@@ -91,18 +91,34 @@ This step determines whether transcript is available before doing any further wo
 
 **Fetching:**
 
-Use `youtube-transcript-api`.
+Use the [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package.
 
-Raw format returned:
+```ts
+import { YoutubeTranscript } from 'youtube-transcript';
+
+const lines = await YoutubeTranscript.fetchTranscript(videoId);
+```
+
+Raw format returned (note: `offset` in ms, not `start` in seconds):
 
 ```json
 [
   {
     "text": "Hello everyone welcome to the video",
-    "start": 0.0,
-    "duration": 3.5
+    "offset": 0,
+    "duration": 3500
   }
 ]
+```
+
+Normalize to seconds immediately after fetching:
+
+```ts
+const normalized = lines.map(line => ({
+  text: line.text,
+  start: line.offset / 1000,
+  duration: line.duration / 1000,
+}));
 ```
 
 **Micro-block grouping:**
@@ -161,7 +177,29 @@ Output per chunk:
 
 ### Module 5 — LLM Segment Analyzer
 
-Send each chunk to the LLM **in parallel** for cost and time efficiency.
+Send each chunk to the LLM **in parallel** using `Promise.all` for cost and time efficiency.
+
+Use the Vercel AI SDK's `generateObject` with a Zod schema — this eliminates manual JSON parsing and removes the need for retry-on-malformed-JSON logic entirely. The SDK handles structured output natively.
+
+```ts
+import { generateObject } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+const SegmentSchema = z.object({
+  interesting: z.boolean(),
+  score: z.number().min(1).max(10),
+  reason: z.string(),
+  clip_start: z.number(),
+  clip_end: z.number(),
+});
+
+const { object } = await generateObject({
+  model: openai('gpt-4o'),
+  schema: SegmentSchema,
+  prompt: buildPrompt(chunk),
+});
+```
 
 Prompt template:
 
@@ -185,23 +223,18 @@ START: {start_time}
 END: {end_time}
 
 {transcript}
-
-Return JSON only, no explanation:
-
-{
-  "interesting": true/false,
-  "score": 1-10,
-  "reason": "why this moment is interesting",
-  "clip_start": seconds,
-  "clip_end": seconds
-}
 ```
 
-**LLM JSON parse error handling:**
+**Error handling:**
 
-If the LLM returns malformed JSON:
-1. Retry once with an explicit instruction: `"You must return only valid JSON. No markdown, no explanation."`
-2. If it fails again, skip this chunk and log a warning.
+If `generateObject` throws (network error, model refusal, etc.), catch per-chunk and log a warning — don't fail the entire run:
+
+```ts
+const results = await Promise.allSettled(chunks.map(chunk => analyzeChunk(chunk)));
+const successful = results
+  .filter(r => r.status === 'fulfilled')
+  .map(r => r.value);
+```
 
 ---
 
@@ -267,12 +300,16 @@ Return JSON only:
 
 ### Module 8 — Video Downloader
 
-Use `yt-dlp` to download the video **only after** segments are ranked (avoid downloading if no good segments are found).
+Use `yt-dlp` via [`execa`](https://www.npmjs.com/package/execa) to download the video **only after** segments are ranked (avoid downloading if no good segments are found).
 
-```bash
-yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
-       -o "downloads/%(id)s.%(ext)s" \
-       "https://youtube.com/watch?v=VIDEO_ID"
+```ts
+import { execa } from 'execa';
+
+await execa('yt-dlp', [
+  '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+  '-o', `downloads/${videoId}.%(ext)s`,
+  `https://youtube.com/watch?v=${videoId}`,
+]);
 ```
 
 Store path as:
@@ -285,14 +322,20 @@ downloads/{VIDEO_ID}.mp4
 
 ### Module 9 — Clip Generator (Optional)
 
-Use `ffmpeg` to cut each ranked segment:
+Use [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) to cut each ranked segment:
 
-```bash
-ffmpeg -ss {clip_start} -to {clip_end} -i downloads/{VIDEO_ID}.mp4 \
-       -c copy outputs/{VIDEO_ID}_{clip_start}_{clip_end}.mp4
+```ts
+import ffmpeg from 'fluent-ffmpeg';
+
+ffmpeg(`downloads/${videoId}.mp4`)
+  .setStartTime(clipStart)
+  .setDuration(clipEnd - clipStart)
+  .output(`outputs/${videoId}_${clipStart}_${clipEnd}.mp4`)
+  .outputOptions('-c copy')
+  .run();
 ```
 
-> `-c copy` avoids re-encoding for speed. If precise frame cuts are needed, replace with `-c:v libx264 -c:a aac`.
+> `-c copy` avoids re-encoding for speed. If precise frame cuts are needed, replace with `.videoCodec('libx264').audioCodec('aac')`.
 
 ---
 
@@ -312,25 +355,43 @@ ffmpeg -ss {clip_start} -to {clip_end} -i downloads/{VIDEO_ID}.mp4 \
 
 ## 5. Configuration
 
-All tunable parameters should live in a config file or be passable as CLI/API arguments:
+All tunable parameters live in a `.env` file and are validated at startup using `zod` — the process exits immediately with a clear error if any required value is missing or invalid.
 
-```python
-SCORE_THRESHOLD = 7          # minimum score to keep a segment
-TOP_N_SEGMENTS = 10          # max segments to return
-CHUNK_LENGTH_SEC = 120       # LLM chunk size in seconds
-CHUNK_OVERLAP_SEC = 20       # overlap between chunks
-MICRO_BLOCK_SEC = 15         # micro-block grouping window
-LLM_PROVIDER = "openai"      # openai | anthropic | google
-LLM_MODEL = "gpt-4o"
-LLM_MAX_RETRIES = 3
-DOWNLOAD_DIR = "downloads/"
-OUTPUT_DIR = "outputs/"
+`.env`:
+
+```env
+OPENAI_API_KEY=your_key_here
+
+SCORE_THRESHOLD=7
+TOP_N_SEGMENTS=10
+CHUNK_LENGTH_SEC=120
+CHUNK_OVERLAP_SEC=20
+MICRO_BLOCK_SEC=15
+LLM_MODEL=gpt-4o
+LLM_MAX_RETRIES=3
+DOWNLOAD_DIR=downloads/
+OUTPUT_DIR=outputs/
 ```
 
-**API key management:** Load from environment variables, never hardcode.
+`src/config.ts`:
 
-```bash
-export OPENAI_API_KEY=...
+```ts
+import { z } from 'zod';
+
+const ConfigSchema = z.object({
+  OPENAI_API_KEY: z.string().min(1),
+  SCORE_THRESHOLD: z.coerce.number().default(7),
+  TOP_N_SEGMENTS: z.coerce.number().default(10),
+  CHUNK_LENGTH_SEC: z.coerce.number().default(120),
+  CHUNK_OVERLAP_SEC: z.coerce.number().default(20),
+  MICRO_BLOCK_SEC: z.coerce.number().default(15),
+  LLM_MODEL: z.string().default('gpt-4o'),
+  LLM_MAX_RETRIES: z.coerce.number().default(3),
+  DOWNLOAD_DIR: z.string().default('downloads/'),
+  OUTPUT_DIR: z.string().default('outputs/'),
+});
+
+export const config = ConfigSchema.parse(process.env);
 ```
 
 **Cost estimate:** At ~500 tokens per chunk and ~1 chunk per 2 minutes of video, a 30-minute video generates ~15 chunks. At GPT-4o pricing (~$5/1M input tokens), a full run costs roughly **$0.04–0.10** per video.
@@ -369,13 +430,16 @@ export OPENAI_API_KEY=...
 
 | Layer | Choice |
 |---|---|
-| Backend | Python / FastAPI |
-| Transcript | `youtube-transcript-api` |
-| Video download | `yt-dlp` |
-| Clip cutting | `ffmpeg` |
-| LLM | OpenAI / Anthropic / Google (configurable) |
-| Async workers | Python `asyncio` + `asyncio.gather` for parallel LLM calls |
-| Job queue (optional) | Redis + `rq` or Celery |
+| Language | TypeScript (Node.js 18+) |
+| HTTP layer | None yet — CLI-first. API layer added later. |
+| Transcript | [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package |
+| Video download | `yt-dlp` subprocess via [`execa`](https://www.npmjs.com/package/execa) |
+| Clip cutting | `ffmpeg` subprocess via [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) |
+| LLM | Vercel AI SDK (`ai` + `@ai-sdk/openai` / `@ai-sdk/anthropic` / `@ai-sdk/google`) |
+| Structured LLM output | `generateObject` + `zod` schema (no manual JSON parsing needed) |
+| Config validation | `zod` — parse and validate all env vars at startup |
+| Async workers | `Promise.all` / `Promise.allSettled` for parallel LLM calls |
+| Job queue (optional) | Redis + `bullmq` |
 
 ---
 
@@ -384,16 +448,16 @@ export OPENAI_API_KEY=...
 ```
 Input: https://youtube.com/watch?v=abc123
 
-1. Parse URL              → video_id = "abc123"
+1. Parse URL              → videoId = "abc123"
 2. Fetch metadata         → duration = 1823s, title = "..."
-3. Fetch transcript       → 312 raw lines
+3. Fetch transcript       → 312 raw lines (normalize offset→seconds)
 4. Build micro-blocks     → 91 blocks @ ~20s each
 5. Build LLM chunks       → 16 chunks @ ~120s with 20s overlap
-6. Parallel LLM analysis  → 16 API calls (async)
+6. Parallel LLM analysis  → Promise.allSettled(chunks.map(analyzeChunk))
 7. Rank segments          → 4 segments with score >= 7
 8. Refinement pass        → tighten boundaries on top 4
-9. Download video         → downloads/abc123.mp4
-10. Generate clips        → outputs/abc123_120_150.mp4, ...
+9. Download video         → downloads/abc123.mp4  (via yt-dlp + execa)
+10. Generate clips        → outputs/abc123_120_150.mp4, ...  (via fluent-ffmpeg)
 
 Output: JSON with 4 ranked segments
 ```

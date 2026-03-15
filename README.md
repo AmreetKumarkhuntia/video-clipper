@@ -1,58 +1,80 @@
 # video-clipper
 
-A system that takes a YouTube URL, analyzes the transcript using an LLM, and identifies the most interesting/high-value moments — returning timestamp ranges and optionally cutting clips automatically.
+A TypeScript CLI tool that takes a YouTube URL, analyzes the transcript with an LLM, and returns the most interesting moments as ranked timestamp ranges. Optionally downloads the video and cuts clips automatically.
 
-## What it does
+## How it works
 
-1. Takes a YouTube URL
-2. Extracts the transcript with timestamps
-3. Uses an LLM to analyze the transcript in parallel chunks
-4. Identifies interesting moments (insights, humor, storytelling, controversy, etc.)
-5. Returns ranked timestamp ranges
-6. Optionally downloads the video and cuts clips using ffmpeg
+```
+YouTube URL
+    │
+    ▼
+Parse URL → fetch transcript → group into chunks
+    │
+    ▼
+Parallel LLM analysis (Vercel AI SDK + gpt-4o)
+    │
+    ▼
+Rank & deduplicate segments
+    │
+    ▼
+Refine clip boundaries (second LLM pass)
+    │
+    ▼
+(Optional) Download video + cut clips with ffmpeg
+```
 
 ## Tech Stack
 
-- **Backend:** Python / FastAPI
-- **Transcript:** `youtube-transcript-api`
-- **Video download:** `yt-dlp`
-- **Clip cutting:** `ffmpeg`
-- **LLM:** OpenAI / Anthropic / Google (configurable)
-- **Async:** Python `asyncio` for parallel LLM calls
+| Layer | Choice |
+|---|---|
+| Language | TypeScript (Node.js 18+) |
+| Transcript | `youtube-transcript` |
+| LLM | Vercel AI SDK (`ai` + `@ai-sdk/openai`) |
+| Structured output | `generateObject` + `zod` |
+| Video download | `yt-dlp` via `execa` |
+| Clip cutting | `fluent-ffmpeg` |
+| Config validation | `zod` |
+
+## Requirements
+
+- Node.js 18+
+- `yt-dlp` (for video download)
+- `ffmpeg` (for clip cutting)
+
+```bash
+# macOS
+brew install yt-dlp ffmpeg
+```
 
 ## Setup
 
 ```bash
-pip install fastapi youtube-transcript-api yt-dlp openai
+npm install
+cp .env.example .env
 ```
 
-Set your LLM API key:
+Edit `.env` and add your OpenAI API key:
 
-```bash
-export OPENAI_API_KEY=your_key_here
-```
-
-ffmpeg must be installed separately:
-
-```bash
-# macOS
-brew install ffmpeg
-
-# Ubuntu
-sudo apt install ffmpeg
+```env
+OPENAI_API_KEY=your_key_here
 ```
 
 ## Configuration
 
-Key parameters (all configurable):
+All parameters are set via `.env`:
 
-| Parameter | Default | Description |
+| Variable | Default | Description |
 |---|---|---|
-| `SCORE_THRESHOLD` | 7 | Minimum LLM score to keep a segment |
-| `TOP_N_SEGMENTS` | 10 | Max segments to return |
-| `CHUNK_LENGTH_SEC` | 120 | LLM analysis chunk size (seconds) |
-| `CHUNK_OVERLAP_SEC` | 20 | Overlap between chunks |
+| `OPENAI_API_KEY` | — | Required. Your OpenAI API key. |
+| `SCORE_THRESHOLD` | `7` | Minimum score (1–10) to keep a segment |
+| `TOP_N_SEGMENTS` | `10` | Max number of segments to return |
+| `CHUNK_LENGTH_SEC` | `120` | LLM analysis window size in seconds |
+| `CHUNK_OVERLAP_SEC` | `20` | Overlap between consecutive chunks |
+| `MICRO_BLOCK_SEC` | `15` | Transcript grouping window in seconds |
 | `LLM_MODEL` | `gpt-4o` | Model to use |
+| `LLM_MAX_RETRIES` | `3` | Max retries on LLM failure |
+| `DOWNLOAD_DIR` | `downloads/` | Where to store downloaded videos |
+| `OUTPUT_DIR` | `outputs/` | Where to store generated clips |
 
 ## Output
 
@@ -68,6 +90,13 @@ Key parameters (all configurable):
       "end": 150,
       "score": 9,
       "reason": "strong controversial opinion"
+    },
+    {
+      "rank": 2,
+      "start": 420,
+      "end": 455,
+      "score": 8,
+      "reason": "funny storytelling moment"
     }
   ]
 }
@@ -75,4 +104,4 @@ Key parameters (all configurable):
 
 ## Docs
 
-See [docs/plan.md](docs/plan.md) for the full architecture and build plan.
+Full architecture and build plan: [docs/plan.md](docs/plan.md)
