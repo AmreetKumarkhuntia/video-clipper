@@ -114,7 +114,7 @@ Raw format returned (note: `offset` in ms, not `start` in seconds):
 Normalize to seconds immediately after fetching:
 
 ```ts
-const normalized = lines.map(line => ({
+const normalized = lines.map((line) => ({
   text: line.text,
   start: line.offset / 1000,
   duration: line.duration / 1000,
@@ -230,10 +230,8 @@ END: {end_time}
 If `generateObject` throws (network error, model refusal, etc.), catch per-chunk and log a warning — don't fail the entire run:
 
 ```ts
-const results = await Promise.allSettled(chunks.map(chunk => analyzeChunk(chunk)));
-const successful = results
-  .filter(r => r.status === 'fulfilled')
-  .map(r => r.value);
+const results = await Promise.allSettled(chunks.map((chunk) => analyzeChunk(chunk)));
+const successful = results.filter((r) => r.status === 'fulfilled').map((r) => r.value);
 ```
 
 ---
@@ -306,8 +304,10 @@ Use `yt-dlp` via [`execa`](https://www.npmjs.com/package/execa) to download the 
 import { execa } from 'execa';
 
 await execa('yt-dlp', [
-  '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
-  '-o', `downloads/${videoId}.%(ext)s`,
+  '-f',
+  'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+  '-o',
+  `downloads/${videoId}.%(ext)s`,
   `https://youtube.com/watch?v=${videoId}`,
 ]);
 ```
@@ -341,15 +341,15 @@ ffmpeg(`downloads/${videoId}.mp4`)
 
 ## 4. Error Handling
 
-| Scenario | Behavior |
-|---|---|
-| No transcript available | Return error: `"No transcript found for this video"`. Suggest checking if captions are enabled. |
-| Auto-generated only (no manual captions) | Proceed with auto-generated but warn the user — accuracy may be lower. |
-| Video too long (> 3 hours) | Warn user about high LLM cost. Optionally add a `--max-duration` flag to abort. |
-| LLM returns malformed JSON | Retry once with stricter prompt. Skip chunk on second failure. |
-| LLM API rate limit hit | Exponential backoff with jitter (max 3 retries). |
-| yt-dlp download fails | Return error with reason (private video, geo-blocked, etc.). |
-| ffmpeg not installed | Return clear error: `"ffmpeg is required for clip generation. Install it first."` |
+| Scenario                                 | Behavior                                                                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| No transcript available                  | Return error: `"No transcript found for this video"`. Suggest checking if captions are enabled. |
+| Auto-generated only (no manual captions) | Proceed with auto-generated but warn the user — accuracy may be lower.                          |
+| Video too long (> 3 hours)               | Warn user about high LLM cost. Optionally add a `--max-duration` flag to abort.                 |
+| LLM returns malformed JSON               | Retry once with stricter prompt. Skip chunk on second failure.                                  |
+| LLM API rate limit hit                   | Exponential backoff with jitter (max 3 retries).                                                |
+| yt-dlp download fails                    | Return error with reason (private video, geo-blocked, etc.).                                    |
+| ffmpeg not installed                     | Return clear error: `"ffmpeg is required for clip generation. Install it first."`               |
 
 ---
 
@@ -428,18 +428,18 @@ export const config = ConfigSchema.parse(process.env);
 
 ## 7. Tech Stack
 
-| Layer | Choice |
-|---|---|
-| Language | TypeScript (Node.js 18+) |
-| HTTP layer | None yet — CLI-first. API layer added later. |
-| Transcript | [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package |
-| Video download | `yt-dlp` subprocess via [`execa`](https://www.npmjs.com/package/execa) |
-| Clip cutting | `ffmpeg` subprocess via [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) |
-| LLM | Vercel AI SDK (`ai` + `@ai-sdk/openai` / `@ai-sdk/anthropic` / `@ai-sdk/google`) |
-| Structured LLM output | `generateObject` + `zod` schema (no manual JSON parsing needed) |
-| Config validation | `zod` — parse and validate all env vars at startup |
-| Async workers | `Promise.all` / `Promise.allSettled` for parallel LLM calls |
-| Job queue (optional) | Redis + `bullmq` |
+| Layer                 | Choice                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| Language              | TypeScript (Node.js 18+)                                                               |
+| HTTP layer            | None yet — CLI-first. API layer added later.                                           |
+| Transcript            | [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package   |
+| Video download        | `yt-dlp` subprocess via [`execa`](https://www.npmjs.com/package/execa)                 |
+| Clip cutting          | `ffmpeg` subprocess via [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) |
+| LLM                   | Vercel AI SDK (`ai` + `@ai-sdk/openai` / `@ai-sdk/anthropic` / `@ai-sdk/google`)       |
+| Structured LLM output | `generateObject` + `zod` schema (no manual JSON parsing needed)                        |
+| Config validation     | `zod` — parse and validate all env vars at startup                                     |
+| Async workers         | `Promise.all` / `Promise.allSettled` for parallel LLM calls                            |
+| Job queue (optional)  | Redis + `bullmq`                                                                       |
 
 ---
 

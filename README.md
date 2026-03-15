@@ -25,15 +25,15 @@ Refine clip boundaries (second LLM pass)
 
 ## Tech Stack
 
-| Layer | Choice |
-|---|---|
-| Language | TypeScript (Node.js 18+) |
-| Transcript | `youtube-transcript` |
-| LLM | Vercel AI SDK (`ai` + `@ai-sdk/openai`) |
-| Structured output | `generateObject` + `zod` |
-| Video download | `yt-dlp` via `execa` |
-| Clip cutting | `fluent-ffmpeg` |
-| Config validation | `zod` |
+| Layer             | Choice                                  |
+| ----------------- | --------------------------------------- |
+| Language          | TypeScript (Node.js 18+)                |
+| Transcript        | `youtube-transcript`                    |
+| LLM               | Vercel AI SDK (`ai` + `@ai-sdk/openai`) |
+| Structured output | `generateObject` + `zod`                |
+| Video download    | `yt-dlp` via `execa`                    |
+| Clip cutting      | `fluent-ffmpeg`                         |
+| Config validation | `zod`                                   |
 
 ## Requirements
 
@@ -63,18 +63,18 @@ OPENAI_API_KEY=your_key_here
 
 All parameters are set via `.env`:
 
-| Variable | Default | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | — | Required. Your OpenAI API key. |
-| `SCORE_THRESHOLD` | `7` | Minimum score (1–10) to keep a segment |
-| `TOP_N_SEGMENTS` | `10` | Max number of segments to return |
-| `CHUNK_LENGTH_SEC` | `120` | LLM analysis window size in seconds |
-| `CHUNK_OVERLAP_SEC` | `20` | Overlap between consecutive chunks |
-| `MICRO_BLOCK_SEC` | `15` | Transcript grouping window in seconds |
-| `LLM_MODEL` | `gpt-4o` | Model to use |
-| `LLM_MAX_RETRIES` | `3` | Max retries on LLM failure |
-| `DOWNLOAD_DIR` | `downloads/` | Where to store downloaded videos |
-| `OUTPUT_DIR` | `outputs/` | Where to store generated clips |
+| Variable            | Default      | Description                            |
+| ------------------- | ------------ | -------------------------------------- |
+| `OPENAI_API_KEY`    | —            | Required. Your OpenAI API key.         |
+| `SCORE_THRESHOLD`   | `7`          | Minimum score (1–10) to keep a segment |
+| `TOP_N_SEGMENTS`    | `10`         | Max number of segments to return       |
+| `CHUNK_LENGTH_SEC`  | `120`        | LLM analysis window size in seconds    |
+| `CHUNK_OVERLAP_SEC` | `20`         | Overlap between consecutive chunks     |
+| `MICRO_BLOCK_SEC`   | `15`         | Transcript grouping window in seconds  |
+| `LLM_MODEL`         | `gpt-4o`     | Model to use                           |
+| `LLM_MAX_RETRIES`   | `3`          | Max retries on LLM failure             |
+| `DOWNLOAD_DIR`      | `downloads/` | Where to store downloaded videos       |
+| `OUTPUT_DIR`        | `outputs/`   | Where to store generated clips         |
 
 ## Output
 

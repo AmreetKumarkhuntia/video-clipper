@@ -47,7 +47,7 @@ async function extractViaOEmbed(videoId: string): Promise<VideoMetadata> {
   }
   const data = (await res.json()) as OEmbedResponse;
   log.warn(
-    `yt-dlp unavailable — duration unknown for "${videoId}". Install yt-dlp for full metadata.`
+    `yt-dlp unavailable — duration unknown for "${videoId}". Install yt-dlp for full metadata.`,
   );
   return {
     videoId,

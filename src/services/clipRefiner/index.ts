@@ -18,17 +18,15 @@ const RefinedBoundariesSchema = z.object({
  */
 function buildContextText(
   segment: RankedSegment,
-  allBlocks: MicroBlock[]
+  allBlocks: MicroBlock[],
 ): { text: string; windowStart: number; windowEnd: number } {
   const windowStart = Math.max(0, segment.start - CONTEXT_PADDING_SEC);
   const windowEnd = segment.end + CONTEXT_PADDING_SEC;
 
-  const contextBlocks = allBlocks.filter(
-    b => b.end > windowStart && b.start < windowEnd
-  );
+  const contextBlocks = allBlocks.filter((b) => b.end > windowStart && b.start < windowEnd);
 
   return {
-    text: contextBlocks.map(b => b.text).join(' '),
+    text: contextBlocks.map((b) => b.text).join(' '),
     windowStart,
     windowEnd,
   };
@@ -41,7 +39,7 @@ function buildPrompt(
   segment: RankedSegment,
   contextText: string,
   windowStart: number,
-  windowEnd: number
+  windowEnd: number,
 ): string {
   return `You are a video editor refining clip boundaries.
 
@@ -71,7 +69,7 @@ Rules:
  */
 async function refineSegment(
   segment: RankedSegment,
-  allBlocks: MicroBlock[]
+  allBlocks: MicroBlock[],
 ): Promise<RankedSegment> {
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
@@ -97,12 +95,14 @@ async function refineSegment(
  */
 export async function refineSegments(
   segments: RankedSegment[],
-  allBlocks: MicroBlock[]
+  allBlocks: MicroBlock[],
 ): Promise<RankedSegment[]> {
-  log.info(`Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''}...`);
+  log.info(
+    `Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''}...`,
+  );
 
   const results = await Promise.allSettled(
-    segments.map(segment => refineSegment(segment, allBlocks))
+    segments.map((segment) => refineSegment(segment, allBlocks)),
   );
 
   const refined = results.map((result, i) => {

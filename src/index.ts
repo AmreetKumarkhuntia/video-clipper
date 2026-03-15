@@ -48,19 +48,31 @@ function parseArgs(argv: string[]): CliArgs {
       result.clip = true;
     } else if (arg === '--threshold') {
       const val = Number(args[++i]);
-      if (isNaN(val)) { log.error(`--threshold requires a numeric value`); process.exit(1); }
+      if (isNaN(val)) {
+        log.error(`--threshold requires a numeric value`);
+        process.exit(1);
+      }
       result.threshold = val;
     } else if (arg === '--top-n') {
       const val = Number(args[++i]);
-      if (isNaN(val)) { log.error(`--top-n requires a numeric value`); process.exit(1); }
+      if (isNaN(val)) {
+        log.error(`--top-n requires a numeric value`);
+        process.exit(1);
+      }
       result.topN = val;
     } else if (arg === '--max-duration') {
       const val = Number(args[++i]);
-      if (isNaN(val)) { log.error(`--max-duration requires a numeric value`); process.exit(1); }
+      if (isNaN(val)) {
+        log.error(`--max-duration requires a numeric value`);
+        process.exit(1);
+      }
       result.maxDuration = val;
     } else if (arg === '--output-json') {
       result.outputJson = args[++i];
-      if (!result.outputJson) { log.error(`--output-json requires a file path`); process.exit(1); }
+      if (!result.outputJson) {
+        log.error(`--output-json requires a file path`);
+        process.exit(1);
+      }
     } else if (!arg.startsWith('--')) {
       result.url = arg;
     } else {
@@ -74,7 +86,8 @@ function parseArgs(argv: string[]): CliArgs {
 }
 
 function printUsage(): void {
-  console.log(`
+  console.log(
+    `
 Usage: npx tsx src/index.ts <youtube-url> [options]
 
 Arguments:
@@ -93,7 +106,8 @@ Examples:
   npx tsx src/index.ts https://youtu.be/dQw4w9WgXcQ --clip
   npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
   npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
-`.trim());
+`.trim(),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -116,7 +130,9 @@ if (!cliArgs.url) {
 const threshold = cliArgs.threshold ?? config.SCORE_THRESHOLD;
 const topN = cliArgs.topN ?? config.TOP_N_SEGMENTS;
 
-log.info(`Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}`);
+log.info(
+  `Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}`,
+);
 
 async function run(): Promise<void> {
   // Step 1: Parse URL
@@ -138,7 +154,7 @@ async function run(): Promise<void> {
     process.exit(1);
   }
   log.info(
-    `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`
+    `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
   );
 
   // Step 3: --max-duration guard
@@ -146,7 +162,7 @@ async function run(): Promise<void> {
     if (metadata.duration > cliArgs.maxDuration) {
       log.error(
         `Video duration exceeds --max-duration limit. ` +
-        `(${formatSeconds(metadata.duration)} > ${formatSeconds(cliArgs.maxDuration)})`
+          `(${formatSeconds(metadata.duration)} > ${formatSeconds(cliArgs.maxDuration)})`,
       );
       process.exit(1);
     }
@@ -166,7 +182,7 @@ async function run(): Promise<void> {
   const microBlocks = buildMicroBlocks(lines, config.MICRO_BLOCK_SEC);
   const chunks = buildLLMChunks(microBlocks, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
   log.info(
-    `Transcript: ${lines.length} lines → ${microBlocks.length} micro-blocks → ${chunks.length} chunks`
+    `Transcript: ${lines.length} lines → ${microBlocks.length} micro-blocks → ${chunks.length} chunks`,
   );
 
   // Step 6: LLM analysis (parallel across all chunks)
@@ -193,7 +209,9 @@ async function run(): Promise<void> {
     process.exit(0);
   }
 
-  log.info(`Analysis complete: ${rankedSegments.length} segment${rankedSegments.length !== 1 ? 's' : ''} above threshold ${threshold}`);
+  log.info(
+    `Analysis complete: ${rankedSegments.length} segment${rankedSegments.length !== 1 ? 's' : ''} above threshold ${threshold}`,
+  );
 
   // Step 8: Refine clip boundaries (second LLM pass)
   log.info('Refining clip boundaries...');
@@ -227,7 +245,9 @@ async function run(): Promise<void> {
   }
 
   // Step 11: Generate clips via ffmpeg
-  log.info(`Generating ${refinedSegments.length} clip${refinedSegments.length !== 1 ? 's' : ''}...`);
+  log.info(
+    `Generating ${refinedSegments.length} clip${refinedSegments.length !== 1 ? 's' : ''}...`,
+  );
   let clipPaths: string[];
   try {
     clipPaths = await generateClips(videoPath, refinedSegments, videoId);
@@ -250,7 +270,10 @@ async function run(): Promise<void> {
 // Output helper
 // ---------------------------------------------------------------------------
 
-async function outputResult(result: PipelineResult, outputJsonPath: string | undefined): Promise<void> {
+async function outputResult(
+  result: PipelineResult,
+  outputJsonPath: string | undefined,
+): Promise<void> {
   const json = JSON.stringify(result, null, 2);
   if (outputJsonPath) {
     await fs.writeFile(outputJsonPath, json, 'utf-8');

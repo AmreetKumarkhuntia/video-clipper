@@ -72,10 +72,7 @@ describe('buildMicroBlocks', () => {
   });
 
   it('preserves start time of the first line in each block', () => {
-    const lines = [
-      makeLine(3, 5, 'first'),
-      makeLine(25, 5, 'second'),
-    ];
+    const lines = [makeLine(3, 5, 'first'), makeLine(25, 5, 'second')];
     const blocks = buildMicroBlocks(lines, 15);
     expect(blocks[0].start).toBe(3);
     expect(blocks[1].start).toBe(25);
@@ -109,9 +106,7 @@ describe('buildLLMChunks', () => {
     // chunk 1: blocks starting 0–59s → [0,10,20,30,40,50]
     // chunk 2: blocks starting 40–99s → [40,50,60,70,80,90]
     // chunk 3: blocks starting 80–139s (capped at 120) → [80,90,100,110]
-    const blocks = Array.from({ length: 12 }, (_, i) =>
-      makeBlock(i * 10, i * 10 + 10, `b${i}`)
-    );
+    const blocks = Array.from({ length: 12 }, (_, i) => makeBlock(i * 10, i * 10 + 10, `b${i}`));
     const chunks = buildLLMChunks(blocks, 60, 20);
     expect(chunks).toHaveLength(3);
 
@@ -138,19 +133,13 @@ describe('buildLLMChunks', () => {
   });
 
   it('chunk start is the start of the first included block', () => {
-    const blocks = [
-      makeBlock(5, 15, 'a'),
-      makeBlock(15, 25, 'b'),
-    ];
+    const blocks = [makeBlock(5, 15, 'a'), makeBlock(15, 25, 'b')];
     const chunks = buildLLMChunks(blocks, 120, 20);
     expect(chunks[0].start).toBe(5);
   });
 
   it('chunk end is the end of the last included block', () => {
-    const blocks = [
-      makeBlock(0, 60, 'a'),
-      makeBlock(60, 90, 'b'),
-    ];
+    const blocks = [makeBlock(0, 60, 'a'), makeBlock(60, 90, 'b')];
     const chunks = buildLLMChunks(blocks, 120, 20);
     expect(chunks[0].end).toBe(90);
   });

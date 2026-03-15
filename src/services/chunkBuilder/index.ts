@@ -54,7 +54,7 @@ export function buildMicroBlocks(lines: TranscriptLine[], windowSec: number): Mi
 export function buildLLMChunks(
   blocks: MicroBlock[],
   chunkLen: number,
-  overlap: number
+  overlap: number,
 ): LLMChunk[] {
   if (blocks.length === 0) return [];
 
@@ -65,13 +65,13 @@ export function buildLLMChunks(
   while (chunkStart < totalEnd) {
     const chunkEnd = chunkStart + chunkLen;
 
-    const window = blocks.filter(b => b.start >= chunkStart && b.start < chunkEnd);
+    const window = blocks.filter((b) => b.start >= chunkStart && b.start < chunkEnd);
 
     if (window.length > 0) {
       chunks.push({
         start: window[0].start,
         end: window[window.length - 1].end,
-        text: window.map(b => b.text).join(' '),
+        text: window.map((b) => b.text).join(' '),
       });
     }
 

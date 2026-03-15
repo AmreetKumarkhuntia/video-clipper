@@ -28,7 +28,9 @@ describe('parseUrl', () => {
     });
 
     it('parses a watch URL with additional query params', () => {
-      expect(parseUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120&list=PLxxx')).toBe('dQw4w9WgXcQ');
+      expect(parseUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120&list=PLxxx')).toBe(
+        'dQw4w9WgXcQ',
+      );
     });
   });
 
@@ -51,13 +53,13 @@ describe('parseUrl', () => {
 
     it('throws if the video ID is shorter than 11 characters', () => {
       expect(() => parseUrl('https://www.youtube.com/watch?v=short')).toThrow(
-        'expected 11 characters'
+        'expected 11 characters',
       );
     });
 
     it('throws if the video ID is longer than 11 characters', () => {
       expect(() => parseUrl('https://www.youtube.com/watch?v=toolongvideoid')).toThrow(
-        'expected 11 characters'
+        'expected 11 characters',
       );
     });
 

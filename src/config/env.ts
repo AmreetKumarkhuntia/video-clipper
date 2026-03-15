@@ -6,7 +6,7 @@ function loadConfig() {
 
   if (!result.success) {
     const issues = result.error.issues
-      .map(i => `  - ${i.path.join('.')}: ${i.message}`)
+      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
     console.error(`[error] Invalid configuration:\n${issues}`);
     process.exit(1);

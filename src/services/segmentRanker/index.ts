@@ -4,12 +4,7 @@ import type { AnalyzedSegment, RankedSegment } from '../../types/index.js';
  * Returns the overlap duration in seconds between two segments [aStart, aEnd) and [bStart, bEnd).
  * Returns 0 if they do not overlap.
  */
-function overlapSeconds(
-  aStart: number,
-  aEnd: number,
-  bStart: number,
-  bEnd: number
-): number {
+function overlapSeconds(aStart: number, aEnd: number, bStart: number, bEnd: number): number {
   const start = Math.max(aStart, bStart);
   const end = Math.min(aEnd, bEnd);
   return Math.max(0, end - start);
@@ -22,7 +17,7 @@ function significantlyOverlaps(
   aStart: number,
   aEnd: number,
   bStart: number,
-  bEnd: number
+  bEnd: number,
 ): boolean {
   const overlap = overlapSeconds(aStart, aEnd, bStart, bEnd);
   if (overlap === 0) return false;
@@ -38,13 +33,13 @@ function significantlyOverlaps(
  * Assumes input is already sorted by score DESC.
  */
 function deduplicateSegments(
-  segments: Array<{ start: number; end: number; score: number; reason: string }>
+  segments: Array<{ start: number; end: number; score: number; reason: string }>,
 ): Array<{ start: number; end: number; score: number; reason: string }> {
   const kept: typeof segments = [];
 
   for (const candidate of segments) {
-    const dominated = kept.some(existing =>
-      significantlyOverlaps(existing.start, existing.end, candidate.start, candidate.end)
+    const dominated = kept.some((existing) =>
+      significantlyOverlaps(existing.start, existing.end, candidate.start, candidate.end),
     );
     if (!dominated) {
       kept.push(candidate);
@@ -68,13 +63,13 @@ function deduplicateSegments(
 export function rankSegments(
   segments: AnalyzedSegment[],
   threshold: number,
-  topN: number
+  topN: number,
 ): RankedSegment[] {
   const filtered = segments
-    .filter(s => s.interesting && s.score >= threshold)
+    .filter((s) => s.interesting && s.score >= threshold)
     .sort((a, b) => b.score - a.score);
 
-  const normalized = filtered.map(s => ({
+  const normalized = filtered.map((s) => ({
     start: s.clip_start,
     end: s.clip_end,
     score: s.score,

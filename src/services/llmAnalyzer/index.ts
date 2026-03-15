@@ -24,7 +24,7 @@ function isRateLimitError(err: unknown): boolean {
  * Sleeps for `ms` milliseconds.
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -80,7 +80,7 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
         const delay = BACKOFF_BASE_MS * Math.pow(2, attempt) + Math.random() * BACKOFF_JITTER_MS;
         log.warn(
           `[chunk] Rate limit hit (attempt ${attempt + 1}/${config.LLM_MAX_RETRIES + 1}). ` +
-          `Retrying in ${Math.round(delay)}ms...`
+            `Retrying in ${Math.round(delay)}ms...`,
         );
         await sleep(delay);
         continue;
@@ -103,7 +103,7 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
 export async function analyzeChunks(chunks: LLMChunk[]): Promise<AnalyzedSegment[]> {
   log.info(`Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} in parallel...`);
 
-  const results = await Promise.allSettled(chunks.map(chunk => analyzeChunk(chunk)));
+  const results = await Promise.allSettled(chunks.map((chunk) => analyzeChunk(chunk)));
 
   const segments: AnalyzedSegment[] = [];
 

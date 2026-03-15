@@ -45,7 +45,7 @@ export function parseUrl(url: string): string {
 
   if (videoId.length !== VIDEO_ID_LENGTH) {
     throw new Error(
-      `Invalid video ID "${videoId}": expected ${VIDEO_ID_LENGTH} characters, got ${videoId.length}`
+      `Invalid video ID "${videoId}": expected ${VIDEO_ID_LENGTH} characters, got ${videoId.length}`,
     );
   }
 

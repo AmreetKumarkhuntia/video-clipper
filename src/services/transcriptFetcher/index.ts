@@ -31,18 +31,17 @@ export async function fetchTranscript(videoId: string): Promise<TranscriptLine[]
   }
 
   if (!raw || raw.length === 0) {
-    throw new Error(
-      `No transcript found for this video. Check if captions are enabled.`
-    );
+    throw new Error(`No transcript found for this video. Check if captions are enabled.`);
   }
 
   // Detect auto-generated captions heuristically: youtube-transcript doesn't
   // expose a direct flag, but videos with very short, uniform duration blocks
   // are typically ASR-generated. Warn but do not abort.
-  const avgDuration = raw.reduce((sum: number, l: TranscriptResponse) => sum + (l.duration ?? 0), 0) / raw.length;
+  const avgDuration =
+    raw.reduce((sum: number, l: TranscriptResponse) => sum + (l.duration ?? 0), 0) / raw.length;
   if (avgDuration > 0 && avgDuration < 1500) {
     log.warn(
-      `Transcript for "${videoId}" may be auto-generated (avg block duration ${Math.round(avgDuration)}ms). Accuracy may be lower.`
+      `Transcript for "${videoId}" may be auto-generated (avg block duration ${Math.round(avgDuration)}ms). Accuracy may be lower.`,
     );
   }
 

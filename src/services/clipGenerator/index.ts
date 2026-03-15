@@ -16,7 +16,7 @@ function cutClip(
   videoPath: string,
   start: number,
   end: number,
-  outputPath: string
+  outputPath: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
@@ -47,7 +47,7 @@ function cutClip(
 export async function generateClips(
   videoPath: string,
   segments: RankedSegment[],
-  videoId: string
+  videoId: string,
 ): Promise<string[]> {
   await fs.mkdir(config.OUTPUT_DIR, { recursive: true });
 
@@ -80,7 +80,7 @@ export async function generateClips(
     } else {
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log.warn(
-        `Failed to cut clip for segment [${segment.start}s – ${segment.end}s] (rank ${segment.rank}): ${reason}`
+        `Failed to cut clip for segment [${segment.start}s – ${segment.end}s] (rank ${segment.rank}): ${reason}`,
       );
     }
   }
@@ -96,11 +96,7 @@ async function verifyFfmpeg(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     ffmpeg.getAvailableFormats((err) => {
       if (err) {
-        reject(
-          new Error(
-            'ffmpeg is required for clip generation. Install it first.'
-          )
-        );
+        reject(new Error('ffmpeg is required for clip generation. Install it first.'));
       } else {
         resolve();
       }

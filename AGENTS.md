@@ -64,6 +64,7 @@ docs/
 ## Module Conventions
 
 Each module in `src/modules/` should:
+
 - Export a single main function named after the module (e.g. `fetchTranscript`, `buildChunks`)
 - Accept typed inputs and return typed outputs (no `any`)
 - Not import from other modules except `config.ts` and `types.ts` unless there is a clear dependency

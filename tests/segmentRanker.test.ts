@@ -10,7 +10,7 @@ function seg(
   clip_start: number,
   clip_end: number,
   score: number,
-  interesting = true
+  interesting = true,
 ): AnalyzedSegment {
   return {
     interesting,
@@ -54,19 +54,17 @@ describe('rankSegments', () => {
   it('sorts segments by score descending', () => {
     const segments = [seg(0, 30, 7), seg(60, 90, 9), seg(120, 150, 8)];
     const result = rankSegments(segments, 7, 10);
-    expect(result.map(r => r.score)).toEqual([9, 8, 7]);
+    expect(result.map((r) => r.score)).toEqual([9, 8, 7]);
   });
 
   it('assigns sequential ranks starting at 1', () => {
     const segments = [seg(0, 30, 9), seg(60, 90, 8), seg(120, 150, 7)];
     const result = rankSegments(segments, 7, 10);
-    expect(result.map(r => r.rank)).toEqual([1, 2, 3]);
+    expect(result.map((r) => r.rank)).toEqual([1, 2, 3]);
   });
 
   it('caps output at topN', () => {
-    const segments = Array.from({ length: 8 }, (_, i) =>
-      seg(i * 60, i * 60 + 30, 10 - i)
-    );
+    const segments = Array.from({ length: 8 }, (_, i) => seg(i * 60, i * 60 + 30, 10 - i));
     const result = rankSegments(segments, 1, 3);
     expect(result).toHaveLength(3);
     expect(result[0].rank).toBe(1);
@@ -122,9 +120,9 @@ describe('rankSegments', () => {
     it('correctly deduplicates multiple overlapping segments keeping highest scores', () => {
       // Three segments all overlapping with the first
       const segments = [
-        seg(0, 60, 9),   // best, kept
-        seg(10, 70, 8),  // overlaps A > 50% → dropped
-        seg(20, 80, 7),  // overlaps A > 50% → dropped
+        seg(0, 60, 9), // best, kept
+        seg(10, 70, 8), // overlaps A > 50% → dropped
+        seg(20, 80, 7), // overlaps A > 50% → dropped
         seg(200, 250, 8), // no overlap → kept
       ];
       const result = rankSegments(segments, 7, 10);

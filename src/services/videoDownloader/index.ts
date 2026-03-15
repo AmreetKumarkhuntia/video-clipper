@@ -35,9 +35,12 @@ export async function downloadVideo(videoId: string): Promise<string> {
 
   try {
     await execa('yt-dlp', [
-      '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
-      '--merge-output-format', 'mp4',
-      '-o', outputPath,
+      '-f',
+      'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+      '--merge-output-format',
+      'mp4',
+      '-o',
+      outputPath,
       '--no-playlist',
       `https://www.youtube.com/watch?v=${videoId}`,
     ]);
@@ -45,9 +48,7 @@ export async function downloadVideo(videoId: string): Promise<string> {
     const message = err instanceof Error ? err.message : String(err);
 
     if (message.includes('command not found') || message.includes('ENOENT')) {
-      throw new Error(
-        'yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp'
-      );
+      throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
     }
 
     if (message.includes('Private video') || message.includes('Sign in')) {
