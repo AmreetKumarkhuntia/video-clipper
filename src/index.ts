@@ -8,26 +8,27 @@ import { extractMetadata } from './services/metadataExtractor/index.js';
 import { analyzeChunks } from './services/llmAnalyzer/index.js';
 import { rankSegments } from './services/segmentRanker/index.js';
 import { refineSegments } from './services/clipRefiner/index.js';
+import { downloadVideo } from './services/videoDownloader/index.js';
+import { generateClips } from './services/clipGenerator/index.js';
 
-// Future pipeline steps (implemented in Phase 4):
-// import { downloadVideo }  from './services/videoDownloader/index.js';
-// import { generateClips }  from './services/clipGenerator/index.js';
-
-const url = process.argv[2];
+const args = process.argv.slice(2);
+const url = args.find((a) => !a.startsWith('--'));
+const clipsFlag = args.includes('--clips');
 
 if (!url) {
-  log.error('Usage: npx tsx src/index.ts <youtube-url>');
-  log.error('Example: npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ');
+  log.error('Usage: npx tsx src/index.ts <youtube-url> [--clips]');
+  log.error('Example: npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --clips');
+  log.error('  --clips   Download the video and generate mp4 clips for each segment');
   process.exit(1);
 }
 
-log.info(`Starting video-clipper (model: ${config.LLM_MODEL})`);
+log.info(`Starting video-clipper (model: ${config.LLM_MODEL})${clipsFlag ? ' [--clips enabled]' : ''}`);
 
 async function run(): Promise<void> {
   // Step 1: Parse URL
   let videoId: string;
   try {
-    videoId = parseUrl(url);
+    videoId = parseUrl(url as string);
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
@@ -103,6 +104,41 @@ async function run(): Promise<void> {
   };
 
   console.log('\n' + JSON.stringify(result, null, 2));
+
+  // Steps 10-11: Download video + generate clips (only with --clips flag)
+  if (!clipsFlag) {
+    log.info('Tip: run with --clips to download the video and generate mp4 clips.');
+    return;
+  }
+
+  // Step 10: Download video via yt-dlp
+  log.info('Downloading video...');
+  let videoPath: string;
+  try {
+    videoPath = await downloadVideo(videoId);
+  } catch (err) {
+    log.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+
+  // Step 11: Generate clips via ffmpeg
+  log.info(`Generating ${refinedSegments.length} clip${refinedSegments.length !== 1 ? 's' : ''}...`);
+  let clipPaths: string[];
+  try {
+    clipPaths = await generateClips(videoPath, refinedSegments, videoId);
+  } catch (err) {
+    log.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+
+  if (clipPaths.length === 0) {
+    log.warn('No clips were generated successfully.');
+  } else {
+    log.info(`Done — ${clipPaths.length} clip${clipPaths.length !== 1 ? 's' : ''} saved:`);
+    for (const p of clipPaths) {
+      log.info(`  ${p}`);
+    }
+  }
 }
 
 run();
