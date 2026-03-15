@@ -1,0 +1,8 @@
+node_modules/
+dist/
+downloads/
+outputs/
+.env
+*.mp4
+*.m4a
+*.webm
