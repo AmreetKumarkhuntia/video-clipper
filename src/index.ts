@@ -11,6 +11,7 @@ import { rankSegments } from './services/segmentRanker/index.js';
 import { refineSegments } from './services/clipRefiner/index.js';
 import { downloadVideo } from './services/videoDownloader/index.js';
 import { generateClips } from './services/clipGenerator/index.js';
+import { dumpTranscript, dumpAnalysis } from './utils/dumper.js';
 import type { PipelineResult } from './types/index.js';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,7 @@ interface CliArgs {
   threshold: number | undefined;
   topN: number | undefined;
   maxDuration: number | undefined;
+  maxChunks: number | undefined;
   outputJson: string | undefined;
   help: boolean;
 }
@@ -35,6 +37,7 @@ function parseArgs(argv: string[]): CliArgs {
     threshold: undefined,
     topN: undefined,
     maxDuration: undefined,
+    maxChunks: undefined,
     outputJson: undefined,
     help: false,
   };
@@ -67,6 +70,13 @@ function parseArgs(argv: string[]): CliArgs {
         process.exit(1);
       }
       result.maxDuration = val;
+    } else if (arg === '--max-chunks') {
+      const val = Number(args[++i]);
+      if (isNaN(val) || !Number.isInteger(val) || val < 1) {
+        log.error(`--max-chunks requires a positive integer`);
+        process.exit(1);
+      }
+      result.maxChunks = val;
     } else if (arg === '--output-json') {
       result.outputJson = args[++i];
       if (!result.outputJson) {
@@ -98,6 +108,7 @@ Options:
   --threshold <n>         Minimum score to keep a segment (default: ${config.SCORE_THRESHOLD})
   --top-n <n>             Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
   --max-duration <s>      Abort if video is longer than <s> seconds
+  --max-chunks <n>        Limit the number of transcript chunks sent to the LLM (useful for testing/cost control)
   --output-json <path>    Write output JSON to file instead of stdout
   --help, -h              Show this help message
 
@@ -106,6 +117,7 @@ Examples:
   npx tsx src/index.ts https://youtu.be/dQw4w9WgXcQ --clip
   npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
   npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
+  npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
 `.trim(),
   );
 }
@@ -178,6 +190,11 @@ async function run(): Promise<void> {
     process.exit(1);
   }
 
+  // Step 4a: Dump transcript (if enabled)
+  if (config.DUMP_OUTPUTS) {
+    await dumpTranscript(videoId, lines);
+  }
+
   // Step 5: Build micro-blocks and LLM chunks
   const microBlocks = buildMicroBlocks(lines, config.MICRO_BLOCK_SEC);
   const chunks = buildLLMChunks(microBlocks, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
@@ -186,8 +203,17 @@ async function run(): Promise<void> {
   );
 
   // Step 6: LLM analysis (parallel across all chunks)
-  log.info(`Analyzing chunks with ${config.LLM_MODEL} (${chunks.length} parallel calls)...`);
-  const analyzedSegments = await analyzeChunks(chunks);
+  const chunkLimit = cliArgs.maxChunks ?? config.MAX_CHUNKS;
+  const chunksToAnalyze = chunkLimit !== undefined ? chunks.slice(0, chunkLimit) : chunks;
+  if (chunkLimit !== undefined) {
+    log.info(
+      `Limiting evaluation to ${chunksToAnalyze.length} of ${chunks.length} chunks (--max-chunks ${chunkLimit})`,
+    );
+  }
+  log.info(
+    `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} parallel calls)...`,
+  );
+  const analyzedSegments = await analyzeChunks(chunksToAnalyze);
 
   if (analyzedSegments.length === 0) {
     log.error('All chunks failed LLM analysis. Check your API key and model config.');
@@ -206,6 +232,9 @@ async function run(): Promise<void> {
       segments: [],
     };
     await outputResult(emptyResult, cliArgs.outputJson);
+    if (config.DUMP_OUTPUTS) {
+      await dumpAnalysis(videoId, emptyResult);
+    }
     process.exit(0);
   }
 
@@ -226,6 +255,12 @@ async function run(): Promise<void> {
   };
 
   await outputResult(result, cliArgs.outputJson);
+
+  // Step 9a: Dump analysis (if enabled)
+  if (config.DUMP_OUTPUTS) {
+    await dumpAnalysis(videoId, result);
+  }
+
   log.info('Done.');
 
   // Steps 10-11: Download video + generate clips (only with --clip flag)

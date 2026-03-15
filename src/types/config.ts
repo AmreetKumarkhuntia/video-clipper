@@ -39,6 +39,10 @@ export const ConfigSchema = z
     LLM_MAX_RETRIES: z.coerce.number().min(0).default(3),
     DOWNLOAD_DIR: z.string().default('downloads/'),
     OUTPUT_DIR: z.string().default('outputs/'),
+    // --- Output dumping ---
+    DUMP_OUTPUTS: z.coerce.boolean().default(true),
+    // --- LLM evaluation limits ---
+    MAX_CHUNKS: z.coerce.number().min(1).optional(),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
