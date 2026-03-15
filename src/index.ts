@@ -98,7 +98,11 @@ function parseArgs(argv: string[]): CliArgs {
 function printUsage(): void {
   console.log(
     `
-Usage: npx tsx src/index.ts <youtube-url> [options]
+Usage: npm run start -- <youtube-url> [options]
+       npx tsx src/index.ts <youtube-url> [options]
+
+Note: when invoking via npm run, use -- to pass flags to the script:
+  npm run start -- <url> --max-chunks 3
 
 Arguments:
   <youtube-url>           YouTube video URL (required)
@@ -113,11 +117,11 @@ Options:
   --help, -h              Show this help message
 
 Examples:
-  npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ
-  npx tsx src/index.ts https://youtu.be/dQw4w9WgXcQ --clip
-  npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
-  npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
-  npx tsx src/index.ts https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ
+  npm run start -- https://youtu.be/dQw4w9WgXcQ --clip
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
 `.trim(),
   );
 }
