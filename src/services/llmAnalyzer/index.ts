@@ -8,6 +8,18 @@ import type { LLMChunk, AnalyzedSegment, ChunkEvaluation } from '../../types/ind
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
 
+const DEFAULT_SYSTEM_PROMPT = `You are an expert video editor analyzing a YouTube transcript segment.
+
+Identify if this segment contains a potentially interesting moment worth clipping.
+
+Interesting moments include:
+- surprising insights or revelations
+- strong or controversial opinions
+- humor or entertaining storytelling
+- emotional moments
+- key explanations of important concepts
+- "aha" moments or turning points`;
+
 /**
  * Returns true if the error looks like an API rate-limit response.
  */
@@ -28,30 +40,25 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Builds the LLM prompt for a single transcript chunk.
+ * Builds the chunk-specific user prompt for a single transcript chunk.
+ * When a custom system prompt is in use, semantic scoring hints are omitted
+ * so they don't conflict with the user's own instructions.
  */
-function buildPrompt(chunk: LLMChunk): string {
-  return `You are an expert video editor analyzing a YouTube transcript segment.
+function buildPrompt(chunk: LLMChunk, isCustomSystemPrompt: boolean): string {
+  const semanticRules = isCustomSystemPrompt
+    ? ''
+    : `- Set interesting=true only if the segment is genuinely compelling
+- Score 1-10 (7+ means worth clipping, 9-10 means viral potential)
+`;
 
-Identify if this segment contains a potentially interesting moment worth clipping.
-
-Interesting moments include:
-- surprising insights or revelations
-- strong or controversial opinions
-- humor or entertaining storytelling
-- emotional moments
-- key explanations of important concepts
-- "aha" moments or turning points
-
-Transcript Segment:
+  return `Transcript Segment:
 START: ${chunk.start}s
 END: ${chunk.end}s
 
 ${chunk.text}
 
 Rules for your response:
-- Set interesting=true only if the segment is genuinely compelling
-- Score 1-10 (7+ means worth clipping, 9-10 means viral potential)
+${semanticRules}
 - clip_start and clip_end must be within [${chunk.start}, ${chunk.end}]
 - clip_start must be less than clip_end`;
 }
@@ -68,7 +75,8 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
       const { object } = await generateObject({
         model: getModel(),
         schema: AnalyzedSegmentSchema,
-        prompt: buildPrompt(chunk),
+        system: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        prompt: buildPrompt(chunk, !!config.LLM_SYSTEM_PROMPT),
         // Let our own retry loop handle rate limits; disable SDK-level retries
         maxRetries: 0,
       });

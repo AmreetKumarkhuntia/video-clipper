@@ -43,6 +43,8 @@ export const ConfigSchema = z
     DUMP_OUTPUTS: z.coerce.boolean().default(true),
     // --- LLM evaluation limits ---
     MAX_CHUNKS: z.coerce.number().min(1).optional(),
+    // --- Custom system prompt (overrides the default if set) ---
+    LLM_SYSTEM_PROMPT: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
