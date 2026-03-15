@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrl } from './index.js';
+import { parseUrl } from '../src/services/urlParser/index.js';
 
 describe('parseUrl', () => {
   describe('valid URLs', () => {

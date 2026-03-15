@@ -32,6 +32,10 @@ src/
     clipGenerator.ts
   types.ts         # shared TypeScript types
   index.ts         # CLI entrypoint
+tests/             # all unit tests (mirrors module names)
+  urlParser.test.ts
+  chunkBuilder.test.ts
+  segmentRanker.test.ts
 downloads/         # yt-dlp output (gitignored)
 outputs/           # ffmpeg clip output (gitignored)
 docs/
@@ -82,7 +86,7 @@ Each module in `src/modules/` should:
 
 - Write unit tests for pure functions (URL parser, chunker, ranker, deduplicator)
 - Do not unit test functions that call external services (LLM, yt-dlp, ffmpeg) — integration test those separately
-- Test files live next to source files: `urlParser.test.ts` alongside `urlParser.ts`
+- Test files live in `tests/` at the project root, mirroring the module name (e.g. `tests/urlParser.test.ts`)
 
 ## Git
 

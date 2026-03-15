@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { rankSegments } from './index.js';
-import type { AnalyzedSegment } from '../../types/index.js';
+import { rankSegments } from '../src/services/segmentRanker/index.js';
+import type { AnalyzedSegment } from '../src/types/index.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

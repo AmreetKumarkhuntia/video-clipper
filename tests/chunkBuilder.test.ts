@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildMicroBlocks, buildLLMChunks } from './index.js';
-import type { TranscriptLine, MicroBlock } from '../../types/index.js';
+import { buildMicroBlocks, buildLLMChunks } from '../src/services/chunkBuilder/index.js';
+import type { TranscriptLine, MicroBlock } from '../src/types/index.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
