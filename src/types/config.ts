@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-const LLM_PROVIDERS = ['openai', 'anthropic', 'google', 'xai', 'mistral', 'groq', 'zai'] as const;
+const LLM_PROVIDERS = [
+  'openai',
+  'anthropic',
+  'google',
+  'xai',
+  'mistral',
+  'groq',
+  'zai',
+  'openrouter',
+] as const;
 
 export type LLMProvider = (typeof LLM_PROVIDERS)[number];
 
@@ -13,6 +22,7 @@ const PROVIDER_KEY_MAP: Record<LLMProvider, string> = {
   mistral: 'MISTRAL_API_KEY',
   groq: 'GROQ_API_KEY',
   zai: 'ZAI_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
 };
 
 export const ConfigSchema = z
@@ -28,6 +38,7 @@ export const ConfigSchema = z
     MISTRAL_API_KEY: z.string().optional(),
     GROQ_API_KEY: z.string().optional(),
     ZAI_API_KEY: z.string().optional(),
+    OPENROUTER_API_KEY: z.string().optional(),
 
     // --- Tunable parameters ---
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),

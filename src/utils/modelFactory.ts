@@ -48,5 +48,11 @@ export function getModel(): LanguageModel {
         baseURL: 'https://api.z.ai/api/paas/v4/',
         apiKey: config.ZAI_API_KEY,
       })(model);
+
+    case 'openrouter':
+      return createOpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: config.OPENROUTER_API_KEY,
+      })(model);
   }
 }
