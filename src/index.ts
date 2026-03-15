@@ -217,15 +217,16 @@ async function run(): Promise<void> {
   log.info(
     `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} parallel calls)...`,
   );
-  const analyzedSegments = await analyzeChunks(chunksToAnalyze);
+  const chunkEvaluations = await analyzeChunks(chunksToAnalyze);
+  const succeededCount = chunkEvaluations.filter((e) => e.status === 'success').length;
 
-  if (analyzedSegments.length === 0) {
+  if (succeededCount === 0) {
     log.error('All chunks failed LLM analysis. Check your API key and model config.');
     process.exit(1);
   }
 
   // Step 7: Rank segments
-  const rankedSegments = rankSegments(analyzedSegments, threshold, topN);
+  const rankedSegments = rankSegments(chunkEvaluations, threshold, topN);
 
   if (rankedSegments.length === 0) {
     log.warn(`No segments scored above threshold ${threshold}. Try lowering --threshold.`);
@@ -233,6 +234,7 @@ async function run(): Promise<void> {
       video_id: videoId,
       title: metadata.title,
       duration: metadata.duration,
+      chunk_evaluations: chunkEvaluations,
       segments: [],
     };
     await outputResult(emptyResult, cliArgs.outputJson);
@@ -255,6 +257,7 @@ async function run(): Promise<void> {
     video_id: videoId,
     title: metadata.title,
     duration: metadata.duration,
+    chunk_evaluations: chunkEvaluations,
     segments: refinedSegments,
   };
 

@@ -1,4 +1,4 @@
-import type { AnalyzedSegment, RankedSegment } from '../../types/index.js';
+import type { ChunkEvaluation, RankedSegment } from '../../types/index.js';
 
 /**
  * Returns the overlap duration in seconds between two segments [aStart, aEnd) and [bStart, bEnd).
@@ -61,11 +61,13 @@ function deduplicateSegments(
  * 6. Rename `clip_start`/`clip_end` → `start`/`end`
  */
 export function rankSegments(
-  segments: AnalyzedSegment[],
+  segments: ChunkEvaluation[],
   threshold: number,
   topN: number,
 ): RankedSegment[] {
-  const filtered = segments
+  const successful = segments.filter((s) => s.status === 'success');
+
+  const filtered = successful
     .filter((s) => s.interesting && s.score >= threshold)
     .sort((a, b) => b.score - a.score);
 

@@ -17,3 +17,25 @@ export const RankedSegmentSchema = z.object({
   reason: z.string(),
 });
 export type RankedSegment = z.infer<typeof RankedSegmentSchema>;
+
+const ChunkEvaluationBaseSchema = z.object({
+  chunk_index: z.number().int().min(0),
+  chunk_start: z.number(), // seconds
+  chunk_end: z.number(), // seconds
+});
+
+export const ChunkEvaluationSchema = z.discriminatedUnion('status', [
+  ChunkEvaluationBaseSchema.extend({
+    status: z.literal('success'),
+    interesting: z.boolean(),
+    score: z.number().min(1).max(10),
+    reason: z.string(),
+    clip_start: z.number(),
+    clip_end: z.number(),
+  }),
+  ChunkEvaluationBaseSchema.extend({
+    status: z.literal('failed'),
+    error: z.string(),
+  }),
+]);
+export type ChunkEvaluation = z.infer<typeof ChunkEvaluationSchema>;

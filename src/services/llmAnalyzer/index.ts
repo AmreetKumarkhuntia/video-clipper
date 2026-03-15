@@ -3,7 +3,7 @@ import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { getModel } from '../../utils/modelFactory.js';
 import { AnalyzedSegmentSchema } from '../../types/index.js';
-import type { LLMChunk, AnalyzedSegment } from '../../types/index.js';
+import type { LLMChunk, AnalyzedSegment, ChunkEvaluation } from '../../types/index.js';
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
@@ -96,26 +96,44 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
 
 /**
  * Analyzes all LLM chunks in parallel using Promise.allSettled.
- * Failed chunks are logged and skipped — never crashes the pipeline.
- *
- * @returns AnalyzedSegment[] from successfully analyzed chunks only
+ * Returns a ChunkEvaluation for every chunk — successful ones include the full
+ * LLM result; failed ones include the error message.
  */
-export async function analyzeChunks(chunks: LLMChunk[]): Promise<AnalyzedSegment[]> {
+export async function analyzeChunks(chunks: LLMChunk[]): Promise<ChunkEvaluation[]> {
   log.info(`Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} in parallel...`);
 
   const results = await Promise.allSettled(chunks.map((chunk) => analyzeChunk(chunk)));
 
-  const segments: AnalyzedSegment[] = [];
-
-  results.forEach((result, i) => {
+  let succeeded = 0;
+  const evaluations: ChunkEvaluation[] = results.map((result, i) => {
+    const chunk = chunks[i];
     if (result.status === 'fulfilled') {
-      segments.push(result.value);
+      succeeded++;
+      const seg: AnalyzedSegment = result.value;
+      return {
+        status: 'success' as const,
+        chunk_index: i,
+        chunk_start: chunk.start,
+        chunk_end: chunk.end,
+        interesting: seg.interesting,
+        score: seg.score,
+        reason: seg.reason,
+        clip_start: seg.clip_start,
+        clip_end: seg.clip_end,
+      };
     } else {
-      const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      log.warn(`[chunk ${i}] LLM analysis skipped: ${reason}`);
+      const error = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      log.warn(`[chunk ${i}] LLM analysis skipped: ${error}`);
+      return {
+        status: 'failed' as const,
+        chunk_index: i,
+        chunk_start: chunk.start,
+        chunk_end: chunk.end,
+        error,
+      };
     }
   });
 
-  log.info(`Analysis complete: ${segments.length}/${chunks.length} chunks succeeded`);
-  return segments;
+  log.info(`Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`);
+  return evaluations;
 }

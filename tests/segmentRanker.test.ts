@@ -1,18 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { rankSegments } from '../src/services/segmentRanker/index.js';
-import type { AnalyzedSegment } from '../src/types/index.js';
+import type { ChunkEvaluation } from '../src/types/index.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+let _chunkIndex = 0;
 
 function seg(
   clip_start: number,
   clip_end: number,
   score: number,
   interesting = true,
-): AnalyzedSegment {
+): ChunkEvaluation {
   return {
+    status: 'success',
+    chunk_index: _chunkIndex++,
+    chunk_start: clip_start,
+    chunk_end: clip_end,
     interesting,
     score,
     reason: `reason for ${clip_start}-${clip_end}`,
@@ -21,11 +27,17 @@ function seg(
   };
 }
 
+function resetIndex() {
+  _chunkIndex = 0;
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe('rankSegments', () => {
+  beforeEach(() => resetIndex());
+
   it('returns empty array when input is empty', () => {
     expect(rankSegments([], 7, 10)).toEqual([]);
   });

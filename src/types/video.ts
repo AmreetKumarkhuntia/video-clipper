@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RankedSegmentSchema } from './segment.js';
+import { RankedSegmentSchema, ChunkEvaluationSchema } from './segment.js';
 
 export const VideoMetadataSchema = z.object({
   videoId: z.string().length(11),
@@ -12,6 +12,7 @@ export const PipelineResultSchema = z.object({
   video_id: z.string().length(11),
   title: z.string(),
   duration: z.number(), // seconds
+  chunk_evaluations: z.array(ChunkEvaluationSchema),
   segments: z.array(RankedSegmentSchema),
 });
 export type PipelineResult = z.infer<typeof PipelineResultSchema>;
