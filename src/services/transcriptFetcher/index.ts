@@ -19,12 +19,20 @@ export async function fetchTranscript(videoId: string): Promise<TranscriptLine[]
     raw = await YoutubeTranscript.fetchTranscript(videoId);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // Surface the underlying message — if it mentions no captions, use the canonical phrase
+    if (
+      message.toLowerCase().includes('no transcript') ||
+      message.toLowerCase().includes('disabled') ||
+      message.toLowerCase().includes('not available')
+    ) {
+      throw new Error(`No transcript found for this video. Check if captions are enabled.`);
+    }
     throw new Error(`Failed to fetch transcript for video "${videoId}": ${message}`);
   }
 
   if (!raw || raw.length === 0) {
     throw new Error(
-      `No transcript found for video "${videoId}". Check that captions are enabled.`
+      `No transcript found for this video. Check if captions are enabled.`
     );
   }
 

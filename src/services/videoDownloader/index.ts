@@ -46,7 +46,7 @@ export async function downloadVideo(videoId: string): Promise<string> {
 
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error(
-        'yt-dlp is not installed or not in PATH. Install it: https://github.com/yt-dlp/yt-dlp#installation'
+        'yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp'
       );
     }
 
@@ -58,7 +58,7 @@ export async function downloadVideo(videoId: string): Promise<string> {
       throw new Error(`Video "${videoId}" is geo-blocked in your region.`);
     }
 
-    throw new Error(`yt-dlp download failed for "${videoId}": ${message}`);
+    throw new Error(`Download failed: ${message}`);
   }
 
   log.info(`Download complete: ${outputPath}`);

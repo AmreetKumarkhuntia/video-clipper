@@ -5,6 +5,28 @@ import { log } from '../../utils/logger.js';
 import { AnalyzedSegmentSchema } from '../../types/index.js';
 import type { LLMChunk, AnalyzedSegment } from '../../types/index.js';
 
+const BACKOFF_BASE_MS = 1000;
+const BACKOFF_JITTER_MS = 500;
+
+/**
+ * Returns true if the error looks like an API rate-limit response.
+ */
+function isRateLimitError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    message.toLowerCase().includes('rate limit') ||
+    message.includes('429') ||
+    message.toLowerCase().includes('too many requests')
+  );
+}
+
+/**
+ * Sleeps for `ms` milliseconds.
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * Builds the LLM prompt for a single transcript chunk.
  */
@@ -35,17 +57,41 @@ Rules for your response:
 }
 
 /**
- * Analyzes a single LLM chunk and returns an AnalyzedSegment.
- * Throws on LLM failure — caller handles via Promise.allSettled.
+ * Analyzes a single LLM chunk with exponential backoff + jitter on rate-limit errors.
+ * Throws on non-retryable failures or when all retries are exhausted.
  */
 async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
-  const { object } = await generateObject({
-    model: openai(config.LLM_MODEL),
-    schema: AnalyzedSegmentSchema,
-    prompt: buildPrompt(chunk),
-    maxRetries: config.LLM_MAX_RETRIES,
-  });
-  return object;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= config.LLM_MAX_RETRIES; attempt++) {
+    try {
+      const { object } = await generateObject({
+        model: openai(config.LLM_MODEL),
+        schema: AnalyzedSegmentSchema,
+        prompt: buildPrompt(chunk),
+        // Let our own retry loop handle rate limits; disable SDK-level retries
+        maxRetries: 0,
+      });
+      return object;
+    } catch (err) {
+      lastError = err;
+
+      if (isRateLimitError(err) && attempt < config.LLM_MAX_RETRIES) {
+        const delay = BACKOFF_BASE_MS * Math.pow(2, attempt) + Math.random() * BACKOFF_JITTER_MS;
+        log.warn(
+          `[chunk] Rate limit hit (attempt ${attempt + 1}/${config.LLM_MAX_RETRIES + 1}). ` +
+          `Retrying in ${Math.round(delay)}ms...`
+        );
+        await sleep(delay);
+        continue;
+      }
+
+      // Non-retryable error or retries exhausted — re-throw for caller to handle
+      throw err;
+    }
+  }
+
+  throw lastError;
 }
 
 /**

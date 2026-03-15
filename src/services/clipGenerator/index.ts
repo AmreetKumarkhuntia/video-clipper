@@ -98,8 +98,7 @@ async function verifyFfmpeg(): Promise<void> {
       if (err) {
         reject(
           new Error(
-            'ffmpeg is required for clip generation but was not found in PATH. ' +
-              'Install it: https://ffmpeg.org/download.html'
+            'ffmpeg is required for clip generation. Install it first.'
           )
         );
       } else {
