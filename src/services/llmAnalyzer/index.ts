@@ -1,7 +1,7 @@
 import { generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
+import { getModel } from '../../utils/modelFactory.js';
 import { AnalyzedSegmentSchema } from '../../types/index.js';
 import type { LLMChunk, AnalyzedSegment } from '../../types/index.js';
 
@@ -66,7 +66,7 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
   for (let attempt = 0; attempt <= config.LLM_MAX_RETRIES; attempt++) {
     try {
       const { object } = await generateObject({
-        model: openai(config.LLM_MODEL),
+        model: getModel(),
         schema: AnalyzedSegmentSchema,
         prompt: buildPrompt(chunk),
         // Let our own retry loop handle rate limits; disable SDK-level retries

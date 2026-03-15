@@ -14,7 +14,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
+    "@ai-sdk/google": "^3.0.43",
+    "@ai-sdk/groq": "^3.0.29",
+    "@ai-sdk/mistral": "^3.0.24",
     "@ai-sdk/openai": "^1.3.22",
+    "@ai-sdk/xai": "^3.0.67",
     "ai": "^4.3.16",
     "dotenv": "^16.4.7",
     "execa": "^9.5.2",

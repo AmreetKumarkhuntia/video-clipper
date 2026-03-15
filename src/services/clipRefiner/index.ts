@@ -1,8 +1,8 @@
 import { generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
+import { getModel } from '../../utils/modelFactory.js';
 import type { RankedSegment, MicroBlock } from '../../types/index.js';
 
 const CONTEXT_PADDING_SEC = 30;
@@ -76,7 +76,7 @@ async function refineSegment(
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
   const { object } = await generateObject({
-    model: openai(config.LLM_MODEL),
+    model: getModel(),
     schema: RefinedBoundariesSchema,
     prompt: buildPrompt(segment, text, windowStart, windowEnd),
     maxRetries: config.LLM_MAX_RETRIES,
