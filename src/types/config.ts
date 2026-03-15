@@ -39,10 +39,12 @@ export const ConfigSchema = z
     LLM_MAX_RETRIES: z.coerce.number().min(0).default(3),
     DOWNLOAD_DIR: z.string().default('downloads/'),
     OUTPUT_DIR: z.string().default('outputs/'),
+    CACHE_DIR: z.string().default('outputs/cache'),
     // --- Output dumping ---
     DUMP_OUTPUTS: z.coerce.boolean().default(true),
     // --- LLM evaluation limits ---
     MAX_CHUNKS: z.coerce.number().min(1).optional(),
+    LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
     // --- Custom system prompt (overrides the default if set) ---
     LLM_SYSTEM_PROMPT: z.string().optional(),
   })

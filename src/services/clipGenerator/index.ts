@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
+import { formatSeconds } from '../../utils/format.js';
 import type { RankedSegment } from '../../types/index.js';
 
 /**
@@ -64,7 +65,7 @@ export async function generateClips(
     const endInt = Math.ceil(segment.end);
     const outputPath = join(config.OUTPUT_DIR, `${videoId}_${startInt}_${endInt}.mp4`);
 
-    log.info(`Cutting clip: ${outputPath} (${startInt}s – ${endInt}s)`);
+    log.info(`Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`);
     return cutClip(videoPath, segment.start, segment.end, outputPath);
   });
 
@@ -80,7 +81,7 @@ export async function generateClips(
     } else {
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log.warn(
-        `Failed to cut clip for segment [${segment.start}s – ${segment.end}s] (rank ${segment.rank}): ${reason}`,
+        `Failed to cut clip for segment [${formatSeconds(segment.start)} – ${formatSeconds(segment.end)}] (rank ${segment.rank}): ${reason}`,
       );
     }
   }

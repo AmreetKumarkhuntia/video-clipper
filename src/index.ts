@@ -12,6 +12,8 @@ import { refineSegments } from './services/clipRefiner/index.js';
 import { downloadVideo } from './services/videoDownloader/index.js';
 import { generateClips } from './services/clipGenerator/index.js';
 import { dumpTranscript, dumpAnalysis } from './utils/dumper.js';
+import { formatConfig } from './utils/redactConfig.js';
+import { readTranscriptCache, writeTranscriptCache } from './utils/cache.js';
 import type { PipelineResult } from './types/index.js';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +27,9 @@ interface CliArgs {
   topN: number | undefined;
   maxDuration: number | undefined;
   maxChunks: number | undefined;
+  maxParallel: number | undefined;
   outputJson: string | undefined;
+  noCache: boolean;
   help: boolean;
 }
 
@@ -38,7 +42,9 @@ function parseArgs(argv: string[]): CliArgs {
     topN: undefined,
     maxDuration: undefined,
     maxChunks: undefined,
+    maxParallel: undefined,
     outputJson: undefined,
+    noCache: false,
     help: false,
   };
 
@@ -49,6 +55,8 @@ function parseArgs(argv: string[]): CliArgs {
       result.help = true;
     } else if (arg === '--clip') {
       result.clip = true;
+    } else if (arg === '--no-cache') {
+      result.noCache = true;
     } else if (arg === '--threshold') {
       const val = Number(args[++i]);
       if (isNaN(val)) {
@@ -77,6 +85,13 @@ function parseArgs(argv: string[]): CliArgs {
         process.exit(1);
       }
       result.maxChunks = val;
+    } else if (arg === '--max-parallel') {
+      const val = Number(args[++i]);
+      if (isNaN(val) || !Number.isInteger(val) || val < 1) {
+        log.error(`--max-parallel requires a positive integer`);
+        process.exit(1);
+      }
+      result.maxParallel = val;
     } else if (arg === '--output-json') {
       result.outputJson = args[++i];
       if (!result.outputJson) {
@@ -113,7 +128,9 @@ Options:
   --top-n <n>             Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
   --max-duration <s>      Abort if video is longer than <s> seconds
   --max-chunks <n>        Limit the number of transcript chunks sent to the LLM (useful for testing/cost control)
+  --max-parallel <n>      Max number of LLM calls to run in parallel (default: LLM_CONCURRENCY env, or 3)
   --output-json <path>    Write output JSON to file instead of stdout
+  --no-cache              Bypass all caches and force a fresh run (transcript + chunk LLM results)
   --help, -h              Show this help message
 
 Examples:
@@ -122,6 +139,7 @@ Examples:
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-parallel 5
 `.trim(),
   );
 }
@@ -149,6 +167,7 @@ const topN = cliArgs.topN ?? config.TOP_N_SEGMENTS;
 log.info(
   `Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}`,
 );
+log.info(`Config: ${formatConfig(config)}`);
 
 async function run(): Promise<void> {
   // Step 1: Parse URL
@@ -184,14 +203,23 @@ async function run(): Promise<void> {
     }
   }
 
-  // Step 4: Fetch transcript
+  // Step 4: Fetch transcript (with cache)
   log.info('Fetching transcript...');
   let lines: Awaited<ReturnType<typeof fetchTranscript>>;
-  try {
-    lines = await fetchTranscript(videoId);
-  } catch (err) {
-    log.error(err instanceof Error ? err.message : String(err));
-    process.exit(1);
+
+  const cachedLines = cliArgs.noCache ? null : await readTranscriptCache(videoId, config.CACHE_DIR);
+
+  if (cachedLines) {
+    lines = cachedLines;
+    log.info(`[cache hit] Transcript loaded from cache (${lines.length} lines)`);
+  } else {
+    try {
+      lines = await fetchTranscript(videoId);
+    } catch (err) {
+      log.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+    await writeTranscriptCache(videoId, lines, config.CACHE_DIR);
   }
 
   // Step 4a: Dump transcript (if enabled)
@@ -215,9 +243,13 @@ async function run(): Promise<void> {
     );
   }
   log.info(
-    `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} parallel calls)...`,
+    `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} chunks, max ${cliArgs.maxParallel ?? config.LLM_CONCURRENCY} parallel)...`,
   );
-  const chunkEvaluations = await analyzeChunks(chunksToAnalyze);
+  const chunkEvaluations = await analyzeChunks(
+    chunksToAnalyze,
+    cliArgs.maxParallel ?? config.LLM_CONCURRENCY,
+    cliArgs.noCache,
+  );
   const succeededCount = chunkEvaluations.filter((e) => e.status === 'success').length;
 
   if (succeededCount === 0) {

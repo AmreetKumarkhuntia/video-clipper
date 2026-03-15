@@ -1,7 +1,10 @@
 import { generateObject } from 'ai';
+import pLimit from 'p-limit';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
+import { formatSeconds } from '../../utils/format.js';
 import { getModel } from '../../utils/modelFactory.js';
+import { readChunkCache, writeChunkCache } from '../../utils/cache.js';
 import { AnalyzedSegmentSchema } from '../../types/index.js';
 import type { LLMChunk, AnalyzedSegment, ChunkEvaluation } from '../../types/index.js';
 
@@ -65,9 +68,25 @@ ${semanticRules}
 
 /**
  * Analyzes a single LLM chunk with exponential backoff + jitter on rate-limit errors.
+ * Returns a cached result immediately if one exists (and noCache is false).
  * Throws on non-retryable failures or when all retries are exhausted.
  */
-async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
+async function analyzeChunk(chunk: LLMChunk, noCache: boolean): Promise<AnalyzedSegment> {
+  if (!noCache) {
+    const cached = await readChunkCache(chunk, config.CACHE_DIR);
+    if (cached && cached.status === 'success') {
+      log.info(`[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`);
+      // Return the shape that analyzeChunks expects (AnalyzedSegment)
+      return {
+        interesting: cached.interesting,
+        score: cached.score,
+        reason: cached.reason,
+        clip_start: cached.clip_start,
+        clip_end: cached.clip_end,
+      };
+    }
+  }
+
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= config.LLM_MAX_RETRIES; attempt++) {
@@ -106,41 +125,58 @@ async function analyzeChunk(chunk: LLMChunk): Promise<AnalyzedSegment> {
  * Analyzes all LLM chunks in parallel using Promise.allSettled.
  * Returns a ChunkEvaluation for every chunk — successful ones include the full
  * LLM result; failed ones include the error message.
+ * Pass noCache=true to bypass the on-disk chunk cache.
  */
-export async function analyzeChunks(chunks: LLMChunk[]): Promise<ChunkEvaluation[]> {
-  log.info(`Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} in parallel...`);
+export async function analyzeChunks(
+  chunks: LLMChunk[],
+  concurrency: number,
+  noCache = false,
+): Promise<ChunkEvaluation[]> {
+  log.info(
+    `Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
+  );
 
-  const results = await Promise.allSettled(chunks.map((chunk) => analyzeChunk(chunk)));
+  const limit = pLimit(concurrency);
+  const results = await Promise.allSettled(
+    chunks.map((chunk) => limit(() => analyzeChunk(chunk, noCache))),
+  );
 
   let succeeded = 0;
-  const evaluations: ChunkEvaluation[] = results.map((result, i) => {
-    const chunk = chunks[i];
-    if (result.status === 'fulfilled') {
-      succeeded++;
-      const seg: AnalyzedSegment = result.value;
-      return {
-        status: 'success' as const,
-        chunk_index: i,
-        chunk_start: chunk.start,
-        chunk_end: chunk.end,
-        interesting: seg.interesting,
-        score: seg.score,
-        reason: seg.reason,
-        clip_start: seg.clip_start,
-        clip_end: seg.clip_end,
-      };
-    } else {
-      const error = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      log.warn(`[chunk ${i}] LLM analysis skipped: ${error}`);
-      return {
-        status: 'failed' as const,
-        chunk_index: i,
-        chunk_start: chunk.start,
-        chunk_end: chunk.end,
-        error,
-      };
-    }
-  });
+  const evaluations: ChunkEvaluation[] = await Promise.all(
+    results.map(async (result, i) => {
+      const chunk = chunks[i];
+      if (result.status === 'fulfilled') {
+        succeeded++;
+        const seg: AnalyzedSegment = result.value;
+        const evaluation: ChunkEvaluation = {
+          status: 'success' as const,
+          chunk_index: i,
+          chunk_start: chunk.start,
+          chunk_end: chunk.end,
+          interesting: seg.interesting,
+          score: seg.score,
+          reason: seg.reason,
+          clip_start: seg.clip_start,
+          clip_end: seg.clip_end,
+        };
+        if (!noCache) {
+          await writeChunkCache(chunk, evaluation, config.CACHE_DIR);
+        }
+        return evaluation;
+      } else {
+        const error =
+          result.reason instanceof Error ? result.reason.message : String(result.reason);
+        log.warn(`[chunk ${i}] LLM analysis skipped: ${error}`);
+        return {
+          status: 'failed' as const,
+          chunk_index: i,
+          chunk_start: chunk.start,
+          chunk_end: chunk.end,
+          error,
+        };
+      }
+    }),
+  );
 
   log.info(`Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`);
   return evaluations;
