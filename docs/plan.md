@@ -300,6 +300,10 @@ Return JSON only:
 
 Use `yt-dlp` via [`execa`](https://www.npmjs.com/package/execa) to download the video **only after** segments are ranked (avoid downloading if no good segments are found).
 
+Supports two download modes:
+
+**Full video mode** (default):
+
 ```ts
 import { execa } from 'execa';
 
@@ -308,34 +312,79 @@ await execa('yt-dlp', [
   'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
   '-o',
   `downloads/${videoId}.%(ext)s`,
-  `https://youtube.com/watch?v=${videoId}`,
+  `https://www.youtube.com/watch?v=${videoId}`,
 ]);
 ```
 
-Store path as:
+**Segments mode** (top N segments only):
+
+```ts
+await execa('yt-dlp', [
+  '-f',
+  'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+  '--download-sections',
+  `*${start}.${end}`, // HH:MM:SS.mmm format for millisecond precision
+  '-o',
+  `downloads/${videoId}_${start}_${end}.mp4`,
+  `https://www.youtube.com/watch?v=${videoId}`,
+]);
+```
+
+**Key features:**
+
+- **Millisecond precision**: Segments mode uses HH:MM:SS.mmm format to preserve exact timestamps (e.g., 120.5s → 00:02:00.500)
+- **Timestamp offset**: `TIMESTAMP_OFFSET_SECONDS` config option applies global adjustment to all timestamps (positive = later, negative = earlier)
+- **Pre-downloaded video support**: Detects existing video in `downloads/{VIDEO_ID}.mp4` and skips download
+- **Enhanced logging**: Shows requested, adjusted, and final timestamps for debugging sync issues
+
+Store path(s) as:
 
 ```
-downloads/{VIDEO_ID}.mp4
+downloads/{VIDEO_ID}.mp4  // full mode
+downloads/{VIDEO_ID}_{start}_{end}.mp4  // segments mode
 ```
 
 ---
 
 ### Module 9 — Clip Generator (Optional)
 
-Use [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) to cut each ranked segment:
+Two modes of operation:
+
+**Full video mode** — Use [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) to cut each ranked segment:
 
 ```ts
 import ffmpeg from 'fluent-ffmpeg';
 
 ffmpeg(`downloads/${videoId}.mp4`)
-  .setStartTime(clipStart)
+  .setStartTime(clipStart + TIMESTAMP_OFFSET_SECONDS)
   .setDuration(clipEnd - clipStart)
+  .outputOptions('-c:v', 'libx264')
+  .outputOptions('-preset', FFMPEG_PRESET) // Configurable: ultrafast, superfast, veryfast, fast (default), medium, slow, slower
+  .outputOptions('-c:a', 'aac')
   .output(`outputs/${videoId}_${clipStart}_${clipEnd}.mp4`)
-  .outputOptions('-c copy')
   .run();
 ```
 
-> `-c copy` avoids re-encoding for speed. If precise frame cuts are needed, replace with `.videoCodec('libx264').audioCodec('aac')`.
+**Segments mode** — Organize pre-downloaded segment files from downloads/ to outputs/:
+
+```ts
+await fs.copyFile(
+  `downloads/${videoId}_${start}_${end}.mp4`,
+  `outputs/${videoId}_${start}_${end}.mp4`,
+);
+```
+
+**Key features:**
+
+- **Re-encoding for sync**: Uses libx264 (video) and aac (audio) instead of stream copy (`-c copy`) to ensure perfect audio/video synchronization
+- **Timestamp offset**: `TIMESTAMP_OFFSET_SECONDS` applies global adjustment to fix systematic transcript-video misalignment
+- **Quality preset**: `FFMPEG_PRESET` config option allows speed/quality trade-off (faster = lower quality)
+- **Enhanced logging**: Shows adjusted timestamps and durations for troubleshooting
+- **Pre-downloaded video**: Can work with existing video file without re-downloading
+
+> Re-encoding with libx264 (video) and aac (audio) ensures perfect audio/video synchronization. This is slower than stream copy mode but prevents desync issues common with keyframe-based cuts. Use the `FFMPEG_PRESET` config option to adjust speed/quality trade-off (ultrafast, superfast, veryfast, fast, medium, slow, slower).
+
+> **Transcript-video misalignment**: If audio is consistently delayed or early across all clips, use `TIMESTAMP_OFFSET_SECONDS` (e.g., -3 for 3-second delay) to compensate. Common with auto-generated captions.
 
 ---
 

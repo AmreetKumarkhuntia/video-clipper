@@ -10,11 +10,11 @@ import { analyzeChunks } from './services/llmAnalyzer/index.js';
 import { rankSegments } from './services/segmentRanker/index.js';
 import { refineSegments } from './services/clipRefiner/index.js';
 import { downloadVideo } from './services/videoDownloader/index.js';
-import { generateClips } from './services/clipGenerator/index.js';
+import { generateClips, organizeClips } from './services/clipGenerator/index.js';
 import { dumpTranscript, dumpAnalysis } from './utils/dumper.js';
 import { formatConfig } from './utils/redactConfig.js';
 import { readTranscriptCache, writeTranscriptCache } from './utils/cache.js';
-import type { PipelineResult } from './types/index.js';
+import type { PipelineResult, RankedSegment } from './types/index.js';
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -23,6 +23,8 @@ import type { PipelineResult } from './types/index.js';
 interface CliArgs {
   url: string | undefined;
   clip: boolean;
+  downloadSections: 'all' | number | undefined;
+  videoPath: string | undefined;
   threshold: number | undefined;
   topN: number | undefined;
   maxDuration: number | undefined;
@@ -38,6 +40,8 @@ function parseArgs(argv: string[]): CliArgs {
   const result: CliArgs = {
     url: undefined,
     clip: false,
+    downloadSections: undefined,
+    videoPath: undefined,
     threshold: undefined,
     topN: undefined,
     maxDuration: undefined,
@@ -55,6 +59,37 @@ function parseArgs(argv: string[]): CliArgs {
       result.help = true;
     } else if (arg === '--clip') {
       result.clip = true;
+    } else if (arg === '--download-sections') {
+      const val = args[++i];
+      if (!val) {
+        log.error(`--download-sections requires a value: 'all' or a number (1, 2, 3, ...)`);
+        process.exit(1);
+      }
+
+      if (val === 'all') {
+        result.downloadSections = 'all';
+      } else if (val === 'segments') {
+        log.warn(
+          `--download-sections segments is deprecated. Use a number like --download-sections 5 to download top 5 segments, or --download-sections all for full video.`,
+        );
+        result.downloadSections = 'all';
+      } else {
+        const num = Number(val);
+        if (isNaN(num) || !Number.isInteger(num) || num < 1) {
+          log.error(`--download-sections requires 'all' or a positive integer (1, 2, 3, ...)`);
+          process.exit(1);
+        }
+        result.downloadSections = num;
+      }
+
+      result.clip = true;
+    } else if (arg === '--video-path') {
+      const val = args[++i];
+      if (!val) {
+        log.error(`--video-path requires a directory path`);
+        process.exit(1);
+      }
+      result.videoPath = val;
     } else if (arg === '--no-cache') {
       result.noCache = true;
     } else if (arg === '--threshold') {
@@ -124,6 +159,8 @@ Arguments:
 
 Options:
   --clip                  Download video and generate mp4 clips for each segment
+  --download-sections <mode>  yt-dlp download mode: 'all' (full video) or N (top N segments only, e.g. 1, 2, 3...) (default: ${config.DOWNLOAD_SECTIONS_MODE})
+  --video-path <path>     Custom output directory for downloaded videos and clips (overrides DOWNLOAD_DIR/OUTPUT_DIR)
   --threshold <n>         Minimum score to keep a segment (default: ${config.SCORE_THRESHOLD})
   --top-n <n>             Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
   --max-duration <s>      Abort if video is longer than <s> seconds
@@ -136,6 +173,9 @@ Options:
 Examples:
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ
   npm run start -- https://youtu.be/dQw4w9WgXcQ --clip
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections all
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 3
+  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 5 --video-path ./my-clips
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
   npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
@@ -163,9 +203,11 @@ if (!cliArgs.url) {
 
 const threshold = cliArgs.threshold ?? config.SCORE_THRESHOLD;
 const topN = cliArgs.topN ?? config.TOP_N_SEGMENTS;
+const downloadSections = cliArgs.downloadSections ?? config.DOWNLOAD_SECTIONS_MODE;
+const videoPath = cliArgs.videoPath;
 
 log.info(
-  `Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}`,
+  `Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}${downloadSections !== undefined && downloadSections !== 'all' ? ` [--download-sections: ${downloadSections}]` : ''}${videoPath ? ` [--video-path: ${videoPath}]` : ''}`,
 );
 log.info(`Config: ${formatConfig(config)}`);
 
@@ -313,26 +355,56 @@ async function run(): Promise<void> {
     return;
   }
 
-  // Step 10: Download video via yt-dlp
-  log.info('Downloading video...');
-  let videoPath: string;
+  // Prepare segments for download based on mode
+  let segmentsToDownload: RankedSegment[] = refinedSegments;
+  let downloadMode: 'all' | 'segments' = 'all';
+
+  if (typeof downloadSections === 'number') {
+    downloadMode = 'segments';
+    segmentsToDownload = refinedSegments.slice(0, downloadSections);
+
+    if (segmentsToDownload.length < downloadSections) {
+      log.warn(
+        `Requested ${downloadSections} segments, but only ${segmentsToDownload.length} are available above threshold.`,
+      );
+    }
+  } else if (downloadSections === 'all') {
+    downloadMode = 'all';
+  }
+
+  // Step 10: Download video via yt-dlp (based on mode)
+  log.info(`Downloading video (${downloadMode} mode)...`);
+  let downloadResult: Awaited<ReturnType<typeof downloadVideo>>;
   try {
-    videoPath = await downloadVideo(videoId);
+    downloadResult = await downloadVideo(videoId, downloadMode, segmentsToDownload, videoPath);
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
 
-  // Step 11: Generate clips via ffmpeg
-  log.info(
-    `Generating ${refinedSegments.length} clip${refinedSegments.length !== 1 ? 's' : ''}...`,
-  );
+  // Step 11: Generate clips via ffmpeg or organize pre-downloaded segments
   let clipPaths: string[];
-  try {
-    clipPaths = await generateClips(videoPath, refinedSegments, videoId);
-  } catch (err) {
-    log.error(err instanceof Error ? err.message : String(err));
-    process.exit(1);
+
+  if (downloadResult.mode === 'segments') {
+    log.info(
+      `Organizing ${downloadResult.paths.length} pre-downloaded segment${downloadResult.paths.length !== 1 ? 's' : ''}...`,
+    );
+    try {
+      clipPaths = await organizeClips(downloadResult.paths, videoId, videoPath);
+    } catch (err) {
+      log.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  } else {
+    log.info(
+      `Generating ${refinedSegments.length} clip${refinedSegments.length !== 1 ? 's' : ''}...`,
+    );
+    try {
+      clipPaths = await generateClips(downloadResult.path, refinedSegments, videoId, videoPath);
+    } catch (err) {
+      log.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
   }
 
   if (clipPaths.length === 0) {

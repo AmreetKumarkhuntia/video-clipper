@@ -58,6 +58,14 @@ export const ConfigSchema = z
     LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
     // --- Custom system prompt (overrides the default if set) ---
     LLM_SYSTEM_PROMPT: z.string().optional(),
+    // --- Download mode for yt-dlp ---
+    DOWNLOAD_SECTIONS_MODE: z.enum(['all', 'segments']).default('all'),
+    // --- FFmpeg encoding preset for clip generation ---
+    FFMPEG_PRESET: z
+      .enum(['ultrafast', 'superfast', 'veryfast', 'fast', 'medium', 'slow', 'slower'])
+      .default('fast'),
+    // --- Timestamp offset for clips (adjusts if transcript is misaligned with video) ---
+    TIMESTAMP_OFFSET_SECONDS: z.coerce.number().default(0),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
