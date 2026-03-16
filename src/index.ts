@@ -11,10 +11,18 @@ import { rankSegments } from './services/segmentRanker/index.js';
 import { refineSegments } from './services/clipRefiner/index.js';
 import { downloadVideo } from './services/videoDownloader/index.js';
 import { generateClips, organizeClips } from './services/clipGenerator/index.js';
+import { downloadAudio } from './services/audioDownloader/index.js';
+import { detectAudioEvents } from './services/audioEventDetector/index.js';
+import { mergeSignals } from './services/signalMerger/index.js';
 import { dumpTranscript, dumpAnalysis } from './utils/dumper.js';
 import { formatConfig } from './utils/redactConfig.js';
-import { readTranscriptCache, writeTranscriptCache } from './utils/cache.js';
-import type { PipelineResult, RankedSegment } from './types/index.js';
+import {
+  readTranscriptCache,
+  writeTranscriptCache,
+  readAudioEventCache,
+  writeAudioEventCache,
+} from './utils/cache.js';
+import type { PipelineResult, RankedSegment, AudioEvent, MergedCandidate } from './types/index.js';
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -33,6 +41,8 @@ interface CliArgs {
   maxParallel: number | undefined;
   outputJson: string | undefined;
   noCache: boolean;
+  noAudio: boolean;
+  gameProfile?: string;
   help: boolean;
 }
 
@@ -50,6 +60,8 @@ function parseArgs(argv: string[]): CliArgs {
     maxParallel: undefined,
     outputJson: undefined,
     noCache: false,
+    noAudio: false,
+    gameProfile: undefined,
     help: false,
   };
 
@@ -136,6 +148,15 @@ function parseArgs(argv: string[]): CliArgs {
         process.exit(1);
       }
       result.maxParallel = val;
+    } else if (arg === '--no-audio') {
+      result.noAudio = true;
+    } else if (arg === '--game-profile') {
+      const val = args[++i];
+      if (!val) {
+        log.error(`--game-profile requires a value (valorant, fps, boss_fight, general)`);
+        process.exit(1);
+      }
+      result.gameProfile = val;
     } else if (arg === '--output-json') {
       result.outputJson = args[++i];
       if (!result.outputJson) {
@@ -178,6 +199,8 @@ Options:
   --max-parallel <n>      Max number of LLM calls to run in parallel (default: LLM_CONCURRENCY env, or 3)
   --output-json <path>    Write output JSON to file instead of stdout
   --no-cache              Bypass all caches and force a fresh run (transcript + chunk LLM results)
+  --no-audio             Disable audio event detection (transcript-only mode)
+  --game-profile <type>   Game profile: valorant, fps, boss_fight, general (default: ${config.GAME_PROFILE})
   --help, -h              Show this help message
 
 Examples:
@@ -229,6 +252,7 @@ const threshold = cliArgs.threshold ?? config.SCORE_THRESHOLD;
 const topN = cliArgs.topN ?? config.TOP_N_SEGMENTS;
 const downloadSections = cliArgs.downloadSections ?? config.DOWNLOAD_SECTIONS_MODE;
 const videoPath = cliArgs.videoPath;
+const gameProfile = cliArgs.gameProfile ?? config.GAME_PROFILE;
 
 log.info(
   `Starting video-clipper (model: ${config.LLM_MODEL})${cliArgs.clip ? ' [--clip enabled]' : ''}${cliArgs.localVideo ? ` [--local-video: ${cliArgs.localVideo}]` : ''}${downloadSections !== undefined && downloadSections !== 'all' ? ` [--download-sections: ${downloadSections}]` : ''}${videoPath ? ` [--video-path: ${videoPath}]` : ''}`,
@@ -293,6 +317,64 @@ async function run(): Promise<void> {
     await dumpTranscript(videoId, lines);
   }
 
+  // Step 4b: Download and detect audio events (if enabled)
+  let audioEvents: AudioEvent[] = [];
+  const audioEnabled = config.AUDIO_DETECTION_ENABLED && !cliArgs.noAudio;
+  if (audioEnabled) {
+    const cachedEvents = cliArgs.noCache
+      ? null
+      : await readAudioEventCache(videoId, gameProfile, config.AUDIO_PROVIDER, config.CACHE_DIR);
+
+    if (cachedEvents) {
+      audioEvents = cachedEvents;
+      log.info(`[cache hit] Audio events loaded from cache (${audioEvents.length} events)`);
+    } else {
+      log.info('Downloading audio for event detection...');
+      try {
+        const audioPath = await downloadAudio(videoId, config.OUTPUT_DIR);
+        log.info(`Audio downloaded to ${audioPath}`);
+
+        log.info(
+          `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${gameProfile})...`,
+        );
+        const chunkLength = config.CHUNK_LENGTH_SEC;
+        const audioDuration = metadata.duration;
+
+        for (let offset = 0; offset < audioDuration; offset += chunkLength) {
+          const chunkOffset = offset;
+          const chunkEnd = Math.min(offset + chunkLength, audioDuration);
+          const chunkDuration = chunkEnd - offset;
+
+          log.info(`  Processing audio chunk ${offset}s - ${chunkEnd}s...`);
+
+          try {
+            const events = await detectAudioEvents(audioPath, gameProfile, chunkOffset);
+            audioEvents.push(...events);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            log.warn(
+              `  Audio event detection failed for chunk ${offset}s - ${chunkEnd}s: ${message}`,
+            );
+          }
+        }
+
+        log.info(`Audio event detection complete: ${audioEvents.length} events found`);
+
+        await writeAudioEventCache(
+          videoId,
+          gameProfile,
+          config.AUDIO_PROVIDER,
+          audioEvents,
+          config.CACHE_DIR,
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn(`Audio event detection disabled due to error: ${message}`);
+        audioEvents = [];
+      }
+    }
+  }
+
   // Step 5: Build micro-blocks and LLM chunks
   const microBlocks = buildMicroBlocks(lines, config.MICRO_BLOCK_SEC);
   const chunks = buildLLMChunks(microBlocks, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
@@ -323,8 +405,11 @@ async function run(): Promise<void> {
     process.exit(1);
   }
 
-  // Step 7: Rank segments
-  const rankedSegments = rankSegments(chunkEvaluations, threshold, topN);
+  // Step 7: Merge transcript and audio signals
+  const mergedCandidates = mergeSignals(chunkEvaluations, audioEvents);
+
+  // Step 8: Rank segments
+  const rankedSegments = rankSegments(mergedCandidates, threshold, topN);
 
   if (rankedSegments.length === 0) {
     log.warn(`No segments scored above threshold ${threshold}. Try lowering --threshold.`);
@@ -346,7 +431,7 @@ async function run(): Promise<void> {
     `Analysis complete: ${rankedSegments.length} segment${rankedSegments.length !== 1 ? 's' : ''} above threshold ${threshold}`,
   );
 
-  // Step 8: Refine clip boundaries (second LLM pass)
+  // Step 9: Refine clip boundaries (second LLM pass)
   log.info('Refining clip boundaries...');
   const refinedSegments = await refineSegments(
     rankedSegments,
@@ -355,7 +440,7 @@ async function run(): Promise<void> {
     cliArgs.noCache,
   );
 
-  // Step 9: Output final result
+  // Step 10: Output final result
   const result: PipelineResult = {
     video_id: videoId,
     title: metadata.title,
@@ -366,20 +451,20 @@ async function run(): Promise<void> {
 
   await outputResult(result, cliArgs.outputJson);
 
-  // Step 9a: Dump analysis (if enabled)
+  // Step 10a: Dump analysis (if enabled)
   if (config.DUMP_OUTPUTS) {
     await dumpAnalysis(videoId, result);
   }
 
   log.info('Done.');
 
-  // Steps 10-11: Download video + generate clips (only with --clip flag)
+  // Steps 11-12: Download video + generate clips (only with --clip flag)
   if (!cliArgs.clip) {
     log.info('Tip: run with --clip to download the video and generate mp4 clips.');
     return;
   }
 
-  // Step 10: Download video or use local file
+  // Step 11: Download video or use local file
   let downloadResult: Awaited<ReturnType<typeof downloadVideo>> | undefined;
   let localVideoPath: string | undefined;
 
@@ -411,7 +496,7 @@ async function run(): Promise<void> {
     }
   }
 
-  // Step 11: Generate clips via ffmpeg or organize pre-downloaded segments
+  // Step 12: Generate clips via ffmpeg or organize pre-downloaded segments
   let clipPaths: string[];
 
   if (localVideoPath) {

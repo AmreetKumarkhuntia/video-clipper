@@ -5,7 +5,8 @@ import { z } from 'zod';
 import { log } from './logger.js';
 import { TranscriptLineSchema } from '../types/index.js';
 import { ChunkEvaluationSchema } from '../types/index.js';
-import type { TranscriptLine, LLMChunk, ChunkEvaluation } from '../types/index.js';
+import { AudioEventSchema } from '../types/index.js';
+import type { TranscriptLine, LLMChunk, ChunkEvaluation, AudioEvent } from '../types/index.js';
 
 // ---------------------------------------------------------------------------
 // Generic hash helper
@@ -167,4 +168,48 @@ export async function writeSegmentRefinementCache(
   const filePath = segmentRefinementCachePath(start, end, reason, cacheDir);
   log.info(`Caching segment refinement [${start}, ${end}] at ${filePath}`);
   await writeCacheFile(filePath, refined);
+}
+
+// ---------------------------------------------------------------------------
+// Audio event cache
+//   Key  : sha256(videoId + '|' + gameProfile + '|' + provider)
+//   Value: AudioEvent[]
+// ---------------------------------------------------------------------------
+
+function audioEventCachePath(
+  videoId: string,
+  gameProfile: string,
+  provider: string,
+  cacheDir: string,
+): string {
+  const key = `${videoId}|${gameProfile}|${provider}`;
+  return path.join(cacheDir, 'audio', `${hashContent(key)}.json`);
+}
+
+/**
+ * Returns cached audio events for a videoId/gameProfile/provider combination, or null on miss.
+ */
+export async function readAudioEventCache(
+  videoId: string,
+  gameProfile: string,
+  provider: string,
+  cacheDir: string,
+): Promise<AudioEvent[] | null> {
+  const filePath = audioEventCachePath(videoId, gameProfile, provider, cacheDir);
+  return readCacheFile(filePath, z.array(AudioEventSchema));
+}
+
+/**
+ * Persists audio events to disk.
+ */
+export async function writeAudioEventCache(
+  videoId: string,
+  gameProfile: string,
+  provider: string,
+  events: AudioEvent[],
+  cacheDir: string,
+): Promise<void> {
+  const filePath = audioEventCachePath(videoId, gameProfile, provider, cacheDir);
+  log.info(`Caching ${events.length} audio events for ${videoId} at ${filePath}`);
+  await writeCacheFile(filePath, events);
 }
