@@ -282,7 +282,12 @@ async function run(): Promise<void> {
 
   // Step 8: Refine clip boundaries (second LLM pass)
   log.info('Refining clip boundaries...');
-  const refinedSegments = await refineSegments(rankedSegments, microBlocks);
+  const refinedSegments = await refineSegments(
+    rankedSegments,
+    microBlocks,
+    cliArgs.maxParallel ?? config.LLM_CONCURRENCY,
+    cliArgs.noCache,
+  );
 
   // Step 9: Output final result
   const result: PipelineResult = {

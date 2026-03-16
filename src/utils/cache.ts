@@ -118,3 +118,53 @@ export async function writeChunkCache(
   log.info(`Caching successful evaluation for chunk [${chunk.start}, ${chunk.end}] at ${filePath}`);
   await writeCacheFile(filePath, evaluation);
 }
+
+// ---------------------------------------------------------------------------
+// Segment refinement cache
+//   Key  : sha256(segment.start + '|' + segment.end + '|' + segment.reason)
+//   Value: { refined_start: number, refined_end: number }
+// ---------------------------------------------------------------------------
+
+function segmentRefinementCachePath(
+  start: number,
+  end: number,
+  reason: string,
+  cacheDir: string,
+): string {
+  const key = `${start}|${end}|${reason}`;
+  return path.join(cacheDir, 'segments', `${hashContent(key)}.json`);
+}
+
+const SegmentRefinementSchema = z.object({
+  refined_start: z.number(),
+  refined_end: z.number(),
+});
+type SegmentRefinement = z.infer<typeof SegmentRefinementSchema>;
+
+/**
+ * Returns cached refined boundaries for a segment, or `null` on a cache miss.
+ */
+export async function readSegmentRefinementCache(
+  start: number,
+  end: number,
+  reason: string,
+  cacheDir: string,
+): Promise<SegmentRefinement | null> {
+  const filePath = segmentRefinementCachePath(start, end, reason, cacheDir);
+  return readCacheFile(filePath, SegmentRefinementSchema);
+}
+
+/**
+ * Persists refined segment boundaries to disk.
+ */
+export async function writeSegmentRefinementCache(
+  start: number,
+  end: number,
+  reason: string,
+  refined: SegmentRefinement,
+  cacheDir: string,
+): Promise<void> {
+  const filePath = segmentRefinementCachePath(start, end, reason, cacheDir);
+  log.info(`Caching segment refinement [${start}, ${end}] at ${filePath}`);
+  await writeCacheFile(filePath, refined);
+}

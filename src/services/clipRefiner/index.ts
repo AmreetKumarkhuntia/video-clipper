@@ -1,8 +1,10 @@
 import { generateObject } from 'ai';
+import pLimit from 'p-limit';
 import { z } from 'zod';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { getModel } from '../../utils/modelFactory.js';
+import { readSegmentRefinementCache, writeSegmentRefinementCache } from '../../utils/cache.js';
 import type { RankedSegment, MicroBlock } from '../../types/index.js';
 
 const CONTEXT_PADDING_SEC = 30;
@@ -70,7 +72,21 @@ Rules:
 async function refineSegment(
   segment: RankedSegment,
   allBlocks: MicroBlock[],
+  noCache: boolean,
 ): Promise<RankedSegment> {
+  if (!noCache) {
+    const cached = await readSegmentRefinementCache(
+      segment.start,
+      segment.end,
+      segment.reason,
+      config.CACHE_DIR,
+    );
+    if (cached) {
+      log.info(`[segment] cache hit (rank=${segment.rank})`);
+      return { ...segment, start: cached.refined_start, end: cached.refined_end };
+    }
+  }
+
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
   const { object } = await generateObject({
@@ -84,6 +100,16 @@ async function refineSegment(
   const refinedStart = Math.max(windowStart, Math.min(object.clip_start, object.clip_end - 1));
   const refinedEnd = Math.min(windowEnd, Math.max(object.clip_end, object.clip_start + 1));
 
+  if (!noCache) {
+    await writeSegmentRefinementCache(
+      segment.start,
+      segment.end,
+      segment.reason,
+      { refined_start: refinedStart, refined_end: refinedEnd },
+      config.CACHE_DIR,
+    );
+  }
+
   return { ...segment, start: refinedStart, end: refinedEnd };
 }
 
@@ -96,13 +122,16 @@ async function refineSegment(
 export async function refineSegments(
   segments: RankedSegment[],
   allBlocks: MicroBlock[],
+  concurrency: number,
+  noCache = false,
 ): Promise<RankedSegment[]> {
   log.info(
-    `Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''}...`,
+    `Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
   );
 
+  const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
-    segments.map((segment) => refineSegment(segment, allBlocks)),
+    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, noCache))),
   );
 
   const refined = results.map((result, i) => {
