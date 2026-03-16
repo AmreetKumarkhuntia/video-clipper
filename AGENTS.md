@@ -9,37 +9,58 @@ See `docs/plan.md` for the full architecture.
 ## Stack
 
 - TypeScript (Node.js 18+)
-- Vercel AI SDK (`ai`, `@ai-sdk/openai`) with `generateObject` + `zod` for structured LLM output
+- Vercel AI SDK (`ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/mistral`, `@ai-sdk/groq`) with `generateObject` + `zod` for structured LLM output
+- Multi-provider support: OpenAI, Anthropic, Google, XAI, Mistral, Groq, Zai, OpenRouter
 - `youtube-transcript` for transcript fetching
 - `yt-dlp` + `execa` for video download
 - `fluent-ffmpeg` for clip cutting
 - `zod` for config validation at startup
+- `p-limit` for concurrency control
 
 ## Project Structure
 
 ```
 src/
-  config.ts        # zod-validated env config — import this, never read process.env directly
-  modules/
-    urlParser.ts
-    metadataExtractor.ts
-    transcriptFetcher.ts
-    chunkBuilder.ts
-    llmAnalyzer.ts
-    segmentRanker.ts
-    clipRefiner.ts
-    videoDownloader.ts
-    clipGenerator.ts
-  types.ts         # shared TypeScript types
+  config/          # zod-validated env config — import this, never read process.env directly
+    index.ts
+    env.ts
+  services/        # core pipeline modules
+    urlParser/
+    metadataExtractor/
+    transcriptFetcher/
+    chunkBuilder/
+    llmAnalyzer/
+    segmentRanker/
+    clipRefiner/
+    videoDownloader/
+    clipGenerator/
+  types/           # shared TypeScript types
+    index.ts
+    config.ts
+    segment.ts
+    transcript.ts
+    video.ts
+    youtube-transcript.d.ts
+  utils/           # utility functions
+    cache.ts        # transcript + chunk LLM result caching
+    dumper.ts       # transcript/analysis JSON dumps
+    redactConfig.ts # config formatting for logs (redacts API keys)
+    format.ts       # timestamp formatting utilities
+    logger.ts       # logging utilities
+    modelFactory.ts # LLM provider factory
   index.ts         # CLI entrypoint
 tests/             # all unit tests (mirrors module names)
   urlParser.test.ts
   chunkBuilder.test.ts
   segmentRanker.test.ts
 downloads/         # yt-dlp output (gitignored)
-outputs/           # ffmpeg clip output (gitignored)
+outputs/           # ffmpeg clip output, caches, dumps (gitignored)
+  cache/           # transcript + LLM result cache
+  transcript/       # transcript dumps
+  analysis/        # analysis dumps
 docs/
   plan.md
+  free-models.md
 ```
 
 ## Code Rules

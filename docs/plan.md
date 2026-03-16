@@ -350,6 +350,36 @@ ffmpeg(`downloads/${videoId}.mp4`)
 | LLM API rate limit hit                   | Exponential backoff with jitter (max 3 retries).                                                |
 | yt-dlp download fails                    | Return error with reason (private video, geo-blocked, etc.).                                    |
 | ffmpeg not installed                     | Return clear error: `"ffmpeg is required for clip generation. Install it first."`               |
+| Cache read error                         | Warn user, proceed with fresh fetch.                                                            |
+| Cache write error                        | Warn user, continue (no impact on current run).                                                 |
+
+---
+
+## 5b. Caching
+
+To speed up repeated runs, the CLI caches:
+
+- **Transcript cache**: Per-video JSON files containing normalized transcript lines
+- **LLM chunk cache**: Stores successful chunk analyses (chunk hash → LLM result)
+
+Cache behavior:
+
+- Enabled by default (`DUMP_OUTPUTS=true`)
+- Automatic cache hit detection on re-runs
+- `--no-cache` flag bypasses all caching
+- `CACHE_DIR` defaults to `outputs/cache`
+
+Cache file structure:
+
+```
+outputs/cache/
+  transcript/
+    abc123.json          # transcript lines for video abc123
+  chunks/
+    abc123/
+      chunk_0_120.json  # LLM result for chunk 0-120s
+      chunk_100_220.json # LLM result for chunk 100-220s
+```
 
 ---
 
@@ -360,41 +390,124 @@ All tunable parameters live in a `.env` file and are validated at startup using 
 `.env`:
 
 ```env
+# Provider selection
+LLM_PROVIDER=openai
 OPENAI_API_KEY=your_key_here
 
+# Model & LLM parameters
+LLM_MODEL=gpt-4o
+LLM_MAX_RETRIES=3
+LLM_CONCURRENCY=3
+LLM_SYSTEM_PROMPT=
+
+# Analysis parameters
 SCORE_THRESHOLD=7
 TOP_N_SEGMENTS=10
 CHUNK_LENGTH_SEC=120
 CHUNK_OVERLAP_SEC=20
 MICRO_BLOCK_SEC=15
-LLM_MODEL=gpt-4o
-LLM_MAX_RETRIES=3
+MAX_CHUNKS=
+
+# Paths
 DOWNLOAD_DIR=downloads/
 OUTPUT_DIR=outputs/
+CACHE_DIR=outputs/cache
+
+# Output options
+DUMP_OUTPUTS=true
 ```
 
-`src/config.ts`:
+`src/config/env.ts`:
 
 ```ts
-import { z } from 'zod';
+import 'dotenv/config';
+import { ConfigSchema } from '../types/config.js';
 
-const ConfigSchema = z.object({
-  OPENAI_API_KEY: z.string().min(1),
-  SCORE_THRESHOLD: z.coerce.number().default(7),
-  TOP_N_SEGMENTS: z.coerce.number().default(10),
-  CHUNK_LENGTH_SEC: z.coerce.number().default(120),
-  CHUNK_OVERLAP_SEC: z.coerce.number().default(20),
-  MICRO_BLOCK_SEC: z.coerce.number().default(15),
-  LLM_MODEL: z.string().default('gpt-4o'),
-  LLM_MAX_RETRIES: z.coerce.number().default(3),
-  DOWNLOAD_DIR: z.string().default('downloads/'),
-  OUTPUT_DIR: z.string().default('outputs/'),
-});
+const LLM_PROVIDERS = [
+  'openai',
+  'anthropic',
+  'google',
+  'xai',
+  'mistral',
+  'groq',
+  'zai',
+  'openrouter',
+] as const;
+
+const PROVIDER_KEY_MAP: Record<LLMProvider, string> = {
+  openai: 'OPENAI_API_KEY',
+  anthropic: 'ANTHROPIC_API_KEY',
+  google: 'GOOGLE_GENERATIVE_AI_API_KEY',
+  xai: 'XAI_API_KEY',
+  mistral: 'MISTRAL_API_KEY',
+  groq: 'GROQ_API_KEY',
+  zai: 'ZAI_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
+};
+
+const ConfigSchema = z
+  .object({
+    LLM_PROVIDER: z.enum(LLM_PROVIDERS).default('openai'),
+    OPENAI_API_KEY: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+    XAI_API_KEY: z.string().optional(),
+    MISTRAL_API_KEY: z.string().optional(),
+    GROQ_API_KEY: z.string().optional(),
+    ZAI_API_KEY: z.string().optional(),
+    OPENROUTER_API_KEY: z.string().optional(),
+    SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
+    TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
+    CHUNK_LENGTH_SEC: z.coerce.number().min(10).default(120),
+    CHUNK_OVERLAP_SEC: z.coerce.number().min(0).default(20),
+    MICRO_BLOCK_SEC: z.coerce.number().min(5).default(15),
+    LLM_MODEL: z.string().default('gpt-4o'),
+    LLM_MAX_RETRIES: z.coerce.number().min(0).default(3),
+    DOWNLOAD_DIR: z.string().default('downloads/'),
+    OUTPUT_DIR: z.string().default('outputs/'),
+    CACHE_DIR: z.string().default('outputs/cache'),
+    DUMP_OUTPUTS: z.coerce.boolean().default(true),
+    MAX_CHUNKS: z.coerce.number().min(1).optional(),
+    LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
+    LLM_SYSTEM_PROMPT: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const provider = data.LLM_PROVIDER;
+    const keyName = PROVIDER_KEY_MAP[provider];
+    const keyValue = data[keyName as keyof typeof data] as string | undefined;
+
+    if (!keyValue || keyValue.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [keyName],
+        message: `${keyName} is required when LLM_PROVIDER is "${provider}"`,
+      });
+    }
+  });
 
 export const config = ConfigSchema.parse(process.env);
 ```
 
-**Cost estimate:** At ~500 tokens per chunk and ~1 chunk per 2 minutes of video, a 30-minute video generates ~15 chunks. At GPT-4o pricing (~$5/1M input tokens), a full run costs roughly **$0.04–0.10** per video.
+**Cost estimate:** At ~500 tokens per chunk and ~1 chunk per 2 minutes of video, a 30-minute video generates ~15 chunks. At GPT-4o pricing (~$5/1M input tokens), a full run costs roughly **$0.04–0.10** per video. Free models via OpenRouter reduce this to zero.
+
+### Multi-Provider LLM Support
+
+The CLI supports 8 LLM providers:
+
+| Provider   | API Key Env Var                | Sample Models                                                      |
+| ---------- | ------------------------------ | ------------------------------------------------------------------ |
+| openai     | `OPENAI_API_KEY`               | gpt-4o, gpt-4o-mini, gpt-4-turbo                                   |
+| anthropic  | `ANTHROPIC_API_KEY`            | claude-sonnet-4-5, claude-opus-4, claude-haiku-3-5                 |
+| google     | `GOOGLE_GENERATIVE_AI_API_KEY` | gemini-2.0-flash, gemini-1.5-pro                                   |
+| xai        | `XAI_API_KEY`                  | grok-beta, grok-2                                                  |
+| mistral    | `MISTRAL_API_KEY`              | mistral-large-latest, mistral-small-latest                         |
+| groq       | `GROQ_API_KEY`                 | llama-3.3-70b-versatile, llama-3.1-8b-instant                      |
+| zai        | `ZAI_API_KEY`                  | glm-5, glm-4.7, glm-4.6, glm-5-turbo                               |
+| openrouter | `OPENROUTER_API_KEY`           | meta-llama/llama-3.3-70b-instruct:free, google/gemma-3-27b-it:free |
+
+Set `LLM_PROVIDER` in `.env` to choose your provider. The corresponding API key is required.
+
+See `docs/free-models.md` for free model options via OpenRouter.
 
 ---
 
@@ -428,18 +541,19 @@ export const config = ConfigSchema.parse(process.env);
 
 ## 7. Tech Stack
 
-| Layer                 | Choice                                                                                 |
-| --------------------- | -------------------------------------------------------------------------------------- |
-| Language              | TypeScript (Node.js 18+)                                                               |
-| HTTP layer            | None yet — CLI-first. API layer added later.                                           |
-| Transcript            | [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package   |
-| Video download        | `yt-dlp` subprocess via [`execa`](https://www.npmjs.com/package/execa)                 |
-| Clip cutting          | `ffmpeg` subprocess via [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg) |
-| LLM                   | Vercel AI SDK (`ai` + `@ai-sdk/openai` / `@ai-sdk/anthropic` / `@ai-sdk/google`)       |
-| Structured LLM output | `generateObject` + `zod` schema (no manual JSON parsing needed)                        |
-| Config validation     | `zod` — parse and validate all env vars at startup                                     |
-| Async workers         | `Promise.all` / `Promise.allSettled` for parallel LLM calls                            |
-| Job queue (optional)  | Redis + `bullmq`                                                                       |
+| Layer                 | Choice                                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Language              | TypeScript (Node.js 18+)                                                                                                                               |
+| HTTP layer            | None yet — CLI-first. API layer added later.                                                                                                           |
+| Transcript            | [`youtube-transcript`](https://www.npmjs.com/package/youtube-transcript) npm package                                                                   |
+| Video download        | `yt-dlp` subprocess via [`execa`](https://www.npmjs.com/package/execa)                                                                                 |
+| Clip cutting          | `ffmpeg` subprocess via [`fluent-ffmpeg`](https://www.npmjs.com/package/fluent-ffmpeg)                                                                 |
+| LLM                   | Vercel AI SDK (`ai` + `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/mistral`, `@ai-sdk/groq`, `@ai-sdk/openrouter`) |
+| Structured LLM output | `generateObject` + `zod` schema (no manual JSON parsing needed)                                                                                        |
+| Config validation     | `zod` — parse and validate all env vars at startup                                                                                                     |
+| Async workers         | `Promise.all` / `Promise.allSettled` for parallel LLM calls                                                                                            |
+| Concurrency control   | `p-limit`                                                                                                                                              |
+| Job queue (optional)  | Redis + `bullmq`                                                                                                                                       |
 
 ---
 
@@ -450,10 +564,10 @@ Input: https://youtube.com/watch?v=abc123
 
 1. Parse URL              → videoId = "abc123"
 2. Fetch metadata         → duration = 1823s, title = "..."
-3. Fetch transcript       → 312 raw lines (normalize offset→seconds)
+3. Fetch transcript       → 312 raw lines (normalize offset→seconds) [check cache first]
 4. Build micro-blocks     → 91 blocks @ ~20s each
 5. Build LLM chunks       → 16 chunks @ ~120s with 20s overlap
-6. Parallel LLM analysis  → Promise.allSettled(chunks.map(analyzeChunk))
+6. Parallel LLM analysis  → Promise.allSettled(chunks.map(analyzeChunk)) [max 3 concurrent]
 7. Rank segments          → 4 segments with score >= 7
 8. Refinement pass        → tighten boundaries on top 4
 9. Download video         → downloads/abc123.mp4  (via yt-dlp + execa)
