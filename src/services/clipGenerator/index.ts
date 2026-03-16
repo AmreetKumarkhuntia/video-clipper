@@ -1,6 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import pLimit from 'p-limit';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { formatSeconds } from '../../utils/format.js';
@@ -63,14 +64,15 @@ async function copySegment(
  * Generates video clips for each ranked segment using fluent-ffmpeg.
  *
  * - Auto-creates the output directory if it doesn't exist.
- * - Runs all clips in parallel via Promise.allSettled.
+ * - Runs clips with controlled concurrency via p-limit.
  * - Logs a warning per failed clip; never aborts the entire run.
  * - Re-encodes with libx264/aac for accurate audio/video sync.
  *
  * @param videoPath - Local path to the downloaded mp4
- * @param segments  - Ranked segments to cut
- * @param videoId   - Used to name output files
+ * @param segments - Ranked segments to cut
+ * @param videoId - Used to name output files
  * @param customPath - Custom output directory (optional, overrides OUTPUT_DIR)
+ * @param concurrency - Maximum number of parallel clip operations (default: 1)
  * @returns Array of successfully written clip file paths
  * @throws {Error} if ffmpeg is not installed
  */
@@ -79,6 +81,7 @@ export async function generateClips(
   segments: RankedSegment[],
   videoId: string,
   customPath?: string,
+  concurrency: number = 1,
 ): Promise<string[]> {
   const outputDir = customPath || config.OUTPUT_DIR;
   await fs.mkdir(outputDir, { recursive: true });
@@ -88,14 +91,23 @@ export async function generateClips(
     return [];
   }
 
-  const jobs = segments.map(async (segment) => {
-    const startInt = Math.floor(segment.start);
-    const endInt = Math.ceil(segment.end);
-    const outputPath = join(outputDir, `${videoId}_${startInt}_${endInt}.mp4`);
+  const limit = pLimit(concurrency);
+  log.info(
+    `Generating ${segments.length} clip${segments.length !== 1 ? 's' : ''} from local video (max ${concurrency} parallel)...`,
+  );
 
-    log.info(`Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`);
-    return cutClip(videoPath, segment.start, segment.end, outputPath);
-  });
+  const jobs = segments.map((segment, i) =>
+    limit(async () => {
+      const startInt = Math.floor(segment.start);
+      const endInt = Math.ceil(segment.end);
+      const outputPath = join(outputDir, `${videoId}_${startInt}_${endInt}.mp4`);
+
+      log.info(
+        `Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`,
+      );
+      return cutClip(videoPath, segment.start, segment.end, outputPath);
+    }),
+  );
 
   const results = await Promise.allSettled(jobs);
 
@@ -124,12 +136,14 @@ export async function generateClips(
  * @param sourcePaths - Paths to the pre-downloaded segment files in downloads/
  * @param videoId - Used to verify file naming
  * @param customPath - Custom output directory (optional, overrides OUTPUT_DIR)
+ * @param concurrency - Maximum number of parallel copy operations (default: 1)
  * @returns Array of organized clip file paths in outputs/
  */
 export async function organizeClips(
   sourcePaths: string[],
   videoId: string,
   customPath?: string,
+  concurrency: number = 1,
 ): Promise<string[]> {
   if (sourcePaths.length === 0) {
     log.warn('No pre-downloaded segments to organize.');
@@ -139,13 +153,20 @@ export async function organizeClips(
   const outputDir = customPath || config.OUTPUT_DIR;
   await fs.mkdir(outputDir, { recursive: true });
 
-  const jobs = sourcePaths.map(async (sourcePath) => {
-    const filename = sourcePath.split('/').pop() || '';
-    const outputPath = join(outputDir, filename);
+  const limit = pLimit(concurrency);
+  log.info(
+    `Organizing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
+  );
 
-    log.info(`Organizing clip: ${outputPath}`);
-    return copySegment(sourcePath, outputPath, customPath);
-  });
+  const jobs = sourcePaths.map((sourcePath) =>
+    limit(async () => {
+      const filename = sourcePath.split('/').pop() || '';
+      const outputPath = join(outputDir, filename);
+
+      log.info(`Organizing clip: ${outputPath}`);
+      return copySegment(sourcePath, outputPath, customPath);
+    }),
+  );
 
   const results = await Promise.allSettled(jobs);
 

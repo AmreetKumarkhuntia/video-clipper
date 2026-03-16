@@ -56,6 +56,7 @@ export const ConfigSchema = z
     // --- LLM evaluation limits ---
     MAX_CHUNKS: z.coerce.number().min(1).optional(),
     LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
+    CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
     // --- Custom system prompt (overrides the default if set) ---
     LLM_SYSTEM_PROMPT: z.string().optional(),
     // --- Download mode for yt-dlp ---
