@@ -1,34 +1,22 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { rankSegments } from '../src/services/segmentRanker/index.js';
-import type { ChunkEvaluation } from '../src/types/index.js';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-let _chunkIndex = 0;
+import type { MergedCandidate } from '../src/types/index.js';
 
 function seg(
-  clip_start: number,
-  clip_end: number,
+  start: number,
+  end: number,
   score: number,
-  interesting = true,
-): ChunkEvaluation {
+  source: 'transcript' | 'audio' | 'both' = 'transcript',
+  audio_event?: string,
+): MergedCandidate {
   return {
-    status: 'success',
-    chunk_index: _chunkIndex++,
-    chunk_start: clip_start,
-    chunk_end: clip_end,
-    interesting,
+    start,
+    end,
     score,
-    reason: `reason for ${clip_start}-${clip_end}`,
-    clip_start,
-    clip_end,
+    source,
+    reason: `reason for ${start}-${end}`,
+    audio_event,
   };
-}
-
-function resetIndex() {
-  _chunkIndex = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,8 +24,6 @@ function resetIndex() {
 // ---------------------------------------------------------------------------
 
 describe('rankSegments', () => {
-  beforeEach(() => resetIndex());
-
   it('returns empty array when input is empty', () => {
     expect(rankSegments([], 7, 10)).toEqual([]);
   });
@@ -49,8 +35,8 @@ describe('rankSegments', () => {
     expect(result[0].score).toBe(8);
   });
 
-  it('filters out segments where interesting is false', () => {
-    const segments = [seg(0, 30, 9, false), seg(30, 60, 8, true)];
+  it('filters out segments with score below threshold', () => {
+    const segments = [seg(0, 30, 6, 'transcript'), seg(30, 60, 8, 'transcript')];
     const result = rankSegments(segments, 7, 10);
     expect(result).toHaveLength(1);
     expect(result[0].score).toBe(8);

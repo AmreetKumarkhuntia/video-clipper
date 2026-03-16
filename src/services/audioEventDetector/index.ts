@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import { execa } from 'execa';
 import { config } from '../../config/index.js';
+import { log } from '../../utils/logger.js';
 import type { AudioEvent } from '../../types/index.js';
 
 const GAME_PROFILE_PROMPTS: Record<string, string> = {
@@ -13,6 +14,29 @@ const GAME_PROFILE_PROMPTS: Record<string, string> = {
   general:
     'You are analyzing audio from a gaming video. Identify ALL significant audio events: explosions, gunshots, crowd reactions, cheering, epic moments, dramatic sounds.',
 };
+
+let _pythonBin: string | null = null;
+
+async function getPythonBin(): Promise<string> {
+  if (_pythonBin) return _pythonBin;
+
+  for (const bin of ['python3', 'python']) {
+    try {
+      await execa(bin, ['--version']);
+      _pythonBin = bin;
+      return bin;
+    } catch {
+      log.warn(`[audio] ${bin} not found, trying next binary...`);
+    }
+  }
+
+  log.error(
+    '[audio] No Python interpreter found (tried python3, python). Install Python 3 to use YAMNet fallback.',
+  );
+  throw new Error(
+    'No Python interpreter found (tried python3, python). Install Python 3 to use YAMNet fallback.',
+  );
+}
 
 async function detectEventsGemini(
   audioPath: string,
@@ -58,7 +82,8 @@ async function detectEventsYAMNet(
   audioPath: string,
   chunkOffsetSec: number,
 ): Promise<AudioEvent[]> {
-  const { stdout } = await execa('python', [
+  const python = await getPythonBin();
+  const { stdout } = await execa(python, [
     'scripts/detect_events.py',
     audioPath,
     String(config.AUDIO_CONFIDENCE_THRESHOLD),

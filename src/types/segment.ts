@@ -15,6 +15,8 @@ export const RankedSegmentSchema = z.object({
   end: z.number(), // seconds
   score: z.number().min(1).max(10),
   reason: z.string(),
+  source: z.enum(['transcript', 'audio', 'both']),
+  audio_event: z.string().optional(),
 });
 export type RankedSegment = z.infer<typeof RankedSegmentSchema>;
 

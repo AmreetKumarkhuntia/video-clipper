@@ -67,6 +67,16 @@ export const ConfigSchema = z
       .default('fast'),
     // --- Timestamp offset for clips (adjusts if transcript is misaligned with video) ---
     TIMESTAMP_OFFSET_SECONDS: z.coerce.number().default(0),
+    // --- Audio event detection ---
+    AUDIO_DETECTION_ENABLED: z.coerce.boolean().default(true),
+    AUDIO_PROVIDER: z.enum(['gemini', 'yamnet', 'both']).default('both'),
+    AUDIO_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.3),
+    AUDIO_CLIP_PRE_ROLL: z.coerce.number().min(0).default(5),
+    AUDIO_CLIP_POST_ROLL: z.coerce.number().min(0).default(15),
+    AUDIO_LLM_BOOST_WINDOW: z.coerce.number().min(0).default(10),
+    AUDIO_LLM_SCORE_BOOST: z.coerce.number().min(0).default(2),
+    // --- Game profile ---
+    GAME_PROFILE: z.enum(['valorant', 'fps', 'boss_fight', 'general']).default('general'),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
