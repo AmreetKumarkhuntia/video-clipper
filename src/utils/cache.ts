@@ -115,5 +115,6 @@ export async function writeChunkCache(
 ): Promise<void> {
   if (evaluation.status !== 'success') return;
   const filePath = chunkCachePath(chunk, cacheDir);
+  log.info(`Caching successful evaluation for chunk [${chunk.start}, ${chunk.end}] at ${filePath}`);
   await writeCacheFile(filePath, evaluation);
 }

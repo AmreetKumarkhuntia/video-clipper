@@ -71,7 +71,11 @@ ${semanticRules}
  * Returns a cached result immediately if one exists (and noCache is false).
  * Throws on non-retryable failures or when all retries are exhausted.
  */
-async function analyzeChunk(chunk: LLMChunk, noCache: boolean): Promise<AnalyzedSegment> {
+async function analyzeChunk(
+  chunk: LLMChunk,
+  noCache: boolean,
+  chunkIndex: number,
+): Promise<AnalyzedSegment> {
   if (!noCache) {
     const cached = await readChunkCache(chunk, config.CACHE_DIR);
     if (cached && cached.status === 'success') {
@@ -99,6 +103,20 @@ async function analyzeChunk(chunk: LLMChunk, noCache: boolean): Promise<Analyzed
         // Let our own retry loop handle rate limits; disable SDK-level retries
         maxRetries: 0,
       });
+      if (!noCache) {
+        const evaluation: ChunkEvaluation = {
+          status: 'success' as const,
+          chunk_index: chunkIndex,
+          chunk_start: chunk.start,
+          chunk_end: chunk.end,
+          interesting: object.interesting,
+          score: object.score,
+          reason: object.reason,
+          clip_start: object.clip_start,
+          clip_end: object.clip_end,
+        };
+        await writeChunkCache(chunk, evaluation, config.CACHE_DIR);
+      }
       return object;
     } catch (err) {
       lastError = err;
@@ -138,7 +156,7 @@ export async function analyzeChunks(
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
-    chunks.map((chunk) => limit(() => analyzeChunk(chunk, noCache))),
+    chunks.map((chunk, i) => limit(() => analyzeChunk(chunk, noCache, i))),
   );
 
   let succeeded = 0;
@@ -159,9 +177,6 @@ export async function analyzeChunks(
           clip_start: seg.clip_start,
           clip_end: seg.clip_end,
         };
-        if (!noCache) {
-          await writeChunkCache(chunk, evaluation, config.CACHE_DIR);
-        }
         return evaluation;
       } else {
         const error =
