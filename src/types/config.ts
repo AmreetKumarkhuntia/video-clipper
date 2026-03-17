@@ -76,7 +76,8 @@ export const ConfigSchema = z
     TIMESTAMP_OFFSET_SECONDS: z.coerce.number().default(0),
     // --- Audio event detection ---
     AUDIO_DETECTION_ENABLED: z.coerce.boolean().default(true),
-    AUDIO_PROVIDER: z.enum(['gemini', 'yamnet', 'both']).default('both'),
+    AUDIO_PROVIDER: z.enum(['gemini', 'yamnet', 'whisper', 'both']).default('both'),
+    AUDIO_WHISPER_MODEL: z.enum(['tiny', 'base', 'small', 'medium', 'large-v3']).default('medium'),
     AUDIO_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.3),
     AUDIO_CLIP_PRE_ROLL: z.coerce.number().min(0).default(5),
     AUDIO_CLIP_POST_ROLL: z.coerce.number().min(0).default(15),

@@ -4,7 +4,7 @@ export const AudioEventSchema = z.object({
   time: z.number(),
   event: z.string(),
   confidence: z.number().min(0).max(1),
-  source: z.enum(['gemini', 'yamnet']),
+  source: z.enum(['gemini', 'yamnet', 'whisper']),
 });
 export type AudioEvent = z.infer<typeof AudioEventSchema>;
 

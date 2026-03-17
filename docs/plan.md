@@ -120,19 +120,19 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
 
 ---
 
-### Module 3c — Audio Event Detector (Gemini primary + YAMNet fallback) 🆕
+### Module 3c — Audio Event Detector (Gemini primary + Whisper local + YAMNet legacy) 🆕
 
 **Status: To Do**
 
-Two-tier audio event detection. Gemini 1.5 Flash is tried first — understands game context, needs no local setup. If Gemini fails or is disabled, YAMNet runs locally for free.
+Three-tier audio event detection. Gemini 1.5 Flash is tried first — understands game context, needs no local setup. If Gemini fails or is disabled, Whisper runs locally: it transcribes the audio chunk and scans the resulting transcript for hype keywords per game profile. YAMNet remains available as a legacy option via `AUDIO_PROVIDER=yamnet`.
 
-|              | Gemini 1.5 Flash (primary)               | YAMNet (fallback)                     |
-| ------------ | ---------------------------------------- | ------------------------------------- |
-| Cost         | ~$0.001/video (free tier: 60/day)        | Free, always                          |
-| Setup        | Just an API key                          | pip install tensorflow tensorflow-hub |
-| Game context | Understands "clutch", "ace", boss phases | Class IDs only (gunshot, explosion)   |
-| Accuracy     | High — semantic understanding            | Medium — fixed class threshold        |
-| Offline      | No                                       | Yes                                   |
+|              | Gemini Flash (primary)                   | Whisper (local fallback)                         | YAMNet (legacy)                       |
+| ------------ | ---------------------------------------- | ------------------------------------------------ | ------------------------------------- |
+| Cost         | ~$0.001/video (free tier: 60/day)        | Free, always                                     | Free, always                          |
+| Setup        | Just an API key                          | pip install openai-whisper                       | pip install tensorflow tensorflow-hub |
+| Game context | Understands "clutch", "ace", boss phases | Speech transcript + keyword matching per profile | Class IDs only (gunshot, explosion)   |
+| Accuracy     | High — semantic understanding            | Medium-high — depends on speech clarity          | Medium — fixed class threshold        |
+| Offline      | No                                       | Yes                                              | Yes                                   |
 
 #### Tier 1 — Gemini 1.5 Flash (primary)
 
@@ -335,8 +335,9 @@ Changes from v1:
 ```env
 # Audio Event Detection
 AUDIO_DETECTION_ENABLED=true        # set false to skip (transcript-only mode)
-AUDIO_PROVIDER=gemini               # gemini | yamnet | both (gemini with yamnet fallback)
-AUDIO_CONFIDENCE_THRESHOLD=0.30     # YAMNet confidence minimum (0-1)
+AUDIO_PROVIDER=both                 # gemini | yamnet | whisper | both (gemini with whisper fallback)
+AUDIO_CONFIDENCE_THRESHOLD=0.30     # confidence minimum (0-1); for Whisper: 1.0=exact, 0.8=partial
+AUDIO_WHISPER_MODEL=medium          # tiny | base | small | medium | large-v3
 AUDIO_CLIP_PRE_ROLL=5               # seconds before event to start clip
 AUDIO_CLIP_POST_ROLL=15             # seconds after event to end clip
 AUDIO_LLM_BOOST_WINDOW=10           # seconds within which audio boosts LLM score

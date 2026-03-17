@@ -186,13 +186,56 @@ async function detectEventsYAMNet(
   }));
 }
 
+async function detectEventsWhisper(
+  audioPath: string,
+  gameProfile: string,
+  chunkOffsetSec: number,
+): Promise<AudioEvent[]> {
+  const python = await getPythonBin();
+
+  let stdout: string;
+  try {
+    const result = await execa(python, [
+      'scripts/detect_events_whisper.py',
+      audioPath,
+      String(config.AUDIO_CONFIDENCE_THRESHOLD),
+      gameProfile,
+      config.AUDIO_WHISPER_MODEL,
+    ]);
+    stdout = result.stdout;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (message.includes('ModuleNotFoundError') || message.includes('No module named')) {
+      throw new Error(
+        'openai-whisper not installed. Run: pip install openai-whisper\n' +
+          'Or set AUDIO_PROVIDER=gemini in .env and configure GOOGLE_GENERATIVE_AI_API_KEY.',
+      );
+    }
+
+    throw new Error(`Whisper detection failed: ${message}`);
+  }
+
+  const events = JSON.parse(stdout) as Array<{ time: number; event: string; confidence: number }>;
+
+  return events.map((e) => ({
+    time: e.time + chunkOffsetSec,
+    event: e.event,
+    confidence: e.confidence,
+    source: 'whisper' as const,
+  }));
+}
+
 export async function detectAudioEvents(
   audioPath: string,
   gameProfile: string,
   chunkOffsetSec: number,
   chunkDurationSec: number,
 ): Promise<AudioEvent[]> {
-  const useGemini = config.AUDIO_PROVIDER !== 'yamnet' && config.GOOGLE_GENERATIVE_AI_API_KEY;
+  const useGemini =
+    config.AUDIO_PROVIDER !== 'yamnet' &&
+    config.AUDIO_PROVIDER !== 'whisper' &&
+    config.GOOGLE_GENERATIVE_AI_API_KEY;
 
   if (useGemini) {
     try {
@@ -207,14 +250,21 @@ export async function detectAudioEvents(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (config.AUDIO_PROVIDER === 'both') {
-        log.warn(`[audio] Gemini failed, falling back to YAMNet: ${message}`);
+        log.warn(`[audio] Gemini failed, falling back to Whisper: ${message}`);
       } else {
         throw err;
       }
     }
   }
 
-  const events = await detectEventsYAMNet(audioPath, chunkOffsetSec);
-  log.info(`[audio] YAMNet detected ${events.length} events`);
+  if (config.AUDIO_PROVIDER === 'yamnet') {
+    const events = await detectEventsYAMNet(audioPath, chunkOffsetSec);
+    log.info(`[audio] YAMNet detected ${events.length} events`);
+    return events;
+  }
+
+  // whisper | both (Gemini fallback path lands here too)
+  const events = await detectEventsWhisper(audioPath, gameProfile, chunkOffsetSec);
+  log.info(`[audio] Whisper detected ${events.length} events`);
   return events;
 }
