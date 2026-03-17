@@ -59,6 +59,8 @@ export const ConfigSchema = z
     CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
     // --- Custom system prompt (overrides the default if set) ---
     LLM_SYSTEM_PROMPT: z.string().optional(),
+    // --- Gemini model used for audio event detection ---
+    AUDIO_GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
     // --- Extra instructions appended to the Gemini audio detection prompt ---
     AUDIO_EXTRA_INSTRUCTIONS: z.string().optional(),
     // --- Download mode for yt-dlp ---

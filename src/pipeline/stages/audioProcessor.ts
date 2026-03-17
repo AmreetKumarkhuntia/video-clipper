@@ -75,7 +75,12 @@ export async function processAudio(
           window.end - window.start,
           config.OUTPUT_DIR,
         );
-        const events = await detectAudioEvents(slicePath, opts.gameProfile, window.start);
+        const events = await detectAudioEvents(
+          slicePath,
+          opts.gameProfile,
+          window.start,
+          window.end - window.start,
+        );
         await fs.unlink(slicePath);
 
         await cache.writeAudioChunk(
