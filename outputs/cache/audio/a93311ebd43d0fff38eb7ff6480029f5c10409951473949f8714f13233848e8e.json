@@ -1,0 +1,80 @@
+[
+  {
+    "time": 1334.5,
+    "event": "ability use (Raze Blast Pack)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1336.2,
+    "event": "ability use (Raze Blast Pack)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1338.1,
+    "event": "ability use (Raze Showstopper activation)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1346.5,
+    "event": "explosion (Showstopper rocket)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1347.2,
+    "event": "double kill (Raze kills two with Showstopper)",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1351.3,
+    "event": "ability use (Sage Barrier Orb)",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1358.2,
+    "event": "ability use (Sova Owl Drone)",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1400.1,
+    "event": "kill (Raze kills enemy with Vandal)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1403.5,
+    "event": "kill (Raze kills enemy with Vandal)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1408.2,
+    "event": "kill (Raze kills enemy with Vandal)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1411.4,
+    "event": "kill (Raze kills enemy with Vandal)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1414.6,
+    "event": "kill (Raze achieves Ace)",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1416.5,
+    "event": "ace and clutch moment notification",
+    "confidence": 1,
+    "source": "gemini"
+  }
+]

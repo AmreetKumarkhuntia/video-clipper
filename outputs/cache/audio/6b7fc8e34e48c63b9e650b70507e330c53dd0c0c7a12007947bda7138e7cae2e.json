@@ -1,0 +1,122 @@
+[
+  {
+    "time": 1523.5,
+    "event": "Raze Ultimate Ability Use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1524.5,
+    "event": "Rocket Explosion",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1528,
+    "event": "Raze Kill with Vandal",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1529,
+    "event": "Raze Kill with Vandal",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1530,
+    "event": "Raze Kill with Vandal",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1541.5,
+    "event": "Raze Ultimate Ability Use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1543,
+    "event": "Rocket Explosion",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1544,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1545,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1547.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1548.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1604,
+    "event": "Raze Ultimate Ability Use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1605.5,
+    "event": "Rocket Explosion and Multiple Kills",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1640.5,
+    "event": "Raze Ultimate Ability Use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1642.5,
+    "event": "Rocket Explosion",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1643.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1644.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1648.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1650.5,
+    "event": "Raze Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1652.5,
+    "event": "Raze Death",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

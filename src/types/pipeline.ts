@@ -57,6 +57,7 @@ export interface TranscriptResult {
 export interface AudioProcessorOpts {
   noAudio: boolean;
   gameProfile: string;
+  maxParallel: number;
 }
 
 // ---------------------------------------------------------------------------

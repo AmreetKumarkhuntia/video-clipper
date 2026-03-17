@@ -1,0 +1,86 @@
+[
+  {
+    "time": 1739.5,
+    "event": "Ability use: Omen Ultimate",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1742.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1743.5,
+    "event": "Spike planted",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1746.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1747.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1753.5,
+    "event": "Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1754.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1758.5,
+    "event": "Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1846.5,
+    "event": "Ability use: Omen Ultimate",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1852.5,
+    "event": "Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1853.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1854.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1856.5,
+    "event": "Kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1857.5,
+    "event": "Kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

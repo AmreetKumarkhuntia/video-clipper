@@ -1,0 +1,338 @@
+[
+  {
+    "time": 103,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 105,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 106,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 108,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 110,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 113,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 115,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 117,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 118,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 120,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 123,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 124,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 125,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 128,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 129,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 130,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 131,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 134,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 137,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 139,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 141,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 143,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 145,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 146,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 147,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 148,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 150,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 151,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 153,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 160,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 161,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 163,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 165,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 167,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 169,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 171,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 173,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 175,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 176,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 179,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 182,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 184,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 187,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 191,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 193,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 194,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 198,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 200,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 203,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 206,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 209,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 212,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 214,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 216,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 218,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 220,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  }
+]

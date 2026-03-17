@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import pLimit from 'p-limit';
 import { downloadAudio } from '../../services/audioDownloader/index.js';
 import { detectAudioEvents } from '../../services/audioEventDetector/index.js';
 import { sliceAudio } from '../../utils/sliceAudio.js';
@@ -42,7 +43,7 @@ export async function processAudio(
     const audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
 
     log.info(
-      `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${opts.gameProfile})...`,
+      `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${opts.gameProfile}, max ${opts.maxParallel} parallel)...`,
     );
 
     // Use the generic chunker to build time windows over the full audio duration.
@@ -50,58 +51,66 @@ export async function processAudio(
     // which also use a sliding window of CHUNK_LENGTH_SEC with CHUNK_OVERLAP_SEC overlap.
     const windows = buildWindows(duration, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
 
-    const audioEvents: AudioEvent[] = [];
+    const limit = pLimit(opts.maxParallel);
 
-    for (const window of windows) {
-      log.info(`  Processing audio chunk ${window.start}s - ${window.end}s...`);
-      try {
-        // Per-chunk cache — avoids re-processing completed windows on retry
-        const cachedChunk = await cache.readAudioChunk(
-          videoId,
-          opts.gameProfile,
-          config.AUDIO_PROVIDER,
-          window.start,
-          window.end,
-        );
-        if (cachedChunk) {
-          log.info(
-            `  [cache hit] Audio chunk ${window.start}s - ${window.end}s (${cachedChunk.length} events)`,
+    const results = await Promise.allSettled(
+      windows.map((window) =>
+        limit(async () => {
+          log.info(`  Processing audio chunk ${window.start}s - ${window.end}s...`);
+
+          // Per-chunk cache — avoids re-processing completed windows on retry
+          const cachedChunk = await cache.readAudioChunk(
+            videoId,
+            opts.gameProfile,
+            config.AUDIO_PROVIDER,
+            window.start,
+            window.end,
           );
-          audioEvents.push(...cachedChunk);
-          continue;
-        }
+          if (cachedChunk) {
+            log.info(
+              `  [cache hit] Audio chunk ${window.start}s - ${window.end}s (${cachedChunk.length} events)`,
+            );
+            return cachedChunk;
+          }
 
-        const slicePath = await sliceAudio(
-          audioPath,
-          window.start,
-          window.end - window.start,
-          config.OUTPUT_DIR,
-        );
-        const events = await detectAudioEvents(
-          slicePath,
-          opts.gameProfile,
-          window.start,
-          window.end - window.start,
-        );
-        await fs.unlink(slicePath);
+          const slicePath = await sliceAudio(
+            audioPath,
+            window.start,
+            window.end - window.start,
+            config.OUTPUT_DIR,
+          );
+          const events = await detectAudioEvents(
+            slicePath,
+            opts.gameProfile,
+            window.start,
+            window.end - window.start,
+          );
+          await fs.unlink(slicePath);
 
-        await cache.writeAudioChunk(
-          videoId,
-          opts.gameProfile,
-          config.AUDIO_PROVIDER,
-          window.start,
-          window.end,
-          events,
-        );
+          await cache.writeAudioChunk(
+            videoId,
+            opts.gameProfile,
+            config.AUDIO_PROVIDER,
+            window.start,
+            window.end,
+            events,
+          );
 
-        audioEvents.push(...events);
-      } catch (err) {
-        const message = String(err);
+          return events;
+        }),
+      ),
+    );
+
+    const audioEvents: AudioEvent[] = results
+      .flatMap((r, i) => {
+        if (r.status === 'fulfilled') return r.value;
+        const w = windows[i]!;
         log.warn(
-          `  Audio event detection failed for chunk ${window.start}s - ${window.end}s: ${message}`,
+          `  Audio event detection failed for chunk ${w.start}s - ${w.end}s: ${String(r.reason)}`,
         );
-      }
-    }
+        return [];
+      })
+      .sort((a, b) => a.time - b.time);
 
     log.info(`Audio event detection complete: ${audioEvents.length} events found`);
 

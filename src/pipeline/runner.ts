@@ -55,6 +55,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
   const audioEvents = await processAudio(videoId, metadata.duration, cache, {
     noAudio: args.noAudio,
     gameProfile,
+    maxParallel,
   });
 
   // ── Stage 4a: LLM analysis (informed by audio events) ────────────────────

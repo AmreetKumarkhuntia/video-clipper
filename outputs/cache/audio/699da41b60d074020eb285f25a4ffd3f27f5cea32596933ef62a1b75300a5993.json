@@ -1,0 +1,110 @@
+[
+  {
+    "time": 1226.5,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1238.8,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1243.5,
+    "event": "explosion",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1244.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1245.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1246.8,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1247.9,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1248.9,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1250.1,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1251.3,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1252.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1253.7,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1260.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1281.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1295.5,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1300.8,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1301.9,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1302.9,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  }
+]

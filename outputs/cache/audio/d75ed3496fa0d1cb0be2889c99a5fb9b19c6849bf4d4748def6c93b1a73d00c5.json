@@ -1,0 +1,122 @@
+[
+  {
+    "time": 1811.8,
+    "event": "Ability use (Sova Recon Bolt)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1813.5,
+    "event": "Player kills opponent (Sheriff)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1814.4,
+    "event": "Player kills opponent (Sheriff)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1816,
+    "event": "Player kills opponent (Sheriff)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1819.4,
+    "event": "Ability use (Raze Paint Shells)",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1822.8,
+    "event": "Spike plant",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1827.9,
+    "event": "Player kills opponent (Guardian)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1834.5,
+    "event": "Player kills opponent (Bulldog)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1837.8,
+    "event": "Player kills opponent (Bulldog)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1844.5,
+    "event": "Player kills opponent (Bulldog)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1851.5,
+    "event": "Clutch moment: Player kills opponent",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1852.5,
+    "event": "Teammate hype reaction",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 1899.5,
+    "event": "Spike dropped",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1907.5,
+    "event": "Ability use (Raze Ultimate - Showstopper)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1913.3,
+    "event": "Player kills opponent (Spectre)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1914.2,
+    "event": "Player kills opponent (Spectre)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1915.3,
+    "event": "Player kills opponent (Spectre)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1918.2,
+    "event": "Player kills opponent (Spectre)",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 1919.9,
+    "event": "Ace moment: Player kills final opponent",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 1920.5,
+    "event": "Teammate hype reaction",
+    "confidence": 0.85,
+    "source": "gemini"
+  }
+]
