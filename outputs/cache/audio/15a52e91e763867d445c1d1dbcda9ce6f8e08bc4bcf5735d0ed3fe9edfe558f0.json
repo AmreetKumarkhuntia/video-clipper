@@ -1,0 +1,80 @@
+[
+  {
+    "time": 816,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 820,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 825,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 827,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 835,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 837,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 840,
+    "event": "kill",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 845,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 846,
+    "event": "explosion",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 850,
+    "event": "death",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 875,
+    "event": "spike plant",
+    "confidence": 0.98,
+    "source": "gemini"
+  },
+  {
+    "time": 882,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 886,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "time": 930.2,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 932.8,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 939.2,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 940.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 949.1,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 952.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 959,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 962.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 968.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1013,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1015.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1018.5,
+    "event": "Getting a kill",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

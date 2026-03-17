@@ -1,0 +1,68 @@
+[
+  {
+    "time": 1010,
+    "event": "Ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1014,
+    "event": "Ally kills opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1015,
+    "event": "Ally kills opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1028,
+    "event": "Ally gets killed",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1036,
+    "event": "Spike planted",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1041,
+    "event": "One enemy remaining",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1053,
+    "event": "Player kills opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1054,
+    "event": "Player kills opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1094,
+    "event": "Player kills opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1096,
+    "event": "Ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1115,
+    "event": "Spike planted",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

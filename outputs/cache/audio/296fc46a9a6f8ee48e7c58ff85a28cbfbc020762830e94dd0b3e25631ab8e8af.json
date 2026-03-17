@@ -1,0 +1,50 @@
+[
+  {
+    "time": 54,
+    "event": "match found announcer",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 71,
+    "event": "deathmatch announcer",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 79.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 83.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 95.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 102.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 108.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  },
+  {
+    "time": 117.5,
+    "event": "player gets a kill",
+    "confidence": 1,
+    "source": "gemini"
+  }
+]

@@ -1,0 +1,134 @@
+[
+  {
+    "time": 1160,
+    "event": "ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1102,
+    "event": "ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1103,
+    "event": "ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1111,
+    "event": "ability use",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1114,
+    "event": "spike plant",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1127,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1128,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1132,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1133,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1213,
+    "event": "ability use",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1217,
+    "event": "ally death",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1218,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1219,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1221,
+    "event": "ability use",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 1224,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1224.5,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1225,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1225.5,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1227,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1227.5,
+    "event": "kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1233,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1233.5,
+    "event": "death",
+    "confidence": 0.95,
+    "source": "gemini"
+  }
+]

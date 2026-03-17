@@ -1,0 +1,86 @@
+[
+  {
+    "time": 210.7,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 220.3,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 224.7,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 237.3,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 242.7,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 247.6,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 252.8,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 260.5,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 273.8,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 284.7,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 294.4,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 296.7,
+    "event": "getting killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 301.5,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 318.5,
+    "event": "killing opponent",
+    "confidence": 0.95,
+    "source": "gemini"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "time": 1617.5,
+    "event": "getting killed",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1618.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1619.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1620.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1621.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1659.5,
+    "event": "ability use",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1660.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1662,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1663.5,
+    "event": "explosion",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1666.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1667.5,
+    "event": "getting killed",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1671.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1675.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1677.5,
+    "event": "killing opponent",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1678.5,
+    "event": "clutch moment",
+    "confidence": 0.8,
+    "source": "gemini"
+  }
+]

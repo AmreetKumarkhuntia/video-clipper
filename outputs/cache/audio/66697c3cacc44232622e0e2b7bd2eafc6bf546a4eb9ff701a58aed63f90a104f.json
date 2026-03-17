@@ -1,0 +1,26 @@
+[
+  {
+    "time": 626.5,
+    "event": "Game UI sound",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 691,
+    "event": "Character voice line",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 712.5,
+    "event": "Character voice line",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 718.5,
+    "event": "Character voice line",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

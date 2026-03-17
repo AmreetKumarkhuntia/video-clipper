@@ -206,7 +206,11 @@ export async function detectAudioEvents(
       return events;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      log.warn(`[audio] Gemini failed, falling back to YAMNet: ${message}`);
+      if (config.AUDIO_PROVIDER === 'both') {
+        log.warn(`[audio] Gemini failed, falling back to YAMNet: ${message}`);
+      } else {
+        throw err;
+      }
     }
   }
 

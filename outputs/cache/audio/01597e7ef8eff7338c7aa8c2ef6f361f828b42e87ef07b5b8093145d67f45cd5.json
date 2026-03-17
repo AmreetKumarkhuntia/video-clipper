@@ -1,0 +1,44 @@
+[
+  {
+    "time": 1424,
+    "event": "Player gets a kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1425.5,
+    "event": "Player is killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1431.5,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1432.5,
+    "event": "Teammate is killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1444.5,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 1470,
+    "event": "Teammate gets a kill",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1471,
+    "event": "Teammate is killed",
+    "confidence": 0.95,
+    "source": "gemini"
+  }
+]

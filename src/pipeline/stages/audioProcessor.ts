@@ -96,7 +96,7 @@ export async function processAudio(
 
         audioEvents.push(...events);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = String(err);
         log.warn(
           `  Audio event detection failed for chunk ${window.start}s - ${window.end}s: ${message}`,
         );
