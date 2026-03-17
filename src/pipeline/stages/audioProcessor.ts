@@ -45,8 +45,10 @@ export async function processAudio(
       `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${opts.gameProfile})...`,
     );
 
-    // Use the generic chunker to build time windows over the full audio duration
-    const windows = buildWindows(duration, config.CHUNK_LENGTH_SEC);
+    // Use the generic chunker to build time windows over the full audio duration.
+    // Pass CHUNK_OVERLAP_SEC so audio windows are co-aligned with transcript LLM chunks,
+    // which also use a sliding window of CHUNK_LENGTH_SEC with CHUNK_OVERLAP_SEC overlap.
+    const windows = buildWindows(duration, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
 
     const audioEvents: AudioEvent[] = [];
 
