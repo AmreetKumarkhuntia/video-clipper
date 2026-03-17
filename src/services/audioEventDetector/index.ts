@@ -44,7 +44,7 @@ async function detectEventsGemini(
   chunkOffsetSec: number,
 ): Promise<AudioEvent[]> {
   const genai = new GoogleGenerativeAI(config.GOOGLE_GENERATIVE_AI_API_KEY!);
-  const model = genai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const audioData = fs.readFileSync(audioPath);
   const base64Audio = audioData.toString('base64');
@@ -68,6 +68,7 @@ Return ONLY a JSON array, no explanation. Format:
   ]);
 
   const text = result.response.text();
+  console.log(`[audio] Gemini response: ${text}`);
   const events = JSON.parse(text) as Array<{ time_sec: number; event: string; confidence: number }>;
 
   return events.map((e) => ({
@@ -83,11 +84,27 @@ async function detectEventsYAMNet(
   chunkOffsetSec: number,
 ): Promise<AudioEvent[]> {
   const python = await getPythonBin();
-  const { stdout } = await execa(python, [
-    'scripts/detect_events.py',
-    audioPath,
-    String(config.AUDIO_CONFIDENCE_THRESHOLD),
-  ]);
+
+  let stdout: string;
+  try {
+    const result = await execa(python, [
+      'scripts/detect_events.py',
+      audioPath,
+      String(config.AUDIO_CONFIDENCE_THRESHOLD),
+    ]);
+    stdout = result.stdout;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (message.includes('ModuleNotFoundError') || message.includes('No module named')) {
+      throw new Error(
+        'YAMNet dependencies missing. Run: pip3 install tensorflow-hub soundfile numpy\n' +
+          'Or set AUDIO_PROVIDER=gemini in .env and configure GOOGLE_GENERATIVE_AI_API_KEY.',
+      );
+    }
+
+    throw new Error(`YAMNet detection failed: ${message}`);
+  }
 
   const events = JSON.parse(stdout) as Array<{ time: number; event: string; confidence: number }>;
 

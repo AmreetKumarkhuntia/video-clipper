@@ -60,7 +60,10 @@ export const ConfigSchema = z
     // --- Custom system prompt (overrides the default if set) ---
     LLM_SYSTEM_PROMPT: z.string().optional(),
     // --- Download mode for yt-dlp ---
-    DOWNLOAD_SECTIONS_MODE: z.enum(['all', 'segments']).default('all'),
+    DOWNLOAD_SECTIONS_MODE: z.union([z.literal('all'), z.number().int().positive()]).default('all'),
+    // --- FFmpeg paths (optional, for custom ffmpeg/ffprobe locations) ---
+    FFMPEG_PATH: z.string().optional(),
+    FFPROBE_PATH: z.string().optional(),
     // --- FFmpeg encoding preset for clip generation ---
     FFMPEG_PRESET: z
       .enum(['ultrafast', 'superfast', 'veryfast', 'fast', 'medium', 'slow', 'slower'])
@@ -77,6 +80,11 @@ export const ConfigSchema = z
     AUDIO_LLM_SCORE_BOOST: z.coerce.number().min(0).default(2),
     // --- Game profile ---
     GAME_PROFILE: z.enum(['valorant', 'fps', 'boss_fight', 'general']).default('general'),
+    // --- yt-dlp cookie support (for bot detection / auth) ---
+    YT_DLP_COOKIES_FROM_BROWSER: z
+      .enum(['chrome', 'firefox', 'safari', 'brave', 'edge', 'opera', 'chromium'])
+      .optional(),
+    YT_DLP_COOKIES_FILE: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -88,6 +96,16 @@ export const ConfigSchema = z
         code: z.ZodIssueCode.custom,
         path: [keyName],
         message: `${keyName} is required when LLM_PROVIDER is "${provider}"`,
+      });
+    }
+
+    // Validate cookie config: only one method allowed at a time
+    if (data.YT_DLP_COOKIES_FROM_BROWSER && data.YT_DLP_COOKIES_FILE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['YT_DLP_COOKIES_FROM_BROWSER'],
+        message:
+          'Cannot set both YT_DLP_COOKIES_FROM_BROWSER and YT_DLP_COOKIES_FILE. Use only one.',
       });
     }
   });

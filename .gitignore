@@ -9,3 +9,5 @@ downloads/
 outputs/analysis
 outputs/clips
 outputs/transcript
+*.wav
+outputs/audio

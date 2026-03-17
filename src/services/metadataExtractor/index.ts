@@ -1,4 +1,5 @@
 import { execa } from 'execa';
+import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import type { VideoMetadata } from '../../types/index.js';
 
@@ -19,18 +20,24 @@ interface OEmbedResponse {
  */
 async function extractViaYtDlp(videoId: string): Promise<VideoMetadata | null> {
   try {
-    const { stdout } = await execa('yt-dlp', [
-      '--dump-json',
-      '--no-playlist',
-      `https://www.youtube.com/watch?v=${videoId}`,
-    ]);
+    const args = ['--dump-json', '--no-playlist', `https://www.youtube.com/watch?v=${videoId}`];
+
+    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
+      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
+    } else if (config.YT_DLP_COOKIES_FILE) {
+      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
+    }
+
+    const { stdout } = await execa('yt-dlp', args);
     const data = JSON.parse(stdout) as YtDlpJson;
     return {
       videoId,
       title: data.title,
       duration: data.duration,
     };
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log.warn(`yt-dlp failed for "${videoId}": ${message}`);
     return null;
   }
 }

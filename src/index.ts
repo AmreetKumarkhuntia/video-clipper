@@ -16,6 +16,7 @@ import { detectAudioEvents } from './services/audioEventDetector/index.js';
 import { mergeSignals } from './services/signalMerger/index.js';
 import { dumpTranscript, dumpAnalysis } from './utils/dumper.js';
 import { formatConfig } from './utils/redactConfig.js';
+import { sliceAudio } from './utils/sliceAudio.js';
 import {
   readTranscriptCache,
   writeTranscriptCache,
@@ -329,10 +330,8 @@ async function run(): Promise<void> {
       audioEvents = cachedEvents;
       log.info(`[cache hit] Audio events loaded from cache (${audioEvents.length} events)`);
     } else {
-      log.info('Downloading audio for event detection...');
       try {
-        const audioPath = await downloadAudio(videoId, config.OUTPUT_DIR);
-        log.info(`Audio downloaded to ${audioPath}`);
+        const audioPath = await downloadAudio(videoId, config.OUTPUT_DIR + '/audio');
 
         log.info(
           `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${gameProfile})...`,
@@ -343,12 +342,18 @@ async function run(): Promise<void> {
         for (let offset = 0; offset < audioDuration; offset += chunkLength) {
           const chunkOffset = offset;
           const chunkEnd = Math.min(offset + chunkLength, audioDuration);
-          const chunkDuration = chunkEnd - offset;
 
           log.info(`  Processing audio chunk ${offset}s - ${chunkEnd}s...`);
 
           try {
-            const events = await detectAudioEvents(audioPath, gameProfile, chunkOffset);
+            const slicePath = await sliceAudio(
+              audioPath,
+              offset,
+              chunkEnd - offset,
+              config.OUTPUT_DIR,
+            );
+            const events = await detectAudioEvents(slicePath, gameProfile, chunkOffset);
+            await fs.unlink(slicePath);
             audioEvents.push(...events);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);

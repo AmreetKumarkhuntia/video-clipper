@@ -7,6 +7,13 @@ import { log } from '../../utils/logger.js';
 import { formatSeconds } from '../../utils/format.js';
 import type { RankedSegment } from '../../types/index.js';
 
+if (config.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(config.FFMPEG_PATH);
+}
+if (config.FFPROBE_PATH) {
+  ffmpeg.setFfprobePath(config.FFPROBE_PATH);
+}
+
 /**
  * Cuts a single clip from a video file using fluent-ffmpeg.
  * Re-encodes with libx264 (video) and aac (audio) for perfect audio/video sync.

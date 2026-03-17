@@ -79,7 +79,7 @@ export async function downloadFullVideo(videoId: string, customPath?: string): P
   log.info(`Downloading full video ${videoId} via yt-dlp...`);
 
   try {
-    const subprocess = execa('yt-dlp', [
+    const args = [
       '-f',
       'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
       '--merge-output-format',
@@ -89,7 +89,15 @@ export async function downloadFullVideo(videoId: string, customPath?: string): P
       '--no-playlist',
       '--newline',
       `https://www.youtube.com/watch?v=${videoId}`,
-    ]);
+    ];
+
+    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
+      args.splice(0, 0, '--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
+    } else if (config.YT_DLP_COOKIES_FILE) {
+      args.splice(0, 0, '--cookies', config.YT_DLP_COOKIES_FILE);
+    }
+
+    const subprocess = execa('yt-dlp', args);
 
     subprocess.stdout?.on('data', displayProgress('stdout'));
     subprocess.stderr?.on('data', displayProgress('stderr'));
@@ -154,7 +162,7 @@ async function downloadSegment(
   }
 
   try {
-    const subprocess = execa('yt-dlp', [
+    const args = [
       '-f',
       'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
       '--merge-output-format',
@@ -166,7 +174,15 @@ async function downloadSegment(
       '--no-playlist',
       '--newline',
       `https://www.youtube.com/watch?v=${videoId}`,
-    ]);
+    ];
+
+    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
+      args.splice(0, 0, '--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
+    } else if (config.YT_DLP_COOKIES_FILE) {
+      args.splice(0, 0, '--cookies', config.YT_DLP_COOKIES_FILE);
+    }
+
+    const subprocess = execa('yt-dlp', args);
 
     subprocess.stdout?.on('data', displayProgress('stdout'));
     subprocess.stderr?.on('data', displayProgress('stderr'));

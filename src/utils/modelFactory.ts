@@ -6,6 +6,7 @@ import { mistral } from '@ai-sdk/mistral';
 import { groq } from '@ai-sdk/groq';
 import type { LanguageModel } from 'ai';
 import { config } from '../config/index.js';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 /**
  * Returns a Vercel AI SDK LanguageModel instance for the configured provider
@@ -15,44 +16,42 @@ import { config } from '../config/index.js';
  * The active provider is controlled by `LLM_PROVIDER` in the environment.
  * The model name is controlled by `LLM_MODEL`.
  *
- * Note: newer provider packages (anthropic, google, xai, mistral, groq) ship
- * `LanguageModelV3` from their own bundled `@ai-sdk/provider`, which is a
- * superset of `LanguageModelV1`. The cast to `LanguageModel` is safe because
- * all concrete objects satisfy the interface expected by `generateObject` at
- * runtime.
+ * In ai@5, all provider packages ship LanguageModelV3 which natively
+ * satisfies the LanguageModel interface.
  */
 export function getModel(): LanguageModel {
   const model = config.LLM_MODEL;
 
   switch (config.LLM_PROVIDER) {
     case 'openai':
-      return openai(model);
+      return openai.languageModel(model);
 
     case 'anthropic':
-      return anthropic(model) as unknown as LanguageModel;
+      return anthropic.languageModel(model);
 
     case 'google':
-      return google(model) as unknown as LanguageModel;
+      return google.languageModel(model);
 
     case 'xai':
-      return xai(model) as unknown as LanguageModel;
+      return xai.languageModel(model);
 
     case 'mistral':
-      return mistral(model) as unknown as LanguageModel;
+      return mistral.languageModel(model);
 
     case 'groq':
-      return groq(model) as unknown as LanguageModel;
+      return groq.languageModel(model);
 
     case 'zai':
-      return createOpenAI({
-        baseURL: 'https://api.z.ai/api/paas/v4/',
+      return createOpenAICompatible({
+        name: 'zai',
+        baseURL: 'https://api.z.ai/api/paas/v4',
         apiKey: config.ZAI_API_KEY,
-      })(model);
+      }).languageModel(model);
 
     case 'openrouter':
       return createOpenAI({
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey: config.OPENROUTER_API_KEY,
-      })(model);
+      }).languageModel(model);
   }
 }
