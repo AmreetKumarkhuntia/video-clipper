@@ -1,56 +1,151 @@
-// youtube-transcript's package.json has "type":"module" but no "exports" field,
-// so Node resolves the CJS bundle via "main" and fails. Import the ESM build directly.
-// The types live at the package root, so we declare the subpath module here.
-import { YoutubeTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.js';
-import type { TranscriptResponse } from 'youtube-transcript';
+import { execa } from 'execa';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { log } from '../../utils/logger.js';
+import { config } from '../../config/index.js';
 import type { TranscriptLine } from '../../types/index.js';
 
 /**
- * Fetches the transcript for a given YouTube video ID and normalizes
- * timestamps from milliseconds to seconds.
+ * Parses a WebVTT string into TranscriptLine[].
  *
- * @throws {Error} if no transcript lines are returned (captions unavailable)
+ * Handles:
+ * - `HH:MM:SS.mmm --> HH:MM:SS.mmm` timestamp lines
+ * - `<MM:SS.mmm><c>text</c>` inline cue tags (stripped)
+ * - Duplicate / empty cues (skipped)
+ *
+ * Exported for unit testing.
+ */
+export function parseVtt(vttContent: string): TranscriptLine[] {
+  const lines = vttContent.split(/\r?\n/);
+  const result: TranscriptLine[] = [];
+
+  // Regex: HH:MM:SS.mmm --> HH:MM:SS.mmm (optional positioning metadata after)
+  const TIMESTAMP_RE =
+    /^(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s+-->\s+(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/;
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    const match = TIMESTAMP_RE.exec(line);
+
+    if (match) {
+      const startSec =
+        parseInt(match[1], 10) * 3600 +
+        parseInt(match[2], 10) * 60 +
+        parseInt(match[3], 10) +
+        parseInt(match[4], 10) / 1000;
+
+      const endSec =
+        parseInt(match[5], 10) * 3600 +
+        parseInt(match[6], 10) * 60 +
+        parseInt(match[7], 10) +
+        parseInt(match[8], 10) / 1000;
+
+      // Collect cue text lines until blank line or EOF
+      i++;
+      const textLines: string[] = [];
+      while (i < lines.length && lines[i].trim() !== '') {
+        textLines.push(lines[i].trim());
+        i++;
+      }
+
+      const rawText = textLines.join(' ');
+
+      // Strip VTT inline tags: <00:00:00.000>, <c>, </c>, <b>, </b>, <i>, </i>, etc.
+      const text = rawText
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (text.length === 0) {
+        continue;
+      }
+
+      const duration = Math.max(0, endSec - startSec);
+
+      // Deduplicate: skip if this cue text is identical to the previous one
+      // (YouTube VTT often repeats the same line as text scrolls)
+      if (result.length > 0 && result[result.length - 1].text === text) {
+        continue;
+      }
+
+      result.push({ text, start: startSec, duration });
+      continue;
+    }
+
+    i++;
+  }
+
+  return result;
+}
+
+/**
+ * Fetches the transcript for a given YouTube video ID using yt-dlp
+ * auto-generated subtitles (VTT format).
+ *
+ * The VTT file is written to a temp directory, parsed into TranscriptLine[],
+ * then cleaned up. Cookie config (YT_DLP_COOKIES_FROM_BROWSER /
+ * YT_DLP_COOKIES_FILE) is forwarded to yt-dlp automatically.
+ *
+ * @throws {Error} with the yt-dlp stderr if the command fails
+ * @throws {Error} if no subtitle file is produced
+ * @throws {Error} if the subtitle file contains no parseable cues
  */
 export async function fetchTranscript(videoId: string): Promise<TranscriptLine[]> {
-  let raw: TranscriptResponse[];
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vc-vtt-'));
 
   try {
-    raw = await YoutubeTranscript.fetchTranscript(videoId);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    // Surface the underlying message — if it mentions no captions, use the canonical phrase
-    if (
-      message.toLowerCase().includes('no transcript') ||
-      message.toLowerCase().includes('disabled') ||
-      message.toLowerCase().includes('not available')
-    ) {
-      throw new Error(`No transcript found for this video. Check if captions are enabled.`);
+    const args = [
+      '--write-auto-sub',
+      '--sub-format',
+      'vtt',
+      '--sub-lang',
+      'en.*',
+      '--skip-download',
+      '--output',
+      path.join(tmpDir, '%(id)s.%(ext)s'),
+      `https://www.youtube.com/watch?v=${videoId}`,
+    ];
+
+    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
+      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
+    } else if (config.YT_DLP_COOKIES_FILE) {
+      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
     }
-    throw new Error(`Failed to fetch transcript for video "${videoId}": ${message}`);
+
+    try {
+      await execa('yt-dlp', args);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`yt-dlp failed to fetch subtitles for "${videoId}": ${message}`);
+    }
+
+    // Find the downloaded .vtt file (yt-dlp names it <id>.<lang>.vtt)
+    const files = await fs.readdir(tmpDir);
+    const vttFile = files.find((f) => f.endsWith('.vtt'));
+
+    if (!vttFile) {
+      throw new Error(
+        `No subtitles found for "${videoId}". The video may not have auto-generated captions.`,
+      );
+    }
+
+    const content = await fs.readFile(path.join(tmpDir, vttFile), 'utf8');
+    const lines = parseVtt(content);
+
+    log.info(`Parsed ${lines.length} cues from subtitle file "${vttFile}".`);
+
+    if (lines.length === 0) {
+      throw new Error(`Subtitle file for "${videoId}" was empty or contained no parseable cues.`);
+    }
+
+    return lines;
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true });
   }
-
-  if (!raw || raw.length === 0) {
-    throw new Error(`No transcript found for this video. Check if captions are enabled.`);
-  }
-
-  // Detect auto-generated captions heuristically: youtube-transcript doesn't
-  // expose a direct flag, but videos with very short, uniform duration blocks
-  // are typically ASR-generated. Warn but do not abort.
-  const avgDuration =
-    raw.reduce((sum: number, l: TranscriptResponse) => sum + (l.duration ?? 0), 0) / raw.length;
-  if (avgDuration > 0 && avgDuration < 1500) {
-    log.warn(
-      `Transcript for "${videoId}" may be auto-generated (avg block duration ${Math.round(avgDuration)}ms). Accuracy may be lower.`,
-    );
-  }
-
-  // Normalize: offset (ms) → start (s), duration (ms) → duration (s)
-  const lines: TranscriptLine[] = raw.map((line: TranscriptResponse) => ({
-    text: line.text,
-    start: line.offset / 1000,
-    duration: line.duration / 1000,
-  }));
-
-  return lines;
 }

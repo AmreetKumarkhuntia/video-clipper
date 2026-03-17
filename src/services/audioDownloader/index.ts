@@ -50,6 +50,12 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
       args.unshift('--ffmpeg-location', config.FFMPEG_PATH);
     }
 
+    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
+      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
+    } else if (config.YT_DLP_COOKIES_FILE) {
+      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
+    }
+
     const subprocess = execa('yt-dlp', args);
 
     subprocess.stdout?.on('data', displayProgress('stdout'));
@@ -73,8 +79,15 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
       );
     }
 
-    if (message.includes('Private video') || message.includes('Sign in')) {
+    if (message.includes('Private video')) {
       throw new Error(`Video "${videoId}" is private and cannot be downloaded.`);
+    }
+
+    if (message.includes('Sign in to confirm') || message.includes('confirm you')) {
+      throw new Error(
+        `yt-dlp was blocked by YouTube bot detection for "${videoId}". ` +
+          `Set YT_DLP_COOKIES_FROM_BROWSER=chrome (or firefox/safari) in your .env to authenticate.`,
+      );
     }
 
     if (message.includes('not available in your country') || message.includes('geo')) {

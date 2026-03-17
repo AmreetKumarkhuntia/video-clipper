@@ -46,6 +46,10 @@ export function getModel(): LanguageModel {
         name: 'zai',
         baseURL: 'https://api.z.ai/api/paas/v4',
         apiKey: config.ZAI_API_KEY,
+        // Zai is OpenAI-compatible and supports json_schema response format.
+        // Without this flag the SDK falls back to json_object mode and emits
+        // a "responseFormat not supported" warning on every chunk call.
+        supportsStructuredOutputs: true,
       }).languageModel(model);
 
     case 'openrouter':

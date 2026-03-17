@@ -12,3 +12,17 @@ export type { AudioEvent, MergedCandidate } from './audio.js';
 
 export { VideoMetadataSchema, PipelineResultSchema } from './video.js';
 export type { VideoMetadata, PipelineResult } from './video.js';
+
+export type { CliArgs } from './cli.js';
+
+export type {
+  ChunkWindow,
+  VideoResolverResult,
+  TranscriptProcessorOpts,
+  TranscriptResult,
+  AudioProcessorOpts,
+  SegmentAnalyzerOpts,
+  SegmentAnalyzerResult,
+  SegmentSelectorOpts,
+  ClipExporterOpts,
+} from './pipeline.js';

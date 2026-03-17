@@ -3,25 +3,26 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { log } from './logger.js';
-import { TranscriptLineSchema } from '../types/index.js';
-import { ChunkEvaluationSchema } from '../types/index.js';
-import { AudioEventSchema } from '../types/index.js';
+import { TranscriptLineSchema, ChunkEvaluationSchema, AudioEventSchema } from '../types/index.js';
 import type { TranscriptLine, LLMChunk, ChunkEvaluation, AudioEvent } from '../types/index.js';
 
 // ---------------------------------------------------------------------------
-// Generic hash helper
+// Internal cache-key helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the hex SHA-256 digest of an arbitrary string.
+ * Serializes audio events into a stable string for cache keying.
+ * Events are sorted by time so the key is order-independent.
  */
-export function hashContent(input: string): string {
-  return createHash('sha256').update(input).digest('hex');
+function audioEventsKey(events: AudioEvent[]): string {
+  if (events.length === 0) return '';
+  const sorted = [...events].sort((a, b) => a.time - b.time);
+  return JSON.stringify(sorted);
 }
 
-// ---------------------------------------------------------------------------
-// Generic disk read/write helpers
-// ---------------------------------------------------------------------------
+function hashContent(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
 
 async function readCacheFile<T>(filePath: string, schema: z.ZodType<T>): Promise<T | null> {
   try {
@@ -49,93 +50,6 @@ async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Transcript cache
-//   Key  : sha256(videoId)
-//   Value: TranscriptLine[]
-// ---------------------------------------------------------------------------
-
-function transcriptCachePath(videoId: string, cacheDir: string): string {
-  return path.join(cacheDir, 'transcript', `${hashContent(videoId)}.json`);
-}
-
-/**
- * Returns cached transcript lines for `videoId`, or `null` on a cache miss.
- */
-export async function readTranscriptCache(
-  videoId: string,
-  cacheDir: string,
-): Promise<TranscriptLine[] | null> {
-  const filePath = transcriptCachePath(videoId, cacheDir);
-  return readCacheFile(filePath, z.array(TranscriptLineSchema));
-}
-
-/**
- * Persists `lines` to the transcript cache for `videoId`.
- */
-export async function writeTranscriptCache(
-  videoId: string,
-  lines: TranscriptLine[],
-  cacheDir: string,
-): Promise<void> {
-  const filePath = transcriptCachePath(videoId, cacheDir);
-  await writeCacheFile(filePath, lines);
-}
-
-// ---------------------------------------------------------------------------
-// Chunk LLM-result cache
-//   Key  : sha256(chunk.start + '|' + chunk.end + '|' + chunk.text)
-//   Value: ChunkEvaluation (status === 'success' only)
-// ---------------------------------------------------------------------------
-
-function chunkCachePath(chunk: LLMChunk, cacheDir: string): string {
-  const key = `${chunk.start}|${chunk.end}|${chunk.text}`;
-  return path.join(cacheDir, 'chunks', `${hashContent(key)}.json`);
-}
-
-/**
- * Returns the cached `ChunkEvaluation` for a chunk, or `null` on a cache miss.
- * Only successful evaluations are ever stored, so a hit always returns status 'success'.
- */
-export async function readChunkCache(
-  chunk: LLMChunk,
-  cacheDir: string,
-): Promise<ChunkEvaluation | null> {
-  const filePath = chunkCachePath(chunk, cacheDir);
-  return readCacheFile(filePath, ChunkEvaluationSchema);
-}
-
-/**
- * Persists a successful `ChunkEvaluation` to disk.
- * Silently ignores failed evaluations — those should be retried on the next run.
- */
-export async function writeChunkCache(
-  chunk: LLMChunk,
-  evaluation: ChunkEvaluation,
-  cacheDir: string,
-): Promise<void> {
-  if (evaluation.status !== 'success') return;
-  const filePath = chunkCachePath(chunk, cacheDir);
-  log.info(`Caching successful evaluation for chunk [${chunk.start}, ${chunk.end}] at ${filePath}`);
-  await writeCacheFile(filePath, evaluation);
-}
-
-// ---------------------------------------------------------------------------
-// Segment refinement cache
-//   Key  : sha256(segment.start + '|' + segment.end + '|' + segment.reason)
-//   Value: { refined_start: number, refined_end: number }
-// ---------------------------------------------------------------------------
-
-function segmentRefinementCachePath(
-  start: number,
-  end: number,
-  reason: string,
-  cacheDir: string,
-): string {
-  const key = `${start}|${end}|${reason}`;
-  return path.join(cacheDir, 'segments', `${hashContent(key)}.json`);
-}
-
 const SegmentRefinementSchema = z.object({
   refined_start: z.number(),
   refined_end: z.number(),
@@ -143,21 +57,186 @@ const SegmentRefinementSchema = z.object({
 type SegmentRefinement = z.infer<typeof SegmentRefinementSchema>;
 
 /**
- * Returns cached refined boundaries for a segment, or `null` on a cache miss.
+ * Disk-backed cache for all pipeline stages.
+ *
+ * Constructed once in runner.ts with the resolved cache directory and passed
+ * down to each stage that needs caching. Pass `disabled = true` to bypass all
+ * reads and writes (equivalent to --no-cache).
  */
+export class Cache {
+  constructor(
+    private readonly cacheDir: string,
+    private readonly disabled: boolean = false,
+  ) {}
+
+  // ---- Transcript ---------------------------------------------------------
+
+  private transcriptPath(videoId: string): string {
+    return path.join(this.cacheDir, 'transcript', `${hashContent(videoId)}.json`);
+  }
+
+  async readTranscript(videoId: string): Promise<TranscriptLine[] | null> {
+    if (this.disabled) return null;
+    return readCacheFile(this.transcriptPath(videoId), z.array(TranscriptLineSchema));
+  }
+
+  async writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void> {
+    if (this.disabled) return;
+    await writeCacheFile(this.transcriptPath(videoId), lines);
+  }
+
+  // ---- LLM chunk results --------------------------------------------------
+
+  private chunkPath(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
+    const audioKey = audioEventsKey(chunkAudioEvents);
+    return path.join(
+      this.cacheDir,
+      'chunks',
+      `${hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`)}.json`,
+    );
+  }
+
+  async readChunk(
+    chunk: LLMChunk,
+    chunkAudioEvents: AudioEvent[] = [],
+  ): Promise<ChunkEvaluation | null> {
+    if (this.disabled) return null;
+    return readCacheFile(this.chunkPath(chunk, chunkAudioEvents), ChunkEvaluationSchema);
+  }
+
+  async writeChunk(
+    chunk: LLMChunk,
+    evaluation: ChunkEvaluation,
+    chunkAudioEvents: AudioEvent[] = [],
+  ): Promise<void> {
+    if (this.disabled) return;
+    if (evaluation.status !== 'success') return;
+    await writeCacheFile(this.chunkPath(chunk, chunkAudioEvents), evaluation);
+  }
+
+  // ---- Segment refinement -------------------------------------------------
+
+  private segmentRefinementPath(start: number, end: number, reason: string): string {
+    return path.join(this.cacheDir, 'segments', `${hashContent(`${start}|${end}|${reason}`)}.json`);
+  }
+
+  async readSegmentRefinement(
+    start: number,
+    end: number,
+    reason: string,
+  ): Promise<SegmentRefinement | null> {
+    if (this.disabled) return null;
+    return readCacheFile(this.segmentRefinementPath(start, end, reason), SegmentRefinementSchema);
+  }
+
+  async writeSegmentRefinement(
+    start: number,
+    end: number,
+    reason: string,
+    refined: SegmentRefinement,
+  ): Promise<void> {
+    if (this.disabled) return;
+    await writeCacheFile(this.segmentRefinementPath(start, end, reason), refined);
+  }
+
+  // ---- Audio events (whole-video) -----------------------------------------
+
+  private audioEventPath(videoId: string, gameProfile: string, provider: string): string {
+    return path.join(
+      this.cacheDir,
+      'audio',
+      `${hashContent(`${videoId}|${gameProfile}|${provider}`)}.json`,
+    );
+  }
+
+  async readAudioEvents(
+    videoId: string,
+    gameProfile: string,
+    provider: string,
+  ): Promise<AudioEvent[] | null> {
+    if (this.disabled) return null;
+    return readCacheFile(
+      this.audioEventPath(videoId, gameProfile, provider),
+      z.array(AudioEventSchema),
+    );
+  }
+
+  async writeAudioEvents(
+    videoId: string,
+    gameProfile: string,
+    provider: string,
+    events: AudioEvent[],
+  ): Promise<void> {
+    if (this.disabled) return;
+    await writeCacheFile(this.audioEventPath(videoId, gameProfile, provider), events);
+  }
+
+  // ---- Audio events (per-chunk) -------------------------------------------
+
+  /**
+   * Per-chunk audio cache — mirrors the LLM `chunks/` pattern.
+   * Key includes videoId, gameProfile, provider, and the exact window bounds
+   * so each 120s slice is stored independently.
+   */
+  private audioChunkPath(
+    videoId: string,
+    gameProfile: string,
+    provider: string,
+    windowStart: number,
+    windowEnd: number,
+  ): string {
+    return path.join(
+      this.cacheDir,
+      'audio',
+      `${hashContent(`${videoId}|${gameProfile}|${provider}|${windowStart}|${windowEnd}`)}.json`,
+    );
+  }
+
+  async readAudioChunk(
+    videoId: string,
+    gameProfile: string,
+    provider: string,
+    windowStart: number,
+    windowEnd: number,
+  ): Promise<AudioEvent[] | null> {
+    if (this.disabled) return null;
+    return readCacheFile(
+      this.audioChunkPath(videoId, gameProfile, provider, windowStart, windowEnd),
+      z.array(AudioEventSchema),
+    );
+  }
+
+  async writeAudioChunk(
+    videoId: string,
+    gameProfile: string,
+    provider: string,
+    windowStart: number,
+    windowEnd: number,
+    events: AudioEvent[],
+  ): Promise<void> {
+    if (this.disabled) return;
+    await writeCacheFile(
+      this.audioChunkPath(videoId, gameProfile, provider, windowStart, windowEnd),
+      events,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy free-function exports (used by clipRefiner)
+// ---------------------------------------------------------------------------
+
+/** @deprecated Use the `Cache` class instead */
 export async function readSegmentRefinementCache(
   start: number,
   end: number,
   reason: string,
   cacheDir: string,
 ): Promise<SegmentRefinement | null> {
-  const filePath = segmentRefinementCachePath(start, end, reason, cacheDir);
-  return readCacheFile(filePath, SegmentRefinementSchema);
+  return new Cache(cacheDir).readSegmentRefinement(start, end, reason);
 }
 
-/**
- * Persists refined segment boundaries to disk.
- */
+/** @deprecated Use the `Cache` class instead */
 export async function writeSegmentRefinementCache(
   start: number,
   end: number,
@@ -165,51 +244,5 @@ export async function writeSegmentRefinementCache(
   refined: SegmentRefinement,
   cacheDir: string,
 ): Promise<void> {
-  const filePath = segmentRefinementCachePath(start, end, reason, cacheDir);
-  log.info(`Caching segment refinement [${start}, ${end}] at ${filePath}`);
-  await writeCacheFile(filePath, refined);
-}
-
-// ---------------------------------------------------------------------------
-// Audio event cache
-//   Key  : sha256(videoId + '|' + gameProfile + '|' + provider)
-//   Value: AudioEvent[]
-// ---------------------------------------------------------------------------
-
-function audioEventCachePath(
-  videoId: string,
-  gameProfile: string,
-  provider: string,
-  cacheDir: string,
-): string {
-  const key = `${videoId}|${gameProfile}|${provider}`;
-  return path.join(cacheDir, 'audio', `${hashContent(key)}.json`);
-}
-
-/**
- * Returns cached audio events for a videoId/gameProfile/provider combination, or null on miss.
- */
-export async function readAudioEventCache(
-  videoId: string,
-  gameProfile: string,
-  provider: string,
-  cacheDir: string,
-): Promise<AudioEvent[] | null> {
-  const filePath = audioEventCachePath(videoId, gameProfile, provider, cacheDir);
-  return readCacheFile(filePath, z.array(AudioEventSchema));
-}
-
-/**
- * Persists audio events to disk.
- */
-export async function writeAudioEventCache(
-  videoId: string,
-  gameProfile: string,
-  provider: string,
-  events: AudioEvent[],
-  cacheDir: string,
-): Promise<void> {
-  const filePath = audioEventCachePath(videoId, gameProfile, provider, cacheDir);
-  log.info(`Caching ${events.length} audio events for ${videoId} at ${filePath}`);
-  await writeCacheFile(filePath, events);
+  return new Cache(cacheDir).writeSegmentRefinement(start, end, reason, refined);
 }

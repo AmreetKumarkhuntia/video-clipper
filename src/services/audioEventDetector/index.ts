@@ -1,9 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
+import { z } from 'zod';
 import { execa } from 'execa';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import type { AudioEvent } from '../../types/index.js';
+
+const GeminiEventSchema = z.array(
+  z.object({
+    time_sec: z.number(),
+    event: z.string(),
+    confidence: z.number().min(0).max(1),
+  }),
+);
 
 const GAME_PROFILE_PROMPTS: Record<string, string> = {
   valorant:
@@ -49,7 +58,11 @@ async function detectEventsGemini(
   const audioData = fs.readFileSync(audioPath);
   const base64Audio = audioData.toString('base64');
 
-  const prompt = `${GAME_PROFILE_PROMPTS[gameProfile] || GAME_PROFILE_PROMPTS.general}
+  const extraInstructions = config.AUDIO_EXTRA_INSTRUCTIONS
+    ? `\nAdditional instructions:\n${config.AUDIO_EXTRA_INSTRUCTIONS}\n`
+    : '';
+
+  const prompt = `${GAME_PROFILE_PROMPTS[gameProfile] || GAME_PROFILE_PROMPTS.general} ${extraInstructions}
 
 For each event, return a JSON object with:
 - time_sec: the time in seconds relative to the START of this audio chunk
@@ -68,13 +81,22 @@ Return ONLY a JSON array, no explanation. Format:
   ]);
 
   const text = result.response.text();
-  console.log(`[audio] Gemini response: ${text}`);
-  const events = JSON.parse(text) as Array<{ time_sec: number; event: string; confidence: number }>;
+  log.info(`[audio] Gemini response: ${text}`);
 
-  return events.map((e) => ({
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/i, '')
+    .trim();
+
+  const parsed = GeminiEventSchema.safeParse(JSON.parse(cleaned));
+  if (!parsed.success) {
+    throw new Error(`Gemini response failed validation: ${parsed.error.message}`);
+  }
+
+  return parsed.data.map((e) => ({
     time: e.time_sec + chunkOffsetSec,
     event: e.event,
-    confidence: Math.max(0, Math.min(1, e.confidence)),
+    confidence: e.confidence,
     source: 'gemini' as const,
   }));
 }
@@ -126,15 +148,15 @@ export async function detectAudioEvents(
   if (useGemini) {
     try {
       const events = await detectEventsGemini(audioPath, gameProfile, chunkOffsetSec);
-      console.log(`[audio] Gemini detected ${events.length} events`);
+      log.info(`[audio] Gemini detected ${events.length} events`);
       return events;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn(`[audio] Gemini failed, falling back to YAMNet: ${message}`);
+      log.warn(`[audio] Gemini failed, falling back to YAMNet: ${message}`);
     }
   }
 
   const events = await detectEventsYAMNet(audioPath, chunkOffsetSec);
-  console.log(`[audio] YAMNet detected ${events.length} events`);
+  log.info(`[audio] YAMNet detected ${events.length} events`);
   return events;
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "time": 0.53,
+    "event": "match found",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1.105,
+    "event": "death match mode announcement",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 1.565,
+    "event": "gunshots",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 1.575,
+    "event": "player hit/death sound",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 1.585,
+    "event": "player death (down and out voice line)",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

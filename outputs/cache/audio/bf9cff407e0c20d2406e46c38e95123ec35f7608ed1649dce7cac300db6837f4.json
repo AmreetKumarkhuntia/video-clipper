@@ -1,0 +1,134 @@
+[
+  {
+    "time": 720.41,
+    "event": "player reloading",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 720.43,
+    "event": "player callout (site)",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 720.45,
+    "event": "Sova ultimate ability activation",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 720.47,
+    "event": "player callout (Left)",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 720.49,
+    "event": "opponent killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 720.51,
+    "event": "player engaging in combat",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 720.52,
+    "event": "player callout (Right)",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 720.55,
+    "event": "opponent killed, clutch situation initiated",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 721.03,
+    "event": "opponent killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 721.05,
+    "event": "player acknowledging mistake",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 721.07,
+    "event": "player requesting ability (flash)",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 721.09,
+    "event": "Sova ability activation",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 721.11,
+    "event": "announcer hype moment (We are Valorant!)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 721.12,
+    "event": "announcer hype moment (We are fighting!)",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 721.4,
+    "event": "player announces spike possession",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 721.44,
+    "event": "player callout (enemy left)",
+    "confidence": 0.85,
+    "source": "gemini"
+  },
+  {
+    "time": 721.46,
+    "event": "player callout (there)",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 721.47,
+    "event": "gunshots",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 721.49,
+    "event": "Sova ability activation",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 721.52,
+    "event": "gunshots",
+    "confidence": 0.8,
+    "source": "gemini"
+  },
+  {
+    "time": 721.56,
+    "event": "Omen ability activation",
+    "confidence": 0.95,
+    "source": "gemini"
+  },
+  {
+    "time": 721.59,
+    "event": "opponent killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]

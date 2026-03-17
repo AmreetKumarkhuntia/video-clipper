@@ -1,0 +1,302 @@
+[
+  {
+    "time": 120.457,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 121.767,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 122.237,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 125.487,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 127.42699999999999,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 130.517,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 131.237,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 131.857,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 134.887,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 135.657,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 136.597,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 137.517,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 140.257,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 141.057,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 141.907,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 150.637,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 151.067,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 160.507,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 161.347,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 161.977,
+    "event": "enemy killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 167.457,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 168.40699999999998,
+    "event": "enemy killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 171.527,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 171.987,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 172.887,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 173.377,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 179.207,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 179.957,
+    "event": "enemy killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 222.047,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 222.507,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 222.977,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 232.55700000000002,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 233.11700000000002,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 233.567,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 234.397,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 237.80700000000002,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 238.42700000000002,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 238.917,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 250.687,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 251.257,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 259.697,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 260.307,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 260.91700000000003,
+    "event": "enemy killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 264.387,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 265.227,
+    "event": "player killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 269.977,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 270.397,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 276.40700000000004,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 276.977,
+    "event": "gunshot",
+    "confidence": 0.9,
+    "source": "gemini"
+  },
+  {
+    "time": 277.697,
+    "event": "enemy killed",
+    "confidence": 0.9,
+    "source": "gemini"
+  }
+]
