@@ -37,22 +37,6 @@ export interface VideoResolverResult {
 }
 
 // ---------------------------------------------------------------------------
-// Stage 2 — Transcript Processor
-// ---------------------------------------------------------------------------
-
-export interface TranscriptProcessorOpts {
-  dumpOutputs: boolean;
-  /** Path to the downloaded audio WAV. Required by Whisper/Gemini providers; null for ytdlp. */
-  audioPath: string | null;
-}
-
-export interface TranscriptResult {
-  lines: TranscriptLine[];
-  microBlocks: MicroBlock[];
-  chunks: LLMChunk[];
-}
-
-// ---------------------------------------------------------------------------
 // Stage 3 — Audio Processor
 // ---------------------------------------------------------------------------
 

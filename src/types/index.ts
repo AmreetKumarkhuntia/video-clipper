@@ -18,8 +18,6 @@ export type { CliArgs } from './cli.js';
 export type {
   ChunkWindow,
   VideoResolverResult,
-  TranscriptProcessorOpts,
-  TranscriptResult,
   AudioProcessorOpts,
   SegmentAnalyzerOpts,
   SegmentAnalyzerResult,

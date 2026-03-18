@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { getModel } from '../../utils/modelFactory.js';
-import { readSegmentRefinementCache, writeSegmentRefinementCache } from '../../utils/cache.js';
+import { Cache } from '../../utils/cache.js';
 import type { RankedSegment, MicroBlock } from '../../types/index.js';
 
 const CONTEXT_PADDING_SEC = 30;
@@ -74,13 +74,9 @@ async function refineSegment(
   allBlocks: MicroBlock[],
   noCache: boolean,
 ): Promise<RankedSegment> {
+  const cache = new Cache(config.CACHE_DIR);
   if (!noCache) {
-    const cached = await readSegmentRefinementCache(
-      segment.start,
-      segment.end,
-      segment.reason,
-      config.CACHE_DIR,
-    );
+    const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
     if (cached) {
       log.info(`[segment] cache hit (rank=${segment.rank})`);
       return { ...segment, start: cached.refined_start, end: cached.refined_end };
@@ -101,13 +97,10 @@ async function refineSegment(
   const refinedEnd = Math.min(windowEnd, Math.max(object.clip_end, object.clip_start + 1));
 
   if (!noCache) {
-    await writeSegmentRefinementCache(
-      segment.start,
-      segment.end,
-      segment.reason,
-      { refined_start: refinedStart, refined_end: refinedEnd },
-      config.CACHE_DIR,
-    );
+    await cache.writeSegmentRefinement(segment.start, segment.end, segment.reason, {
+      refined_start: refinedStart,
+      refined_end: refinedEnd,
+    });
   }
 
   return { ...segment, start: refinedStart, end: refinedEnd };

@@ -1,6 +1,7 @@
 import { LLMAnalyzer } from '../../services/llmAnalyzer/LLMAnalyzer.js';
 import { TranscriptDetector } from '../../services/transcriptDetector/index.js';
 import { createTranscriptChain } from '../../services/transcriptAnalyzers/index.js';
+import { refineSegments } from '../../services/clipRefiner/index.js';
 import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { Cache } from '../../utils/cache.js';
@@ -55,20 +56,17 @@ export async function analyzeSegments(
 /**
  * Stage 4b — Segment Refiner (LLM pass 2)
  *
- * Delegates to LLMAnalyzer.refine() which wraps refineSegments().
- * Separated from `analyzeSegments` because ranking (stage 5)
- * must happen between the two passes.
+ * Calls refineSegments() directly — no TranscriptDetector needed here since
+ * refinement only tightens clip boundaries and never touches the transcript.
+ * Separated from `analyzeSegments` because ranking (stage 5) must happen
+ * between the two passes.
  */
 export async function refineRankedSegments(
   rankedSegments: RankedSegment[],
   microBlocks: MicroBlock[],
-  cache: Cache,
+  _cache: Cache,
   opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache'>,
 ): Promise<RankedSegment[]> {
   log.info('Refining clip boundaries...');
-  const chain = createTranscriptChain(config.TRANSCRIPT_PROVIDER);
-  const transcriptDetector = new TranscriptDetector(chain);
-  const analyzer = new LLMAnalyzer(transcriptDetector, cache);
-
-  return analyzer.refine(rankedSegments, microBlocks, opts);
+  return refineSegments(rankedSegments, microBlocks, opts.maxParallel, opts.noCache);
 }

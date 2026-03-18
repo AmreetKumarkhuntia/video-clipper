@@ -221,28 +221,3 @@ export class Cache {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Legacy free-function exports (used by clipRefiner)
-// ---------------------------------------------------------------------------
-
-/** @deprecated Use the `Cache` class instead */
-export async function readSegmentRefinementCache(
-  start: number,
-  end: number,
-  reason: string,
-  cacheDir: string,
-): Promise<SegmentRefinement | null> {
-  return new Cache(cacheDir).readSegmentRefinement(start, end, reason);
-}
-
-/** @deprecated Use the `Cache` class instead */
-export async function writeSegmentRefinementCache(
-  start: number,
-  end: number,
-  reason: string,
-  refined: SegmentRefinement,
-  cacheDir: string,
-): Promise<void> {
-  return new Cache(cacheDir).writeSegmentRefinement(start, end, reason, refined);
-}
