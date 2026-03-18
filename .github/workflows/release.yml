@@ -44,8 +44,29 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git
 
-      - name: Release
+      - name: Stage 1: GitHub Release (versioning, tags, releases)
+        id: github_release
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.PUSH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify GitHub Release
+        run: |
+          echo "Checking for new git tags..."
+          CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "Current tag: $CURRENT_TAG"
+
+          if [ "$CURRENT_TAG" != "none" ]; then
+            echo "✅ New tag created: $CURRENT_TAG"
+            echo "Proceeding to npm publish..."
+          else
+            echo "❌ No new tag created - skipping npm publish"
+            exit 1
+          fi
+        if: success()
+
+      - name: Stage 2: Publish to NPM
+        run: npm publish
+        if: success()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
