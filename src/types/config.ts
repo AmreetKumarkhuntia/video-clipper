@@ -9,6 +9,7 @@ const LLM_PROVIDERS = [
   'groq',
   'zai',
   'openrouter',
+  'custom',
 ] as const;
 
 export type LLMProvider = (typeof LLM_PROVIDERS)[number];
@@ -23,6 +24,7 @@ const PROVIDER_KEY_MAP: Record<LLMProvider, string> = {
   groq: 'GROQ_API_KEY',
   zai: 'ZAI_API_KEY',
   openrouter: 'OPENROUTER_API_KEY',
+  custom: 'CUSTOM_OPENAI_API_KEY',
 };
 
 export const ConfigSchema = z
@@ -39,6 +41,8 @@ export const ConfigSchema = z
     GROQ_API_KEY: z.string().optional(),
     ZAI_API_KEY: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
+    CUSTOM_OPENAI_API_KEY: z.string().optional(),
+    CUSTOM_OPENAI_BASE_URL: z.string().url().optional(),
 
     // --- Tunable parameters ---
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
@@ -101,6 +105,18 @@ export const ConfigSchema = z
         code: z.ZodIssueCode.custom,
         path: [keyName],
         message: `${keyName} is required when LLM_PROVIDER is "${provider}"`,
+      });
+    }
+
+    // custom provider also requires a base URL
+    if (
+      provider === 'custom' &&
+      (!data.CUSTOM_OPENAI_BASE_URL || data.CUSTOM_OPENAI_BASE_URL.trim() === '')
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CUSTOM_OPENAI_BASE_URL'],
+        message: 'CUSTOM_OPENAI_BASE_URL is required when LLM_PROVIDER is "custom"',
       });
     }
 

@@ -57,5 +57,15 @@ export function getModel(): LanguageModel {
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey: config.OPENROUTER_API_KEY,
       }).languageModel(model);
+
+    case 'custom':
+      return createOpenAICompatible({
+        name: 'custom',
+        baseURL: config.CUSTOM_OPENAI_BASE_URL!,
+        apiKey: config.CUSTOM_OPENAI_API_KEY,
+        // Treat as a fully OpenAI-compatible endpoint with structured output
+        // support so generateObject uses json_schema mode, not json_object fallback.
+        supportsStructuredOutputs: true,
+      }).languageModel(model);
   }
 }
