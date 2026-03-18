@@ -44,7 +44,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git
 
-      - name: Stage 1: GitHub Release (versioning, tags, releases)
+      - name: Stage 1 GitHub Release (versioning, tags, releases)
         id: github_release
         run: npx semantic-release
         env:
@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
 
-      - name: Stage 2: Publish to NPM
+      - name: Stage 2 Publish to NPM
         if: success()
         run: npm publish
         env:
