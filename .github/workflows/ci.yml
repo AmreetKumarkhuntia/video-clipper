@@ -6,8 +6,9 @@ on:
       - main
       - master
   pull_request:
+    branches:
+      - main
       - master
-
 jobs:
   ci:
     name: Type-check, Format, Test & Build
