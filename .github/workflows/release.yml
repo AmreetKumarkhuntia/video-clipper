@@ -51,6 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PUSH_TOKEN }}
 
       - name: Verify GitHub Release
+        if: success()
         run: |
           echo "Checking for new git tags..."
           CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
@@ -63,10 +64,9 @@ jobs:
             echo "❌ No new tag created - skipping npm publish"
             exit 1
           fi
-        if: success()
 
       - name: Stage 2: Publish to NPM
-        run: npm publish
         if: success()
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
