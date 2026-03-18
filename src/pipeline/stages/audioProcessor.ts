@@ -1,7 +1,8 @@
 import { promises as fs } from 'fs';
 import pLimit from 'p-limit';
 import { downloadAudio } from '../../services/audioDownloader/index.js';
-import { detectAudioEvents } from '../../services/audioEventDetector/index.js';
+import { createAnalyzerChain } from '../../services/audioAnalyzers/index.js';
+import { EventDetector } from '../../services/eventDetector/index.js';
 import { sliceAudio } from '../../utils/sliceAudio.js';
 import { buildWindows } from '../../utils/chunker.js';
 import { log } from '../../utils/logger.js';
@@ -15,13 +16,16 @@ export type { AudioProcessorOpts };
  * Stage 3 — Audio Processor
  *
  * Downloads audio-only WAV, slices it into chunks using the generic
- * `buildWindows` utility, runs event detection on each slice (Gemini primary /
- * YAMNet fallback), and persists the results to cache.
+ * `buildWindows` utility, runs event detection on each slice via an
+ * EventDetector (constructed from the ordered provider chain in config),
+ * and persists the results to cache.
+ *
+ * The provider chain is built once per run from `config.AUDIO_PROVIDER`
+ * (e.g. "gemini,whisper") via `createAnalyzerChain`. The EventDetector
+ * walks the chain in order, falling back to the next analyzer on failure.
  *
  * Returns an empty array immediately when audio detection is disabled via
  * `--no-audio` or the `AUDIO_DETECTION_ENABLED` config flag.
- *
- * All caching is handled internally via the injected `Cache` instance.
  */
 export async function processAudio(
   videoId: string,
@@ -42,15 +46,16 @@ export async function processAudio(
   try {
     const audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
 
+    // Build the analyzer chain once per run from config
+    const chain = createAnalyzerChain(config.AUDIO_PROVIDER);
+    const detector = new EventDetector(chain);
+
+    const providerNames = chain.map((a) => a.source).join(' → ');
     log.info(
-      `Detecting audio events (provider: ${config.AUDIO_PROVIDER}, profile: ${opts.gameProfile}, max ${opts.maxParallel} parallel)...`,
+      `Detecting audio events (chain: ${providerNames}, profile: ${opts.gameProfile}, max ${opts.maxParallel} parallel)...`,
     );
 
-    // Use the generic chunker to build time windows over the full audio duration.
-    // Pass CHUNK_OVERLAP_SEC so audio windows are co-aligned with transcript LLM chunks,
-    // which also use a sliding window of CHUNK_LENGTH_SEC with CHUNK_OVERLAP_SEC overlap.
     const windows = buildWindows(duration, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
-
     const limit = pLimit(opts.maxParallel);
 
     const results = await Promise.allSettled(
@@ -58,7 +63,6 @@ export async function processAudio(
         limit(async () => {
           log.info(`  Processing audio chunk ${window.start}s - ${window.end}s...`);
 
-          // Per-chunk cache — avoids re-processing completed windows on retry
           const cachedChunk = await cache.readAudioChunk(
             videoId,
             opts.gameProfile,
@@ -79,7 +83,7 @@ export async function processAudio(
             window.end - window.start,
             config.OUTPUT_DIR,
           );
-          const events = await detectAudioEvents(
+          const events = await detector.detect(
             slicePath,
             opts.gameProfile,
             window.start,

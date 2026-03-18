@@ -80,7 +80,28 @@ export const ConfigSchema = z
     TIMESTAMP_OFFSET_SECONDS: z.coerce.number().default(0),
     // --- Audio event detection ---
     AUDIO_DETECTION_ENABLED: z.coerce.boolean().default(true),
-    AUDIO_PROVIDER: z.enum(['gemini', 'yamnet', 'whisper', 'both']).default('both'),
+    // Comma-separated ordered fallback chain: "gemini,whisper" | "yamnet" | "gemini" etc.
+    // Legacy value "both" is accepted and mapped to "gemini,whisper" at runtime.
+    AUDIO_PROVIDER: z
+      .string()
+      .default('gemini,whisper')
+      .refine(
+        (v) => {
+          const legacy = v.trim() === 'both';
+          if (legacy) return true;
+          const parts = v
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          return (
+            parts.length > 0 && parts.every((p) => ['gemini', 'whisper', 'yamnet'].includes(p))
+          );
+        },
+        {
+          message:
+            'AUDIO_PROVIDER must be a comma-separated list of: gemini, whisper, yamnet (e.g. "gemini,whisper")',
+        },
+      ),
     AUDIO_WHISPER_MODEL: z.enum(['tiny', 'base', 'small', 'medium', 'large-v3']).default('medium'),
     AUDIO_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.3),
     AUDIO_CLIP_PRE_ROLL: z.coerce.number().min(0).default(5),
