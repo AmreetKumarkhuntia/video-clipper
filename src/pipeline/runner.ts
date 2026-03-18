@@ -2,13 +2,13 @@ import { promises as fs } from 'fs';
 import { config } from '../config/index.js';
 import { Cache } from '../utils/cache.js';
 import { log } from '../utils/logger.js';
-import { dumpAnalysis } from '../utils/dumper.js';
+import { dumpAnalysis, dumpTranscript } from '../utils/dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
-import { processTranscript } from './stages/transcriptProcessor.js';
 import { processAudio } from './stages/audioProcessor.js';
 import { analyzeSegments, refineRankedSegments } from './stages/segmentAnalyzer.js';
 import { selectSegments } from './stages/segmentSelector.js';
 import { exportClips } from './stages/clipExporter.js';
+import { downloadAudio } from '../services/audioDownloader/index.js';
 import type { CliArgs, PipelineResult } from '../types/index.js';
 
 async function outputResult(
@@ -27,13 +27,22 @@ async function outputResult(
 /**
  * Runs the full video-clipper pipeline for the given CLI arguments.
  *
- * Ordering: processAudio completes before analyzeSegments so that audio events
- * can be forwarded into each chunk's LLM prompt. refineRankedSegments runs after
- * ranking since it requires the ranked segment list.
+ * Stage ordering:
+ *   1. resolveVideo         — parse URL, extract video ID + metadata
+ *   2. downloadAudio        — download WAV so Whisper/Gemini transcript providers can use it
+ *   3. processAudio         — detect audio events per window (reuses downloaded WAV)
+ *   4a. analyzeSegments     — fetch transcript + LLM pass 1 (informed by audio events)
+ *   5. selectSegments       — merge signals, rank, threshold filter
+ *   4b. refineRankedSegments — LLM pass 2 to tighten clip boundaries
+ *   6. exportClips          — download video + run ffmpeg (only if --clip)
  *
- * Hard errors (invalid URL, transcript failure, all LLM chunks failed) are thrown
- * so the caller can catch, log, and exit(1). Soft failures (audio detection,
- * individual clip failures) are logged as warnings and the pipeline continues.
+ * downloadAudio runs before analyzeSegments so that `audioPath` is available
+ * for Whisper/Gemini transcript providers. processAudio reuses the same WAV.
+ *
+ * Hard errors (invalid URL, transcript failure, all LLM chunks failed) are
+ * thrown so the caller can catch, log, and exit(1). Soft failures (audio
+ * detection, individual clip failures) are logged as warnings and the pipeline
+ * continues.
  */
 export async function runPipeline(args: CliArgs): Promise<void> {
   const threshold = args.threshold ?? config.SCORE_THRESHOLD;
@@ -46,24 +55,44 @@ export async function runPipeline(args: CliArgs): Promise<void> {
   // ── Stage 1: Resolve video ID + metadata ─────────────────────────────────
   const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration);
 
-  // ── Stage 2: Fetch + chunk transcript ────────────────────────────────────
-  const { lines, microBlocks, chunks } = await processTranscript(videoId, cache, {
-    dumpOutputs: config.DUMP_OUTPUTS,
-  });
+  // ── Stage 2: Download audio ───────────────────────────────────────────────
+  // Downloaded before transcript so Whisper/Gemini transcript providers can
+  // use the WAV. Returns null when audio detection is disabled.
+  let audioPath: string | null = null;
+  const audioEnabled = config.AUDIO_DETECTION_ENABLED && !args.noAudio;
+  if (audioEnabled) {
+    try {
+      audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log.warn(`Audio download failed — continuing without audio: ${message}`);
+    }
+  }
 
-  // ── Stage 3: Audio detection ──────────────────────────────────────────────
+  // ── Stage 3: Audio event detection ───────────────────────────────────────
   const audioEvents = await processAudio(videoId, metadata.duration, cache, {
     noAudio: args.noAudio,
     gameProfile,
     maxParallel,
+    audioPath,
   });
 
-  // ── Stage 4a: LLM analysis (informed by audio events) ────────────────────
-  const { chunkEvals } = await analyzeSegments(chunks, lines, audioEvents, cache, {
-    maxChunks: args.maxChunks,
-    maxParallel,
-    noCache: args.noCache,
-  });
+  // ── Stage 4a: Fetch transcript + LLM analysis (informed by audio events) ──
+  const { lines, microBlocks, chunkEvals } = await analyzeSegments(
+    videoId,
+    audioPath,
+    audioEvents,
+    cache,
+    {
+      maxChunks: args.maxChunks,
+      maxParallel,
+      noCache: args.noCache,
+    },
+  );
+
+  if (config.DUMP_OUTPUTS) {
+    await dumpTranscript(videoId, lines);
+  }
 
   // ── Stage 5: Merge signals + rank ─────────────────────────────────────────
   const rankedSegments = selectSegments(chunkEvals, audioEvents, { threshold, topN });

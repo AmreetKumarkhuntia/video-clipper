@@ -42,6 +42,8 @@ export interface VideoResolverResult {
 
 export interface TranscriptProcessorOpts {
   dumpOutputs: boolean;
+  /** Path to the downloaded audio WAV. Required by Whisper/Gemini providers; null for ytdlp. */
+  audioPath: string | null;
 }
 
 export interface TranscriptResult {
@@ -58,6 +60,8 @@ export interface AudioProcessorOpts {
   noAudio: boolean;
   gameProfile: string;
   maxParallel: number;
+  /** Pre-downloaded audio WAV path. When provided, skips the downloadAudio call. */
+  audioPath?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +75,9 @@ export interface SegmentAnalyzerOpts {
 }
 
 export interface SegmentAnalyzerResult {
+  lines: TranscriptLine[];
+  microBlocks: MicroBlock[];
+  chunks: LLMChunk[];
   chunkEvals: ChunkEvaluation[];
 }
 

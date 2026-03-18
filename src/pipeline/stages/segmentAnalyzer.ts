@@ -1,11 +1,10 @@
-import { analyzeChunks } from '../../services/llmAnalyzer/index.js';
-import { refineSegments } from '../../services/clipRefiner/index.js';
+import { LLMAnalyzer } from '../../services/llmAnalyzer/LLMAnalyzer.js';
+import { TranscriptDetector } from '../../services/transcriptDetector/index.js';
+import { createTranscriptChain } from '../../services/transcriptAnalyzers/index.js';
 import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { Cache } from '../../utils/cache.js';
 import type {
-  LLMChunk,
-  TranscriptLine,
   AudioEvent,
   MicroBlock,
   RankedSegment,
@@ -18,55 +17,46 @@ export type { SegmentAnalyzerOpts, SegmentAnalyzerResult };
 /**
  * Stage 4a — Segment Analyzer (LLM pass 1)
  *
- * Runs LLM analysis over all transcript chunks in parallel, respecting the
- * optional `maxChunks` cap. Audio events and transcript lines within each
- * chunk's window are forwarded to the LLM prompt for full context scoring.
+ * Builds a TranscriptDetector from config.TRANSCRIPT_PROVIDER and an
+ * LLMAnalyzer that owns it. Fetches the transcript (cache-first) and runs
+ * LLM chunk analysis informed by pre-computed audio events.
  *
- * Returns raw ChunkEvaluation results — ranking and merging with audio signals
- * happen in segmentSelector, and the second LLM refinement pass happens in
- * refineRankedSegments (after ranking).
+ * Returns raw ChunkEvaluation results plus transcript data (lines, microBlocks,
+ * chunks) so the runner has everything it needs for ranking.
+ *
+ * NOTE: `processTranscript` no longer needs to run as a separate stage before
+ * this function — `LLMAnalyzer.analyze()` handles transcript fetching internally.
  */
 export async function analyzeSegments(
-  chunks: LLMChunk[],
-  lines: TranscriptLine[],
+  videoId: string,
+  audioPath: string | null,
   audioEvents: AudioEvent[],
   cache: Cache,
   opts: SegmentAnalyzerOpts,
 ): Promise<SegmentAnalyzerResult> {
-  const chunkLimit = opts.maxChunks ?? config.MAX_CHUNKS;
-  const chunksToAnalyze = chunkLimit !== undefined ? chunks.slice(0, chunkLimit) : chunks;
+  log.info('Fetching transcript and analyzing segments...');
 
-  if (chunkLimit !== undefined) {
-    log.info(
-      `Limiting evaluation to ${chunksToAnalyze.length} of ${chunks.length} chunks (--max-chunks ${chunkLimit})`,
-    );
-  }
+  const chain = createTranscriptChain(config.TRANSCRIPT_PROVIDER);
+  const transcriptDetector = new TranscriptDetector(chain);
+  const analyzer = new LLMAnalyzer(transcriptDetector, cache);
 
-  log.info(
-    `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} chunks, max ${opts.maxParallel} parallel)...`,
-  );
-
-  const chunkEvals = await analyzeChunks(
-    chunksToAnalyze,
-    lines,
+  const { lines, microBlocks, chunks, chunkEvals } = await analyzer.analyze({
+    videoId,
+    audioPath,
     audioEvents,
-    opts.maxParallel,
-    opts.noCache,
-  );
+    maxChunks: opts.maxChunks,
+    maxParallel: opts.maxParallel,
+    noCache: opts.noCache,
+  });
 
-  const succeededCount = chunkEvals.filter((e) => e.status === 'success').length;
-  if (succeededCount === 0) {
-    throw new Error('All chunks failed LLM analysis. Check your API key and model config.');
-  }
-
-  return { chunkEvals };
+  return { lines, microBlocks, chunks, chunkEvals };
 }
 
 /**
  * Stage 4b — Segment Refiner (LLM pass 2)
  *
- * Runs a second LLM pass on already-ranked segments to tighten clip
- * boundaries. Separated from `analyzeSegments` because ranking (stage 5)
+ * Delegates to LLMAnalyzer.refine() which wraps refineSegments().
+ * Separated from `analyzeSegments` because ranking (stage 5)
  * must happen between the two passes.
  */
 export async function refineRankedSegments(
@@ -76,5 +66,9 @@ export async function refineRankedSegments(
   opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache'>,
 ): Promise<RankedSegment[]> {
   log.info('Refining clip boundaries...');
-  return refineSegments(rankedSegments, microBlocks, opts.maxParallel, opts.noCache);
+  const chain = createTranscriptChain(config.TRANSCRIPT_PROVIDER);
+  const transcriptDetector = new TranscriptDetector(chain);
+  const analyzer = new LLMAnalyzer(transcriptDetector, cache);
+
+  return analyzer.refine(rankedSegments, microBlocks, opts);
 }

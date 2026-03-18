@@ -44,7 +44,8 @@ export async function processAudio(
   }
 
   try {
-    const audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
+    const audioPath =
+      opts.audioPath ?? (await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`));
 
     // Build the analyzer chain once per run from config
     const chain = createAnalyzerChain(config.AUDIO_PROVIDER);

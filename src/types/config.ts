@@ -78,6 +78,25 @@ export const ConfigSchema = z
       .default('fast'),
     // --- Timestamp offset for clips (adjusts if transcript is misaligned with video) ---
     TIMESTAMP_OFFSET_SECONDS: z.coerce.number().default(0),
+    // --- Transcript provider ---
+    // Comma-separated ordered fallback chain: "ytdlp" | "whisper" | "ytdlp,whisper" etc.
+    // First provider that succeeds wins; subsequent providers are tried only on failure.
+    TRANSCRIPT_PROVIDER: z
+      .string()
+      .default('ytdlp')
+      .refine(
+        (v) => {
+          const parts = v
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          return parts.length > 0 && parts.every((p) => ['ytdlp', 'whisper', 'gemini'].includes(p));
+        },
+        {
+          message:
+            'TRANSCRIPT_PROVIDER must be a comma-separated list of: ytdlp, whisper, gemini (e.g. "ytdlp")',
+        },
+      ),
     // --- Audio event detection ---
     AUDIO_DETECTION_ENABLED: z.coerce.boolean().default(true),
     // Comma-separated ordered fallback chain: "gemini,whisper" | "yamnet" | "gemini" etc.
