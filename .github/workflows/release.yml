@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - test/two-stage-release
 
 jobs:
   release:
