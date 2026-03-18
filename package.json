@@ -1,5 +1,5 @@
 {
-  "name": "video-clipper",
+  "name": "@thunderkiller/video-clipper",
   "version": "1.0.0",
   "description": "CLI that analyzes YouTube transcripts with an LLM to find interesting moments and cut clips",
   "license": "ISC",
@@ -7,6 +7,10 @@
   "packageManager": "pnpm@10.12.4",
   "type": "module",
   "main": "dist/index.js",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc",
