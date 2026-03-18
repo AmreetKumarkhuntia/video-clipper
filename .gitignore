@@ -11,3 +11,4 @@ outputs/clips
 outputs/transcript
 *.wav
 outputs/audio
+outputs

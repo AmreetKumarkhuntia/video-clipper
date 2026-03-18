@@ -117,13 +117,17 @@ async function analyzeChunk(
 
   for (let attempt = 0; attempt <= config.LLM_MAX_RETRIES; attempt++) {
     try {
+      const prompt = buildPrompt(chunk, chunkLines, chunkAudioEvents, !!config.LLM_SYSTEM_PROMPT);
       const { object } = await generateObject({
         model: getModel(),
         schema: AnalyzedSegmentSchema,
         system: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
-        prompt: buildPrompt(chunk, chunkLines, chunkAudioEvents, !!config.LLM_SYSTEM_PROMPT),
+        prompt: prompt,
         maxRetries: 0,
       });
+      log.info(
+        `Chunk ${chunkIndex} analysis complete: interesting=${object.interesting}, score=${object.score}, reason=${object.reason}`,
+      );
       if (!noCache) {
         const evaluation: ChunkEvaluation = {
           status: 'success' as const,
@@ -150,6 +154,8 @@ async function analyzeChunk(
         );
         await sleep(delay);
         continue;
+      } else {
+        log.error(`[chunk] Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
       }
 
       throw err;
