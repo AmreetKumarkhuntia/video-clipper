@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.1.0...v1.1.1) (2026-03-19)
+
+### Bug Fixes
+
+- github workflows ([18a9536](https://github.com/AmreetKumarkhuntia/video-clipper/commit/18a953619ed17de71d3c9bd0a86e1b42a10aea37))
+- **release:** pull updated package.json before npm publish to avoid race condition ([1839e4a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1839e4a57d516234ad629f0217e4fa5f4852e4e3))
+- yaml correction ([33c7854](https://github.com/AmreetKumarkhuntia/video-clipper/commit/33c7854015e1266b3fc01b6206da4ec946f94307))
+
 # 1.0.0 (2026-03-18)
 
 ### Bug Fixes
