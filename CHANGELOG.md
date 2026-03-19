@@ -1,3 +1,9 @@
+# [1.2.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.1.1...v1.2.0) (2026-03-19)
+
+### Features
+
+- **docs:** add advanced examples section to README with common use cases ([6d730f6](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6d730f615830247977273bacb26c9bee24a6e474))
+
 ## [1.1.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.1.0...v1.1.1) (2026-03-19)
 
 ### Bug Fixes
