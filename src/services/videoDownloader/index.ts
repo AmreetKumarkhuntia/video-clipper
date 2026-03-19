@@ -4,21 +4,7 @@ import { join } from 'path';
 import pLimit from 'p-limit';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
-import type { RankedSegment } from '../../types/index.js';
-
-export type DownloadMode = 'all' | 'segments';
-
-export interface DownloadResultAll {
-  mode: 'all';
-  path: string;
-}
-
-export interface DownloadResultSegments {
-  mode: 'segments';
-  paths: string[];
-}
-
-export type DownloadResult = DownloadResultAll | DownloadResultSegments;
+import type { RankedSegment, DownloadMode, DownloadResult } from '../../types/index.js';
 
 /**
  * Formats a timestamp for yt-dlp --download-sections.

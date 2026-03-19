@@ -20,7 +20,7 @@ export function parseVtt(vttContent: string): TranscriptLine[] {
   const lines = vttContent.split(/\r?\n/);
   const result: TranscriptLine[] = [];
 
-  // Regex: HH:MM:SS.mmm --> HH:MM:SS.mmm (optional positioning metadata after)
+  /** Regex to match HH:MM:SS.mmm --> HH:MM:SS.mmm timestamp lines */
   const TIMESTAMP_RE =
     /^(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s+-->\s+(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/;
 
@@ -42,7 +42,6 @@ export function parseVtt(vttContent: string): TranscriptLine[] {
         parseInt(match[7], 10) +
         parseInt(match[8], 10) / 1000;
 
-      // Collect cue text lines until blank line or EOF
       i++;
       const textLines: string[] = [];
       while (i < lines.length && lines[i].trim() !== '') {
@@ -52,7 +51,6 @@ export function parseVtt(vttContent: string): TranscriptLine[] {
 
       const rawText = textLines.join(' ');
 
-      // Strip VTT inline tags: <00:00:00.000>, <c>, </c>, <b>, </b>, <i>, </i>, etc.
       const text = rawText
         .replace(/<[^>]+>/g, '')
         .replace(/&amp;/g, '&')
@@ -68,8 +66,7 @@ export function parseVtt(vttContent: string): TranscriptLine[] {
 
       const duration = Math.max(0, endSec - startSec);
 
-      // Deduplicate: skip if this cue text is identical to the previous one
-      // (YouTube VTT often repeats the same line as text scrolls)
+      /** Skip duplicate cues - YouTube VTT often repeats same line as text scrolls */
       if (result.length > 0 && result[result.length - 1].text === text) {
         continue;
       }
@@ -125,7 +122,6 @@ export async function fetchTranscript(videoId: string): Promise<TranscriptLine[]
       throw new Error(`yt-dlp failed to fetch subtitles for "${videoId}": ${message}`);
     }
 
-    // Find the downloaded .vtt file (yt-dlp names it <id>.<lang>.vtt)
     const files = await fs.readdir(tmpDir);
     const vttFile = files.find((f) => f.endsWith('.vtt'));
 

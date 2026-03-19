@@ -18,7 +18,6 @@ export async function resolveVideo(
   rawUrl: string,
   maxDurationSec?: number,
 ): Promise<VideoResolverResult> {
-  // Parse URL → video ID
   let videoId: string;
   try {
     videoId = parseUrl(rawUrl);
@@ -26,14 +25,12 @@ export async function resolveVideo(
     throw new Error(`Invalid YouTube URL: ${rawUrl}`);
   }
 
-  // Fetch metadata (yt-dlp → oEmbed fallback)
   log.info(`Fetching metadata for ${videoId}...`);
   const metadata = await extractMetadata(videoId);
   log.info(
     `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
   );
 
-  // --max-duration guard
   if (maxDurationSec !== undefined && metadata.duration > 0) {
     if (metadata.duration > maxDurationSec) {
       throw new Error(

@@ -3,12 +3,19 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { log } from './logger.js';
-import { TranscriptLineSchema, ChunkEvaluationSchema, AudioEventSchema } from '../types/index.js';
-import type { TranscriptLine, LLMChunk, ChunkEvaluation, AudioEvent } from '../types/index.js';
-
-// ---------------------------------------------------------------------------
-// Internal cache-key helpers
-// ---------------------------------------------------------------------------
+import {
+  TranscriptLineSchema,
+  ChunkEvaluationSchema,
+  AudioEventSchema,
+  SegmentRefinementSchema,
+} from '../types/index.js';
+import type {
+  TranscriptLine,
+  LLMChunk,
+  ChunkEvaluation,
+  AudioEvent,
+  SegmentRefinement,
+} from '../types/index.js';
 
 /**
  * Serializes audio events into a stable string for cache keying.
@@ -49,12 +56,6 @@ async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
     );
   }
 }
-
-const SegmentRefinementSchema = z.object({
-  refined_start: z.number(),
-  refined_end: z.number(),
-});
-type SegmentRefinement = z.infer<typeof SegmentRefinementSchema>;
 
 /**
  * Disk-backed cache for all pipeline stages.

@@ -11,23 +11,9 @@ import type {
   AudioEvent,
   ChunkEvaluation,
   RankedSegment,
+  LLMAnalyzerResult,
+  LLMAnalyzerOpts,
 } from '../../types/index.js';
-
-export interface LLMAnalyzerResult {
-  lines: TranscriptLine[];
-  microBlocks: MicroBlock[];
-  chunks: LLMChunk[];
-  chunkEvals: ChunkEvaluation[];
-}
-
-export interface LLMAnalyzerOpts {
-  videoId: string;
-  audioPath: string | null;
-  audioEvents: AudioEvent[];
-  maxChunks?: number;
-  maxParallel: number;
-  noCache: boolean;
-}
 
 /**
  * LLMAnalyzer — orchestrates transcript fetching + LLM-based segment analysis.
@@ -62,14 +48,12 @@ export class LLMAnalyzer {
    * everything needed for the ranking step.
    */
   async analyze(opts: LLMAnalyzerOpts): Promise<LLMAnalyzerResult> {
-    // ── Transcript ────────────────────────────────────────────────────────────
     const { lines, microBlocks, chunks } = await this.transcriptDetector.detect(
       opts.videoId,
       opts.audioPath,
       this.cache,
     );
 
-    // ── LLM pass 1 ────────────────────────────────────────────────────────────
     const chunkLimit = opts.maxChunks ?? config.MAX_CHUNKS;
     const chunksToAnalyze = chunkLimit !== undefined ? chunks.slice(0, chunkLimit) : chunks;
 

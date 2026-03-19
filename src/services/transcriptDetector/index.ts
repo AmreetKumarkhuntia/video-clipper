@@ -3,13 +3,12 @@ import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { TranscriptAnalyzer } from '../transcriptAnalyzers/index.js';
 import type { Cache } from '../../utils/cache.js';
-import type { TranscriptLine, MicroBlock, LLMChunk } from '../../types/index.js';
-
-export interface TranscriptDetectorResult {
-  lines: TranscriptLine[];
-  microBlocks: MicroBlock[];
-  chunks: LLMChunk[];
-}
+import type {
+  TranscriptLine,
+  MicroBlock,
+  LLMChunk,
+  TranscriptDetectorResult,
+} from '../../types/index.js';
 
 /**
  * Top-level transcript detector.
@@ -60,7 +59,6 @@ export class TranscriptDetector {
   ): Promise<TranscriptDetectorResult> {
     let lines: TranscriptLine[];
 
-    // Cache-first: if we already have lines on disk, skip the provider chain entirely
     const cached = await cache.readTranscript(videoId);
     if (cached) {
       log.info(`[cache hit] Transcript loaded from cache (${cached.length} lines)`);
@@ -75,10 +73,6 @@ export class TranscriptDetector {
 
     return { lines, microBlocks, chunks };
   }
-
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   /**
    * Walks the analyzer chain in order.

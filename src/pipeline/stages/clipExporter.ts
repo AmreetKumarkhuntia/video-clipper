@@ -22,7 +22,6 @@ export async function exportClips(
   segments: RankedSegment[],
   opts: ClipExporterOpts,
 ): Promise<string[]> {
-  // Mode 1: local video already on disk — cut with ffmpeg
   if (opts.localVideo) {
     log.info(`Using local video: ${opts.localVideo}`);
     return generateClips(
@@ -34,11 +33,9 @@ export async function exportClips(
     );
   }
 
-  // Determine yt-dlp mode
   const downloadSections = opts.downloadSections ?? config.DOWNLOAD_SECTIONS_MODE;
 
   if (typeof downloadSections === 'number') {
-    // Mode 2: download only the top-N segments via --download-sections
     const segmentsToDownload = segments.slice(0, downloadSections);
 
     if (segmentsToDownload.length < downloadSections) {
@@ -62,7 +59,6 @@ export async function exportClips(
     return organizeClips(downloadResult.paths, videoId, opts.videoPath, config.CLIP_CONCURRENCY);
   }
 
-  // Mode 3: full-video download → cut clips with ffmpeg
   log.info('Downloading full video via yt-dlp...');
   const downloadResult = await downloadVideo(videoId, 'all', [], opts.videoPath);
 

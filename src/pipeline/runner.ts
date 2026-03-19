@@ -52,12 +52,11 @@ export async function runPipeline(args: CliArgs): Promise<void> {
 
   const cache = new Cache(config.CACHE_DIR, args.noCache);
 
-  // ── Stage 1: Resolve video ID + metadata ─────────────────────────────────
   const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration);
 
-  // ── Stage 2: Download audio ───────────────────────────────────────────────
-  // Downloaded before transcript so Whisper/Gemini transcript providers can
-  // use the WAV. Returns null when audio detection is disabled.
+  /** Downloaded before transcript so Whisper/Gemini transcript providers can
+   * use the WAV. Returns null when audio detection is disabled.
+   */
   let audioPath: string | null = null;
   const audioEnabled = config.AUDIO_DETECTION_ENABLED && !args.noAudio;
   if (audioEnabled) {
@@ -69,7 +68,6 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     }
   }
 
-  // ── Stage 3: Audio event detection ───────────────────────────────────────
   const audioEvents = await processAudio(videoId, metadata.duration, cache, {
     noAudio: args.noAudio,
     gameProfile,
@@ -77,7 +75,6 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     audioPath,
   });
 
-  // ── Stage 4a: Fetch transcript + LLM analysis (informed by audio events) ──
   const { lines, microBlocks, chunkEvals } = await analyzeSegments(
     videoId,
     audioPath,
@@ -94,10 +91,8 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     await dumpTranscript(videoId, lines);
   }
 
-  // ── Stage 5: Merge signals + rank ─────────────────────────────────────────
   const rankedSegments = selectSegments(chunkEvals, audioEvents, { threshold, topN });
 
-  // Build partial result for early-exit path (no segments above threshold)
   const partialResult: PipelineResult = {
     video_id: videoId,
     title: metadata.title,
@@ -112,13 +107,11 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     return;
   }
 
-  // ── Stage 4b: Refine clip boundaries (LLM pass 2) ─────────────────────────
   const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, cache, {
     maxParallel,
     noCache: args.noCache,
   });
 
-  // ── Output result ─────────────────────────────────────────────────────────
   const result: PipelineResult = {
     video_id: videoId,
     title: metadata.title,
@@ -132,7 +125,6 @@ export async function runPipeline(args: CliArgs): Promise<void> {
 
   log.info('Done.');
 
-  // ── Stage 6: Download + generate clips (only with --clip) ─────────────────
   if (!args.clip) {
     log.info('Tip: run with --clip to download the video and generate mp4 clips.');
     return;

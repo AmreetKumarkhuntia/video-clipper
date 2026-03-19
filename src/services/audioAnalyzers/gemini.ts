@@ -6,12 +6,14 @@ import { log } from '../../utils/logger.js';
 import type { AudioEvent } from '../../types/index.js';
 import { AudioAnalyzer } from './base.js';
 
+/**
+ * Gemini returns timestamps inconsistently as either:
+ * - MM.SS notation: 1.03 = 1 min 3 sec = 63s
+ * - True decimal seconds: 53.403 = 53.403s
+ * Use normalizeGeminiTime() to resolve correct value.
+ */
 const GeminiEventSchema = z.array(
   z.object({
-    // Gemini inconsistently returns timestamps in either:
-    //   - MM.SS notation: 1.03 = 1 min 3 sec = 63s
-    //   - True decimal seconds: 53.403 = 53.403s
-    // Use normalizeGeminiTime() to resolve the correct value.
     time_sec: z.number(),
     event: z.string(),
     confidence: z.number().min(0).max(1),
@@ -56,18 +58,15 @@ function mmssToSeconds(value: number): number {
 export function normalizeGeminiTime(value: number, chunkDurationSec: number): number {
   const frac = value % 1;
 
-  // Fractional part > 0.59 is impossible in MM.SS — must be decimal seconds
   if (Math.round(frac * 100) > 59) {
     return value;
   }
 
-  // Fractional part ≤ 0.59: could be MM.SS — check if converted value fits in chunk
   const mmss = mmssToSeconds(value);
   if (mmss < chunkDurationSec) {
     return mmss;
   }
 
-  // MM.SS conversion overflows the chunk — must be true decimal seconds
   return value;
 }
 
