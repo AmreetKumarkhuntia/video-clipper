@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.2.0...v1.3.0) (2026-03-19)
+
+### Features
+
+- **npm:** configure npm package publishing ([b268345](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b26834559ce97db683c393db765d7d5c7e989236))
+
 # [1.2.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.1.1...v1.2.0) (2026-03-19)
 
 ### Features
