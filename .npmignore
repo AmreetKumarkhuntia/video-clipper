@@ -1,0 +1,36 @@
+# Source & Build
+src/
+scripts/
+tests/
+docs/
+
+# Runtime outputs
+downloads/
+outputs/
+*.mp4
+*.m4a
+*.webm
+*.wav
+
+# Git & CI/CD
+.git/
+.github/
+.husky/
+
+# Secrets & Config
+.env
+.env.local
+.env.*.local
+
+# Development config files
+tsconfig*.json
+vitest.config.ts
+.prettierrc*
+.prettierignore
+.releaserc.json
+requirements.txt
+package-lock.json
+
+# Other
+test-trigger.txt
+AGENTS.md
