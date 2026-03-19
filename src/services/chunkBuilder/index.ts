@@ -15,20 +15,17 @@ export function buildMicroBlocks(lines: TranscriptLine[], windowSec: number): Mi
 
   for (const line of lines) {
     if (line.start >= windowStart + windowSec) {
-      // Flush current block
       blocks.push({
         start: windowStart,
         end: line.start,
         text: texts.join(' '),
       });
-      // Start a new window aligned to the current line
       windowStart = line.start;
       texts = [];
     }
     texts.push(line.text);
   }
 
-  // Flush the final block
   if (texts.length > 0) {
     const lastLine = lines[lines.length - 1];
     blocks.push({
@@ -78,7 +75,6 @@ export function buildLLMChunks(
     const step = chunkLen - overlap;
     chunkStart += step;
 
-    // Guard: if overlap >= chunkLen we'd loop forever
     if (step <= 0) break;
   }
 

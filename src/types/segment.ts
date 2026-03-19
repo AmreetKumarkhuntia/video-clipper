@@ -4,15 +4,15 @@ export const AnalyzedSegmentSchema = z.object({
   interesting: z.boolean(),
   score: z.number().min(1).max(10),
   reason: z.string(),
-  clip_start: z.number(), // seconds
-  clip_end: z.number(), // seconds
+  clip_start: z.number(),
+  clip_end: z.number(),
 });
 export type AnalyzedSegment = z.infer<typeof AnalyzedSegmentSchema>;
 
 export const RankedSegmentSchema = z.object({
   rank: z.number().int().min(1),
-  start: z.number(), // seconds
-  end: z.number(), // seconds
+  start: z.number(),
+  end: z.number(),
   score: z.number().min(1).max(10),
   reason: z.string(),
   source: z.enum(['transcript', 'audio', 'both']),
@@ -22,8 +22,8 @@ export type RankedSegment = z.infer<typeof RankedSegmentSchema>;
 
 const ChunkEvaluationBaseSchema = z.object({
   chunk_index: z.number().int().min(0),
-  chunk_start: z.number(), // seconds
-  chunk_end: z.number(), // seconds
+  chunk_start: z.number(),
+  chunk_end: z.number(),
 });
 
 export const ChunkEvaluationSchema = z.discriminatedUnion('status', [

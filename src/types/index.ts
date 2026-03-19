@@ -24,3 +24,17 @@ export type {
   SegmentSelectorOpts,
   ClipExporterOpts,
 } from './pipeline.js';
+
+export type { LLMAnalyzerResult, LLMAnalyzerOpts, TranscriptDetectorResult } from './analyzer.js';
+
+export type {
+  DownloadMode,
+  DownloadResultAll,
+  DownloadResultSegments,
+  DownloadResult,
+} from './downloader.js';
+
+export { SegmentRefinementSchema } from './cache.js';
+export type { SegmentRefinement } from './cache.js';
+
+export type { TranscriptProviderName, AudioProviderName } from './factory.js';

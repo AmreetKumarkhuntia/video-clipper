@@ -92,7 +92,7 @@ async function refineSegment(
     maxRetries: config.LLM_MAX_RETRIES,
   });
 
-  // Clamp to the context window to ensure LLM doesn't hallucinate out-of-range values
+  /** Clamp to context window to prevent LLM from hallucinating out-of-range values */
   const refinedStart = Math.max(windowStart, Math.min(object.clip_start, object.clip_end - 1));
   const refinedEnd = Math.min(windowEnd, Math.max(object.clip_end, object.clip_start + 1));
 

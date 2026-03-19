@@ -1,12 +1,3 @@
-/**
- * Pipeline-layer types: stage option bags, result shapes, and the generic
- * time-window interface from the chunker utility.
- *
- * All types here are owned by one pipeline stage but live centrally so the
- * runner (and any future consumers) can import them without reaching into
- * individual stage files.
- */
-
 import type {
   VideoMetadata,
   TranscriptLine,
@@ -14,10 +5,6 @@ import type {
   LLMChunk,
   ChunkEvaluation,
 } from './index.js';
-
-// ---------------------------------------------------------------------------
-// Chunker utility
-// ---------------------------------------------------------------------------
 
 /** A half-open time window [start, end) in seconds. Returned by `buildWindows`. */
 export interface ChunkWindow {
@@ -27,18 +14,10 @@ export interface ChunkWindow {
   end: number;
 }
 
-// ---------------------------------------------------------------------------
-// Stage 1 — Video Resolver
-// ---------------------------------------------------------------------------
-
 export interface VideoResolverResult {
   videoId: string;
   metadata: VideoMetadata;
 }
-
-// ---------------------------------------------------------------------------
-// Stage 3 — Audio Processor
-// ---------------------------------------------------------------------------
 
 export interface AudioProcessorOpts {
   noAudio: boolean;
@@ -47,10 +26,6 @@ export interface AudioProcessorOpts {
   /** Pre-downloaded audio WAV path. When provided, skips the downloadAudio call. */
   audioPath?: string | null;
 }
-
-// ---------------------------------------------------------------------------
-// Stage 4a + 4b — Segment Analyzer / Refiner
-// ---------------------------------------------------------------------------
 
 export interface SegmentAnalyzerOpts {
   maxChunks?: number;
@@ -65,18 +40,10 @@ export interface SegmentAnalyzerResult {
   chunkEvals: ChunkEvaluation[];
 }
 
-// ---------------------------------------------------------------------------
-// Stage 5 — Segment Selector
-// ---------------------------------------------------------------------------
-
 export interface SegmentSelectorOpts {
   threshold: number;
   topN: number;
 }
-
-// ---------------------------------------------------------------------------
-// Stage 6 — Clip Exporter
-// ---------------------------------------------------------------------------
 
 export interface ClipExporterOpts {
   /** Path to a pre-existing local video file. Skips yt-dlp download entirely. */

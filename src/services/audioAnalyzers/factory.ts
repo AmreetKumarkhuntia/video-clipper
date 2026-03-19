@@ -3,8 +3,7 @@ import { AudioAnalyzer } from './base.js';
 import { GeminiAudioAnalyzer } from './gemini.js';
 import { WhisperAudioAnalyzer } from './whisper.js';
 import { YAMNetAudioAnalyzer } from './yamnet.js';
-
-export type AudioProviderName = 'gemini' | 'whisper' | 'yamnet';
+import type { AudioProviderName } from '../../types/index.js';
 
 const KNOWN_PROVIDERS = new Set<AudioProviderName>(['gemini', 'whisper', 'yamnet']);
 
@@ -17,7 +16,6 @@ const KNOWN_PROVIDERS = new Set<AudioProviderName>(['gemini', 'whisper', 'yamnet
  * Backward-compat: "both" is mapped to ['gemini', 'whisper'] with a deprecation warning.
  */
 export function parseProviderChain(providerString: string): AudioProviderName[] {
-  // Backward compatibility: map legacy 'both' to the new comma-separated form
   if (providerString.trim() === 'both') {
     log.warn(
       '[audio] AUDIO_PROVIDER=both is deprecated. Use AUDIO_PROVIDER=gemini,whisper instead.',

@@ -36,7 +36,6 @@ export async function processAudio(
   const audioEnabled = config.AUDIO_DETECTION_ENABLED && !opts.noAudio;
   if (!audioEnabled) return [];
 
-  // Cache-first
   const cached = await cache.readAudioEvents(videoId, opts.gameProfile, config.AUDIO_PROVIDER);
   if (cached) {
     log.info(`[cache hit] Audio events loaded from cache (${cached.length} events)`);
@@ -47,7 +46,6 @@ export async function processAudio(
     const audioPath =
       opts.audioPath ?? (await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`));
 
-    // Build the analyzer chain once per run from config
     const chain = createAnalyzerChain(config.AUDIO_PROVIDER);
     const detector = new EventDetector(chain);
 

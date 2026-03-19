@@ -40,7 +40,6 @@ export function parseUrl(url: string): string {
     throw new Error(`Could not extract video ID from URL: "${url}"`);
   }
 
-  // Strip any extra query params that may have been part of the path segment
   videoId = videoId.split('?')[0];
 
   if (videoId.length !== VIDEO_ID_LENGTH) {

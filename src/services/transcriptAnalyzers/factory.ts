@@ -3,8 +3,7 @@ import { TranscriptAnalyzer } from './base.js';
 import { YtDlpTranscriptAnalyzer } from './ytdlp.js';
 import { WhisperTranscriptAnalyzer } from './whisper.js';
 import { GeminiTranscriptAnalyzer } from './gemini.js';
-
-export type TranscriptProviderName = 'ytdlp' | 'whisper' | 'gemini';
+import type { TranscriptProviderName } from '../../types/index.js';
 
 const KNOWN_PROVIDERS = new Set<TranscriptProviderName>(['ytdlp', 'whisper', 'gemini']);
 
