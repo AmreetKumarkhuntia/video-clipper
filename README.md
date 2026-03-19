@@ -92,6 +92,25 @@ OPENAI_API_KEY=your_key_here
 # LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ```
 
+## Advanced Examples
+
+```bash
+# Analyze only (no download)
+npm run start -- <youtube-url>
+
+# Analyze and download full video
+npm run start -- <youtube-url> --download
+
+# Analyze and cut clips
+npm run start -- <youtube-url> --clip
+
+# Limit number of clips to generate
+npm run start -- <youtube-url> --clip --max-clips 3
+
+# Use custom output directory
+OUTPUT_DIR=my-clips npm run start -- <youtube-url> --clip
+```
+
 ## Configuration
 
 All parameters are set via `.env`:
