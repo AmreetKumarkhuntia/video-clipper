@@ -3,6 +3,7 @@ import { config } from '../../config/index.js';
 import type { AudioEvent } from '../../types/index.js';
 import { AudioAnalyzer } from './base.js';
 import { getPythonBin } from './whisper.js';
+import { scriptPath } from '../../utils/paths.js';
 
 /**
  * Uses YAMNet (TensorFlow Hub) via a Python script to classify audio frames
@@ -24,7 +25,7 @@ export class YAMNetAudioAnalyzer extends AudioAnalyzer {
     let stdout: string;
     try {
       const result = await execa(python, [
-        'scripts/detect_events.py',
+        scriptPath('detect_events.py'),
         audioPath,
         String(config.AUDIO_CONFIDENCE_THRESHOLD),
       ]);

@@ -4,6 +4,7 @@ import { config } from '../../config/index.js';
 import type { TranscriptLine } from '../../types/index.js';
 import { TranscriptAnalyzer } from './base.js';
 import { getPythonBin } from '../audioAnalyzers/whisper.js';
+import { scriptPath } from '../../utils/paths.js';
 
 const WhisperSegmentSchema = z.object({
   text: z.string(),
@@ -38,7 +39,7 @@ export class WhisperTranscriptAnalyzer extends TranscriptAnalyzer {
     let stdout: string;
     try {
       const result = await execa(python, [
-        'scripts/transcribe_whisper.py',
+        scriptPath('transcribe_whisper.py'),
         audioPath,
         config.AUDIO_WHISPER_MODEL,
       ]);

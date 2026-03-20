@@ -3,6 +3,7 @@ import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import type { AudioEvent } from '../../types/index.js';
 import { AudioAnalyzer } from './base.js';
+import { scriptPath } from '../../utils/paths.js';
 
 /**
  * Resolves the Python interpreter binary, caching the result after the first
@@ -48,7 +49,7 @@ export class WhisperAudioAnalyzer extends AudioAnalyzer {
     let stdout: string;
     try {
       const result = await execa(python, [
-        'scripts/detect_events_whisper.py',
+        scriptPath('detect_events_whisper.py'),
         audioPath,
         String(config.AUDIO_CONFIDENCE_THRESHOLD),
         gameProfile,

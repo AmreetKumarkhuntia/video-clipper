@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { log } from './utils/logger.js';
 import { formatConfig } from './utils/redactConfig.js';
 import { config } from './config/index.js';
