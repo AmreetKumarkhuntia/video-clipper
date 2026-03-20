@@ -45,6 +45,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git
 
+      - name: Get tag before release
+        run: |
+          BEFORE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "BEFORE_TAG=$BEFORE_TAG" >> "$GITHUB_ENV"
+          echo "Tag before release: $BEFORE_TAG"
+
       - name: Release (versioning, tags, changelog, GitHub release)
         id: github_release
         run: npx semantic-release
@@ -59,10 +65,12 @@ jobs:
         if: success()
         run: |
           CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
-          echo "Current tag: $CURRENT_TAG"
-          if [ "$CURRENT_TAG" = "none" ]; then
+          echo "Tag before: $BEFORE_TAG"
+          echo "Tag after:  $CURRENT_TAG"
+          if [ "$CURRENT_TAG" = "none" ] || [ "$CURRENT_TAG" = "$BEFORE_TAG" ]; then
             echo "No new tag created - skipping publish"
           else
+            echo "New release detected: $CURRENT_TAG"
             echo "NEW_TAG=$CURRENT_TAG" >> "$GITHUB_ENV"
           fi
 
