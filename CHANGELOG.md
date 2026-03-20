@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.3.0...v1.3.1) (2026-03-20)
+
+### Bug Fixes
+
+- **release:** add @semantic-release/npm plugin to update package.json version ([fe6498d](https://github.com/AmreetKumarkhuntia/video-clipper/commit/fe6498d779459455387e2ca2736862e704ea8b1c))
+- **release:** add @semantic-release/npm to update package.json version ([9de3397](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9de33977fe9f856aa8749436cbee7422dd622322))
+
 # [1.3.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.2.0...v1.3.0) (2026-03-19)
 
 ### Features
