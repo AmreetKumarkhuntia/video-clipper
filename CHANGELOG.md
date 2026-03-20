@@ -1,3 +1,9 @@
+## [1.5.5](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.4...v1.5.5) (2026-03-20)
+
+### Bug Fixes
+
+- **release:** skip npm publish when no new tag is created ([5ebe6c5](https://github.com/AmreetKumarkhuntia/video-clipper/commit/5ebe6c5629fbbc840185a930ab8d892cfc1c8693))
+
 ## [1.5.4](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.3...v1.5.4) (2026-03-20)
 
 ### Bug Fixes
