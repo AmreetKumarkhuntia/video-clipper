@@ -1,3 +1,9 @@
+# [1.5.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.4.0...v1.5.0) (2026-03-20)
+
+### Features
+
+- **release:** publish to GitHub Packages alongside npm ([dee2e57](https://github.com/AmreetKumarkhuntia/video-clipper/commit/dee2e574eceb83a43be47155ad87060d74658713))
+
 # [1.4.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.3.1...v1.4.0) (2026-03-20)
 
 ### Features
