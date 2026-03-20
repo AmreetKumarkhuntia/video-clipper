@@ -1,3 +1,9 @@
+## [1.5.2](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.1...v1.5.2) (2026-03-20)
+
+### Bug Fixes
+
+- **release:** use PUSH_TOKEN for GitHub Packages auth ([eb89f64](https://github.com/AmreetKumarkhuntia/video-clipper/commit/eb89f64159f9903d5051587bb43e2e7f0c82c51a))
+
 ## [1.5.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.0...v1.5.1) (2026-03-20)
 
 ### Bug Fixes
