@@ -72,14 +72,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Debug GitHub Packages auth
-        if: env.NEW_TAG != ''
-        run: |
-          echo "TOKEN_LENGTH=${#NODE_AUTH_TOKEN}"
-          echo "PROJECT_NPMRC=$(cat .npmrc | sed 's/_authToken=.*/_authToken=REDACTED/')"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Publish to GitHub Packages
         if: env.NEW_TAG != ''
         run: |
