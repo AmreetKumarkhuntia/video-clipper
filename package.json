@@ -11,6 +11,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AmreetKumarkhuntia/video-clipper.git"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc",
