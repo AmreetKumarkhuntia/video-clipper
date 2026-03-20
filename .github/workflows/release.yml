@@ -29,9 +29,6 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -49,28 +46,4 @@ jobs:
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.PUSH_TOKEN }}
-
-      - name: Pull updated package.json after semantic-release
-        if: success()
-        run: git pull origin master
-
-      - name: Verify GitHub Release
-        if: success()
-        run: |
-          echo "Checking for new git tags..."
-          CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
-          echo "Current tag: $CURRENT_TAG"
-
-          if [ "$CURRENT_TAG" != "none" ]; then
-            echo "✅ New tag created: $CURRENT_TAG"
-            echo "Proceeding to npm publish..."
-          else
-            echo "❌ No new tag created - skipping npm publish"
-            exit 1
-          fi
-
-      - name: Stage 2 Publish to NPM
-        if: success()
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
