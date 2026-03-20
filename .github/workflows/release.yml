@@ -75,9 +75,8 @@ jobs:
       - name: Publish to GitHub Packages
         if: env.NEW_TAG != ''
         run: |
-          echo "@amreetkumarkhuntia:registry=https://npm.pkg.github.com" > ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
           npm pkg set name='@amreetkumarkhuntia/video-clipper'
-          npm publish
+          npm publish --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
