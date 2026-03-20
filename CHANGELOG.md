@@ -1,3 +1,9 @@
+## [1.5.3](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.2...v1.5.3) (2026-03-20)
+
+### Bug Fixes
+
+- **release:** use GITHUB_TOKEN and project-level .npmrc for GitHub Packages ([437234f](https://github.com/AmreetKumarkhuntia/video-clipper/commit/437234fe43edbf5e7e0ad5c1e9f21149bb589bb5))
+
 ## [1.5.2](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.1...v1.5.2) (2026-03-20)
 
 ### Bug Fixes
