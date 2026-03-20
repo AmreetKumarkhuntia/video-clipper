@@ -1,3 +1,9 @@
+# [1.4.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.3.1...v1.4.0) (2026-03-20)
+
+### Features
+
+- **commitlint:** enforce conventional commit message format ([9d99882](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9d998828617be72a81fbe4e72caa15eb28e88b82))
+
 ## [1.3.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.3.0...v1.3.1) (2026-03-20)
 
 ### Bug Fixes
