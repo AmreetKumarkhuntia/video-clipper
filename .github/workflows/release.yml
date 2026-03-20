@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup npm auth
+        run: echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
       - name: Build
         run: pnpm build
 
@@ -41,9 +44,29 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git
 
-      - name: Stage 1 GitHub Release (versioning, tags, releases)
+      - name: Release (versioning, tags, changelog, GitHub release)
         id: github_release
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.PUSH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Pull updated package.json after semantic-release
+        if: success()
+        run: git pull origin master
+
+      - name: Verify release tag
+        if: success()
+        run: |
+          CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "Current tag: $CURRENT_TAG"
+          if [ "$CURRENT_TAG" = "none" ]; then
+            echo "No new tag created - skipping npm publish"
+            exit 1
+          fi
+          echo "NEW_TAG=$CURRENT_TAG" >> "$GITHUB_ENV"
+
+      - name: Publish to npm
+        if: success()
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
