@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -60,13 +61,23 @@ jobs:
           CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
           echo "Current tag: $CURRENT_TAG"
           if [ "$CURRENT_TAG" = "none" ]; then
-            echo "No new tag created - skipping npm publish"
-            exit 1
+            echo "No new tag created - skipping publish"
+          else
+            echo "NEW_TAG=$CURRENT_TAG" >> "$GITHUB_ENV"
           fi
-          echo "NEW_TAG=$CURRENT_TAG" >> "$GITHUB_ENV"
 
       - name: Publish to npm
-        if: success()
+        if: env.NEW_TAG != ''
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        if: env.NEW_TAG != ''
+        run: |
+          echo "@amreetkumarkhuntia:registry=https://npm.pkg.github.com" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          npm pkg set name='@amreetkumarkhuntia/video-clipper'
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
