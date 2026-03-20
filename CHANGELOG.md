@@ -1,3 +1,9 @@
+## [1.5.4](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.3...v1.5.4) (2026-03-20)
+
+### Bug Fixes
+
+- **package:** include python scripts, add type defs, fix exports and bin ([e2b5398](https://github.com/AmreetKumarkhuntia/video-clipper/commit/e2b53987c6b1737cfb73265c325326aadbb277f9))
+
 ## [1.5.3](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.2...v1.5.3) (2026-03-20)
 
 ### Bug Fixes
