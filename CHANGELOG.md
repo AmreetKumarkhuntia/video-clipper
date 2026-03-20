@@ -1,3 +1,9 @@
+## [1.5.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.0...v1.5.1) (2026-03-20)
+
+### Bug Fixes
+
+- **release:** use explicit --registry flag for GitHub Packages publish ([1aec842](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1aec842846fa1308b50eba53fee6465a0dbbb958))
+
 # [1.5.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.4.0...v1.5.0) (2026-03-20)
 
 ### Features
