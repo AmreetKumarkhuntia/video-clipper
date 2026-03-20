@@ -6,7 +6,31 @@
   "author": "",
   "packageManager": "pnpm@10.12.4",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/lib.js",
+  "module": "dist/lib.js",
+  "types": "dist/lib.d.ts",
+  "bin": {
+    "video-clipper": "dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/lib.d.ts",
+        "default": "./dist/lib.js"
+      }
+    },
+    "./cli": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "requirements.txt"
+  ],
   "private": false,
   "publishConfig": {
     "access": "public"

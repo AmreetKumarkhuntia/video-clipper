@@ -1,6 +1,5 @@
 # Source & Build
 src/
-scripts/
 tests/
 docs/
 
@@ -28,7 +27,6 @@ vitest.config.ts
 .prettierrc*
 .prettierignore
 .releaserc.json
-requirements.txt
 package-lock.json
 
 # Other
