@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVtt } from '../src/services/transcriptFetcher/index.js';
+import { parseVtt } from '../src/services/transcriptAnalyzers/ytdlp.js';
 
 const BASIC_VTT = `WEBVTT
 Kind: captions

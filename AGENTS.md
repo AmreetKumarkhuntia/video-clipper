@@ -27,7 +27,6 @@ src/
   services/        # core pipeline modules
     urlParser/
     metadataExtractor/
-    transcriptFetcher/
     chunkBuilder/
     llmAnalyzer/
     segmentRanker/

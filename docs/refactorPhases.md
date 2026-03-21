@@ -48,7 +48,7 @@ pipeline architecture.
 | File                            | Stage        | Wraps                                                                    |
 | ------------------------------- | ------------ | ------------------------------------------------------------------------ |
 | `stages/videoResolver.ts`       | 1            | `urlParser` + `metadataExtractor`                                        |
-| `stages/transcriptProcessor.ts` | 2            | `transcriptFetcher` + `chunkBuilder` + `dumper`                          |
+| `stages/transcriptProcessor.ts` | 2            | `transcriptAnalyzers/ytdlp` + `chunkBuilder` + `dumper`                  |
 | `stages/audioProcessor.ts`      | 3            | `audioDownloader` + `audioEventDetector` + `sliceAudio` + `buildWindows` |
 | `stages/segmentAnalyzer.ts`     | 4a + 4b      | `llmAnalyzer` (pass 1) + `clipRefiner` (pass 2)                          |
 | `stages/segmentSelector.ts`     | 5            | `signalMerger` + `segmentRanker`                                         |
