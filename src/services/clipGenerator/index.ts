@@ -192,19 +192,3 @@ export async function organizeClips(
 
   return paths;
 }
-
-/**
- * Probes ffmpeg availability by running `ffmpeg -version`.
- * @throws {Error} with an actionable install message if ffmpeg is not found
- */
-async function verifyFfmpeg(): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    ffmpeg.getAvailableFormats((err) => {
-      if (err) {
-        reject(new Error('ffmpeg is required for clip generation. Install it first.'));
-      } else {
-        resolve();
-      }
-    });
-  });
-}

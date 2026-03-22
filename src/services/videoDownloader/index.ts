@@ -20,23 +20,6 @@ function formatTimestamp(seconds: number): string {
 }
 
 /**
- * Displays progress from yt-dlp stdout/stderr.
- */
-function displayProgress(stream: 'stdout' | 'stderr'): (data: Buffer | string) => void {
-  return (data: Buffer | string) => {
-    const text = String(data);
-    const lines = text.split('\n').filter((line) => line.trim());
-
-    for (const line of lines) {
-      const progressMatch = line.match(/\[download\]\s+(\d+\.?\d*%)/);
-      if (progressMatch) {
-        process.stdout.write(`\r${progressMatch[0]}`);
-      }
-    }
-  };
-}
-
-/**
  * Downloads a YouTube video using yt-dlp and returns the local file path.
  *
  * Strategy:
@@ -85,8 +68,8 @@ export async function downloadFullVideo(videoId: string, customPath?: string): P
 
     const subprocess = execa('yt-dlp', args);
 
-    subprocess.stdout?.on('data', displayProgress('stdout'));
-    subprocess.stderr?.on('data', displayProgress('stderr'));
+    subprocess.stdout?.on('data', log.progress);
+    subprocess.stderr?.on('data', log.progress);
 
     await subprocess;
     process.stdout.write('\n');
@@ -170,8 +153,8 @@ async function downloadSegment(
 
     const subprocess = execa('yt-dlp', args);
 
-    subprocess.stdout?.on('data', displayProgress('stdout'));
-    subprocess.stderr?.on('data', displayProgress('stderr'));
+    subprocess.stdout?.on('data', log.progress);
+    subprocess.stderr?.on('data', log.progress);
 
     await subprocess;
     process.stdout.write('\n');

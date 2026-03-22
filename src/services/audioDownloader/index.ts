@@ -2,20 +2,7 @@ import { execa } from 'execa';
 import * as fs from 'fs';
 import * as path from 'path';
 import { config } from '../../config/index.js';
-
-function displayProgress(stream: 'stdout' | 'stderr'): (data: Buffer | string) => void {
-  return (data: Buffer | string) => {
-    const text = String(data);
-    const lines = text.split('\n').filter((line) => line.trim());
-
-    for (const line of lines) {
-      const progressMatch = line.match(/\[download\]\s+(\d+\.?\d*%)/);
-      if (progressMatch) {
-        process.stdout.write(`\r${progressMatch[0]}`);
-      }
-    }
-  };
-}
+import { log } from '../../utils/logger.js';
 
 export async function downloadAudio(videoId: string, outputDir: string): Promise<string> {
   if (!fs.existsSync(outputDir)) {
@@ -58,8 +45,8 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
 
     const subprocess = execa('yt-dlp', args);
 
-    subprocess.stdout?.on('data', displayProgress('stdout'));
-    subprocess.stderr?.on('data', displayProgress('stderr'));
+    subprocess.stdout?.on('data', log.progress);
+    subprocess.stderr?.on('data', log.progress);
 
     await subprocess;
     process.stdout.write('\n');
