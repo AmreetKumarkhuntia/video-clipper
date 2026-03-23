@@ -2,7 +2,7 @@ import { execa } from 'execa';
 import { config } from '../../config/index.js';
 import type { AudioEvent } from '../../types/index.js';
 import { AudioAnalyzer } from './base.js';
-import { getPythonBin } from './whisper.js';
+import { getPythonBin } from '../../utils/pythonBin.js';
 import { scriptPath } from '../../utils/paths.js';
 
 /**
