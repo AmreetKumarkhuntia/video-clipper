@@ -1,5 +1,4 @@
-import { mergeSignals } from '../../services/signalMerger/index.js';
-import { rankSegments } from '../../services/segmentRanker/index.js';
+import { mergeSignals, rankSegments } from '../../services/segmentRanker/index.js';
 import { log } from '../../utils/logger.js';
 import type {
   ChunkEvaluation,
