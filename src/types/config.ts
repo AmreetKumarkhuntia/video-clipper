@@ -12,7 +12,7 @@ const LLM_PROVIDERS = [
   'custom',
 ] as const;
 
-export type LLMProvider = (typeof LLM_PROVIDERS)[number];
+type LLMProvider = (typeof LLM_PROVIDERS)[number];
 
 const PROVIDER_KEY_MAP: Record<LLMProvider, string> = {
   openai: 'OPENAI_API_KEY',

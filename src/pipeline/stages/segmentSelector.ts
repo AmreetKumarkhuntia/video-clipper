@@ -7,8 +7,6 @@ import type {
   SegmentSelectorOpts,
 } from '../../types/index.js';
 
-export type { SegmentSelectorOpts };
-
 /**
  * Stage 5 — Segment Selector
  *

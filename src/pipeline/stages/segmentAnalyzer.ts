@@ -13,8 +13,6 @@ import type {
   SegmentAnalyzerResult,
 } from '../../types/index.js';
 
-export type { SegmentAnalyzerOpts, SegmentAnalyzerResult };
-
 /**
  * Stage 4a — Segment Analyzer (LLM pass 1)
  *
