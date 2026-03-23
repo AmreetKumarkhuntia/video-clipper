@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { config } from '../config/index.js';
 import { Cache } from '../utils/cache.js';
 import { log } from '../utils/logger.js';
-import { dumpAnalysis, dumpTranscript } from '../utils/dumper.js';
+import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
 import { processAudio } from './stages/audioProcessor.js';
 import { analyzeSegments, refineRankedSegments } from './stages/segmentAnalyzer.js';
