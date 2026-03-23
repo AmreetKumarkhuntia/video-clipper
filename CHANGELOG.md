@@ -1,3 +1,9 @@
+## [1.5.6](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.5...v1.5.6) (2026-03-23)
+
+### Bug Fixes
+
+- **docs:** restructure README for npm package page ([97bc258](https://github.com/AmreetKumarkhuntia/video-clipper/commit/97bc25885f4756473ed45f080f201a9ce7dca365))
+
 ## [1.5.5](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.4...v1.5.5) (2026-03-20)
 
 ### Bug Fixes
