@@ -4,8 +4,6 @@ import { log } from '../../utils/logger.js';
 import { formatSeconds } from '../../utils/format.js';
 import type { VideoResolverResult } from '../../types/index.js';
 
-export type { VideoResolverResult };
-
 /**
  * Stage 1 — Video Resolver
  *

@@ -10,8 +10,6 @@ import { config } from '../../config/index.js';
 import type { Cache } from '../../utils/cache.js';
 import type { AudioEvent, AudioProcessorOpts } from '../../types/index.js';
 
-export type { AudioProcessorOpts };
-
 /**
  * Stage 3 — Audio Processor
  *

@@ -4,8 +4,6 @@ import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { RankedSegment, ClipExporterOpts } from '../../types/index.js';
 
-export type { ClipExporterOpts };
-
 /**
  * Stage 6 — Clip Exporter
  *

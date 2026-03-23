@@ -11,8 +11,6 @@
 
 import type { ChunkWindow } from '../types/index.js';
 
-export type { ChunkWindow };
-
 /**
  * Builds a list of time windows covering `[0, totalDuration)`.
  *
