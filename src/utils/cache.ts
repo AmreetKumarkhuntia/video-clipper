@@ -1,14 +1,4 @@
-import { createHash } from 'node:crypto';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { z } from 'zod';
-import { log } from './logger.js';
-import {
-  TranscriptLineSchema,
-  ChunkEvaluationSchema,
-  AudioEventSchema,
-  SegmentRefinementSchema,
-} from '../types/index.js';
+import type { CacheBackend } from './cacheBackend.js';
 import type {
   TranscriptLine,
   LLMChunk,
@@ -17,117 +7,57 @@ import type {
   SegmentRefinement,
 } from '../types/index.js';
 
-/**
- * Serializes audio events into a stable string for cache keying.
- * Events are sorted by time so the key is order-independent.
- */
-function audioEventsKey(events: AudioEvent[]): string {
-  if (events.length === 0) return '';
-  const sorted = [...events].sort((a, b) => a.time - b.time);
-  return JSON.stringify(sorted);
-}
-
-function hashContent(input: string): string {
-  return createHash('sha256').update(input).digest('hex');
-}
-
-async function readCacheFile<T>(filePath: string, schema: z.ZodType<T>): Promise<T | null> {
-  try {
-    const raw = await fs.readFile(filePath, 'utf-8');
-    const parsed = schema.safeParse(JSON.parse(raw));
-    if (!parsed.success) {
-      log.warn(`[cache] Corrupt entry at ${filePath} — ignoring`);
-      return null;
-    }
-    return parsed.data;
-  } catch {
-    // File not found or unreadable — normal cache miss, stay silent
-    return null;
-  }
-}
-
-async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
-  try {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    log.warn(
-      `[cache] Failed to write ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-}
+export type { CacheBackend };
 
 /**
- * Disk-backed cache for all pipeline stages.
+ * Facade that wraps a CacheBackend and implements the CacheBackend interface.
  *
- * Constructed once in runner.ts with the resolved cache directory and passed
- * down to each stage that needs caching. Pass `disabled = true` to bypass all
- * reads and writes (equivalent to --no-cache).
+ * This means `Cache` can be passed anywhere a `CacheBackend` is expected, so
+ * all pipeline consumers work whether they type their parameter as `Cache` or
+ * `CacheBackend`. The concrete backend is injected by the factory in
+ * cacheFactory.ts.
+ *
+ * Call `close()` at the end of the pipeline to release backend resources
+ * (important for the MongoDB backend which holds an open connection).
  */
-export class Cache {
-  constructor(
-    private readonly cacheDir: string,
-    private readonly disabled: boolean = false,
-  ) {}
+export class Cache implements CacheBackend {
+  constructor(readonly backend: CacheBackend) {}
 
-  // ---- Transcript ---------------------------------------------------------
-
-  private transcriptPath(videoId: string): string {
-    return path.join(this.cacheDir, 'transcript', `${hashContent(videoId)}.json`);
-  }
+  // ---- Transcript -----------------------------------------------------------
 
   async readTranscript(videoId: string): Promise<TranscriptLine[] | null> {
-    if (this.disabled) return null;
-    return readCacheFile(this.transcriptPath(videoId), z.array(TranscriptLineSchema));
+    return this.backend.readTranscript(videoId);
   }
 
   async writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void> {
-    if (this.disabled) return;
-    await writeCacheFile(this.transcriptPath(videoId), lines);
+    return this.backend.writeTranscript(videoId, lines);
   }
 
-  // ---- LLM chunk results --------------------------------------------------
-
-  private chunkPath(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
-    const audioKey = audioEventsKey(chunkAudioEvents);
-    return path.join(
-      this.cacheDir,
-      'chunks',
-      `${hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`)}.json`,
-    );
-  }
+  // ---- LLM chunk results ----------------------------------------------------
 
   async readChunk(
     chunk: LLMChunk,
-    chunkAudioEvents: AudioEvent[] = [],
+    chunkAudioEvents?: AudioEvent[],
   ): Promise<ChunkEvaluation | null> {
-    if (this.disabled) return null;
-    return readCacheFile(this.chunkPath(chunk, chunkAudioEvents), ChunkEvaluationSchema);
+    return this.backend.readChunk(chunk, chunkAudioEvents);
   }
 
   async writeChunk(
     chunk: LLMChunk,
     evaluation: ChunkEvaluation,
-    chunkAudioEvents: AudioEvent[] = [],
+    chunkAudioEvents?: AudioEvent[],
   ): Promise<void> {
-    if (this.disabled) return;
-    if (evaluation.status !== 'success') return;
-    await writeCacheFile(this.chunkPath(chunk, chunkAudioEvents), evaluation);
+    return this.backend.writeChunk(chunk, evaluation, chunkAudioEvents);
   }
 
-  // ---- Segment refinement -------------------------------------------------
-
-  private segmentRefinementPath(start: number, end: number, reason: string): string {
-    return path.join(this.cacheDir, 'segments', `${hashContent(`${start}|${end}|${reason}`)}.json`);
-  }
+  // ---- Segment refinement ---------------------------------------------------
 
   async readSegmentRefinement(
     start: number,
     end: number,
     reason: string,
   ): Promise<SegmentRefinement | null> {
-    if (this.disabled) return null;
-    return readCacheFile(this.segmentRefinementPath(start, end, reason), SegmentRefinementSchema);
+    return this.backend.readSegmentRefinement(start, end, reason);
   }
 
   async writeSegmentRefinement(
@@ -136,30 +66,17 @@ export class Cache {
     reason: string,
     refined: SegmentRefinement,
   ): Promise<void> {
-    if (this.disabled) return;
-    await writeCacheFile(this.segmentRefinementPath(start, end, reason), refined);
+    return this.backend.writeSegmentRefinement(start, end, reason, refined);
   }
 
-  // ---- Audio events (whole-video) -----------------------------------------
-
-  private audioEventPath(videoId: string, gameProfile: string, provider: string): string {
-    return path.join(
-      this.cacheDir,
-      'audio',
-      `${hashContent(`${videoId}|${gameProfile}|${provider}`)}.json`,
-    );
-  }
+  // ---- Audio events (whole-video) -------------------------------------------
 
   async readAudioEvents(
     videoId: string,
     gameProfile: string,
     provider: string,
   ): Promise<AudioEvent[] | null> {
-    if (this.disabled) return null;
-    return readCacheFile(
-      this.audioEventPath(videoId, gameProfile, provider),
-      z.array(AudioEventSchema),
-    );
+    return this.backend.readAudioEvents(videoId, gameProfile, provider);
   }
 
   async writeAudioEvents(
@@ -168,30 +85,10 @@ export class Cache {
     provider: string,
     events: AudioEvent[],
   ): Promise<void> {
-    if (this.disabled) return;
-    await writeCacheFile(this.audioEventPath(videoId, gameProfile, provider), events);
+    return this.backend.writeAudioEvents(videoId, gameProfile, provider, events);
   }
 
-  // ---- Audio events (per-chunk) -------------------------------------------
-
-  /**
-   * Per-chunk audio cache — mirrors the LLM `chunks/` pattern.
-   * Key includes videoId, gameProfile, provider, and the exact window bounds
-   * so each 120s slice is stored independently.
-   */
-  private audioChunkPath(
-    videoId: string,
-    gameProfile: string,
-    provider: string,
-    windowStart: number,
-    windowEnd: number,
-  ): string {
-    return path.join(
-      this.cacheDir,
-      'audio',
-      `${hashContent(`${videoId}|${gameProfile}|${provider}|${windowStart}|${windowEnd}`)}.json`,
-    );
-  }
+  // ---- Audio events (per-chunk) ---------------------------------------------
 
   async readAudioChunk(
     videoId: string,
@@ -200,11 +97,7 @@ export class Cache {
     windowStart: number,
     windowEnd: number,
   ): Promise<AudioEvent[] | null> {
-    if (this.disabled) return null;
-    return readCacheFile(
-      this.audioChunkPath(videoId, gameProfile, provider, windowStart, windowEnd),
-      z.array(AudioEventSchema),
-    );
+    return this.backend.readAudioChunk(videoId, gameProfile, provider, windowStart, windowEnd);
   }
 
   async writeAudioChunk(
@@ -215,10 +108,19 @@ export class Cache {
     windowEnd: number,
     events: AudioEvent[],
   ): Promise<void> {
-    if (this.disabled) return;
-    await writeCacheFile(
-      this.audioChunkPath(videoId, gameProfile, provider, windowStart, windowEnd),
+    return this.backend.writeAudioChunk(
+      videoId,
+      gameProfile,
+      provider,
+      windowStart,
+      windowEnd,
       events,
     );
+  }
+
+  // ---- Lifecycle ------------------------------------------------------------
+
+  async close(): Promise<void> {
+    return this.backend.close();
   }
 }

@@ -3,7 +3,7 @@ import { refineSegments } from '../clipRefiner/index.js';
 import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { TranscriptDetector } from '../transcriptDetector/index.js';
-import type { Cache } from '../../utils/cache.js';
+import type { CacheBackend } from '../../utils/cacheBackend.js';
 import type {
   TranscriptLine,
   MicroBlock,
@@ -38,7 +38,7 @@ import type {
 export class LLMAnalyzer {
   constructor(
     private readonly transcriptDetector: TranscriptDetector,
-    private readonly cache: Cache,
+    private readonly cache: CacheBackend,
   ) {}
 
   /**
@@ -72,6 +72,7 @@ export class LLMAnalyzer {
       lines,
       opts.audioEvents,
       opts.maxParallel,
+      this.cache,
       opts.noCache,
     );
 
@@ -93,6 +94,6 @@ export class LLMAnalyzer {
     opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache'>,
   ): Promise<RankedSegment[]> {
     log.info('Refining clip boundaries...');
-    return refineSegments(rankedSegments, microBlocks, opts.maxParallel, opts.noCache);
+    return refineSegments(rankedSegments, microBlocks, opts.maxParallel, this.cache, opts.noCache);
   }
 }

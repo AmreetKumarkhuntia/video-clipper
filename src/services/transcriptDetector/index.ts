@@ -2,7 +2,7 @@ import { buildMicroBlocks, buildLLMChunks } from '../chunkBuilder/index.js';
 import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import type { TranscriptAnalyzer } from '../transcriptAnalyzers/index.js';
-import type { Cache } from '../../utils/cache.js';
+import type { CacheBackend } from '../../utils/cacheBackend.js';
 import type {
   TranscriptLine,
   MicroBlock,
@@ -55,7 +55,7 @@ export class TranscriptDetector {
   async detect(
     videoId: string,
     audioPath: string | null,
-    cache: Cache,
+    cache: CacheBackend,
   ): Promise<TranscriptDetectorResult> {
     let lines: TranscriptLine[];
 

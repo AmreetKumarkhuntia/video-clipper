@@ -161,6 +161,7 @@ describe('LLMAnalyzer', () => {
         LINES,
         audioEvents,
         1, // maxParallel
+        expect.anything(), // cache
         true, // noCache
       );
     });
@@ -265,7 +266,13 @@ describe('LLMAnalyzer', () => {
       );
       await analyzer.refine([RANKED_SEGMENT], MICRO_BLOCKS, { maxParallel: 4, noCache: true });
 
-      expect(refineSegments).toHaveBeenCalledWith([RANKED_SEGMENT], MICRO_BLOCKS, 4, true);
+      expect(refineSegments).toHaveBeenCalledWith(
+        [RANKED_SEGMENT],
+        MICRO_BLOCKS,
+        4,
+        expect.anything(),
+        true,
+      );
     });
 
     it('returns an empty array when passed no segments', async () => {
