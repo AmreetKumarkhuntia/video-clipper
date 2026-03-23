@@ -1,3 +1,9 @@
+# [1.6.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.6...v1.6.0) (2026-03-23)
+
+### Features
+
+- **cache:** add pluggable cache backend with MongoDB support ([b1c9d74](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b1c9d74130b7154e54e566dea8279815c0021b97))
+
 ## [1.5.6](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.5...v1.5.6) (2026-03-23)
 
 ### Bug Fixes
