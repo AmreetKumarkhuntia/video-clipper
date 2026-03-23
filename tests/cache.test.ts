@@ -3,6 +3,8 @@ import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import { Cache } from '../src/utils/cache.js';
+import { FileCacheBackend } from '../src/utils/fileCacheBackend.js';
+import { DisabledCacheBackend } from '../src/utils/cacheBackend.js';
 import type { TranscriptLine, LLMChunk, ChunkEvaluation, AudioEvent } from '../src/types/index.js';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +53,7 @@ describe('Cache', () => {
   beforeEach(async () => {
     cacheDir = tmpDir();
     await fs.mkdir(cacheDir, { recursive: true });
-    cache = new Cache(cacheDir);
+    cache = new Cache(new FileCacheBackend(cacheDir));
   });
 
   afterEach(async () => {
@@ -155,7 +157,7 @@ describe('Cache', () => {
     let disabledCache: Cache;
 
     beforeEach(() => {
-      disabledCache = new Cache(cacheDir, true);
+      disabledCache = new Cache(new DisabledCacheBackend());
     });
 
     it('always returns null for reads', async () => {

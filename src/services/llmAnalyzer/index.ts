@@ -4,7 +4,6 @@ import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { formatSeconds } from '../../utils/format.js';
 import { getModel } from '../../utils/modelFactory.js';
-import { Cache } from '../../utils/cache.js';
 import { AnalyzedSegmentSchema } from '../../types/index.js';
 import type {
   LLMChunk,
@@ -13,6 +12,7 @@ import type {
   ChunkEvaluation,
   AudioEvent,
 } from '../../types/index.js';
+import type { CacheBackend } from '../../utils/cacheBackend.js';
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
@@ -95,11 +95,11 @@ async function analyzeChunk(
   chunk: LLMChunk,
   chunkLines: TranscriptLine[],
   chunkAudioEvents: AudioEvent[],
+  cache: CacheBackend,
   noCache: boolean,
   chunkIndex: number,
 ): Promise<AnalyzedSegment> {
   if (!noCache) {
-    const cache = new Cache(config.CACHE_DIR);
     const cached = await cache.readChunk(chunk, chunkAudioEvents);
     if (cached && cached.status === 'success') {
       log.info(`[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`);
@@ -140,7 +140,7 @@ async function analyzeChunk(
           clip_start: object.clip_start,
           clip_end: object.clip_end,
         };
-        await new Cache(config.CACHE_DIR).writeChunk(chunk, evaluation, chunkAudioEvents);
+        await cache.writeChunk(chunk, evaluation, chunkAudioEvents);
       }
       return object;
     } catch (err) {
@@ -168,13 +168,14 @@ async function analyzeChunk(
 /**
  * Analyzes all LLM chunks via Promise.allSettled — one failure never aborts the rest.
  * Each chunk receives only the transcript lines and audio events within its window.
- * Pass noCache=true to bypass the on-disk chunk cache.
+ * Pass noCache=true to bypass the chunk cache.
  */
 export async function analyzeChunks(
   chunks: LLMChunk[],
   lines: TranscriptLine[],
   audioEvents: AudioEvent[],
   concurrency: number,
+  cache: CacheBackend,
   noCache = false,
 ): Promise<ChunkEvaluation[]> {
   log.info(
@@ -188,7 +189,7 @@ export async function analyzeChunks(
       const chunkAudioEvents = audioEvents.filter(
         (e) => e.time >= chunk.start && e.time < chunk.end,
       );
-      return limit(() => analyzeChunk(chunk, chunkLines, chunkAudioEvents, noCache, i));
+      return limit(() => analyzeChunk(chunk, chunkLines, chunkAudioEvents, cache, noCache, i));
     }),
   );
 

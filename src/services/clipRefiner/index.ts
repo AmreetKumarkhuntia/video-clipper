@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { config } from '../../config/index.js';
 import { log } from '../../utils/logger.js';
 import { getModel } from '../../utils/modelFactory.js';
-import { Cache } from '../../utils/cache.js';
+import type { CacheBackend } from '../../utils/cacheBackend.js';
 import type { RankedSegment, MicroBlock } from '../../types/index.js';
 
 const CONTEXT_PADDING_SEC = 30;
@@ -72,9 +72,9 @@ Rules:
 async function refineSegment(
   segment: RankedSegment,
   allBlocks: MicroBlock[],
+  cache: CacheBackend,
   noCache: boolean,
 ): Promise<RankedSegment> {
-  const cache = new Cache(config.CACHE_DIR);
   if (!noCache) {
     const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
     if (cached) {
@@ -116,6 +116,7 @@ export async function refineSegments(
   segments: RankedSegment[],
   allBlocks: MicroBlock[],
   concurrency: number,
+  cache: CacheBackend,
   noCache = false,
 ): Promise<RankedSegment[]> {
   log.info(
@@ -124,7 +125,7 @@ export async function refineSegments(
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
-    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, noCache))),
+    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, cache, noCache))),
   );
 
   const refined = results.map((result, i) => {

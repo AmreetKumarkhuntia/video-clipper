@@ -62,9 +62,9 @@ export async function analyzeSegments(
 export async function refineRankedSegments(
   rankedSegments: RankedSegment[],
   microBlocks: MicroBlock[],
-  _cache: Cache,
+  cache: Cache,
   opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache'>,
 ): Promise<RankedSegment[]> {
   log.info('Refining clip boundaries...');
-  return refineSegments(rankedSegments, microBlocks, opts.maxParallel, opts.noCache);
+  return refineSegments(rankedSegments, microBlocks, opts.maxParallel, cache, opts.noCache);
 }

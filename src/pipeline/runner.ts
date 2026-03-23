@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { config } from '../config/index.js';
 import { Cache } from '../utils/cache.js';
+import { createCacheBackend } from '../utils/cacheFactory.js';
 import { log } from '../utils/logger.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
@@ -50,98 +51,102 @@ export async function runPipeline(args: CliArgs): Promise<void> {
   const gameProfile = args.gameProfile ?? config.GAME_PROFILE;
   const maxParallel = args.maxParallel ?? config.LLM_CONCURRENCY;
 
-  const cache = new Cache(config.CACHE_DIR, args.noCache);
+  const backend = await createCacheBackend(config, args.noCache);
+  const cache = new Cache(backend);
+  try {
+    const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration);
 
-  const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration);
-
-  /** Downloaded before transcript so Whisper/Gemini transcript providers can
-   * use the WAV. Returns null when audio detection is disabled.
-   */
-  let audioPath: string | null = null;
-  const audioEnabled = config.AUDIO_DETECTION_ENABLED && !args.noAudio;
-  if (audioEnabled) {
-    try {
-      audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      log.warn(`Audio download failed — continuing without audio: ${message}`);
+    /** Downloaded before transcript so Whisper/Gemini transcript providers can
+     * use the WAV. Returns null when audio detection is disabled.
+     */
+    let audioPath: string | null = null;
+    const audioEnabled = config.AUDIO_DETECTION_ENABLED && !args.noAudio;
+    if (audioEnabled) {
+      try {
+        audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn(`Audio download failed — continuing without audio: ${message}`);
+      }
     }
-  }
 
-  const audioEvents = await processAudio(videoId, metadata.duration, cache, {
-    noAudio: args.noAudio,
-    gameProfile,
-    maxParallel,
-    audioPath,
-  });
+    const audioEvents = await processAudio(videoId, metadata.duration, cache, {
+      noAudio: args.noAudio,
+      gameProfile,
+      maxParallel,
+      audioPath,
+    });
 
-  const { lines, microBlocks, chunkEvals } = await analyzeSegments(
-    videoId,
-    audioPath,
-    audioEvents,
-    cache,
-    {
-      maxChunks: args.maxChunks,
+    const { lines, microBlocks, chunkEvals } = await analyzeSegments(
+      videoId,
+      audioPath,
+      audioEvents,
+      cache,
+      {
+        maxChunks: args.maxChunks,
+        maxParallel,
+        noCache: args.noCache,
+      },
+    );
+
+    if (config.DUMP_OUTPUTS) {
+      await dumpTranscript(videoId, lines);
+    }
+
+    const rankedSegments = selectSegments(chunkEvals, audioEvents, { threshold, topN });
+
+    const partialResult: PipelineResult = {
+      video_id: videoId,
+      title: metadata.title,
+      duration: metadata.duration,
+      chunk_evaluations: chunkEvals,
+      segments: rankedSegments,
+    };
+
+    if (rankedSegments.length === 0) {
+      await outputResult(partialResult, args.outputJson);
+      if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, partialResult);
+      return;
+    }
+
+    const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, cache, {
       maxParallel,
       noCache: args.noCache,
-    },
-  );
+    });
 
-  if (config.DUMP_OUTPUTS) {
-    await dumpTranscript(videoId, lines);
-  }
+    const result: PipelineResult = {
+      video_id: videoId,
+      title: metadata.title,
+      duration: metadata.duration,
+      chunk_evaluations: chunkEvals,
+      segments: refinedSegments,
+    };
 
-  const rankedSegments = selectSegments(chunkEvals, audioEvents, { threshold, topN });
+    await outputResult(result, args.outputJson);
+    if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, result);
 
-  const partialResult: PipelineResult = {
-    video_id: videoId,
-    title: metadata.title,
-    duration: metadata.duration,
-    chunk_evaluations: chunkEvals,
-    segments: rankedSegments,
-  };
+    log.info('Done.');
 
-  if (rankedSegments.length === 0) {
-    await outputResult(partialResult, args.outputJson);
-    if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, partialResult);
-    return;
-  }
-
-  const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, cache, {
-    maxParallel,
-    noCache: args.noCache,
-  });
-
-  const result: PipelineResult = {
-    video_id: videoId,
-    title: metadata.title,
-    duration: metadata.duration,
-    chunk_evaluations: chunkEvals,
-    segments: refinedSegments,
-  };
-
-  await outputResult(result, args.outputJson);
-  if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, result);
-
-  log.info('Done.');
-
-  if (!args.clip) {
-    log.info('Tip: run with --clip to download the video and generate mp4 clips.');
-    return;
-  }
-
-  const clipPaths = await exportClips(videoId, refinedSegments, {
-    localVideo: args.localVideo,
-    downloadSections: args.downloadSections,
-    videoPath: args.videoPath,
-  });
-
-  if (clipPaths.length === 0) {
-    log.warn('No clips were generated successfully.');
-  } else {
-    log.info(`Done — ${clipPaths.length} clip${clipPaths.length !== 1 ? 's' : ''} saved:`);
-    for (const p of clipPaths) {
-      log.info(`  ${p}`);
+    if (!args.clip) {
+      log.info('Tip: run with --clip to download the video and generate mp4 clips.');
+      return;
     }
+
+    const clipPaths = await exportClips(videoId, refinedSegments, {
+      localVideo: args.localVideo,
+      downloadSections: args.downloadSections,
+      videoPath: args.videoPath,
+    });
+
+    if (clipPaths.length === 0) {
+      log.warn('No clips were generated successfully.');
+    } else {
+      log.info(`Done — ${clipPaths.length} clip${clipPaths.length !== 1 ? 's' : ''} saved:`);
+      for (const p of clipPaths) {
+        log.info(`  ${p}`);
+      }
+    }
+  } finally {
+    await cache.close();
   }
 }

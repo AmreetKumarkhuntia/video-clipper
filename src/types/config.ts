@@ -113,6 +113,12 @@ export const ConfigSchema = z
       .enum(['chrome', 'firefox', 'safari', 'brave', 'edge', 'opera', 'chromium'])
       .optional(),
     YT_DLP_COOKIES_FILE: z.string().optional(),
+
+    // ---- Cache backend -------------------------------------------------------
+    CACHE_BACKEND: z.enum(['file', 'mongodb']).default('file'),
+    MONGODB_URI: z.string().optional(),
+    MONGODB_DATABASE: z.string().default('video-clipper-cache'),
+    CACHE_TTL_SECONDS: z.coerce.number().min(0).default(0),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -144,6 +150,14 @@ export const ConfigSchema = z
         path: ['YT_DLP_COOKIES_FROM_BROWSER'],
         message:
           'Cannot set both YT_DLP_COOKIES_FROM_BROWSER and YT_DLP_COOKIES_FILE. Use only one.',
+      });
+    }
+
+    if (data.CACHE_BACKEND === 'mongodb' && (!data.MONGODB_URI || data.MONGODB_URI.trim() === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['MONGODB_URI'],
+        message: 'MONGODB_URI is required when CACHE_BACKEND is "mongodb"',
       });
     }
   });
