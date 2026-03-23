@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { config } from '../../config/index.js';
 import type { TranscriptLine } from '../../types/index.js';
 import { TranscriptAnalyzer } from './base.js';
-import { getPythonBin } from '../audioAnalyzers/whisper.js';
+import { getPythonBin } from '../../utils/pythonBin.js';
 import { scriptPath } from '../../utils/paths.js';
 
 const WhisperSegmentSchema = z.object({
