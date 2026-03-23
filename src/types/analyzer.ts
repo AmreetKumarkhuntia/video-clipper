@@ -1,4 +1,5 @@
-import type { TranscriptLine, MicroBlock, LLMChunk, ChunkEvaluation } from './index.js';
+import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
+import type { ChunkEvaluation } from './segment.js';
 
 export interface LLMAnalyzerResult {
   lines: TranscriptLine[];
