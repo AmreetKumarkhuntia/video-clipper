@@ -3,7 +3,7 @@ import pLimit from 'p-limit';
 import { downloadAudio } from '../../services/audioDownloader/index.js';
 import { createAnalyzerChain } from '../../services/audioAnalyzers/index.js';
 import { EventDetector } from '../../services/eventDetector/index.js';
-import { sliceAudio } from '../../utils/sliceAudio.js';
+import { sliceAudio } from '../../services/audioDownloader/sliceAudio.js';
 import { buildWindows } from '../../utils/chunker.js';
 import { log } from '../../utils/logger.js';
 import { config } from '../../config/index.js';

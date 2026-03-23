@@ -1,6 +1,6 @@
 import * as path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
-import { config } from '../config/index.js';
+import { config } from '../../config/index.js';
 
 if (config.FFMPEG_PATH) {
   ffmpeg.setFfmpegPath(config.FFMPEG_PATH);

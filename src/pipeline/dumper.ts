@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { config } from '../config/index.js';
-import { log } from './logger.js';
+import { log } from '../utils/logger.js';
 import type { TranscriptLine, PipelineResult } from '../types/index.js';
 
 /**
