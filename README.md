@@ -1,5 +1,9 @@
 # @thunderkiller/video-clipper
 
+[![CI](https://github.com/AmreetKumarkhuntia/video-clipper/actions/workflows/ci.yml/badge.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@thunderkiller/video-clipper.svg)](https://www.npmjs.com/package/@thunderkiller/video-clipper)
+[![license](https://img.shields.io/npm/l/@thunderkiller/video-clipper.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/blob/master/LICENSE)
+
 A TypeScript CLI (and library) that analyzes a YouTube video with an LLM, finds the most interesting moments, and optionally downloads the video and cuts clips automatically.
 
 ## How It Works
@@ -136,6 +140,15 @@ await runPipeline(args);
 ```
 
 All public types and Zod schemas are exported from the package root. See [src/lib.ts](src/lib.ts) for the full surface.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Commit with [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint
+4. Push and open a Pull Request
+
+Pre-commit hooks run automatically: formatting (Prettier), type-check, and tests. Make sure `yt-dlp` and `ffmpeg` are installed locally.
 
 ## Documentation
 

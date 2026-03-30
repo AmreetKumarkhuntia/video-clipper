@@ -3,8 +3,26 @@
   "version": "1.6.0",
   "description": "CLI that analyzes YouTube transcripts with an LLM to find interesting moments and cut clips",
   "license": "ISC",
-  "author": "",
+  "author": "Amreet Kumar Khuntia",
   "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "youtube",
+    "video-clipper",
+    "llm",
+    "transcript",
+    "ffmpeg",
+    "clips",
+    "ai",
+    "segmentation",
+    "yt-dlp",
+    "vercel-ai-sdk",
+    "video",
+    "highlights"
+  ],
   "type": "module",
   "main": "dist/lib.js",
   "module": "dist/lib.js",
