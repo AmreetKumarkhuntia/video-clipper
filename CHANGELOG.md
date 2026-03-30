@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.6.0...v1.7.0) (2026-03-30)
+
+
+### Features
+
+* **package:** add publishing metadata and contributor docs ([1add5e1](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1add5e1107982aafa8e4a6876618290309d4c06a))
+
 # [1.6.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.5.6...v1.6.0) (2026-03-23)
 
 ### Features
