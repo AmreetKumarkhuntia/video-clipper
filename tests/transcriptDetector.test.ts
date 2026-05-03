@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TranscriptDetector } from '../src/services/transcriptDetector/index.js';
-import type { TranscriptAnalyzer } from '../src/services/transcriptAnalyzers/index.js';
-import type { TranscriptLine } from '../src/types/index.js';
-import type { Cache } from '../src/utils/cache.js';
+import { TranscriptDetector } from '../src/lib/services/transcriptDetector/index.js';
+import type { TranscriptAnalyzer } from '../src/lib/services/transcriptAnalyzers/index.js';
+import type { TranscriptLine } from '../src/lib/types/index.js';
+import type { Cache } from '../src/lib/utils/cache.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

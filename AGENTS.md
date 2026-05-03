@@ -2,7 +2,7 @@
 
 ## Project
 
-TypeScript CLI that analyzes YouTube transcripts with an LLM to find interesting moments and optionally cut video clips.
+TypeScript CLI + Web app that analyzes YouTube transcripts with an LLM to find interesting moments and optionally cut video clips.
 
 See `docs/plan.md` for the full architecture.
 
@@ -11,63 +11,113 @@ See `docs/plan.md` for the full architecture.
 - TypeScript (Node.js 18+)
 - Vercel AI SDK (`ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/mistral`, `@ai-sdk/groq`) with `generateObject` + `zod` for structured LLM output
 - Multi-provider support: OpenAI, Anthropic, Google, XAI, Mistral, Groq, Zai, OpenRouter
-- `youtube-transcript` for transcript fetching
 - `yt-dlp` + `execa` for video download
 - `fluent-ffmpeg` for clip cutting
 - `zod` for config validation at startup
 - `p-limit` for concurrency control
+- SvelteKit + Vite for web UI
+- `tsc-alias` for path alias resolution in CLI builds
+
+## Path Aliases
+
+Only 3 aliases — everything flows through `@lib`:
+
+| Alias        | Resolves To     | Purpose                                                               |
+| ------------ | --------------- | --------------------------------------------------------------------- |
+| `@lib/*`     | `src/lib/*`     | Core library (types, config, utils, services, shared pipeline stages) |
+| `@app/cli/*` | `src/app/cli/*` | CLI application                                                       |
+| `@app/web/*` | `src/app/web/*` | Web application (SvelteKit)                                           |
+
+Same-directory imports (`./foo.js`) stay relative. All `.js` extensions are required (NodeNext).
 
 ## Project Structure
 
 ```
 src/
-  config/          # zod-validated env config — import this, never read process.env directly
-    index.ts
-    env.ts
-  services/        # core pipeline modules
-    urlParser/
-    metadataExtractor/
-    chunkBuilder/
-    llmAnalyzer/
-    segmentRanker/
-    clipRefiner/
-    videoDownloader/
-    clipGenerator/
-  types/           # shared TypeScript types
-    index.ts
-    config.ts
-    segment.ts
-    transcript.ts
-    video.ts
-    youtube-transcript.d.ts
-  utils/           # utility functions
-    cache.ts        # transcript + chunk LLM result caching
-    dumper.ts       # transcript/analysis JSON dumps
-    redactConfig.ts # config formatting for logs (redacts API keys)
-    format.ts       # timestamp formatting utilities
-    logger.ts       # logging utilities
-    modelFactory.ts # LLM provider factory
-  index.ts         # CLI entrypoint
-tests/             # all unit tests (mirrors module names)
-  urlParser.test.ts
-  chunkBuilder.test.ts
-  segmentRanker.test.ts
-downloads/         # yt-dlp output (gitignored)
-outputs/           # ffmpeg clip output, caches, dumps (gitignored)
-  cache/           # transcript + LLM result cache
-  transcript/       # transcript dumps
-  analysis/        # analysis dumps
-docs/
-  plan.md
-  free-models.md
+  lib/                        # Core library — source of truth
+    index.ts                  # Public API barrel (re-exports shared code only)
+    types/                    # Shared types (13 files)
+      index.ts, config.ts, transcript.ts, segment.ts, audio.ts,
+      video.ts, cli.ts, pipeline.ts, analyzer.ts, downloader.ts,
+      cache.ts, factory.ts, youtube.ts
+    config/                   # Shared config
+      env.ts                  # zod-validated env — import this, never read process.env
+      index.ts                # re-exports config
+    utils/                    # Shared utilities
+      logger.ts, format.ts, paths.ts, pythonBin.ts, chunker.ts,
+      modelFactory.ts, cacheBackend.ts, cache.ts, cacheFactory.ts,
+      fileCacheBackend.ts, mongoCacheBackend.ts
+    services/                 # Core services (shared: CLI + web)
+      urlParser/
+      metadataExtractor/
+      chunkBuilder/
+      llmAnalyzer/
+      segmentRanker/
+      clipRefiner/
+      transcriptDetector/
+      transcriptAnalyzers/
+      audioDownloader/
+      audioAnalyzers/
+      eventDetector/
+      videoDownloader/
+      clipGenerator/
+      youtube/
+    pipeline/stages/          # Shared pipeline stages (used by both CLI and web)
+      segmentAnalyzer.ts      # LLM analysis + transcript detection
+      segmentSelector.ts      # Segment ranking + selection
+      clipExporter.ts         # Video download + clip generation
+
+  app/
+    cli/                      # CLI application
+      index.ts                # CLI entrypoint (shebang)
+      args.ts                 # parseArgs + printUsage
+      pipeline/
+        runner.ts             # Full CLI pipeline orchestration
+        dumper.ts             # Transcript/analysis JSON dumps
+        stages/
+          videoResolver.ts    # CLI-only: URL parsing + yt-dlp metadata
+          audioProcessor.ts   # CLI-only: audio download + event detection
+
+    web/                      # Web application (SvelteKit)
+      types/                  # Web-only types
+        analysis.ts           # TranscriptBundle, ClipPlan, ClipArtifact, etc.
+        web.ts                # ApiError
+      server/                 # Web server logic
+        analysis/             # Analysis orchestration for web
+        clipping/             # Clip generation for web
+        artifacts/            # File persistence for web
+        youtube/              # YouTube API factory for web
+        config/               # Web-specific config adapter
+        http/                 # SvelteKit HTTP response helpers
+      client/                 # SvelteKit frontend
+        app.html
+        lib/
+        routes/               # SvelteKit file-based routing
+
+tests/                        # Unit tests (mirrors module names)
+downloads/                    # yt-dlp output (gitignored)
+outputs/                      # ffmpeg clip output, caches, dumps (gitignored)
 ```
+
+## Architectural Boundaries
+
+```
+app/cli/  ──imports──>  src/lib/
+app/web/  ──imports──>  src/lib/  +  app/web/ (internal)
+src/lib/  ──imports──>  (external packages only)
+```
+
+- **CLI code** (`src/app/cli/`) never imports from `src/app/web/`
+- **Web code** (`src/app/web/`) imports from `src/lib/` and internal web modules
+- **Library code** (`src/lib/`) never imports from `src/app/`
+- **Web types** (`src/app/web/types/`) are separate from shared types (`src/lib/types/`)
 
 ## Code Rules
 
 - All code in TypeScript — no plain `.js` files
 - Every function must have explicit input/output types; avoid `any`
 - Use `zod` for all external data validation (LLM output, env vars, API responses)
-- Never read `process.env` directly — always import from `src/config.ts`
+- Never read `process.env` directly — always import from `@lib/config/index.js`
 - Never hardcode API keys, model names, thresholds, or directory paths — all come from config
 - Use `async/await` — no raw `.then()` chains
 - Use `Promise.allSettled` for parallel LLM calls so one failure doesn't abort the rest
@@ -83,15 +133,14 @@ docs/
 
 ## Module Conventions
 
-Each module in `src/modules/` should:
+Each service module in `src/lib/services/` should:
 
-- Export a single main function named after the module (e.g. `fetchTranscript`, `buildChunks`)
+- Export a single main function named after the module (e.g. `parseUrl`, `buildChunks`)
 - Accept typed inputs and return typed outputs (no `any`)
-- Not import from other modules except `config.ts` and `types.ts` unless there is a clear dependency
+- Not import from other modules except `@lib/config/*`, `@lib/types/*`, and `@lib/utils/*` unless there is a clear dependency
 
 ## Transcript Notes
 
-- `youtube-transcript` returns `offset` in **milliseconds** — normalize to seconds immediately after fetching
 - Micro-blocks group raw lines into ~15s windows before chunking
 - LLM chunks are 120s windows with 20s overlap — built from micro-blocks, not raw lines
 

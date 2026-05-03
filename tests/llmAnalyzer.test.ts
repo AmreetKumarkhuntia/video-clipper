@@ -1,30 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LLMAnalyzer } from '../src/services/llmAnalyzer/LLMAnalyzer.js';
-import type { TranscriptDetector } from '../src/services/transcriptDetector/index.js';
-import type { Cache } from '../src/utils/cache.js';
+import { LLMAnalyzer } from '../src/lib/services/llmAnalyzer/LLMAnalyzer.js';
+import type { TranscriptDetector } from '../src/lib/services/transcriptDetector/index.js';
+import type { Cache } from '../src/lib/utils/cache.js';
 import type {
   TranscriptLine,
   MicroBlock,
   LLMChunk,
   ChunkEvaluation,
   RankedSegment,
-} from '../src/types/index.js';
+} from '../src/lib/types/index.js';
 
 // ---------------------------------------------------------------------------
 // Module mocks — must be declared before any imports that touch these modules
 // ---------------------------------------------------------------------------
 
-vi.mock('../src/services/llmAnalyzer/index.js', () => ({
+vi.mock('../src/lib/services/llmAnalyzer/index.js', () => ({
   analyzeChunks: vi.fn(),
 }));
 
-vi.mock('../src/services/clipRefiner/index.js', () => ({
+vi.mock('../src/lib/services/clipRefiner/index.js', () => ({
   refineSegments: vi.fn(),
 }));
 
 // Import the mocked free functions so we can configure them per test
-import { analyzeChunks } from '../src/services/llmAnalyzer/index.js';
-import { refineSegments } from '../src/services/clipRefiner/index.js';
+import { analyzeChunks } from '../src/lib/services/llmAnalyzer/index.js';
+import { refineSegments } from '../src/lib/services/clipRefiner/index.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures

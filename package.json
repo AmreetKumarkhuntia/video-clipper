@@ -24,23 +24,23 @@
     "highlights"
   ],
   "type": "module",
-  "main": "dist/lib.js",
-  "module": "dist/lib.js",
-  "types": "dist/lib.d.ts",
+  "main": "dist/lib/index.js",
+  "module": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "bin": {
-    "video-clipper": "dist/index.js"
+    "video-clipper": "dist/app/cli/index.js"
   },
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/lib.d.ts",
-        "default": "./dist/lib.js"
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/lib/index.js"
       }
     },
     "./cli": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./dist/app/cli/index.d.ts",
+        "default": "./dist/app/cli/index.js"
       }
     }
   },
@@ -58,8 +58,8 @@
     "url": "git+https://github.com/AmreetKumarkhuntia/video-clipper.git"
   },
   "scripts": {
-    "start": "tsx src/index.ts",
-    "build": "tsc",
+    "start": "tsx src/app/cli/index.ts",
+    "build": "tsc && tsc-alias",
     "web:dev": "vite --host 0.0.0.0",
     "web:build": "vite build",
     "web:preview": "vite preview --host 0.0.0.0",
@@ -118,6 +118,7 @@
     "semantic-release": "^25.0.3",
     "svelte": "^5.55.5",
     "svelte-check": "4.1.1",
+    "tsc-alias": "^1.8.17",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^5.4.21",
