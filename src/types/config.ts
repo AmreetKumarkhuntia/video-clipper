@@ -40,6 +40,7 @@ export const ConfigSchema = z
     OPENROUTER_API_KEY: z.string().optional(),
     CUSTOM_OPENAI_API_KEY: z.string().optional(),
     CUSTOM_OPENAI_BASE_URL: z.string().url().optional(),
+    YOUTUBE_API_KEY: z.string().optional(),
 
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),

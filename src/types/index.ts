@@ -38,3 +38,39 @@ export { SegmentRefinementSchema } from './cache.js';
 export type { SegmentRefinement } from './cache.js';
 
 export type { TranscriptProviderName, AudioProviderName } from './factory.js';
+export {
+  ChannelSummarySchema,
+  VideoSummarySchema,
+  VideoDetailsSchema,
+  VideoPageSchema,
+  YouTubeThumbnailSchema,
+} from './youtube.js';
+export type {
+  ChannelSummary,
+  VideoSummary,
+  VideoDetails,
+  VideoPage,
+  YouTubeThumbnail,
+} from './youtube.js';
+export {
+  TranscriptBundleSchema,
+  ClipCandidateSchema,
+  AnalysisOptionsSchema,
+  CreateAnalysisRequestSchema,
+  ClipPlanSchema,
+  ClipSelectionSchema,
+  CreateClipsRequestSchema,
+  ClipArtifactSchema,
+} from './analysis.js';
+export type {
+  TranscriptBundle,
+  ClipCandidate,
+  AnalysisOptions,
+  CreateAnalysisRequest,
+  ClipPlan,
+  ClipSelection,
+  CreateClipsRequest,
+  ClipArtifact,
+} from './analysis.js';
+export { ApiErrorSchema } from './web.js';
+export type { ApiError } from './web.js';
