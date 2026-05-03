@@ -79,20 +79,37 @@ src/
           audioProcessor.ts   # CLI-only: audio download + event detection
 
     web/                      # Web application (SvelteKit)
+      app.html                # SvelteKit HTML template
+      style/                  # Global styles (CSS custom properties, reset, typography)
+        variables.css         # Design tokens (colors, radii, spacing, fonts)
+        reset.css             # Global resets (box-sizing, body, button/input inherit)
+        typography.css        # .eyebrow, .muted, .error-text utility classes
+        index.css             # @import barrel
+      components/             # Reusable UI components (each with scoped <style>)
+        Button.svelte         # primary/outline variants, disabled state
+        ErrorText.svelte      # error message display
+        MutedText.svelte      # muted/disabled text
+        PageHead.svelte       # eyebrow + heading + action slot
+        Pagination.svelte     # prev/next pager
+        ChannelCard.svelte    # channel thumbnail + title + link
+        VideoCard.svelte      # video thumbnail + duration + title
+        CandidateCard.svelte  # clip candidate with checkbox + score
+        YouTubeEmbed.svelte   # responsive 16:9 iframe
+      lib/                    # SvelteKit $lib
+        index.ts              # app name etc.
+        api.ts                # readApiError(), apiFetch<T>()
+        format.ts             # formatDuration(), formatTime()
+        services/             # Web server logic
+          analysis/           # Analysis orchestration for web
+          clipping/           # Clip generation for web
+          artifacts/          # File persistence for web
+          youtube/            # YouTube API factory for web
+          config/             # Web-specific config adapter
+          http/               # SvelteKit HTTP response helpers
+      routes/                 # SvelteKit file-based routing
       types/                  # Web-only types
         analysis.ts           # TranscriptBundle, ClipPlan, ClipArtifact, etc.
         web.ts                # ApiError
-      server/                 # Web server logic
-        analysis/             # Analysis orchestration for web
-        clipping/             # Clip generation for web
-        artifacts/            # File persistence for web
-        youtube/              # YouTube API factory for web
-        config/               # Web-specific config adapter
-        http/                 # SvelteKit HTTP response helpers
-      client/                 # SvelteKit frontend
-        app.html
-        lib/
-        routes/               # SvelteKit file-based routing
 
 tests/                        # Unit tests (mirrors module names)
 downloads/                    # yt-dlp output (gitignored)

@@ -10,6 +10,7 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
+      "$lib/*": ["src/app/web/lib/*"],
       "@lib/*": ["src/lib/*"],
       "@app/cli/*": ["src/app/cli/*"],
       "@app/web/*": ["src/app/web/*"]

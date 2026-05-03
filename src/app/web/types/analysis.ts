@@ -1,6 +1,10 @@
 import { z } from 'zod';
-import { TranscriptLineSchema, MicroBlockSchema, LLMChunkSchema } from '@lib/types/transcript.js';
-import { ChunkEvaluationSchema } from '@lib/types/segment.js';
+import {
+  TranscriptLineSchema,
+  MicroBlockSchema,
+  LLMChunkSchema,
+} from '@lib/services/analysis/transcript/types.js';
+import { ChunkEvaluationSchema } from '@lib/services/analysis/types.js';
 
 export const TranscriptBundleSchema = z.object({
   videoId: z.string(),
