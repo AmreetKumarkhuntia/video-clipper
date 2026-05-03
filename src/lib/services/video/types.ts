@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { RankedSegmentSchema, ChunkEvaluationSchema } from './segment.js';
+import { RankedSegmentSchema, ChunkEvaluationSchema } from '../analysis/types.js';
+
+export type { RankedSegment } from '../analysis/types.js';
 
 export const VideoMetadataSchema = z.object({
   videoId: z.string().length(11),
@@ -16,3 +18,17 @@ export const PipelineResultSchema = z.object({
   segments: z.array(RankedSegmentSchema),
 });
 export type PipelineResult = z.infer<typeof PipelineResultSchema>;
+
+export type DownloadMode = 'all' | 'segments';
+
+export interface DownloadResultAll {
+  mode: 'all';
+  path: string;
+}
+
+export interface DownloadResultSegments {
+  mode: 'segments';
+  paths: string[];
+}
+
+export type DownloadResult = DownloadResultAll | DownloadResultSegments;

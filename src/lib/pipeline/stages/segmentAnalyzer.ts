@@ -1,7 +1,7 @@
-import { LLMAnalyzer } from '@lib/services/llmAnalyzer/LLMAnalyzer.js';
-import { TranscriptDetector } from '@lib/services/transcriptDetector/index.js';
-import { createTranscriptChain } from '@lib/services/transcriptAnalyzers/index.js';
-import { refineSegments } from '@lib/services/clipRefiner/index.js';
+import { LLMAnalyzer } from '@lib/services/analysis/llm/LLMAnalyzer.js';
+import { TranscriptDetector } from '@lib/services/analysis/transcript/detector.js';
+import { createTranscriptChain } from '@lib/services/audio/transcriber/index.js';
+import { refineSegments } from '@lib/services/analysis/refiner/index.js';
 import { log } from '@lib/utils/logger.js';
 import { config } from '@lib/config/index.js';
 import type { Cache } from '@lib/utils/cache.js';

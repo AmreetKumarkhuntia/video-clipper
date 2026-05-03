@@ -2,17 +2,17 @@ import { describe, it, expect } from 'vitest';
 import {
   parseProviderChain,
   createAnalyzerChain,
-} from '../src/lib/services/audioAnalyzers/index.js';
+} from '../src/lib/services/audio/analyzer/index.js';
 import {
   parseTranscriptProviderChain,
   createTranscriptChain,
-} from '../src/lib/services/transcriptAnalyzers/index.js';
-import { GeminiAudioAnalyzer } from '../src/lib/services/audioAnalyzers/gemini.js';
-import { WhisperAudioAnalyzer } from '../src/lib/services/audioAnalyzers/whisper.js';
-import { YAMNetAudioAnalyzer } from '../src/lib/services/audioAnalyzers/yamnet.js';
-import { YtDlpTranscriptAnalyzer } from '../src/lib/services/transcriptAnalyzers/ytdlp.js';
-import { WhisperTranscriptAnalyzer } from '../src/lib/services/transcriptAnalyzers/whisper.js';
-import { GeminiTranscriptAnalyzer } from '../src/lib/services/transcriptAnalyzers/gemini.js';
+} from '../src/lib/services/audio/transcriber/index.js';
+import { GeminiAudioAnalyzer } from '../src/lib/services/audio/analyzer/gemini.js';
+import { WhisperAudioAnalyzer } from '../src/lib/services/audio/analyzer/whisper.js';
+import { YAMNetAudioAnalyzer } from '../src/lib/services/audio/analyzer/yamnet.js';
+import { YtDlpTranscriptAnalyzer } from '../src/lib/services/video/source/youtube/subtitles.js';
+import { WhisperTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/whisper.js';
+import { GeminiTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/gemini.js';
 
 // ---------------------------------------------------------------------------
 // Audio analyzer factory

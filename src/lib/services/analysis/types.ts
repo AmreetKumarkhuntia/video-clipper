@@ -1,4 +1,11 @@
 import { z } from 'zod';
+import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript/types.js';
+
+export type { TranscriptLine, MicroBlock, LLMChunk } from './transcript/types.js';
+export { TranscriptLineSchema, MicroBlockSchema, LLMChunkSchema } from './transcript/types.js';
+
+export type { AudioEvent, MergedCandidate } from '../audio/types.js';
+export { AudioEventSchema, MergedCandidateSchema } from '../audio/types.js';
 
 export const AnalyzedSegmentSchema = z.object({
   interesting: z.boolean(),
@@ -41,3 +48,25 @@ export const ChunkEvaluationSchema = z.discriminatedUnion('status', [
   }),
 ]);
 export type ChunkEvaluation = z.infer<typeof ChunkEvaluationSchema>;
+
+export interface LLMAnalyzerResult {
+  lines: TranscriptLine[];
+  microBlocks: MicroBlock[];
+  chunks: LLMChunk[];
+  chunkEvals: ChunkEvaluation[];
+}
+
+export interface LLMAnalyzerOpts {
+  videoId: string;
+  audioPath: string | null;
+  audioEvents: import('../audio/types.js').AudioEvent[];
+  maxChunks?: number;
+  maxParallel: number;
+  noCache: boolean;
+}
+
+export interface TranscriptDetectorResult {
+  lines: TranscriptLine[];
+  microBlocks: MicroBlock[];
+  chunks: LLMChunk[];
+}

@@ -9,7 +9,7 @@ import { processAudio } from './stages/audioProcessor.js';
 import { analyzeSegments, refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
-import { downloadAudio } from '@lib/services/audioDownloader/index.js';
+import { downloadAudio } from '@lib/services/audio/source/youtube.js';
 import type { CliArgs, PipelineResult } from '@lib/types/index.js';
 
 async function outputResult(

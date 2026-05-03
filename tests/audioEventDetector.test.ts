@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeGeminiTime } from '../src/lib/services/audioAnalyzers/gemini.js';
+import { normalizeGeminiTime } from '../src/lib/services/audio/analyzer/gemini.js';
 
 const CHUNK = 120; // default chunk duration in seconds
 

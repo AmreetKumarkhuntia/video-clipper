@@ -1,9 +1,9 @@
 import { promises as fs } from 'fs';
 import pLimit from 'p-limit';
-import { downloadAudio } from '@lib/services/audioDownloader/index.js';
-import { createAnalyzerChain } from '@lib/services/audioAnalyzers/index.js';
-import { EventDetector } from '@lib/services/eventDetector/index.js';
-import { sliceAudio } from '@lib/services/audioDownloader/sliceAudio.js';
+import { downloadAudio } from '@lib/services/audio/source/youtube.js';
+import { createAnalyzerChain } from '@lib/services/audio/analyzer/index.js';
+import { EventDetector } from '@lib/services/audio/processor/detector.js';
+import { sliceAudio } from '@lib/services/audio/processor/slicer.js';
 import { buildWindows } from '@lib/utils/chunker.js';
 import { log } from '@lib/utils/logger.js';
 import { config } from '@lib/config/index.js';
