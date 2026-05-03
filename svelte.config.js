@@ -11,9 +11,9 @@ const config = {
       '@app/web': path.resolve('./src/app/web'),
     },
     files: {
-      appTemplate: 'src/app/web/client/app.html',
-      lib: 'src/app/web/client/lib',
-      routes: 'src/app/web/client/routes',
+      appTemplate: 'src/app/web/app.html',
+      lib: 'src/app/web/lib',
+      routes: 'src/app/web/routes',
     },
   },
 };
