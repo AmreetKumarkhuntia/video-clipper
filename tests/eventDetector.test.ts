@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { EventDetector } from '../src/lib/services/eventDetector/index.js';
-import type { AudioAnalyzer } from '../src/lib/services/audioAnalyzers/index.js';
+import { EventDetector } from '../src/lib/services/audio/processor/detector.js';
+import type { AudioAnalyzer } from '../src/lib/services/audio/analyzer/index.js';
 import type { AudioEvent } from '../src/lib/types/index.js';
 
 // ---------------------------------------------------------------------------

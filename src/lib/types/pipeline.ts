@@ -1,6 +1,10 @@
-import type { VideoMetadata } from './video.js';
-import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
-import type { ChunkEvaluation } from './segment.js';
+import type { VideoMetadata } from '../services/video/types.js';
+import type {
+  TranscriptLine,
+  MicroBlock,
+  LLMChunk,
+} from '../services/analysis/transcript/types.js';
+import type { ChunkEvaluation } from '../services/analysis/types.js';
 
 /** A half-open time window [start, end) in seconds. Returned by `buildWindows`. */
 export interface ChunkWindow {

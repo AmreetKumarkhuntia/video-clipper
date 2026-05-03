@@ -1,5 +1,5 @@
-import { parseUrl } from '@lib/services/urlParser/index.js';
-import { extractMetadata } from '@lib/services/metadataExtractor/index.js';
+import { parseUrl } from '@lib/services/video/source/youtube/parser.js';
+import { extractMetadata } from '@lib/services/video/source/youtube/metadata.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import type { VideoResolverResult } from '@lib/types/index.js';

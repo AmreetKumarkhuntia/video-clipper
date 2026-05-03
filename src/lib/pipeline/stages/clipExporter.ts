@@ -1,5 +1,5 @@
-import { downloadVideo } from '@lib/services/videoDownloader/index.js';
-import { generateClips, organizeClips } from '@lib/services/clipGenerator/index.js';
+import { downloadVideo } from '@lib/services/video/source/youtube/downloader.js';
+import { generateClips, organizeClips } from '@lib/services/video/clipper/index.js';
 import { log } from '@lib/utils/logger.js';
 import { config } from '@lib/config/index.js';
 import type { RankedSegment, ClipExporterOpts } from '@lib/types/index.js';
