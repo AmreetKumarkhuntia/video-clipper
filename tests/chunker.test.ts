@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWindows } from '../src/utils/chunker.js';
+import { buildWindows } from '../src/lib/utils/chunker.js';
 
 describe('buildWindows', () => {
   it('returns empty array when totalDuration is 0', () => {

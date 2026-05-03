@@ -12,7 +12,13 @@
     "types": ["node"],
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lib/*": ["src/lib/*"],
+      "@app/cli/*": ["src/app/cli/*"],
+      "@app/web/*": ["src/app/web/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

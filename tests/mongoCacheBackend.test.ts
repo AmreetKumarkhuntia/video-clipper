@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MongoCacheBackend } from '../src/utils/mongoCacheBackend.js';
+import { MongoCacheBackend } from '../src/lib/utils/mongoCacheBackend.js';
 import type { MongoClient, Db, Collection } from 'mongodb';
 import type {
   TranscriptLine,
@@ -7,7 +7,7 @@ import type {
   ChunkEvaluation,
   AudioEvent,
   SegmentRefinement,
-} from '../src/types/index.js';
+} from '../src/lib/types/index.js';
 
 // ---------------------------------------------------------------------------
 // MongoDB mock factory

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { mergeSignals } from '../src/services/segmentRanker/index.js';
-import type { ChunkEvaluation, AudioEvent } from '../src/types/index.js';
+import { mergeSignals } from '../src/lib/services/segmentRanker/index.js';
+import type { ChunkEvaluation, AudioEvent } from '../src/lib/types/index.js';
 
 function createSuccessEvaluation(
   clipStart: number,

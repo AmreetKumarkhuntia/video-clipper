@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rankSegments } from '../src/services/segmentRanker/index.js';
-import type { MergedCandidate } from '../src/types/index.js';
+import { rankSegments } from '../src/lib/services/segmentRanker/index.js';
+import type { MergedCandidate } from '../src/lib/types/index.js';
 
 function seg(
   start: number,
