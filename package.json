@@ -60,17 +60,21 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc",
+    "web:dev": "vite --host 0.0.0.0",
+    "web:build": "vite build",
+    "web:preview": "vite preview --host 0.0.0.0",
+    "web:check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.web.json",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "type-check": "tsc --project tsconfig.test.json",
     "lint": "tsc --project tsconfig.test.json",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.{ts,svelte}\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.{ts,svelte}\" \"tests/**/*.ts\"",
     "prepare": "husky",
     "release:dry": "npx semantic-release --dry-run"
   },
   "lint-staged": {
-    "*.ts": [
+    "*.{ts,svelte}": [
       "prettier --write"
     ],
     "*.{json,md}": [
@@ -87,6 +91,7 @@
     "@ai-sdk/provider": "^3.0.8",
     "@ai-sdk/xai": "^2.0.62",
     "@google/generative-ai": "^0.21.0",
+    "@googleapis/youtube": "^31.0.0",
     "ai": "^5.0.154",
     "dotenv": "^16.4.7",
     "execa": "^9.5.2",
@@ -101,14 +106,21 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.6",
+    "@sveltejs/adapter-node": "^5.2.13",
+    "@sveltejs/kit": "^2.20.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.4",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/node": "^22.13.10",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "prettier-plugin-svelte": "3.3.3",
     "semantic-release": "^25.0.3",
+    "svelte": "^5.55.5",
+    "svelte-check": "4.1.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
+    "vite": "^5.4.21",
     "vitest": "^3.0.8"
   }
 }
