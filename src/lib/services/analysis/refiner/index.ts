@@ -62,6 +62,7 @@ export interface RefineSegmentsOpts {
   maxRetries: number;
   model: LanguageModel;
   callbacks?: Pick<StreamCallbacks, 'onSegmentTextDelta' | 'onSegmentRefined'>;
+  requestId?: string;
 }
 
 function createReportRefinedBoundariesTool() {
@@ -145,7 +146,11 @@ export async function refineSegments(
   noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment[]> {
-  const done = log.fnCalled('refineSegments', { segments: segments.length, concurrency });
+  const done = log.fnCalled(
+    'refineSegments',
+    { segments: segments.length, concurrency },
+    opts.requestId,
+  );
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(

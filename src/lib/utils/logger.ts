@@ -40,13 +40,15 @@ export const log = {
   fnCalled: (
     name: string,
     meta?: Record<string, unknown>,
+    requestId?: string,
   ): ((result?: Record<string, unknown>) => void) => {
     const start = Date.now();
-    console.log(`[fn →] ${name}${meta ? ` |${formatMeta(meta)}` : ''}`);
+    const prefix = requestId ? `${requestId} ` : '';
+    console.log(`${prefix}[fn →] ${name}${meta ? ` |${formatMeta(meta)}` : ''}`);
     return (result?: Record<string, unknown>): void => {
       const ms = Date.now() - start;
       console.log(
-        `[fn ←] ${name} | ${result && Object.keys(result).length ? `${formatMeta(result).trim()} ` : ''}(${ms}ms)`,
+        `${prefix}[fn ←] ${name} | ${result && Object.keys(result).length ? `${formatMeta(result).trim()} ` : ''}(${ms}ms)`,
       );
     };
   },

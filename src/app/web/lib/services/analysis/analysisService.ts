@@ -31,6 +31,7 @@ After analyzing the segment, call the report_analysis tool with your findings.`;
 export async function analyzeTranscriptForWeb(
   input: CreateAnalysisRequest,
   callbacks?: StreamCallbacks,
+  requestId?: string,
 ): Promise<ClipPlan> {
   const backend = await createCacheBackend(config, input.options.noCache);
   const cache = new Cache(backend);
@@ -62,6 +63,7 @@ export async function analyzeTranscriptForWeb(
         maxChunks: input.options.maxChunks ?? config.MAX_CHUNKS,
         maxParallel: input.options.maxParallel ?? config.LLM_CONCURRENCY,
         noCache: input.options.noCache,
+        requestId,
         transcriptProvider: config.TRANSCRIPT_PROVIDER,
         transcriptChainConfig,
         microBlockSec: config.MICRO_BLOCK_SEC,
@@ -91,6 +93,7 @@ export async function analyzeTranscriptForWeb(
             noCache: input.options.noCache,
             maxRetries: config.LLM_MAX_RETRIES,
             model,
+            requestId,
             callbacks,
           })
         : rankedSegments;

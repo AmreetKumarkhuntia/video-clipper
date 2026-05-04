@@ -63,6 +63,7 @@ export interface LLMAnalyzerOpts {
   maxChunks?: number;
   maxParallel: number;
   noCache: boolean;
+  requestId?: string;
 }
 
 export interface TranscriptDetectorResult {

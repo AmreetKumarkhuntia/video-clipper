@@ -40,6 +40,7 @@ export interface AnalyzeChunksOpts {
   systemPrompt: string;
   model: LanguageModel;
   callbacks?: Pick<StreamCallbacks, 'onChunkTextDelta' | 'onChunkAnalyzed'>;
+  requestId?: string;
 }
 
 function isRateLimitError(err: unknown): boolean {
@@ -219,7 +220,11 @@ export async function analyzeChunks(
   noCache: boolean,
   opts: AnalyzeChunksOpts,
 ): Promise<ChunkEvaluation[]> {
-  const done = log.fnCalled('analyzeChunks', { chunks: chunks.length, concurrency });
+  const done = log.fnCalled(
+    'analyzeChunks',
+    { chunks: chunks.length, concurrency },
+    opts.requestId,
+  );
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(

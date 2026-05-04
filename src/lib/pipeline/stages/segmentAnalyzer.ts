@@ -19,7 +19,7 @@ export async function analyzeSegments(
   cache: Cache,
   opts: SegmentAnalyzerOpts,
 ): Promise<SegmentAnalyzerResult> {
-  const done = log.fnCalled('analyzeSegments', { videoId });
+  const done = log.fnCalled('analyzeSegments', { videoId }, opts.requestId);
 
   const chain = createTranscriptChain(opts.transcriptProvider, opts.transcriptChainConfig);
   const transcriptDetector = new TranscriptDetector(
@@ -46,6 +46,7 @@ export async function analyzeSegments(
     maxChunks: opts.maxChunks,
     maxParallel: opts.maxParallel,
     noCache: opts.noCache,
+    requestId: opts.requestId,
   });
 
   done({});
@@ -56,9 +57,16 @@ export async function refineRankedSegments(
   rankedSegments: RankedSegment[],
   microBlocks: MicroBlock[],
   cache: Cache,
-  opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache' | 'maxRetries' | 'model' | 'callbacks'>,
+  opts: Pick<
+    SegmentAnalyzerOpts,
+    'maxParallel' | 'noCache' | 'maxRetries' | 'model' | 'callbacks' | 'requestId'
+  >,
 ): Promise<RankedSegment[]> {
-  const done = log.fnCalled('refineRankedSegments', { segments: rankedSegments.length });
+  const done = log.fnCalled(
+    'refineRankedSegments',
+    { segments: rankedSegments.length },
+    opts.requestId,
+  );
   const result = await refineSegments(
     rankedSegments,
     microBlocks,
@@ -68,6 +76,7 @@ export async function refineRankedSegments(
     {
       maxRetries: opts.maxRetries,
       model: opts.model,
+      requestId: opts.requestId,
       callbacks: opts.callbacks
         ? {
             onSegmentTextDelta: opts.callbacks.onSegmentTextDelta,
