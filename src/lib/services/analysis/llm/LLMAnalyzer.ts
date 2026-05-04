@@ -50,6 +50,7 @@ export class LLMAnalyzer {
       maxRetries: this.maxRetries,
       systemPrompt: this.systemPrompt,
       model: this.model,
+      requestId: opts.requestId,
       callbacks: this.callbacks
         ? {
             onChunkTextDelta: this.callbacks.onChunkTextDelta,
@@ -79,12 +80,13 @@ export class LLMAnalyzer {
   async refine(
     rankedSegments: RankedSegment[],
     microBlocks: MicroBlock[],
-    opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache'>,
+    opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache' | 'requestId'>,
   ): Promise<RankedSegment[]> {
     log.info('Refining clip boundaries...');
     const refineOpts: RefineSegmentsOpts = {
       maxRetries: this.maxRetries,
       model: this.model,
+      requestId: opts.requestId,
       callbacks: this.callbacks
         ? {
             onSegmentTextDelta: this.callbacks.onSegmentTextDelta,

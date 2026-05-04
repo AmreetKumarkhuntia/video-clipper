@@ -33,6 +33,7 @@ export interface SegmentAnalyzerOpts {
   maxChunks?: number;
   maxParallel: number;
   noCache: boolean;
+  requestId?: string;
   transcriptProvider: string;
   transcriptChainConfig: TranscriptChainConfig;
   microBlockSec: number;

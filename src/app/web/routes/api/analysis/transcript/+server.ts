@@ -52,7 +52,7 @@ export const POST: RequestHandler = async (event) => {
       };
 
       try {
-        const plan = await analyzeTranscriptForWeb(input, callbacks);
+        const plan = await analyzeTranscriptForWeb(input, callbacks, event.locals.requestId);
         send('analysis_complete', { plan });
       } catch (error) {
         send('error', {
