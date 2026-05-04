@@ -44,6 +44,7 @@ export type {
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
   TranscriptDetectorResult,
+  StreamCallbacks,
 } from '../services/analysis/types.js';
 
 export { AudioEventSchema, MergedCandidateSchema } from '../services/audio/types.js';

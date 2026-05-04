@@ -2,10 +2,12 @@
   import { page } from '$app/stores';
   import type { VideoDetails } from '@lib/types/index.js';
   import type { ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
-  import { apiFetch } from '$lib/api.js';
+  import { apiFetch } from '../../../lib/api.js';
+  import { streamAnalysis } from '../../../lib/analysisStream.js';
   import Button from '../../../components/Button.svelte';
   import ErrorText from '../../../components/ErrorText.svelte';
   import MutedText from '../../../components/MutedText.svelte';
+  import AnalysisProgress from '../../../components/AnalysisProgress.svelte';
   import YouTubeEmbed from '../../../components/YouTubeEmbed.svelte';
 
   let video: VideoDetails | null = null;
@@ -15,6 +17,11 @@
   let isLoadingTranscript = false;
   let isAnalyzing = false;
   let errorMessage = '';
+
+  let analyzedChunks = 0;
+  let totalChunks = 0;
+  let analysisPhase: 'analyzing' | 'refining' | 'complete' = 'analyzing';
+  let analysisText = '';
 
   $: videoId = $page.params.videoId;
 
@@ -51,20 +58,46 @@
   async function planClips(): Promise<void> {
     isAnalyzing = true;
     errorMessage = '';
+    analyzedChunks = 0;
+    totalChunks = 0;
+    analysisPhase = 'analyzing';
+    analysisText = '';
 
     try {
-      plan = await apiFetch<ClipPlan>('/api/analysis/transcript', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      plan = await streamAnalysis(
+        {
           videoId,
           title: video?.title,
           durationSec: video?.durationSec,
-          options: { refine: true },
-        }),
-      });
+          options: { refine: true, noCache: false },
+        },
+        {
+          onChunkProgress: (_chunkIndex, text) => {
+            analysisText += text;
+          },
+          onChunkAnalyzed: (chunkIndex, evaluation) => {
+            if (evaluation.status === 'success') {
+              analyzedChunks = chunkIndex + 1;
+              if (totalChunks === 0) {
+                totalChunks = chunkIndex + 1;
+              }
+            }
+          },
+          onSegmentProgress: (_rank, text) => {
+            analysisPhase = 'refining';
+            analysisText += text;
+          },
+          onSegmentRefined: () => {},
+          onError: (message) => {
+            errorMessage = message;
+          },
+        },
+      );
+      analysisPhase = 'complete';
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage) {
+        errorMessage = error instanceof Error ? error.message : String(error);
+      }
     } finally {
       isAnalyzing = false;
     }
@@ -109,6 +142,12 @@
       </div>
     </aside>
   </section>
+
+  {#if isAnalyzing}
+    <section class="progress-section">
+      <AnalysisProgress {analyzedChunks} {totalChunks} phase={analysisPhase} text={analysisText} />
+    </section>
+  {/if}
 
   <section class="below">
     <article>
@@ -185,6 +224,14 @@
   .actions {
     display: grid;
     gap: var(--s-sm);
+  }
+
+  .progress-section {
+    margin-top: var(--s-lg);
+    padding: var(--s-md);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
   }
 
   .below {

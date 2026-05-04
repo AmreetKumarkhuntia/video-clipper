@@ -153,6 +153,27 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       audioProcConfig,
     );
 
+    const callbacks: import('@lib/types/index.js').StreamCallbacks = {
+      onChunkTextDelta: (chunkIndex, text) => {
+        process.stdout.write(text);
+      },
+      onChunkAnalyzed: (chunkIndex, evaluation) => {
+        if (evaluation.status === 'success') {
+          log.info(
+            `  ✓ chunk ${chunkIndex}: interesting=${evaluation.interesting}, score=${evaluation.score}`,
+          );
+        }
+      },
+      onSegmentTextDelta: (rank, text) => {
+        process.stdout.write(text);
+      },
+      onSegmentRefined: (rank, segment) => {
+        log.info(
+          `  ✓ segment rank=${rank}: ${segment.start.toFixed(1)}s–${segment.end.toFixed(1)}s`,
+        );
+      },
+    };
+
     const { lines, microBlocks, chunkEvals } = await analyzeSegments(
       videoId,
       audioPath,
@@ -171,6 +192,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
         maxRetries: config.LLM_MAX_RETRIES,
         systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
         llmModel: config.LLM_MODEL,
+        callbacks,
       },
     );
 
@@ -206,6 +228,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       noCache: args.noCache,
       maxRetries: config.LLM_MAX_RETRIES,
       model,
+      callbacks,
     });
 
     const result: PipelineResult = {

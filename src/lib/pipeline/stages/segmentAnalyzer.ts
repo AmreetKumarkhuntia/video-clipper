@@ -36,6 +36,7 @@ export async function analyzeSegments(
     opts.maxRetries,
     opts.systemPrompt,
     opts.llmModel,
+    opts.callbacks,
   );
 
   const { lines, microBlocks, chunks, chunkEvals } = await analyzer.analyze({
@@ -54,11 +55,17 @@ export async function refineRankedSegments(
   rankedSegments: RankedSegment[],
   microBlocks: MicroBlock[],
   cache: Cache,
-  opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache' | 'maxRetries' | 'model'>,
+  opts: Pick<SegmentAnalyzerOpts, 'maxParallel' | 'noCache' | 'maxRetries' | 'model' | 'callbacks'>,
 ): Promise<RankedSegment[]> {
   log.info('Refining clip boundaries...');
   return refineSegments(rankedSegments, microBlocks, opts.maxParallel, cache, opts.noCache, {
     maxRetries: opts.maxRetries,
     model: opts.model,
+    callbacks: opts.callbacks
+      ? {
+          onSegmentTextDelta: opts.callbacks.onSegmentTextDelta,
+          onSegmentRefined: opts.callbacks.onSegmentRefined,
+        }
+      : undefined,
   });
 }
