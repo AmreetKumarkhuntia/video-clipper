@@ -152,11 +152,11 @@ Pre-commit hooks run automatically: formatting (Prettier), type-check, and tests
 
 ## Documentation
 
-| Doc                                              | Description                                                           |
-| ------------------------------------------------ | --------------------------------------------------------------------- |
-| [docs/configuration.md](docs/configuration.md)   | Full environment variable reference, provider setup, FFmpeg presets   |
-| [docs/advanced-usage.md](docs/advanced-usage.md) | Advanced CLI examples, caching, pre-downloaded videos                 |
-| [docs/audio-sync.md](docs/audio-sync.md)         | Audio/video sync troubleshooting and `TIMESTAMP_OFFSET_SECONDS` guide |
-| [docs/yt-downloader.md](docs/yt-downloader.md)   | yt-dlp download modes explained                                       |
-| [docs/free-models.md](docs/free-models.md)       | Free models that work well with this tool                             |
-| [docs/plan.md](docs/plan.md)                     | Full architecture and pipeline design                                 |
+| Doc                                              | Description                                                                                   |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| [docs/configuration.md](docs/configuration.md)   | Full environment variable reference, provider setup, FFmpeg presets, yt-dlp cookie auth guide |
+| [docs/advanced-usage.md](docs/advanced-usage.md) | Advanced CLI examples, caching, pre-downloaded videos                                         |
+| [docs/audio-sync.md](docs/audio-sync.md)         | Audio/video sync troubleshooting and `TIMESTAMP_OFFSET_SECONDS` guide                         |
+| [docs/yt-downloader.md](docs/yt-downloader.md)   | yt-dlp download modes, transcript bot-detection errors, and cookie troubleshooting            |
+| [docs/free-models.md](docs/free-models.md)       | Free models that work well with this tool                                                     |
+| [docs/plan.md](docs/plan.md)                     | Full architecture and pipeline design                                                         |
