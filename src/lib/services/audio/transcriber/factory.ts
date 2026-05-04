@@ -1,9 +1,14 @@
 import { log } from '@lib/utils/logger.js';
 import { TranscriptAnalyzer } from './base.js';
 import { YtDlpTranscriptAnalyzer } from '../../video/source/youtube/subtitles.js';
+import type { YtDlpCookies } from '../../video/source/youtube/metadata.js';
 import { WhisperTranscriptAnalyzer } from './whisper.js';
 import { GeminiTranscriptAnalyzer } from './gemini.js';
 import type { TranscriptProviderName } from '@lib/types/index.js';
+
+export interface TranscriptChainConfig extends YtDlpCookies {
+  whisperModel: string;
+}
 
 const KNOWN_PROVIDERS = new Set<TranscriptProviderName>(['ytdlp', 'whisper', 'gemini']);
 
@@ -46,15 +51,18 @@ export function parseTranscriptProviderChain(providerString: string): Transcript
  *   // TRANSCRIPT_PROVIDER=ytdlp,whisper  →  [YtDlpTranscriptAnalyzer, WhisperTranscriptAnalyzer]
  *   const chain = createTranscriptChain(config.TRANSCRIPT_PROVIDER);
  */
-export function createTranscriptChain(providerString: string): TranscriptAnalyzer[] {
+export function createTranscriptChain(
+  providerString: string,
+  chainConfig: TranscriptChainConfig,
+): TranscriptAnalyzer[] {
   const names = parseTranscriptProviderChain(providerString);
 
   return names.map((name) => {
     switch (name) {
       case 'ytdlp':
-        return new YtDlpTranscriptAnalyzer();
+        return new YtDlpTranscriptAnalyzer(chainConfig);
       case 'whisper':
-        return new WhisperTranscriptAnalyzer();
+        return new WhisperTranscriptAnalyzer(chainConfig.whisperModel);
       case 'gemini':
         log.warn(
           '[transcript] GeminiTranscriptAnalyzer is not yet implemented — ' +

@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { log } from '@lib/utils/logger.js';
-import { config } from '@lib/config/index.js';
 import type { TranscriptLine } from '../../../analysis/transcript/types.js';
 import { TranscriptAnalyzer } from '../../../audio/transcriber/base.js';
+import type { YtDlpCookies } from './metadata.js';
 
 /**
  * Parses a WebVTT string into TranscriptLine[].
@@ -94,7 +94,7 @@ export function parseVtt(vttContent: string): TranscriptLine[] {
  * @throws {Error} if no subtitle file is produced
  * @throws {Error} if the subtitle file contains no parseable cues
  */
-async function fetchTranscript(videoId: string): Promise<TranscriptLine[]> {
+async function fetchTranscript(videoId: string, cookies: YtDlpCookies): Promise<TranscriptLine[]> {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vc-vtt-'));
 
   try {
@@ -110,10 +110,10 @@ async function fetchTranscript(videoId: string): Promise<TranscriptLine[]> {
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
 
-    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
-      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
-    } else if (config.YT_DLP_COOKIES_FILE) {
-      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
+    if (cookies.cookiesFromBrowser) {
+      args.unshift('--cookies-from-browser', cookies.cookiesFromBrowser);
+    } else if (cookies.cookiesFile) {
+      args.unshift('--cookies', cookies.cookiesFile);
     }
 
     try {
@@ -158,7 +158,11 @@ async function fetchTranscript(videoId: string): Promise<TranscriptLine[]> {
 export class YtDlpTranscriptAnalyzer extends TranscriptAnalyzer {
   readonly source = 'ytdlp' as const;
 
+  constructor(private readonly cookies: YtDlpCookies = {}) {
+    super();
+  }
+
   async detect(videoId: string, _audioPath: string | null): Promise<TranscriptLine[]> {
-    return fetchTranscript(videoId);
+    return fetchTranscript(videoId, this.cookies);
   }
 }

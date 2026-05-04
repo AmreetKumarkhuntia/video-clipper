@@ -1,18 +1,18 @@
 import { execa } from 'execa';
-import { config } from '@lib/config/index.js';
 import type { AudioEvent } from '../types.js';
 import { AudioAnalyzer } from './base.js';
 import { getPythonBin } from '@lib/utils/pythonBin.js';
 import { scriptPath } from '@lib/utils/paths.js';
 
-/**
- * Uses OpenAI Whisper (local) to transcribe the audio chunk and scan the
- * resulting transcript for hype keywords per game profile.
- *
- * Requires: pip install openai-whisper
- */
 export class WhisperAudioAnalyzer extends AudioAnalyzer {
   readonly source = 'whisper' as const;
+
+  constructor(
+    private readonly confidenceThreshold: number,
+    private readonly whisperModel: string,
+  ) {
+    super();
+  }
 
   async detect(
     audioPath: string,
@@ -27,9 +27,9 @@ export class WhisperAudioAnalyzer extends AudioAnalyzer {
       const result = await execa(python, [
         scriptPath('detect_events_whisper.py'),
         audioPath,
-        String(config.AUDIO_CONFIDENCE_THRESHOLD),
+        String(this.confidenceThreshold),
         gameProfile,
-        config.AUDIO_WHISPER_MODEL,
+        this.whisperModel,
       ]);
       stdout = result.stdout;
     } catch (err) {

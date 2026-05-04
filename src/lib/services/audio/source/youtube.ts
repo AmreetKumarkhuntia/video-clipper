@@ -1,10 +1,18 @@
 import { execa } from 'execa';
 import * as fs from 'fs';
 import * as path from 'path';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
+import type { YtDlpCookies } from '../../video/source/youtube/metadata.js';
 
-export async function downloadAudio(videoId: string, outputDir: string): Promise<string> {
+export interface AudioDownloadConfig extends YtDlpCookies {
+  ffmpegPath?: string;
+}
+
+export async function downloadAudio(
+  videoId: string,
+  outputDir: string,
+  audioConfig: AudioDownloadConfig = {},
+): Promise<string> {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -33,14 +41,14 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
       `https://youtube.com/watch?v=${videoId}`,
     ];
 
-    if (config.FFMPEG_PATH) {
-      args.unshift('--ffmpeg-location', config.FFMPEG_PATH);
+    if (audioConfig.ffmpegPath) {
+      args.unshift('--ffmpeg-location', audioConfig.ffmpegPath);
     }
 
-    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
-      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
-    } else if (config.YT_DLP_COOKIES_FILE) {
-      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
+    if (audioConfig.cookiesFromBrowser) {
+      args.unshift('--cookies-from-browser', audioConfig.cookiesFromBrowser);
+    } else if (audioConfig.cookiesFile) {
+      args.unshift('--cookies', audioConfig.cookiesFile);
     }
 
     const subprocess = execa('yt-dlp', args);
@@ -60,7 +68,7 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
     if (message.includes('ffprobe and ffmpeg not found') || message.includes('ffmpeg not found')) {
       throw new Error(
         'ffmpeg is required for audio processing. Install it: `brew install ffmpeg`' +
-          (config.FFMPEG_PATH
+          (audioConfig.ffmpegPath
             ? ''
             : '\nOr set FFMPEG_PATH in your .env to your ffmpeg binary location.'),
       );

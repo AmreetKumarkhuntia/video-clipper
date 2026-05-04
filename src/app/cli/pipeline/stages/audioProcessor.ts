@@ -1,40 +1,39 @@
 import { promises as fs } from 'fs';
 import pLimit from 'p-limit';
 import { downloadAudio } from '@lib/services/audio/source/youtube.js';
+import type { AudioDownloadConfig } from '@lib/services/audio/source/youtube.js';
 import { createAnalyzerChain } from '@lib/services/audio/analyzer/index.js';
+import type { AnalyzerChainConfig } from '@lib/services/audio/analyzer/index.js';
 import { EventDetector } from '@lib/services/audio/processor/detector.js';
 import { sliceAudio } from '@lib/services/audio/processor/slicer.js';
+import type { SlicerConfig } from '@lib/services/audio/processor/slicer.js';
 import { buildWindows } from '@lib/utils/chunker.js';
 import { log } from '@lib/utils/logger.js';
-import { config } from '@lib/config/index.js';
 import type { Cache } from '@lib/utils/cache.js';
 import type { AudioEvent, AudioProcessorOpts } from '@lib/types/index.js';
 
-/**
- * Stage 3 — Audio Processor
- *
- * Downloads audio-only WAV, slices it into chunks using the generic
- * `buildWindows` utility, runs event detection on each slice via an
- * EventDetector (constructed from the ordered provider chain in config),
- * and persists the results to cache.
- *
- * The provider chain is built once per run from `config.AUDIO_PROVIDER`
- * (e.g. "gemini,whisper") via `createAnalyzerChain`. The EventDetector
- * walks the chain in order, falling back to the next analyzer on failure.
- *
- * Returns an empty array immediately when audio detection is disabled via
- * `--no-audio` or the `AUDIO_DETECTION_ENABLED` config flag.
- */
+export interface AudioProcessorConfig {
+  audioEnabled: boolean;
+  audioProvider: string;
+  chunkLengthSec: number;
+  chunkOverlapSec: number;
+  outputDir: string;
+  audioDownloadConfig: AudioDownloadConfig;
+  slicerConfig: SlicerConfig;
+  analyzerChainConfig: AnalyzerChainConfig;
+}
+
 export async function processAudio(
   videoId: string,
   duration: number,
   cache: Cache,
   opts: AudioProcessorOpts,
+  procConfig: AudioProcessorConfig,
 ): Promise<AudioEvent[]> {
-  const audioEnabled = config.AUDIO_DETECTION_ENABLED && !opts.noAudio;
+  const audioEnabled = procConfig.audioEnabled && !opts.noAudio;
   if (!audioEnabled) return [];
 
-  const cached = await cache.readAudioEvents(videoId, opts.gameProfile, config.AUDIO_PROVIDER);
+  const cached = await cache.readAudioEvents(videoId, opts.gameProfile, procConfig.audioProvider);
   if (cached) {
     log.info(`[cache hit] Audio events loaded from cache (${cached.length} events)`);
     return cached;
@@ -42,9 +41,14 @@ export async function processAudio(
 
   try {
     const audioPath =
-      opts.audioPath ?? (await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`));
+      opts.audioPath ??
+      (await downloadAudio(
+        videoId,
+        `${procConfig.outputDir}/audio`,
+        procConfig.audioDownloadConfig,
+      ));
 
-    const chain = createAnalyzerChain(config.AUDIO_PROVIDER);
+    const chain = createAnalyzerChain(procConfig.audioProvider, procConfig.analyzerChainConfig);
     const detector = new EventDetector(chain);
 
     const providerNames = chain.map((a) => a.source).join(' → ');
@@ -52,7 +56,7 @@ export async function processAudio(
       `Detecting audio events (chain: ${providerNames}, profile: ${opts.gameProfile}, max ${opts.maxParallel} parallel)...`,
     );
 
-    const windows = buildWindows(duration, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
+    const windows = buildWindows(duration, procConfig.chunkLengthSec, procConfig.chunkOverlapSec);
     const limit = pLimit(opts.maxParallel);
 
     const results = await Promise.allSettled(
@@ -63,7 +67,7 @@ export async function processAudio(
           const cachedChunk = await cache.readAudioChunk(
             videoId,
             opts.gameProfile,
-            config.AUDIO_PROVIDER,
+            procConfig.audioProvider,
             window.start,
             window.end,
           );
@@ -78,7 +82,8 @@ export async function processAudio(
             audioPath,
             window.start,
             window.end - window.start,
-            config.OUTPUT_DIR,
+            procConfig.outputDir,
+            procConfig.slicerConfig,
           );
           const events = await detector.detect(
             slicePath,
@@ -91,7 +96,7 @@ export async function processAudio(
           await cache.writeAudioChunk(
             videoId,
             opts.gameProfile,
-            config.AUDIO_PROVIDER,
+            procConfig.audioProvider,
             window.start,
             window.end,
             events,
@@ -115,7 +120,7 @@ export async function processAudio(
 
     log.info(`Audio event detection complete: ${audioEvents.length} events found`);
 
-    await cache.writeAudioEvents(videoId, opts.gameProfile, config.AUDIO_PROVIDER, audioEvents);
+    await cache.writeAudioEvents(videoId, opts.gameProfile, procConfig.audioProvider, audioEvents);
     return audioEvents;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

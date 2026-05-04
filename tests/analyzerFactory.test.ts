@@ -3,16 +3,31 @@ import {
   parseProviderChain,
   createAnalyzerChain,
 } from '../src/lib/services/audio/analyzer/index.js';
+import type { AnalyzerChainConfig } from '../src/lib/services/audio/analyzer/index.js';
 import {
   parseTranscriptProviderChain,
   createTranscriptChain,
 } from '../src/lib/services/audio/transcriber/index.js';
+import type { TranscriptChainConfig } from '../src/lib/services/audio/transcriber/index.js';
 import { GeminiAudioAnalyzer } from '../src/lib/services/audio/analyzer/gemini.js';
 import { WhisperAudioAnalyzer } from '../src/lib/services/audio/analyzer/whisper.js';
 import { YAMNetAudioAnalyzer } from '../src/lib/services/audio/analyzer/yamnet.js';
 import { YtDlpTranscriptAnalyzer } from '../src/lib/services/video/source/youtube/subtitles.js';
 import { WhisperTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/whisper.js';
 import { GeminiTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/gemini.js';
+
+const ANALYZER_CHAIN_CONFIG: AnalyzerChainConfig = {
+  confidenceThreshold: 0.5,
+  whisperModel: 'base',
+  gemini: {
+    apiKey: 'test-key',
+    model: 'gemini-pro',
+  },
+};
+
+const TRANSCRIPT_CHAIN_CONFIG: TranscriptChainConfig = {
+  whisperModel: 'base',
+};
 
 // ---------------------------------------------------------------------------
 // Audio analyzer factory
@@ -54,30 +69,30 @@ describe('parseProviderChain (audio)', () => {
 
 describe('createAnalyzerChain (audio)', () => {
   it('returns a GeminiAudioAnalyzer for "gemini"', () => {
-    const chain = createAnalyzerChain('gemini');
+    const chain = createAnalyzerChain('gemini', ANALYZER_CHAIN_CONFIG);
     expect(chain).toHaveLength(1);
     expect(chain[0]).toBeInstanceOf(GeminiAudioAnalyzer);
   });
 
   it('returns a WhisperAudioAnalyzer for "whisper"', () => {
-    const chain = createAnalyzerChain('whisper');
+    const chain = createAnalyzerChain('whisper', ANALYZER_CHAIN_CONFIG);
     expect(chain[0]).toBeInstanceOf(WhisperAudioAnalyzer);
   });
 
   it('returns a YAMNetAudioAnalyzer for "yamnet"', () => {
-    const chain = createAnalyzerChain('yamnet');
+    const chain = createAnalyzerChain('yamnet', ANALYZER_CHAIN_CONFIG);
     expect(chain[0]).toBeInstanceOf(YAMNetAudioAnalyzer);
   });
 
   it('returns analyzers in the declared order for a two-item chain', () => {
-    const chain = createAnalyzerChain('gemini,whisper');
+    const chain = createAnalyzerChain('gemini,whisper', ANALYZER_CHAIN_CONFIG);
     expect(chain).toHaveLength(2);
     expect(chain[0]).toBeInstanceOf(GeminiAudioAnalyzer);
     expect(chain[1]).toBeInstanceOf(WhisperAudioAnalyzer);
   });
 
   it('maps legacy "both" to [Gemini, Whisper]', () => {
-    const chain = createAnalyzerChain('both');
+    const chain = createAnalyzerChain('both', ANALYZER_CHAIN_CONFIG);
     expect(chain).toHaveLength(2);
     expect(chain[0]).toBeInstanceOf(GeminiAudioAnalyzer);
     expect(chain[1]).toBeInstanceOf(WhisperAudioAnalyzer);
@@ -120,30 +135,30 @@ describe('parseTranscriptProviderChain', () => {
 
 describe('createTranscriptChain', () => {
   it('returns a YtDlpTranscriptAnalyzer for "ytdlp"', () => {
-    const chain = createTranscriptChain('ytdlp');
+    const chain = createTranscriptChain('ytdlp', TRANSCRIPT_CHAIN_CONFIG);
     expect(chain).toHaveLength(1);
     expect(chain[0]).toBeInstanceOf(YtDlpTranscriptAnalyzer);
   });
 
   it('returns a WhisperTranscriptAnalyzer for "whisper"', () => {
-    const chain = createTranscriptChain('whisper');
+    const chain = createTranscriptChain('whisper', TRANSCRIPT_CHAIN_CONFIG);
     expect(chain[0]).toBeInstanceOf(WhisperTranscriptAnalyzer);
   });
 
   it('returns a GeminiTranscriptAnalyzer for "gemini"', () => {
-    const chain = createTranscriptChain('gemini');
+    const chain = createTranscriptChain('gemini', TRANSCRIPT_CHAIN_CONFIG);
     expect(chain[0]).toBeInstanceOf(GeminiTranscriptAnalyzer);
   });
 
   it('returns analyzers in the declared order for a two-item chain', () => {
-    const chain = createTranscriptChain('ytdlp,whisper');
+    const chain = createTranscriptChain('ytdlp,whisper', TRANSCRIPT_CHAIN_CONFIG);
     expect(chain).toHaveLength(2);
     expect(chain[0]).toBeInstanceOf(YtDlpTranscriptAnalyzer);
     expect(chain[1]).toBeInstanceOf(WhisperTranscriptAnalyzer);
   });
 
   it('GeminiTranscriptAnalyzer throws when detect() is called (stub)', async () => {
-    const chain = createTranscriptChain('gemini');
+    const chain = createTranscriptChain('gemini', TRANSCRIPT_CHAIN_CONFIG);
     await expect(chain[0].detect('abc', null)).rejects.toThrow('not yet implemented');
   });
 });

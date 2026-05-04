@@ -1,12 +1,9 @@
 import * as path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
-import { config } from '@lib/config/index.js';
 
-if (config.FFMPEG_PATH) {
-  ffmpeg.setFfmpegPath(config.FFMPEG_PATH);
-}
-if (config.FFPROBE_PATH) {
-  ffmpeg.setFfprobePath(config.FFPROBE_PATH);
+export interface SlicerConfig {
+  ffmpegPath?: string;
+  ffprobePath?: string;
 }
 
 export async function sliceAudio(
@@ -14,7 +11,14 @@ export async function sliceAudio(
   startSec: number,
   durationSec: number,
   outputDir: string,
+  slicerConfig: SlicerConfig = {},
 ): Promise<string> {
+  if (slicerConfig.ffmpegPath) {
+    ffmpeg.setFfmpegPath(slicerConfig.ffmpegPath);
+  }
+  if (slicerConfig.ffprobePath) {
+    ffmpeg.setFfprobePath(slicerConfig.ffprobePath);
+  }
   const filename = path.basename(inputPath, path.extname(inputPath));
   const outputPath = path.join(outputDir, `${filename}_slice_${startSec}.wav`);
 

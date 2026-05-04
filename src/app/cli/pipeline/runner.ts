@@ -3,13 +3,23 @@ import { config } from '@lib/config/index.js';
 import { Cache } from '@lib/utils/cache.js';
 import { createCacheBackend } from '@lib/utils/cacheFactory.js';
 import { log } from '@lib/utils/logger.js';
+import { getModel } from '@lib/utils/modelFactory.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
 import { processAudio } from './stages/audioProcessor.js';
+import type { AudioProcessorConfig } from './stages/audioProcessor.js';
 import { analyzeSegments, refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
+import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
 import { downloadAudio } from '@lib/services/audio/source/youtube.js';
+import type { AudioDownloadConfig } from '@lib/services/audio/source/youtube.js';
+import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
+import type { DownloaderConfig } from '@lib/services/video/source/youtube/downloader.js';
+import type { SlicerConfig } from '@lib/services/audio/processor/slicer.js';
+import type { AnalyzerChainConfig } from '@lib/services/audio/analyzer/index.js';
+import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
+import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
 import type { CliArgs, PipelineResult } from '@lib/types/index.js';
 
 async function outputResult(
@@ -51,31 +61,97 @@ export async function runPipeline(args: CliArgs): Promise<void> {
   const gameProfile = args.gameProfile ?? config.GAME_PROFILE;
   const maxParallel = args.maxParallel ?? config.LLM_CONCURRENCY;
 
+  const cookies: YtDlpCookies = {
+    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
+    cookiesFile: config.YT_DLP_COOKIES_FILE,
+  };
+
+  const audioDownloadConfig: AudioDownloadConfig = {
+    ...cookies,
+    ffmpegPath: config.FFMPEG_PATH,
+  };
+
+  const slicerConfig: SlicerConfig = {
+    ffmpegPath: config.FFMPEG_PATH,
+    ffprobePath: config.FFPROBE_PATH,
+  };
+
+  const clipperConfig: ClipperConfig = {
+    ffmpegPath: config.FFMPEG_PATH,
+    ffprobePath: config.FFPROBE_PATH,
+    timestampOffset: config.TIMESTAMP_OFFSET_SECONDS,
+    ffmpegPreset: config.FFMPEG_PRESET,
+    outputDir: config.OUTPUT_DIR,
+  };
+
+  const downloaderConfig: DownloaderConfig = {
+    ...cookies,
+    downloadDir: config.DOWNLOAD_DIR,
+    timestampOffset: config.TIMESTAMP_OFFSET_SECONDS,
+    llmConcurrency: config.LLM_CONCURRENCY,
+  };
+
+  const analyzerChainConfig: AnalyzerChainConfig = {
+    confidenceThreshold: config.AUDIO_CONFIDENCE_THRESHOLD,
+    whisperModel: config.AUDIO_WHISPER_MODEL,
+    gemini: {
+      apiKey: config.GOOGLE_GENERATIVE_AI_API_KEY!,
+      model: config.AUDIO_GEMINI_MODEL,
+      extraInstructions: config.AUDIO_EXTRA_INSTRUCTIONS,
+    },
+  };
+
+  const transcriptChainConfig: TranscriptChainConfig = {
+    ...cookies,
+    whisperModel: config.AUDIO_WHISPER_MODEL,
+  };
+
+  const model = getModel(config.LLM_PROVIDER, config.LLM_MODEL, {
+    ZAI_API_KEY: config.ZAI_API_KEY,
+    OPENROUTER_API_KEY: config.OPENROUTER_API_KEY,
+    CUSTOM_OPENAI_BASE_URL: config.CUSTOM_OPENAI_BASE_URL,
+    CUSTOM_OPENAI_API_KEY: config.CUSTOM_OPENAI_API_KEY,
+  });
+
   const backend = await createCacheBackend(config, args.noCache);
   const cache = new Cache(backend);
   try {
-    const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration);
+    const { videoId, metadata } = await resolveVideo(args.url as string, args.maxDuration, cookies);
 
-    /** Downloaded before transcript so Whisper/Gemini transcript providers can
-     * use the WAV. Returns null when audio detection is disabled.
-     */
     let audioPath: string | null = null;
     const audioEnabled = config.AUDIO_DETECTION_ENABLED && !args.noAudio;
     if (audioEnabled) {
       try {
-        audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`);
+        audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`, audioDownloadConfig);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         log.warn(`Audio download failed — continuing without audio: ${message}`);
       }
     }
 
-    const audioEvents = await processAudio(videoId, metadata.duration, cache, {
-      noAudio: args.noAudio,
-      gameProfile,
-      maxParallel,
-      audioPath,
-    });
+    const audioProcConfig: AudioProcessorConfig = {
+      audioEnabled: config.AUDIO_DETECTION_ENABLED,
+      audioProvider: config.AUDIO_PROVIDER,
+      chunkLengthSec: config.CHUNK_LENGTH_SEC,
+      chunkOverlapSec: config.CHUNK_OVERLAP_SEC,
+      outputDir: config.OUTPUT_DIR,
+      audioDownloadConfig,
+      slicerConfig,
+      analyzerChainConfig,
+    };
+
+    const audioEvents = await processAudio(
+      videoId,
+      metadata.duration,
+      cache,
+      {
+        noAudio: args.noAudio,
+        gameProfile,
+        maxParallel,
+        audioPath,
+      },
+      audioProcConfig,
+    );
 
     const { lines, microBlocks, chunkEvals } = await analyzeSegments(
       videoId,
@@ -86,6 +162,15 @@ export async function runPipeline(args: CliArgs): Promise<void> {
         maxChunks: args.maxChunks,
         maxParallel,
         noCache: args.noCache,
+        transcriptProvider: config.TRANSCRIPT_PROVIDER,
+        transcriptChainConfig,
+        microBlockSec: config.MICRO_BLOCK_SEC,
+        chunkLengthSec: config.CHUNK_LENGTH_SEC,
+        chunkOverlapSec: config.CHUNK_OVERLAP_SEC,
+        model,
+        maxRetries: config.LLM_MAX_RETRIES,
+        systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        llmModel: config.LLM_MODEL,
       },
     );
 
@@ -93,7 +178,14 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       await dumpTranscript(videoId, lines);
     }
 
-    const rankedSegments = selectSegments(chunkEvals, audioEvents, { threshold, topN });
+    const rankedSegments = selectSegments(chunkEvals, audioEvents, {
+      threshold,
+      topN,
+      boostWindow: config.AUDIO_LLM_BOOST_WINDOW,
+      scoreBoost: config.AUDIO_LLM_SCORE_BOOST,
+      preRoll: config.AUDIO_CLIP_PRE_ROLL,
+      postRoll: config.AUDIO_CLIP_POST_ROLL,
+    });
 
     const partialResult: PipelineResult = {
       video_id: videoId,
@@ -112,6 +204,8 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, cache, {
       maxParallel,
       noCache: args.noCache,
+      maxRetries: config.LLM_MAX_RETRIES,
+      model,
     });
 
     const result: PipelineResult = {
@@ -132,11 +226,23 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       return;
     }
 
-    const clipPaths = await exportClips(videoId, refinedSegments, {
-      localVideo: args.localVideo,
-      downloadSections: args.downloadSections,
-      videoPath: args.videoPath,
-    });
+    const exporterConfig: ClipExporterConfig = {
+      downloader: downloaderConfig,
+      clipper: clipperConfig,
+      downloadSectionsMode: config.DOWNLOAD_SECTIONS_MODE,
+    };
+
+    const clipPaths = await exportClips(
+      videoId,
+      refinedSegments,
+      {
+        localVideo: args.localVideo,
+        downloadSections: args.downloadSections,
+        videoPath: args.videoPath,
+        clipConcurrency: config.CLIP_CONCURRENCY,
+      },
+      exporterConfig,
+    );
 
     if (clipPaths.length === 0) {
       log.warn('No clips were generated successfully.');
@@ -150,3 +256,18 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     await cache.close();
   }
 }
+
+const DEFAULT_SYSTEM_PROMPT = `You are an expert video editor analyzing a YouTube transcript segment.
+
+Identify if this segment contains a potentially interesting moment worth clipping.
+
+Interesting moments include:
+- surprising insights or revelations
+- strong or controversial opinions
+- humor or entertaining storytelling
+- emotional moments
+- key explanations of important concepts
+- "aha" moments or turning points
+
+If audio events are listed in the segment, treat them as strong positive signals —
+they indicate high-action or high-energy moments that are often clip-worthy.`;

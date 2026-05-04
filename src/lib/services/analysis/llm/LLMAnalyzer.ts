@@ -1,7 +1,9 @@
 import { analyzeChunks } from './index.js';
+import type { AnalyzeChunksOpts } from './index.js';
 import { refineSegments } from '../refiner/index.js';
+import type { RefineSegmentsOpts } from '../refiner/index.js';
 import { log } from '@lib/utils/logger.js';
-import { config } from '@lib/config/index.js';
+import type { LanguageModel } from 'ai';
 import type { TranscriptDetector } from '../transcript/detector.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type {
@@ -39,14 +41,13 @@ export class LLMAnalyzer {
   constructor(
     private readonly transcriptDetector: TranscriptDetector,
     private readonly cache: CacheBackend,
+    private readonly model: LanguageModel,
+    private readonly maxChunks: number | undefined,
+    private readonly maxRetries: number,
+    private readonly systemPrompt: string,
+    private readonly llmModel: string,
   ) {}
 
-  /**
-   * LLM pass 1 — fetch transcript then run chunk analysis.
-   *
-   * Returns lines, microBlocks, chunks, and chunkEvals so the caller has
-   * everything needed for the ranking step.
-   */
   async analyze(opts: LLMAnalyzerOpts): Promise<LLMAnalyzerResult> {
     const { lines, microBlocks, chunks } = await this.transcriptDetector.detect(
       opts.videoId,
@@ -54,7 +55,7 @@ export class LLMAnalyzer {
       this.cache,
     );
 
-    const chunkLimit = opts.maxChunks ?? config.MAX_CHUNKS;
+    const chunkLimit = opts.maxChunks ?? this.maxChunks;
     const chunksToAnalyze = chunkLimit !== undefined ? chunks.slice(0, chunkLimit) : chunks;
 
     if (chunkLimit !== undefined) {
@@ -64,8 +65,14 @@ export class LLMAnalyzer {
     }
 
     log.info(
-      `Analyzing chunks with ${config.LLM_MODEL} (${chunksToAnalyze.length} chunks, max ${opts.maxParallel} parallel)...`,
+      `Analyzing chunks with ${this.llmModel} (${chunksToAnalyze.length} chunks, max ${opts.maxParallel} parallel)...`,
     );
+
+    const analyzeOpts: AnalyzeChunksOpts = {
+      maxRetries: this.maxRetries,
+      systemPrompt: this.systemPrompt,
+      model: this.model,
+    };
 
     const chunkEvals = await analyzeChunks(
       chunksToAnalyze,
@@ -74,6 +81,7 @@ export class LLMAnalyzer {
       opts.maxParallel,
       this.cache,
       opts.noCache,
+      analyzeOpts,
     );
 
     const succeededCount = chunkEvals.filter((e) => e.status === 'success').length;
@@ -94,6 +102,17 @@ export class LLMAnalyzer {
     opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache'>,
   ): Promise<RankedSegment[]> {
     log.info('Refining clip boundaries...');
-    return refineSegments(rankedSegments, microBlocks, opts.maxParallel, this.cache, opts.noCache);
+    const refineOpts: RefineSegmentsOpts = {
+      maxRetries: this.maxRetries,
+      model: this.model,
+    };
+    return refineSegments(
+      rankedSegments,
+      microBlocks,
+      opts.maxParallel,
+      this.cache,
+      opts.noCache,
+      refineOpts,
+    );
   }
 }

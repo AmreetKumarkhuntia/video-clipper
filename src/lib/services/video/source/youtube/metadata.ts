@@ -1,7 +1,11 @@
 import { execa } from 'execa';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { VideoMetadata } from '../../types.js';
+
+export interface YtDlpCookies {
+  cookiesFromBrowser?: string;
+  cookiesFile?: string;
+}
 
 const OEMBED_URL = 'https://www.youtube.com/oembed';
 
@@ -14,18 +18,17 @@ interface OEmbedResponse {
   title: string;
 }
 
-/**
- * Attempts to extract video metadata via yt-dlp --dump-json.
- * Returns null if yt-dlp is not installed or the call fails.
- */
-async function extractViaYtDlp(videoId: string): Promise<VideoMetadata | null> {
+async function extractViaYtDlp(
+  videoId: string,
+  cookies: YtDlpCookies,
+): Promise<VideoMetadata | null> {
   try {
     const args = ['--dump-json', '--no-playlist', `https://www.youtube.com/watch?v=${videoId}`];
 
-    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
-      args.unshift('--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
-    } else if (config.YT_DLP_COOKIES_FILE) {
-      args.unshift('--cookies', config.YT_DLP_COOKIES_FILE);
+    if (cookies.cookiesFromBrowser) {
+      args.unshift('--cookies-from-browser', cookies.cookiesFromBrowser);
+    } else if (cookies.cookiesFile) {
+      args.unshift('--cookies', cookies.cookiesFile);
     }
 
     const { stdout } = await execa('yt-dlp', args);
@@ -72,8 +75,11 @@ async function extractViaOEmbed(videoId: string): Promise<VideoMetadata> {
  *
  * @throws {Error} if both strategies fail
  */
-export async function extractMetadata(videoId: string): Promise<VideoMetadata> {
-  const ytDlpResult = await extractViaYtDlp(videoId);
+export async function extractMetadata(
+  videoId: string,
+  cookies: YtDlpCookies = {},
+): Promise<VideoMetadata> {
+  const ytDlpResult = await extractViaYtDlp(videoId, cookies);
   if (ytDlpResult) {
     return ytDlpResult;
   }

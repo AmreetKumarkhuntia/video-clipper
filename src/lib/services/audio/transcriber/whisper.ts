@@ -1,6 +1,5 @@
 import { execa } from 'execa';
 import { z } from 'zod';
-import { config } from '@lib/config/index.js';
 import type { TranscriptLine } from '../../analysis/transcript/types.js';
 import { TranscriptAnalyzer } from './base.js';
 import { getPythonBin } from '@lib/utils/pythonBin.js';
@@ -26,6 +25,10 @@ const WhisperSegmentSchema = z.object({
 export class WhisperTranscriptAnalyzer extends TranscriptAnalyzer {
   readonly source = 'whisper' as const;
 
+  constructor(private readonly whisperModel: string) {
+    super();
+  }
+
   async detect(videoId: string, audioPath: string | null): Promise<TranscriptLine[]> {
     if (!audioPath) {
       throw new Error(
@@ -41,7 +44,7 @@ export class WhisperTranscriptAnalyzer extends TranscriptAnalyzer {
       const result = await execa(python, [
         scriptPath('transcribe_whisper.py'),
         audioPath,
-        config.AUDIO_WHISPER_MODEL,
+        this.whisperModel,
       ]);
       stdout = result.stdout;
     } catch (err) {

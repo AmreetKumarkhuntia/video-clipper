@@ -183,11 +183,11 @@ describe('mergeSignals', () => {
     });
   });
 
-  it('uses default config values when overrides not provided', () => {
+  it('works with explicit parameter values', () => {
     const llmSegments = [createSuccessEvaluation(10, 20, 6)];
     const audioEvents = [createAudioEvent(15, 0.8, 'gunshot')];
 
-    const result = mergeSignals(llmSegments, audioEvents);
+    const result = mergeSignals(llmSegments, audioEvents, 30, 2, 5, 15);
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({

@@ -33,10 +33,18 @@ function makeCache(cachedLines: TranscriptLine[] | null = null): Cache {
 // Tests
 // ---------------------------------------------------------------------------
 
+const MICRO_BLOCK_SEC = 15;
+const CHUNK_LENGTH_SEC = 120;
+const CHUNK_OVERLAP_SEC = 20;
+
+function makeDetector(analyzers: TranscriptAnalyzer[]): TranscriptDetector {
+  return new TranscriptDetector(analyzers, MICRO_BLOCK_SEC, CHUNK_LENGTH_SEC, CHUNK_OVERLAP_SEC);
+}
+
 describe('TranscriptDetector', () => {
   describe('constructor', () => {
     it('throws when chain is empty', () => {
-      expect(() => new TranscriptDetector([])).toThrow(
+      expect(() => makeDetector([])).toThrow(
         'TranscriptDetector requires at least one TranscriptAnalyzer',
       );
     });
@@ -47,7 +55,7 @@ describe('TranscriptDetector', () => {
       const cached = [LINE_A, LINE_B];
       const analyzer = makeAnalyzer('ytdlp', []);
       const cache = makeCache(cached);
-      const detector = new TranscriptDetector([analyzer]);
+      const detector = makeDetector([analyzer]);
 
       const result = await detector.detect('abc123', null, cache);
 
@@ -66,7 +74,7 @@ describe('TranscriptDetector', () => {
 
     it('returns lines from the first analyzer on success', async () => {
       const analyzer = makeAnalyzer('ytdlp', [LINE_A]);
-      const detector = new TranscriptDetector([analyzer]);
+      const detector = makeDetector([analyzer]);
 
       const result = await detector.detect('abc123', null, cache);
 
@@ -77,7 +85,7 @@ describe('TranscriptDetector', () => {
     it('falls back to second analyzer when first throws', async () => {
       const first = makeAnalyzer('ytdlp', new Error('no subtitles'));
       const second = makeAnalyzer('whisper', [LINE_B]);
-      const detector = new TranscriptDetector([first, second]);
+      const detector = makeDetector([first, second]);
 
       const result = await detector.detect('abc123', null, cache);
 
@@ -90,7 +98,7 @@ describe('TranscriptDetector', () => {
       const err2 = new Error('whisper crashed');
       const first = makeAnalyzer('ytdlp', err1);
       const second = makeAnalyzer('whisper', err2);
-      const detector = new TranscriptDetector([first, second]);
+      const detector = makeDetector([first, second]);
 
       await expect(detector.detect('abc123', null, cache)).rejects.toThrow('whisper crashed');
     });
@@ -98,7 +106,7 @@ describe('TranscriptDetector', () => {
     it('does not call the second analyzer when the first succeeds', async () => {
       const first = makeAnalyzer('ytdlp', [LINE_A]);
       const second = makeAnalyzer('whisper', [LINE_B]);
-      const detector = new TranscriptDetector([first, second]);
+      const detector = makeDetector([first, second]);
 
       await detector.detect('abc123', null, cache);
       expect(second.detect).not.toHaveBeenCalled();
@@ -115,7 +123,7 @@ describe('TranscriptDetector', () => {
       }));
       const analyzer = makeAnalyzer('ytdlp', lines);
       const cache = makeCache(null);
-      const detector = new TranscriptDetector([analyzer]);
+      const detector = makeDetector([analyzer]);
 
       const result = await detector.detect('abc123', null, cache);
 
@@ -127,7 +135,7 @@ describe('TranscriptDetector', () => {
     it('returns empty microBlocks and chunks for an empty transcript', async () => {
       const analyzer = makeAnalyzer('ytdlp', []);
       const cache = makeCache(null);
-      const detector = new TranscriptDetector([analyzer]);
+      const detector = makeDetector([analyzer]);
 
       const result = await detector.detect('abc123', null, cache);
 
@@ -141,7 +149,7 @@ describe('TranscriptDetector', () => {
     it('passes audioPath through to the analyzer', async () => {
       const analyzer = makeAnalyzer('whisper', [LINE_A]);
       const cache = makeCache(null);
-      const detector = new TranscriptDetector([analyzer]);
+      const detector = makeDetector([analyzer]);
 
       await detector.detect('abc123', '/tmp/audio.wav', cache);
       expect(analyzer.detect).toHaveBeenCalledWith('abc123', '/tmp/audio.wav');

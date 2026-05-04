@@ -1,37 +1,37 @@
 import { downloadVideo } from '@lib/services/video/source/youtube/downloader.js';
+import type { DownloaderConfig } from '@lib/services/video/source/youtube/downloader.js';
 import { generateClips, organizeClips } from '@lib/services/video/clipper/index.js';
+import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
 import { log } from '@lib/utils/logger.js';
-import { config } from '@lib/config/index.js';
 import type { RankedSegment, ClipExporterOpts } from '@lib/types/index.js';
 
-/**
- * Stage 6 — Clip Exporter
- *
- * Handles all three clip-generation modes:
- *   1. Local video  — user supplied --local-video; run ffmpeg directly
- *   2. Segments     -- --download-sections N; download top-N clips via yt-dlp
- *                      --download-sections, then copy to outputs/
- *   3. Full video   — download full video with yt-dlp, then cut clips with ffmpeg
- *
- * @returns Array of absolute paths to the generated clip files.
- */
+export interface ClipExporterConfig {
+  downloader: DownloaderConfig;
+  clipper: ClipperConfig;
+  downloadSectionsMode: 'all' | number | undefined;
+}
+
 export async function exportClips(
   videoId: string,
   segments: RankedSegment[],
   opts: ClipExporterOpts,
+  exporterConfig: ClipExporterConfig,
 ): Promise<string[]> {
+  const clipConcurrency = opts.clipConcurrency;
+
   if (opts.localVideo) {
     log.info(`Using local video: ${opts.localVideo}`);
     return generateClips(
       opts.localVideo,
       segments,
       videoId,
+      exporterConfig.clipper,
       opts.videoPath,
-      config.CLIP_CONCURRENCY,
+      clipConcurrency,
     );
   }
 
-  const downloadSections = opts.downloadSections ?? config.DOWNLOAD_SECTIONS_MODE;
+  const downloadSections = opts.downloadSections ?? exporterConfig.downloadSectionsMode;
 
   if (typeof downloadSections === 'number') {
     const segmentsToDownload = segments.slice(0, downloadSections);
@@ -47,6 +47,7 @@ export async function exportClips(
       videoId,
       'segments',
       segmentsToDownload,
+      exporterConfig.downloader,
       opts.videoPath,
     );
 
@@ -54,11 +55,23 @@ export async function exportClips(
       throw new Error('Expected segments download result but got full-video result.');
     }
 
-    return organizeClips(downloadResult.paths, videoId, opts.videoPath, config.CLIP_CONCURRENCY);
+    return organizeClips(
+      downloadResult.paths,
+      videoId,
+      exporterConfig.clipper,
+      opts.videoPath,
+      clipConcurrency,
+    );
   }
 
   log.info('Downloading full video via yt-dlp...');
-  const downloadResult = await downloadVideo(videoId, 'all', [], opts.videoPath);
+  const downloadResult = await downloadVideo(
+    videoId,
+    'all',
+    [],
+    exporterConfig.downloader,
+    opts.videoPath,
+  );
 
   if (downloadResult.mode !== 'all') {
     throw new Error('Expected full-video download result but got segments result.');
@@ -68,7 +81,8 @@ export async function exportClips(
     downloadResult.path,
     segments,
     videoId,
+    exporterConfig.clipper,
     opts.videoPath,
-    config.CLIP_CONCURRENCY,
+    clipConcurrency,
   );
 }

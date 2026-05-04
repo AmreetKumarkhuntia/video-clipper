@@ -2,16 +2,25 @@ import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import pLimit from 'p-limit';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import type { RankedSegment } from '../types.js';
 
-if (config.FFMPEG_PATH) {
-  ffmpeg.setFfmpegPath(config.FFMPEG_PATH);
+export interface ClipperConfig {
+  ffmpegPath?: string;
+  ffprobePath?: string;
+  timestampOffset: number;
+  ffmpegPreset: string;
+  outputDir: string;
 }
-if (config.FFPROBE_PATH) {
-  ffmpeg.setFfprobePath(config.FFPROBE_PATH);
+
+function configureFfmpeg(cfg: ClipperConfig): void {
+  if (cfg.ffmpegPath) {
+    ffmpeg.setFfmpegPath(cfg.ffmpegPath);
+  }
+  if (cfg.ffprobePath) {
+    ffmpeg.setFfprobePath(cfg.ffprobePath);
+  }
 }
 
 /**
@@ -26,16 +35,17 @@ function cutClip(
   start: number,
   end: number,
   outputPath: string,
+  cfg: ClipperConfig,
 ): Promise<string> {
-  const adjustedStart = Math.max(0, start + config.TIMESTAMP_OFFSET_SECONDS);
-  const adjustedEnd = Math.max(adjustedStart + 1, end + config.TIMESTAMP_OFFSET_SECONDS);
+  const adjustedStart = Math.max(0, start + cfg.timestampOffset);
+  const adjustedEnd = Math.max(adjustedStart + 1, end + cfg.timestampOffset);
   const duration = adjustedEnd - adjustedStart;
 
   log.info(
     `Cutting clip: start=${adjustedStart.toFixed(2)}s, end=${adjustedEnd.toFixed(2)}s, duration=${duration.toFixed(2)}s`,
   );
-  if (config.TIMESTAMP_OFFSET_SECONDS !== 0) {
-    log.info(`  Timestamp offset applied: ${config.TIMESTAMP_OFFSET_SECONDS}s`);
+  if (cfg.timestampOffset !== 0) {
+    log.info(`  Timestamp offset applied: ${cfg.timestampOffset}s`);
   }
 
   return new Promise((resolve, reject) => {
@@ -43,7 +53,7 @@ function cutClip(
       .setStartTime(adjustedStart)
       .setDuration(duration)
       .outputOptions('-c:v', 'libx264')
-      .outputOptions('-preset', config.FFMPEG_PRESET)
+      .outputOptions('-preset', cfg.ffmpegPreset)
       .outputOptions('-c:a', 'aac')
       .output(outputPath)
       .on('end', () => resolve(outputPath))
@@ -59,9 +69,9 @@ function cutClip(
 async function copySegment(
   sourcePath: string,
   outputPath: string,
-  customPath?: string,
+  cfg: ClipperConfig,
 ): Promise<string> {
-  const outputDir = customPath || config.OUTPUT_DIR;
+  const outputDir = cfg.outputDir;
   const finalOutputPath = join(outputDir, outputPath.split('/').pop() || '');
   await fs.copyFile(sourcePath, finalOutputPath);
   return finalOutputPath;
@@ -87,10 +97,12 @@ export async function generateClips(
   videoPath: string,
   segments: RankedSegment[],
   videoId: string,
+  cfg: ClipperConfig,
   customPath?: string,
   concurrency: number = 1,
 ): Promise<string[]> {
-  const outputDir = customPath || config.OUTPUT_DIR;
+  const outputDir = customPath || cfg.outputDir;
+  configureFfmpeg(cfg);
   await fs.mkdir(outputDir, { recursive: true });
 
   if (segments.length === 0) {
@@ -112,7 +124,7 @@ export async function generateClips(
       log.info(
         `Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`,
       );
-      return cutClip(videoPath, segment.start, segment.end, outputPath);
+      return cutClip(videoPath, segment.start, segment.end, outputPath, cfg);
     }),
   );
 
@@ -149,6 +161,7 @@ export async function generateClips(
 export async function organizeClips(
   sourcePaths: string[],
   videoId: string,
+  cfg: ClipperConfig,
   customPath?: string,
   concurrency: number = 1,
 ): Promise<string[]> {
@@ -157,7 +170,8 @@ export async function organizeClips(
     return [];
   }
 
-  const outputDir = customPath || config.OUTPUT_DIR;
+  const outputDir = customPath || cfg.outputDir;
+  configureFfmpeg(cfg);
   await fs.mkdir(outputDir, { recursive: true });
 
   const limit = pLimit(concurrency);
@@ -171,7 +185,7 @@ export async function organizeClips(
       const outputPath = join(outputDir, filename);
 
       log.info(`Organizing clip: ${outputPath}`);
-      return copySegment(sourcePath, outputPath, customPath);
+      return copySegment(sourcePath, outputPath, cfg);
     }),
   );
 
