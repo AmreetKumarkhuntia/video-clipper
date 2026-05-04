@@ -1,5 +1,6 @@
-import { generateObject } from 'ai';
+import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
+import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import { AnalyzedSegmentSchema } from '../types.js';
@@ -9,6 +10,7 @@ import type {
   AnalyzedSegment,
   ChunkEvaluation,
   AudioEvent,
+  StreamCallbacks,
 } from '../types.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type { LanguageModel } from 'ai';
@@ -29,12 +31,15 @@ Interesting moments include:
 - "aha" moments or turning points
 
 If audio events are listed in the segment, treat them as strong positive signals —
-they indicate high-action or high-energy moments that are often clip-worthy.`;
+they indicate high-action or high-energy moments that are often clip-worthy.
+
+After analyzing the segment, call the report_analysis tool with your findings.`;
 
 export interface AnalyzeChunksOpts {
   maxRetries: number;
   systemPrompt: string;
   model: LanguageModel;
+  callbacks?: Pick<StreamCallbacks, 'onChunkTextDelta' | 'onChunkAnalyzed'>;
 }
 
 function isRateLimitError(err: unknown): boolean {
@@ -50,10 +55,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Builds the user prompt for a single transcript chunk.
- * Semantic scoring hints are omitted when a custom system prompt is in use.
- */
 function buildPrompt(
   chunk: LLMChunk,
   chunkLines: TranscriptLine[],
@@ -93,9 +94,24 @@ ${semanticRules}- clip_start and clip_end must be within [${chunk.start}, ${chun
 - clip_start must be less than clip_end`;
 }
 
-/**
- * Analyzes a single LLM chunk with exponential backoff + jitter on rate-limit errors.
- */
+function createReportAnalysisTool() {
+  return tool({
+    description:
+      'Report the analysis result for this transcript segment. Call this tool once you have evaluated the segment.',
+    inputSchema: zodSchema(
+      z.object({
+        interesting: z.boolean().describe('Whether this segment contains an interesting moment'),
+        score: z.number().min(1).max(10).describe('Interest score from 1-10'),
+        reason: z
+          .string()
+          .describe('Brief explanation of why this segment is or is not interesting'),
+        clip_start: z.number().describe('Suggested clip start time in seconds'),
+        clip_end: z.number().describe('Suggested clip end time in seconds'),
+      }),
+    ),
+  });
+}
+
 async function analyzeChunk(
   chunk: LLMChunk,
   chunkLines: TranscriptLine[],
@@ -109,13 +125,26 @@ async function analyzeChunk(
     const cached = await cache.readChunk(chunk, chunkAudioEvents);
     if (cached && cached.status === 'success') {
       log.info(`[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`);
-      return {
+      const result: AnalyzedSegment = {
         interesting: cached.interesting,
         score: cached.score,
         reason: cached.reason,
         clip_start: cached.clip_start,
         clip_end: cached.clip_end,
       };
+      const evaluation: ChunkEvaluation = {
+        status: 'success' as const,
+        chunk_index: chunkIndex,
+        chunk_start: chunk.start,
+        chunk_end: chunk.end,
+        interesting: result.interesting,
+        score: result.score,
+        reason: result.reason,
+        clip_start: result.clip_start,
+        clip_end: result.clip_end,
+      };
+      opts.callbacks?.onChunkAnalyzed?.(chunkIndex, evaluation);
+      return result;
     }
   }
 
@@ -129,13 +158,30 @@ async function analyzeChunk(
         chunkAudioEvents,
         opts.systemPrompt !== DEFAULT_SYSTEM_PROMPT,
       );
-      const { object } = await generateObject({
+
+      const result = streamText({
         model: opts.model,
-        schema: AnalyzedSegmentSchema,
+        tools: { report_analysis: createReportAnalysisTool() },
+        toolChoice: 'required',
         system: opts.systemPrompt,
         prompt: prompt,
         maxRetries: 0,
       });
+
+      for await (const part of result.fullStream) {
+        if (part.type === 'text-delta') {
+          opts.callbacks?.onChunkTextDelta?.(chunkIndex, part.text);
+        }
+      }
+
+      const toolCalls = await result.staticToolCalls;
+
+      if (!toolCalls || toolCalls.length === 0 || toolCalls[0].toolName !== 'report_analysis') {
+        throw new Error('LLM did not call report_analysis tool');
+      }
+
+      const object = AnalyzedSegmentSchema.parse(toolCalls[0].input);
+
       log.info(
         `Chunk ${chunkIndex} analysis complete: interesting=${object.interesting}, score=${object.score}, reason=${object.reason}`,
       );
@@ -176,11 +222,6 @@ async function analyzeChunk(
   throw lastError;
 }
 
-/**
- * Analyzes all LLM chunks via Promise.allSettled — one failure never aborts the rest.
- * Each chunk receives only the transcript lines and audio events within its window.
- * Pass noCache=true to bypass the chunk cache.
- */
 export async function analyzeChunks(
   chunks: LLMChunk[],
   lines: TranscriptLine[],
@@ -225,6 +266,7 @@ export async function analyzeChunks(
           clip_start: seg.clip_start,
           clip_end: seg.clip_end,
         };
+        opts.callbacks?.onChunkAnalyzed?.(i, evaluation);
         return evaluation;
       } else {
         const error =

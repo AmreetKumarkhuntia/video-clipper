@@ -1,25 +1,70 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { analyzeTranscriptForWeb } from '@app/web/lib/services/analysis/analysisService.js';
-import {
-  errorMessage,
-  jsonError,
-  jsonOk,
-  parseJsonBody,
-  zodErrorDetail,
-} from '@app/web/lib/services/http/responses.js';
+import { jsonError, parseJsonBody, zodErrorDetail } from '@app/web/lib/services/http/responses.js';
 import { CreateAnalysisRequestSchema } from '@app/web/types/analysis.js';
+import type { StreamCallbacks, ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
+
+function serializeSSE(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
 
 export const POST: RequestHandler = async (event) => {
+  let input;
   try {
-    const input = await parseJsonBody(event, CreateAnalysisRequestSchema);
-    const plan = await analyzeTranscriptForWeb(input);
-    return jsonOk(plan);
+    input = await parseJsonBody(event, CreateAnalysisRequestSchema);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(400, 'Invalid analysis request.', zodErrorDetail(error));
     }
-
-    return jsonError(500, 'Failed to analyze transcript.', errorMessage(error));
+    return jsonError(
+      500,
+      'Failed to parse request.',
+      error instanceof Error ? error.message : String(error),
+    );
   }
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+
+      function send(event: string, data: unknown): void {
+        controller.enqueue(encoder.encode(serializeSSE(event, data)));
+      }
+
+      const callbacks: StreamCallbacks = {
+        onChunkTextDelta: (chunkIndex, text) => {
+          send('chunk_progress', { chunkIndex, text });
+        },
+        onChunkAnalyzed: (chunkIndex, evaluation) => {
+          send('chunk_analyzed', { chunkIndex, evaluation });
+        },
+        onSegmentTextDelta: (rank, text) => {
+          send('segment_progress', { rank, text });
+        },
+        onSegmentRefined: (rank, segment) => {
+          send('segment_refined', { rank, segment });
+        },
+      };
+
+      try {
+        const plan = await analyzeTranscriptForWeb(input, callbacks);
+        send('analysis_complete', { plan });
+      } catch (error) {
+        send('error', {
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  });
 };

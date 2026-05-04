@@ -1,9 +1,9 @@
-import { generateObject } from 'ai';
+import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
-import type { RankedSegment, MicroBlock } from '../types.js';
+import type { RankedSegment, MicroBlock, StreamCallbacks } from '../types.js';
 import type { LanguageModel } from 'ai';
 
 const CONTEXT_PADDING_SEC = 30;
@@ -13,10 +13,6 @@ const RefinedBoundariesSchema = z.object({
   clip_end: z.number().describe('Refined clip end time in seconds'),
 });
 
-/**
- * Extracts the micro-block text that falls within a context window
- * around the segment, padded by CONTEXT_PADDING_SEC on each side.
- */
 function buildContextText(
   segment: RankedSegment,
   allBlocks: MicroBlock[],
@@ -33,9 +29,6 @@ function buildContextText(
   };
 }
 
-/**
- * Builds the refinement prompt for a single ranked segment.
- */
 function buildPrompt(
   segment: RankedSegment,
   contextText: string,
@@ -60,17 +53,28 @@ Rules:
 - clip_start must be >= ${windowStart}
 - clip_end must be <= ${windowEnd}
 - clip_start must be less than clip_end
-- Only make small adjustments (seconds, not minutes)`;
+- Only make small adjustments (seconds, not minutes)
+
+After analyzing, call the report_refined_boundaries tool with your refined clip boundaries.`;
 }
 
-/**
- * Refines the boundaries of a single ranked segment via a second LLM pass.
- * Returns the segment with updated start/end if successful.
- * Falls back to the original boundaries on failure.
- */
 export interface RefineSegmentsOpts {
   maxRetries: number;
   model: LanguageModel;
+  callbacks?: Pick<StreamCallbacks, 'onSegmentTextDelta' | 'onSegmentRefined'>;
+}
+
+function createReportRefinedBoundariesTool() {
+  return tool({
+    description:
+      'Report the refined clip boundaries. Call this tool once you have determined the optimal start and end times.',
+    inputSchema: zodSchema(
+      z.object({
+        clip_start: z.number().describe('Refined clip start time in seconds'),
+        clip_end: z.number().describe('Refined clip end time in seconds'),
+      }),
+    ),
+  });
 }
 
 async function refineSegment(
@@ -84,20 +88,40 @@ async function refineSegment(
     const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
     if (cached) {
       log.info(`[segment] cache hit (rank=${segment.rank})`);
-      return { ...segment, start: cached.refined_start, end: cached.refined_end };
+      const refined = { ...segment, start: cached.refined_start, end: cached.refined_end };
+      opts.callbacks?.onSegmentRefined?.(segment.rank, refined);
+      return refined;
     }
   }
 
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
-  const { object } = await generateObject({
+  const result = streamText({
     model: opts.model,
-    schema: RefinedBoundariesSchema,
+    tools: { report_refined_boundaries: createReportRefinedBoundariesTool() },
+    toolChoice: 'required',
     prompt: buildPrompt(segment, text, windowStart, windowEnd),
     maxRetries: opts.maxRetries,
   });
 
-  /** Clamp to context window to prevent LLM from hallucinating out-of-range values */
+  for await (const part of result.fullStream) {
+    if (part.type === 'text-delta') {
+      opts.callbacks?.onSegmentTextDelta?.(segment.rank, part.text);
+    }
+  }
+
+  const toolCalls = await result.staticToolCalls;
+
+  if (
+    !toolCalls ||
+    toolCalls.length === 0 ||
+    toolCalls[0].toolName !== 'report_refined_boundaries'
+  ) {
+    throw new Error('LLM did not call report_refined_boundaries tool');
+  }
+
+  const object = RefinedBoundariesSchema.parse(toolCalls[0].input);
+
   const refinedStart = Math.max(windowStart, Math.min(object.clip_start, object.clip_end - 1));
   const refinedEnd = Math.min(windowEnd, Math.max(object.clip_end, object.clip_start + 1));
 
@@ -108,15 +132,11 @@ async function refineSegment(
     });
   }
 
-  return { ...segment, start: refinedStart, end: refinedEnd };
+  const refined = { ...segment, start: refinedStart, end: refinedEnd };
+  opts.callbacks?.onSegmentRefined?.(segment.rank, refined);
+  return refined;
 }
 
-/**
- * Runs a second LLM pass on all ranked segments in parallel to tighten clip boundaries.
- * Segments that fail refinement retain their original boundaries.
- *
- * @returns RankedSegment[] with refined (or original) start/end values
- */
 export async function refineSegments(
   segments: RankedSegment[],
   allBlocks: MicroBlock[],

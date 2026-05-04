@@ -7,36 +7,13 @@ import type { LanguageModel } from 'ai';
 import type { TranscriptDetector } from '../transcript/detector.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type {
-  TranscriptLine,
   MicroBlock,
-  LLMChunk,
-  AudioEvent,
-  ChunkEvaluation,
   RankedSegment,
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
+  StreamCallbacks,
 } from '../types.js';
 
-/**
- * LLMAnalyzer — orchestrates transcript fetching + LLM-based segment analysis.
- *
- * Owns a TranscriptDetector (which encapsulates the provider chain) and the
- * Cache. Audio events are provided externally — they are pre-computed by the
- * AudioProcessor stage so that the full per-chunk caching logic stays in
- * audioProcessor.ts and is not duplicated here.
- *
- * LLM pass 1 (`analyze`) — fetches transcript, runs chunk analysis.
- * LLM pass 2 (`refine`)  — tightens clip boundaries on ranked segments.
- *
- * The free functions in `llmAnalyzer/index.ts` and `clipRefiner/index.ts` are
- * NOT modified — this class wraps them.
- *
- * @example
- *   const analyzer  = new LLMAnalyzer(transcriptDetector, cache);
- *   const result    = await analyzer.analyze({ videoId, audioPath, audioEvents, ... });
- *   // ... ranking step ...
- *   const refined   = await analyzer.refine(rankedSegments, result.microBlocks, opts);
- */
 export class LLMAnalyzer {
   constructor(
     private readonly transcriptDetector: TranscriptDetector,
@@ -46,6 +23,7 @@ export class LLMAnalyzer {
     private readonly maxRetries: number,
     private readonly systemPrompt: string,
     private readonly llmModel: string,
+    private readonly callbacks?: StreamCallbacks,
   ) {}
 
   async analyze(opts: LLMAnalyzerOpts): Promise<LLMAnalyzerResult> {
@@ -72,6 +50,12 @@ export class LLMAnalyzer {
       maxRetries: this.maxRetries,
       systemPrompt: this.systemPrompt,
       model: this.model,
+      callbacks: this.callbacks
+        ? {
+            onChunkTextDelta: this.callbacks.onChunkTextDelta,
+            onChunkAnalyzed: this.callbacks.onChunkAnalyzed,
+          }
+        : undefined,
     };
 
     const chunkEvals = await analyzeChunks(
@@ -92,10 +76,6 @@ export class LLMAnalyzer {
     return { lines, microBlocks, chunks, chunkEvals };
   }
 
-  /**
-   * LLM pass 2 — tighten clip boundaries on already-ranked segments.
-   * Must be called after ranking, since it takes `RankedSegment[]` as input.
-   */
   async refine(
     rankedSegments: RankedSegment[],
     microBlocks: MicroBlock[],
@@ -105,6 +85,12 @@ export class LLMAnalyzer {
     const refineOpts: RefineSegmentsOpts = {
       maxRetries: this.maxRetries,
       model: this.model,
+      callbacks: this.callbacks
+        ? {
+            onSegmentTextDelta: this.callbacks.onSegmentTextDelta,
+            onSegmentRefined: this.callbacks.onSegmentRefined,
+          }
+        : undefined,
     };
     return refineSegments(
       rankedSegments,

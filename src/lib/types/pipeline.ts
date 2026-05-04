@@ -4,7 +4,7 @@ import type {
   MicroBlock,
   LLMChunk,
 } from '../services/analysis/transcript/types.js';
-import type { ChunkEvaluation } from '../services/analysis/types.js';
+import type { ChunkEvaluation, StreamCallbacks } from '../services/analysis/types.js';
 import type { LanguageModel } from 'ai';
 import type { TranscriptChainConfig } from '../services/audio/transcriber/factory.js';
 
@@ -42,6 +42,7 @@ export interface SegmentAnalyzerOpts {
   maxRetries: number;
   systemPrompt: string;
   llmModel: string;
+  callbacks?: StreamCallbacks;
 }
 
 export interface SegmentAnalyzerResult {

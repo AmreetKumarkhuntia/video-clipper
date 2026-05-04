@@ -7,7 +7,7 @@ import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { createArtifactId, saveAnalysis } from '@app/web/lib/services/artifacts/artifactStore.js';
 import { ClipPlanSchema } from '@app/web/types/analysis.js';
 import type { ClipCandidate, ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js';
-import type { RankedSegment, TranscriptLine } from '@lib/types/index.js';
+import type { RankedSegment, TranscriptLine, StreamCallbacks } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
 
@@ -24,9 +24,14 @@ Interesting moments include:
 - "aha" moments or turning points
 
 If audio events are listed in the segment, treat them as strong positive signals —
-they indicate high-action or high-energy moments that are often clip-worthy.`;
+they indicate high-action or high-energy moments that are often clip-worthy.
 
-export async function analyzeTranscriptForWeb(input: CreateAnalysisRequest): Promise<ClipPlan> {
+After analyzing the segment, call the report_analysis tool with your findings.`;
+
+export async function analyzeTranscriptForWeb(
+  input: CreateAnalysisRequest,
+  callbacks?: StreamCallbacks,
+): Promise<ClipPlan> {
   const backend = await createCacheBackend(config, input.options.noCache);
   const cache = new Cache(backend);
 
@@ -66,6 +71,7 @@ export async function analyzeTranscriptForWeb(input: CreateAnalysisRequest): Pro
         maxRetries: config.LLM_MAX_RETRIES,
         systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
         llmModel: config.LLM_MODEL,
+        callbacks,
       },
     );
 
@@ -85,6 +91,7 @@ export async function analyzeTranscriptForWeb(input: CreateAnalysisRequest): Pro
             noCache: input.options.noCache,
             maxRetries: config.LLM_MAX_RETRIES,
             model,
+            callbacks,
           })
         : rankedSegments;
 

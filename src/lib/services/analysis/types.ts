@@ -70,3 +70,10 @@ export interface TranscriptDetectorResult {
   microBlocks: MicroBlock[];
   chunks: LLMChunk[];
 }
+
+export interface StreamCallbacks {
+  onChunkTextDelta?: (chunkIndex: number, text: string) => void;
+  onChunkAnalyzed?: (chunkIndex: number, evaluation: ChunkEvaluation) => void;
+  onSegmentTextDelta?: (segmentRank: number, text: string) => void;
+  onSegmentRefined?: (segmentRank: number, segment: RankedSegment) => void;
+}

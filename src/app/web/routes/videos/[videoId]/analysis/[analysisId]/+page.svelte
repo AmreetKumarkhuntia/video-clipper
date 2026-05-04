@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
-  import { apiFetch } from '$lib/api.js';
+  import { apiFetch } from '../../../../../lib/api.js';
   import Button from '../../../../../components/Button.svelte';
   import ErrorText from '../../../../../components/ErrorText.svelte';
   import MutedText from '../../../../../components/MutedText.svelte';
