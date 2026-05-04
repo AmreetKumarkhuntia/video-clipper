@@ -145,9 +145,7 @@ export async function refineSegments(
   noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment[]> {
-  log.info(
-    `Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
-  );
+  const done = log.fnCalled('refineSegments', { segments: segments.length, concurrency });
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
@@ -164,5 +162,6 @@ export async function refineSegments(
   });
 
   log.info(`Refinement complete`);
+  done({ refined: refined.length });
   return refined;
 }

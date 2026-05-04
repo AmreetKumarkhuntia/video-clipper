@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { analyzeTranscriptForWeb } from '@app/web/lib/services/analysis/analysisService.js';
 import { jsonError, parseJsonBody, zodErrorDetail } from '@app/web/lib/services/http/responses.js';
 import { CreateAnalysisRequestSchema } from '@app/web/types/analysis.js';
+import { log } from '@lib/utils/logger.js';
 import type { StreamCallbacks, ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
 
 function serializeSSE(event: string, data: unknown): string {
@@ -10,13 +11,16 @@ function serializeSSE(event: string, data: unknown): string {
 }
 
 export const POST: RequestHandler = async (event) => {
+  const reqDone = log.request('POST', '/api/analysis/transcript', event.locals.requestId);
   let input;
   try {
     input = await parseJsonBody(event, CreateAnalysisRequestSchema);
   } catch (error) {
     if (error instanceof z.ZodError) {
+      reqDone(400);
       return jsonError(400, 'Invalid analysis request.', zodErrorDetail(error));
     }
+    reqDone(500);
     return jsonError(
       500,
       'Failed to parse request.',
@@ -60,6 +64,7 @@ export const POST: RequestHandler = async (event) => {
     },
   });
 
+  reqDone(200);
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',

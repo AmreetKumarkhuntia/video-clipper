@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { VideoSummary } from '@lib/types/index.js';
-  import { formatDuration } from '$lib/format.js';
+  import { formatDuration } from '@web/lib/format.js';
 
   export let video: VideoSummary;
 </script>

@@ -1,5 +1,5 @@
 import { createParser } from 'eventsource-parser';
-import type { ClipPlan, CreateAnalysisRequest } from '../types/analysis.js';
+import type { ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js';
 import type { ChunkEvaluation } from '@lib/types/index.js';
 
 export interface AnalysisStreamCallbacks {

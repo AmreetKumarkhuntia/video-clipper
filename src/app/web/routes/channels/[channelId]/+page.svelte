@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import type { VideoPage } from '@lib/types/index.js';
-  import { apiFetch } from '$lib/api.js';
-  import ErrorText from '../../../components/ErrorText.svelte';
-  import MutedText from '../../../components/MutedText.svelte';
-  import PageHead from '../../../components/PageHead.svelte';
-  import VideoCard from '../../../components/VideoCard.svelte';
-  import Pagination from '../../../components/Pagination.svelte';
+  import { apiFetch } from '@web/lib/api.js';
+  import ErrorText from '@web/components/ErrorText.svelte';
+  import MutedText from '@web/components/MutedText.svelte';
+  import PageHead from '@web/components/PageHead.svelte';
+  import VideoCard from '@web/components/VideoCard.svelte';
+  import Pagination from '@web/components/Pagination.svelte';
 
   let videos: VideoPage['videos'] = [];
   let nextPageToken: string | undefined;

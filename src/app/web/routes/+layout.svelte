@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appName } from '$lib/index.js';
+  import { appName } from '@web/lib/index.js';
   import '../style/index.css';
 </script>
 
