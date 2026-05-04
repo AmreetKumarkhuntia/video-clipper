@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appName } from '@web/lib/index.js';
+  import Toaster from '@web/components/Toaster.svelte';
   import '../style/index.css';
 </script>
 
@@ -16,11 +17,13 @@
     <a class="brand" href="/">{appName}</a>
     <nav aria-label="Primary navigation">
       <a href="/">Channels</a>
+      <a href="/settings">Settings</a>
     </nav>
   </header>
   <main>
     <slot />
   </main>
+  <Toaster />
 </div>
 
 <style>
