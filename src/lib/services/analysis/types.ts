@@ -73,8 +73,10 @@ export interface TranscriptDetectorResult {
 }
 
 export interface StreamCallbacks {
+  onChunkStarted?: (chunkIndex: number) => void;
   onChunkTextDelta?: (chunkIndex: number, text: string) => void;
   onChunkAnalyzed?: (chunkIndex: number, evaluation: ChunkEvaluation) => void;
+  onSegmentStarted?: (segmentRank: number) => void;
   onSegmentTextDelta?: (segmentRank: number, text: string) => void;
   onSegmentRefined?: (segmentRank: number, segment: RankedSegment) => void;
 }

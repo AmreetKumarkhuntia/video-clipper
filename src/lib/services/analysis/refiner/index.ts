@@ -61,7 +61,7 @@ After analyzing, call the report_refined_boundaries tool with your refined clip 
 export interface RefineSegmentsOpts {
   maxRetries: number;
   model: LanguageModel;
-  callbacks?: Pick<StreamCallbacks, 'onSegmentTextDelta' | 'onSegmentRefined'>;
+  callbacks?: Pick<StreamCallbacks, 'onSegmentStarted' | 'onSegmentTextDelta' | 'onSegmentRefined'>;
   requestId?: string;
 }
 
@@ -85,6 +85,8 @@ async function refineSegment(
   noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment> {
+  opts.callbacks?.onSegmentStarted?.(segment.rank);
+
   if (!noCache) {
     const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
     if (cached) {

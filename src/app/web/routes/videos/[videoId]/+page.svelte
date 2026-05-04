@@ -12,8 +12,10 @@
     createStartedActivityState,
     upsertChunkCompletion,
     upsertChunkProgress,
+    upsertChunkStarted,
     upsertSegmentCompletion,
     upsertSegmentProgress,
+    upsertSegmentStarted,
   } from '@web/lib/activity/analysisActivity.js';
   import ErrorText from '@web/components/ErrorText.svelte';
   import MutedText from '@web/components/MutedText.svelte';
@@ -22,6 +24,7 @@
   import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
   import VideoPlayerPanel from '@web/components/video/VideoPlayerPanel.svelte';
+  import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
 
   let video: VideoDetails | null = null;
   let transcript: TranscriptBundle | null = null;
@@ -35,6 +38,7 @@
   let totalChunks = 0;
   let analysisPhase: ActivityPhase = 'idle';
   let activityState = createInitialActivityState();
+  let completedChunkIndexes = new Set<number>();
 
   $: videoId = $page.params.videoId;
 
@@ -80,6 +84,7 @@
     totalChunks = transcript?.chunks.length ?? 0;
     analysisPhase = 'analyzing';
     activityState = createStartedActivityState();
+    completedChunkIndexes = new Set();
 
     try {
       plan = await streamAnalysis(
@@ -90,23 +95,66 @@
           options: { refine: true, noCache: false },
         },
         {
+          onChunkStarted: (chunkIndex) => {
+            logAnalysisEvent('chunk_started', { chunkIndex });
+            activityState = upsertChunkStarted(activityState, chunkIndex);
+          },
           onChunkProgress: (chunkIndex, text) => {
+            logAnalysisEvent(
+              'chunk_progress',
+              {
+                chunkIndex,
+                textLength: text.length,
+                preview: previewStreamText(text),
+              },
+              'debug',
+            );
             activityState = upsertChunkProgress(activityState, chunkIndex, text);
           },
           onChunkAnalyzed: (chunkIndex, evaluation) => {
+            logAnalysisEvent('chunk_analyzed', {
+              chunkIndex,
+              status: evaluation.status,
+              interesting: evaluation.status === 'success' ? evaluation.interesting : undefined,
+              score: evaluation.status === 'success' ? evaluation.score : undefined,
+            });
             totalChunks = Math.max(totalChunks, chunkIndex + 1);
-            analyzedChunks = Math.max(analyzedChunks, chunkIndex + 1);
+            if (!completedChunkIndexes.has(chunkIndex)) {
+              completedChunkIndexes = new Set(completedChunkIndexes).add(chunkIndex);
+            }
+            analyzedChunks = completedChunkIndexes.size;
             activityState = upsertChunkCompletion(activityState, chunkIndex, evaluation);
           },
+          onSegmentStarted: (rank) => {
+            logAnalysisEvent('segment_started', { rank });
+            analysisPhase = 'refining';
+            activityState = upsertSegmentStarted(activityState, rank);
+          },
           onSegmentProgress: (rank, text) => {
+            logAnalysisEvent(
+              'segment_progress',
+              {
+                rank,
+                textLength: text.length,
+                preview: previewStreamText(text),
+              },
+              'debug',
+            );
             analysisPhase = 'refining';
             activityState = upsertSegmentProgress(activityState, rank, text);
           },
           onSegmentRefined: (rank, segment) => {
+            logAnalysisEvent('segment_refined', {
+              rank,
+              start: segment.start,
+              end: segment.end,
+              score: segment.score,
+            });
             analysisPhase = 'refining';
             activityState = upsertSegmentCompletion(activityState, rank, segment, formatTime);
           },
           onError: (message) => {
+            logAnalysisEvent('error', { message }, 'error');
             errorMessage = message;
             activityState = appendSystemActivity(activityState, {
               title: 'Analysis failed',
@@ -116,6 +164,10 @@
           },
         },
       );
+
+      logAnalysisEvent('analysis_complete', {
+        candidateCount: plan.candidates.length,
+      });
 
       analysisPhase = 'complete';
       activityState = appendSystemActivity(activityState, {

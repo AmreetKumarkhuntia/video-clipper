@@ -3,8 +3,10 @@ import type { ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js
 import type { ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
 
 export interface AnalysisStreamCallbacks {
+  onChunkStarted?: (chunkIndex: number) => void;
   onChunkProgress?: (chunkIndex: number, text: string) => void;
   onChunkAnalyzed?: (chunkIndex: number, evaluation: ChunkEvaluation) => void;
+  onSegmentStarted?: (rank: number) => void;
   onSegmentProgress?: (rank: number, text: string) => void;
   onSegmentRefined?: (rank: number, segment: RankedSegment) => void;
   onError?: (message: string) => void;
@@ -38,12 +40,18 @@ export async function streamAnalysis(
   return new Promise<ClipPlan>((resolve, reject) => {
     const parser = createParser({
       onEvent(event) {
-        if (event.event === 'chunk_progress') {
+        if (event.event === 'chunk_started') {
+          const data = JSON.parse(event.data);
+          callbacks.onChunkStarted?.(data.chunkIndex);
+        } else if (event.event === 'chunk_progress') {
           const data = JSON.parse(event.data);
           callbacks.onChunkProgress?.(data.chunkIndex, data.text);
         } else if (event.event === 'chunk_analyzed') {
           const data = JSON.parse(event.data);
           callbacks.onChunkAnalyzed?.(data.chunkIndex, data.evaluation);
+        } else if (event.event === 'segment_started') {
+          const data = JSON.parse(event.data);
+          callbacks.onSegmentStarted?.(data.rank);
         } else if (event.event === 'segment_progress') {
           const data = JSON.parse(event.data);
           callbacks.onSegmentProgress?.(data.rank, data.text);

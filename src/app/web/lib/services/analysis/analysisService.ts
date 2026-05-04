@@ -28,6 +28,8 @@ they indicate high-action or high-energy moments that are often clip-worthy.
 
 After analyzing the segment, call the report_analysis tool with your findings.`;
 
+const DEFAULT_WEB_LLM_CONCURRENCY = 1;
+
 export async function analyzeTranscriptForWeb(
   input: CreateAnalysisRequest,
   callbacks?: StreamCallbacks,
@@ -61,7 +63,7 @@ export async function analyzeTranscriptForWeb(
       cache,
       {
         maxChunks: input.options.maxChunks ?? config.MAX_CHUNKS,
-        maxParallel: input.options.maxParallel ?? config.LLM_CONCURRENCY,
+        maxParallel: input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY,
         noCache: input.options.noCache,
         requestId,
         transcriptProvider: config.TRANSCRIPT_PROVIDER,
@@ -89,7 +91,7 @@ export async function analyzeTranscriptForWeb(
     const finalSegments =
       input.options.refine && rankedSegments.length > 0
         ? await refineRankedSegments(rankedSegments, microBlocks, cache, {
-            maxParallel: input.options.maxParallel ?? config.LLM_CONCURRENCY,
+            maxParallel: input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY,
             noCache: input.options.noCache,
             maxRetries: config.LLM_MAX_RETRIES,
             model,
