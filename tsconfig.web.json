@@ -17,5 +17,11 @@
       "@web/components/*": ["src/app/web/components/*"]
     }
   },
-  "include": ["src/app/web/**/*.svelte", "src/app/web/**/*.ts", "src/lib/**/*.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/web/**/*.svelte",
+    "src/app/web/**/*.ts",
+    "src/lib/**/*.ts",
+    "vite.config.ts"
+  ]
 }
