@@ -106,7 +106,47 @@ cp .env.example .env
 | `YT_DLP_COOKIES_FROM_BROWSER` | —       | Extract cookies from browser: `chrome`, `firefox`, `safari`, `brave`, `edge`, `opera`, `chromium` |
 | `YT_DLP_COOKIES_FILE`         | —       | Path to a Netscape-format cookies file for yt-dlp authentication                                  |
 
-> Note: `YT_DLP_COOKIES_FROM_BROWSER` and `YT_DLP_COOKIES_FILE` are mutually exclusive.
+> `YT_DLP_COOKIES_FROM_BROWSER` and `YT_DLP_COOKIES_FILE` are mutually exclusive.
+
+#### Specifying a Chrome profile
+
+Bare `chrome` reads the **Default** profile. If your YouTube session lives in a different profile, append `:Profile Name`:
+
+```env
+YT_DLP_COOKIES_FROM_BROWSER=chrome:Profile 1
+```
+
+To find which profile has a valid YouTube session, check the cookie count per profile:
+
+```bash
+for profile in "Default" "Profile 1" "Profile 2"; do
+  db="$HOME/Library/Application Support/Google/Chrome/$profile/Cookies"
+  [ -f "$db" ] || continue
+  count=$(python3 -c "
+import sqlite3, shutil, tempfile, os
+tmp = tempfile.mktemp(suffix='.db')
+shutil.copy2('$db', tmp)
+c = sqlite3.connect(tmp)
+print(c.execute(\"SELECT COUNT(*) FROM cookies WHERE host_key LIKE '%youtube%'\").fetchone()[0])
+c.close(); os.unlink(tmp)
+" 2>/dev/null)
+  echo "$profile: $count YouTube cookies"
+done
+```
+
+Use the profile with the highest count, e.g. `chrome:Profile 1`.
+
+#### Cookie rotation
+
+Chrome rotates YouTube session cookies frequently as a security measure. If you see:
+
+```
+WARNING: The provided YouTube account cookies are no longer valid.
+```
+
+Re-authenticate: open Chrome, sign in to YouTube in a fresh private/incognito window, then retry. yt-dlp will re-extract the fresh cookies automatically on the next run.
+
+Alternatively, export a static `cookies.txt` file and use `YT_DLP_COOKIES_FILE` — this is more stable than `--cookies-from-browser` for automation.
 
 ## FFmpeg Preset Guide
 

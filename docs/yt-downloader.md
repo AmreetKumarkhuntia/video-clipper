@@ -175,6 +175,62 @@ The `TIMESTAMP_OFFSET_SECONDS` config option applies a global adjustment to all 
 
 This is useful when transcript timestamps don't perfectly match the actual video timing.
 
+## Troubleshooting: Transcript / Bot Detection Errors
+
+### "Sign in to confirm you're not a bot"
+
+YouTube gates some videos behind a bot-detection challenge. When this happens both the direct caption fetch and the yt-dlp fallback will fail until valid authenticated cookies are provided.
+
+**Fix:**
+
+1. Set `YT_DLP_COOKIES_FROM_BROWSER=chrome` (or `firefox`, `safari`, etc.) in `.env`
+2. Open Chrome and sign in to YouTube in a fresh private/incognito window to refresh the session
+3. Retry — yt-dlp re-extracts the cookies automatically
+
+If you have multiple Chrome profiles, bare `chrome` reads the **Default** profile which may have stale cookies. Identify the correct profile:
+
+```bash
+for profile in "Default" "Profile 1" "Profile 2"; do
+  db="$HOME/Library/Application Support/Google/Chrome/$profile/Cookies"
+  [ -f "$db" ] || continue
+  count=$(python3 -c "
+import sqlite3, shutil, tempfile, os
+tmp = tempfile.mktemp(suffix='.db')
+shutil.copy2('$db', tmp)
+c = sqlite3.connect(tmp)
+print(c.execute(\"SELECT COUNT(*) FROM cookies WHERE host_key LIKE '%youtube%'\").fetchone()[0])
+c.close(); os.unlink(tmp)
+" 2>/dev/null)
+  echo "$profile: $count YouTube cookies"
+done
+```
+
+Use the profile with the highest count:
+
+```env
+YT_DLP_COOKIES_FROM_BROWSER=chrome:Profile 1
+```
+
+### "The provided YouTube account cookies are no longer valid"
+
+Chrome rotates YouTube session cookies frequently. When you see this warning the cookie jar yt-dlp extracted is already stale.
+
+**Fix:** Sign in to YouTube in a fresh Chrome private/incognito window, then retry. The cookies are refreshed in the Chrome cookie store and yt-dlp will pick them up on the next run.
+
+For more stable automation, export a static `cookies.txt` and use `YT_DLP_COOKIES_FILE` instead:
+
+```env
+YT_DLP_COOKIES_FILE=/path/to/youtube-cookies.txt
+```
+
+### "Requested format is not available" (n-challenge / Deno error)
+
+When yt-dlp uses the YouTube TV client and the Deno JS runtime fails to solve the n-challenge, yt-dlp sees only `images` as an available format and errors out before writing subtitle files.
+
+This is handled internally by passing `--format mhtml` to yt-dlp during subtitle-only fetches. The `mhtml` format matches what YouTube exposes when the TV client is in a degraded state, unblocking subtitle download without affecting the VTT output (no video or audio is downloaded because `--skip-download` is always set).
+
+You do not need to do anything — this is applied automatically. If you see this error in logs it means the n-challenge solver failed but subtitles were still fetched successfully.
+
 ---
 
 ## Troubleshooting: Timestamp Alignment

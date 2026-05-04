@@ -11,7 +11,7 @@ See `docs/plan.md` for the full architecture.
 - TypeScript (Node.js 18+)
 - Vercel AI SDK (`ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/mistral`, `@ai-sdk/groq`) with `generateObject` + `zod` for structured LLM output
 - Multi-provider support: OpenAI, Anthropic, Google, XAI, Mistral, Groq, Zai, OpenRouter
-- `yt-dlp` + `execa` for video download
+- `yt-dlp` + `execa` for video download and subtitle extraction fallback
 - `fluent-ffmpeg` for clip cutting
 - `zod` for config validation at startup
 - `p-limit` for concurrency control
@@ -160,6 +160,19 @@ Each service module in `src/lib/services/` should:
 
 - Micro-blocks group raw lines into ~15s windows before chunking
 - LLM chunks are 120s windows with 20s overlap — built from micro-blocks, not raw lines
+
+### Transcript fetch strategy (`src/lib/services/video/source/youtube/subtitles.ts`)
+
+Two-tier fetch, in order:
+
+1. **Direct YouTube caption fetch (primary)** — reads `ytInitialPlayerResponse` from the YouTube watch page HTML, picks the best English caption track, fetches it via the `timedtext` endpoint as VTT. No yt-dlp, no cookies required for public videos.
+2. **yt-dlp subtitle extraction (fallback)** — used when the direct fetch returns no tracks or throws (e.g. `LOGIN_REQUIRED`). Always passes `--format mhtml` so yt-dlp can select a format even when the TV-client n-challenge JS solver fails (Deno bug that produces "Requested format is not available"). Cookies are applied here via `YT_DLP_COOKIES_FROM_BROWSER` / `YT_DLP_COOKIES_FILE`.
+
+When working on transcript fetch code:
+
+- Do not remove `--format mhtml` from the yt-dlp args — it is required for bot-gated videos
+- `YT_DLP_COOKIES_FROM_BROWSER` supports a profile suffix: `chrome:Profile 1`; bare `chrome` uses the Default profile which may have stale cookies
+- Auth errors from the direct fetch are caught and re-thrown as human-readable messages pointing to the cookie config vars
 
 ## Naming
 

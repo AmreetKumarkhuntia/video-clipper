@@ -68,6 +68,8 @@ Module 9 — Clip Generator (optional)
 | 1 | URL Parser | ✅ Done |
 | 2 | Video Metadata Extractor | ✅ Done |
 | 3 | Transcript Fetcher + Micro-block Grouper | ✅ Done |
+| 3a | Direct YouTube caption fetch (primary) | ✅ Done |
+| 3a | yt-dlp subtitle fallback with `--format mhtml` (secondary) | ✅ Done |
 | 3b | Audio Downloader (yt-dlp audio-only) | 🆕 New |
 | 3c | Audio Event Detector (Gemini primary + YAMNet fallback) | 🆕 New |
 | 4 | LLM Chunk Builder | ✅ Done |
@@ -420,6 +422,8 @@ pip install tensorflow tensorflow-hub soundfile numpy
 - ✅ Module 1 — URL Parser
 - ✅ Module 2 — Video Metadata Extractor
 - ✅ Module 3 — Transcript Fetcher + Micro-block Grouper
+  - ✅ Primary: direct `ytInitialPlayerResponse` caption track fetch from YouTube watch page
+  - ✅ Fallback: yt-dlp subtitle extraction with `--format mhtml` to bypass n-challenge format errors
 - ✅ Module 4 — LLM Chunk Builder
 - ✅ Module 5 — LLM Segment Analyzer
 - ✅ Module 7 — Clip Refinement Pass
