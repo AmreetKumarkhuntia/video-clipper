@@ -2,13 +2,13 @@
   import { page } from '$app/stores';
   import type { VideoDetails } from '@lib/types/index.js';
   import type { ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
-  import { apiFetch } from '../../../lib/api.js';
-  import { streamAnalysis } from '../../../lib/analysisStream.js';
-  import Button from '../../../components/Button.svelte';
-  import ErrorText from '../../../components/ErrorText.svelte';
-  import MutedText from '../../../components/MutedText.svelte';
-  import AnalysisProgress from '../../../components/AnalysisProgress.svelte';
-  import YouTubeEmbed from '../../../components/YouTubeEmbed.svelte';
+  import { apiFetch } from '@web/lib/api.js';
+  import { streamAnalysis } from '@web/lib/analysisStream.js';
+  import Button from '@web/components/Button.svelte';
+  import ErrorText from '@web/components/ErrorText.svelte';
+  import MutedText from '@web/components/MutedText.svelte';
+  import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
+  import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
 
   let video: VideoDetails | null = null;
   let transcript: TranscriptBundle | null = null;

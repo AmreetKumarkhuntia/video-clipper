@@ -17,7 +17,9 @@
     "paths": {
       "@lib/*": ["src/lib/*"],
       "@app/cli/*": ["src/app/cli/*"],
-      "@app/web/*": ["src/app/web/*"]
+      "@app/web/*": ["src/app/web/*"],
+      "@web/lib/*": ["src/app/web/lib/*"],
+      "@web/components/*": ["src/app/web/components/*"]
     }
   },
   "include": ["src/**/*"],

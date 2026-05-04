@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { ChannelSummary } from '@lib/types/index.js';
-  import { apiFetch } from '$lib/api.js';
-  import Button from '../components/Button.svelte';
-  import ErrorText from '../components/ErrorText.svelte';
-  import ChannelCard from '../components/ChannelCard.svelte';
+  import { apiFetch } from '@web/lib/api.js';
+  import Button from '@web/components/Button.svelte';
+  import ErrorText from '@web/components/ErrorText.svelte';
+  import ChannelCard from '@web/components/ChannelCard.svelte';
 
   let channelInput = '';
   let isLoading = false;

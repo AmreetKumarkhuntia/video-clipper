@@ -9,6 +9,8 @@ const config = {
       '@lib': path.resolve('./src/lib'),
       '@app/cli': path.resolve('./src/app/cli'),
       '@app/web': path.resolve('./src/app/web'),
+      '@web/lib': path.resolve('./src/app/web/lib'),
+      '@web/components': path.resolve('./src/app/web/components'),
     },
     files: {
       appTemplate: 'src/app/web/app.html',

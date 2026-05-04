@@ -9,17 +9,22 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { CreateClipsRequestSchema } from '@app/web/types/analysis.js';
+import { log } from '@lib/utils/logger.js';
 
 export const POST: RequestHandler = async (event) => {
+  const reqDone = log.request('POST', '/api/clips', event.locals.requestId);
   try {
     const input = await parseJsonBody(event, CreateClipsRequestSchema);
     const clips = await generateWebClips(input);
+    reqDone(200);
     return jsonOk({ clips });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      reqDone(400);
       return jsonError(400, 'Invalid clip generation request.', zodErrorDetail(error));
     }
 
+    reqDone(500);
     return jsonError(500, 'Failed to generate clips.', errorMessage(error));
   }
 };

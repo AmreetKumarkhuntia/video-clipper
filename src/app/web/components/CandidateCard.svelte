@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ClipCandidate } from '@app/web/types/analysis.js';
-  import { formatTime } from '$lib/format.js';
+  import { formatTime } from '@web/lib/format.js';
 
   export let candidate: ClipCandidate;
 

@@ -231,9 +231,7 @@ export async function analyzeChunks(
   noCache: boolean,
   opts: AnalyzeChunksOpts,
 ): Promise<ChunkEvaluation[]> {
-  log.info(
-    `Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
-  );
+  const done = log.fnCalled('analyzeChunks', { chunks: chunks.length, concurrency });
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
@@ -284,5 +282,6 @@ export async function analyzeChunks(
   );
 
   log.info(`Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`);
+  done({ succeeded, total: chunks.length });
   return evaluations;
 }

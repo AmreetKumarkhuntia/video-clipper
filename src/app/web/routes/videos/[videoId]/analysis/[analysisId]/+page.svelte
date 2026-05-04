@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
-  import { apiFetch } from '../../../../../lib/api.js';
-  import Button from '../../../../../components/Button.svelte';
-  import ErrorText from '../../../../../components/ErrorText.svelte';
-  import MutedText from '../../../../../components/MutedText.svelte';
-  import PageHead from '../../../../../components/PageHead.svelte';
-  import CandidateCard from '../../../../../components/CandidateCard.svelte';
+  import { apiFetch } from '@web/lib/api.js';
+  import Button from '@web/components/Button.svelte';
+  import ErrorText from '@web/components/ErrorText.svelte';
+  import MutedText from '@web/components/MutedText.svelte';
+  import PageHead from '@web/components/PageHead.svelte';
+  import CandidateCard from '@web/components/CandidateCard.svelte';
 
   let plan: ClipPlan | null = null;
   let clips: ClipArtifact[] = [];
