@@ -132,18 +132,6 @@ async function analyzeChunk(
         clip_start: cached.clip_start,
         clip_end: cached.clip_end,
       };
-      const evaluation: ChunkEvaluation = {
-        status: 'success' as const,
-        chunk_index: chunkIndex,
-        chunk_start: chunk.start,
-        chunk_end: chunk.end,
-        interesting: result.interesting,
-        score: result.score,
-        reason: result.reason,
-        clip_start: result.clip_start,
-        clip_end: result.clip_end,
-      };
-      opts.callbacks?.onChunkAnalyzed?.(chunkIndex, evaluation);
       return result;
     }
   }

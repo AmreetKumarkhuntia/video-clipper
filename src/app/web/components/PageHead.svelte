@@ -19,12 +19,13 @@
     align-items: end;
     justify-content: space-between;
     gap: 20px;
-    margin-bottom: 26px;
+    margin-bottom: 30px;
   }
 
   h1 {
     margin: 0;
-    font-size: 34px;
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1;
   }
 
   .action {

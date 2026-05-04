@@ -13,7 +13,7 @@ function formatMeta(meta: Record<string, unknown>): string {
 }
 
 export function generateRequestId(): string {
-  return nanoid(8);
+  return nanoid(24);
 }
 
 export const log = {

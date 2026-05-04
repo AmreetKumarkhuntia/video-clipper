@@ -2,13 +2,26 @@
   import { page } from '$app/stores';
   import type { VideoDetails } from '@lib/types/index.js';
   import type { ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
+  import type { ActivityPhase } from '@app/web/types/activity.js';
   import { apiFetch } from '@web/lib/api.js';
   import { streamAnalysis } from '@web/lib/analysisStream.js';
-  import Button from '@web/components/Button.svelte';
+  import { formatTime } from '@web/lib/format.js';
+  import {
+    appendSystemActivity,
+    createInitialActivityState,
+    createStartedActivityState,
+    upsertChunkCompletion,
+    upsertChunkProgress,
+    upsertSegmentCompletion,
+    upsertSegmentProgress,
+  } from '@web/lib/activity/analysisActivity.js';
   import ErrorText from '@web/components/ErrorText.svelte';
   import MutedText from '@web/components/MutedText.svelte';
-  import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
-  import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
+  import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
+  import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
+  import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
+  import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
+  import VideoPlayerPanel from '@web/components/video/VideoPlayerPanel.svelte';
 
   let video: VideoDetails | null = null;
   let transcript: TranscriptBundle | null = null;
@@ -20,14 +33,19 @@
 
   let analyzedChunks = 0;
   let totalChunks = 0;
-  let analysisPhase: 'analyzing' | 'refining' | 'complete' = 'analyzing';
-  let analysisText = '';
+  let analysisPhase: ActivityPhase = 'idle';
+  let activityState = createInitialActivityState();
 
   $: videoId = $page.params.videoId;
 
   $: if (videoId) {
     void loadVideo();
   }
+
+  $: transcriptRows = transcript?.lines ?? [];
+  $: candidateRanges =
+    plan?.candidates.map((candidate) => ({ start: candidate.startSec, end: candidate.endSec })) ??
+    [];
 
   async function loadVideo(): Promise<void> {
     isLoadingVideo = true;
@@ -59,9 +77,9 @@
     isAnalyzing = true;
     errorMessage = '';
     analyzedChunks = 0;
-    totalChunks = 0;
+    totalChunks = transcript?.chunks.length ?? 0;
     analysisPhase = 'analyzing';
-    analysisText = '';
+    activityState = createStartedActivityState();
 
     try {
       plan = await streamAnalysis(
@@ -72,28 +90,39 @@
           options: { refine: true, noCache: false },
         },
         {
-          onChunkProgress: (_chunkIndex, text) => {
-            analysisText += text;
+          onChunkProgress: (chunkIndex, text) => {
+            activityState = upsertChunkProgress(activityState, chunkIndex, text);
           },
           onChunkAnalyzed: (chunkIndex, evaluation) => {
-            if (evaluation.status === 'success') {
-              analyzedChunks = chunkIndex + 1;
-              if (totalChunks === 0) {
-                totalChunks = chunkIndex + 1;
-              }
-            }
+            totalChunks = Math.max(totalChunks, chunkIndex + 1);
+            analyzedChunks = Math.max(analyzedChunks, chunkIndex + 1);
+            activityState = upsertChunkCompletion(activityState, chunkIndex, evaluation);
           },
-          onSegmentProgress: (_rank, text) => {
+          onSegmentProgress: (rank, text) => {
             analysisPhase = 'refining';
-            analysisText += text;
+            activityState = upsertSegmentProgress(activityState, rank, text);
           },
-          onSegmentRefined: () => {},
+          onSegmentRefined: (rank, segment) => {
+            analysisPhase = 'refining';
+            activityState = upsertSegmentCompletion(activityState, rank, segment, formatTime);
+          },
           onError: (message) => {
             errorMessage = message;
+            activityState = appendSystemActivity(activityState, {
+              title: 'Analysis failed',
+              status: 'error',
+              detail: message,
+            });
           },
         },
       );
+
       analysisPhase = 'complete';
+      activityState = appendSystemActivity(activityState, {
+        title: 'Clip plan ready',
+        status: 'done',
+        detail: `${plan.candidates.length} candidate moments are ready for review.`,
+      });
     } catch (error) {
       if (!errorMessage) {
         errorMessage = error instanceof Error ? error.message : String(error);
@@ -106,171 +135,83 @@
 
 {#if isLoadingVideo}
   <MutedText>Loading video details...</MutedText>
-{:else if errorMessage}
+{:else if errorMessage && !video}
   <ErrorText message={errorMessage} />
 {/if}
 
 {#if video}
-  <section class="video-layout">
-    <YouTubeEmbed {videoId} title={video.title} />
+  <section class="video-page-columns">
+    <div class="left-column">
+      <VideoPlayerPanel {videoId} title={video.title} />
 
-    <aside class="details">
-      <p class="channel">{video.channelTitle}</p>
-      <h1>{video.title}</h1>
-      <dl>
-        <div>
-          <dt>Published</dt>
-          <dd>{new Date(video.publishedAt).toLocaleDateString()}</dd>
-        </div>
-        <div>
-          <dt>Views</dt>
-          <dd>{video.viewCount?.toLocaleString() ?? 'unknown'}</dd>
-        </div>
-        <div>
-          <dt>Duration</dt>
-          <dd>{Math.round(video.durationSec)}s</dd>
-        </div>
-      </dl>
+      <ActivityPanel
+        {analyzedChunks}
+        {totalChunks}
+        phase={analysisPhase}
+        items={activityState.items}
+        {isAnalyzing}
+      />
+    </div>
 
-      <div class="actions">
-        <Button on:click={loadTranscript} disabled={isLoadingTranscript}>
-          {isLoadingTranscript ? 'Fetching transcript...' : 'Fetch transcript'}
-        </Button>
-        <Button on:click={planClips} disabled={isAnalyzing}>
-          {isAnalyzing ? 'Planning clips...' : 'Plan clippers'}
-        </Button>
-      </div>
-    </aside>
+    <div class="right-column">
+      <VideoDetailsRail
+        {video}
+        {isLoadingTranscript}
+        {isAnalyzing}
+        errorMessage={errorMessage && video ? errorMessage : ''}
+        onLoadTranscript={loadTranscript}
+        onPlanClips={planClips}
+      />
+
+      <TranscriptPanel
+        lines={transcriptRows}
+        chunkCount={transcript?.chunks.length ?? 0}
+        highlightRanges={candidateRanges}
+      />
+    </div>
   </section>
 
-  {#if isAnalyzing}
-    <section class="progress-section">
-      <AnalysisProgress {analyzedChunks} {totalChunks} phase={analysisPhase} text={analysisText} />
-    </section>
-  {/if}
-
-  <section class="below">
-    <article>
-      <h2>Transcript</h2>
-      {#if transcript}
-        <p>{transcript.lines.length} lines, {transcript.chunks.length} analysis chunks.</p>
-        <p class="excerpt">
-          {transcript.lines
-            .slice(0, 8)
-            .map((line) => line.text)
-            .join(' ')}
-        </p>
-      {:else}
-        <MutedText>Transcript not loaded yet.</MutedText>
-      {/if}
-    </article>
-
-    <article>
-      <h2>Clip plan</h2>
-      {#if plan}
-        <p>{plan.candidates.length} candidate moments created.</p>
-        <a class="btn-link" href={`/videos/${videoId}/analysis/${plan.id}`}>Review candidates</a>
-      {:else}
-        <MutedText>No clip plan generated yet.</MutedText>
-      {/if}
-    </article>
-  </section>
+  <div class="plan-panel">
+    <ClipPlanSummary {plan} {videoId} />
+  </div>
 {/if}
 
 <style>
-  .video-layout {
+  .video-page-columns {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.55fr);
+    grid-template-columns: minmax(0, var(--video-page-main)) minmax(340px, var(--video-page-rail));
     gap: var(--s-lg);
     align-items: start;
   }
 
-  .details {
+  .left-column,
+  .right-column {
     display: grid;
-    gap: var(--s-md);
-  }
-
-  .channel {
-    margin: 0;
-    color: var(--c-text-secondary);
-    font-weight: var(--fw-semibold);
-  }
-
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    line-height: 1.12;
-  }
-
-  dl {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--s-sm);
-    margin: 0;
-  }
-
-  dt {
-    color: var(--c-text-muted);
-    font-size: 12px;
-    font-weight: var(--fw-semibold);
-    text-transform: uppercase;
-  }
-
-  dd {
-    margin: 3px 0 0;
-    font-weight: var(--fw-bold);
-  }
-
-  .actions {
-    display: grid;
-    gap: var(--s-sm);
-  }
-
-  .progress-section {
-    margin-top: var(--s-lg);
-    padding: var(--s-md);
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    background: var(--c-surface);
-  }
-
-  .below {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: var(--s-lg);
-    margin-top: 28px;
+    align-content: start;
   }
 
-  article {
-    padding-top: 18px;
-    border-top: 1px solid var(--c-border);
+  .plan-panel {
+    margin-top: var(--s-lg);
   }
 
-  h2 {
-    margin: 0 0 var(--s-sm);
-    font-size: 18px;
+  @media (max-width: 980px) {
+    .video-page-columns {
+      grid-template-columns: minmax(0, var(--video-page-main-soft)) minmax(
+          300px,
+          var(--video-page-rail-soft)
+        );
+    }
   }
 
-  .excerpt {
-    color: var(--c-text-muted);
-  }
-
-  .btn-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 14px;
-    border-radius: var(--r-md);
-    background: var(--c-primary);
-    color: var(--c-primary-text);
-    font-weight: var(--fw-bold);
-  }
-
-  @media (max-width: 900px) {
-    .video-layout,
-    .below {
+  @media (max-width: 800px) {
+    .video-page-columns {
       grid-template-columns: 1fr;
+    }
+
+    .right-column,
+    .plan-panel {
+      margin-top: var(--s-lg);
     }
   }
 </style>
