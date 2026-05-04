@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { analyzeTranscriptForWeb } from '@app/web/lib/services/analysis/analysisService.js';
+import {
+  logEmittedAnalysisEvent,
+  serializeSSE,
+  type AnalysisStreamEventName,
+} from '@app/web/lib/services/analysis/streamEvents.js';
 import { jsonError, parseJsonBody, zodErrorDetail } from '@app/web/lib/services/http/responses.js';
 import { CreateAnalysisRequestSchema } from '@app/web/types/analysis.js';
 import { log } from '@lib/utils/logger.js';
-import type { StreamCallbacks, ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
-
-function serializeSSE(event: string, data: unknown): string {
-  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-}
+import type { StreamCallbacks } from '@lib/types/index.js';
 
 export const POST: RequestHandler = async (event) => {
   const reqDone = log.request('POST', '/api/analysis/transcript', event.locals.requestId);
@@ -32,16 +33,23 @@ export const POST: RequestHandler = async (event) => {
     async start(controller) {
       const encoder = new TextEncoder();
 
-      function send(event: string, data: unknown): void {
-        controller.enqueue(encoder.encode(serializeSSE(event, data)));
+      function send(eventName: AnalysisStreamEventName, data: unknown): void {
+        logEmittedAnalysisEvent(event.locals.requestId, eventName, data);
+        controller.enqueue(encoder.encode(serializeSSE(eventName, data)));
       }
 
       const callbacks: StreamCallbacks = {
+        onChunkStarted: (chunkIndex) => {
+          send('chunk_started', { chunkIndex });
+        },
         onChunkTextDelta: (chunkIndex, text) => {
           send('chunk_progress', { chunkIndex, text });
         },
         onChunkAnalyzed: (chunkIndex, evaluation) => {
           send('chunk_analyzed', { chunkIndex, evaluation });
+        },
+        onSegmentStarted: (rank) => {
+          send('segment_started', { rank });
         },
         onSegmentTextDelta: (rank, text) => {
           send('segment_progress', { rank, text });

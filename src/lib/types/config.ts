@@ -110,9 +110,7 @@ export const ConfigSchema = z
     AUDIO_LLM_BOOST_WINDOW: z.coerce.number().min(0).default(10),
     AUDIO_LLM_SCORE_BOOST: z.coerce.number().min(0).default(2),
     GAME_PROFILE: z.enum(['valorant', 'fps', 'boss_fight', 'general']).default('general'),
-    YT_DLP_COOKIES_FROM_BROWSER: z
-      .enum(['chrome', 'firefox', 'safari', 'brave', 'edge', 'opera', 'chromium'])
-      .optional(),
+    YT_DLP_COOKIES_FROM_BROWSER: z.string().optional(),
     YT_DLP_COOKIES_FILE: z.string().optional(),
 
     // ---- Cache backend -------------------------------------------------------

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parseVtt } from '../src/lib/services/video/source/youtube/subtitles.js';
+import {
+  extractInitialPlayerResponse,
+  parseVtt,
+  pickEnglishCaptionTrack,
+  rankSubtitleFiles,
+} from '../src/lib/services/video/source/youtube/subtitles.js';
 
 const BASIC_VTT = `WEBVTT
 Kind: captions
@@ -175,5 +180,83 @@ describe('parseVtt', () => {
       const vtt = 'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<c></c>\n\n';
       expect(parseVtt(vtt)).toEqual([]);
     });
+  });
+});
+
+describe('extractInitialPlayerResponse', () => {
+  it('parses ytInitialPlayerResponse from watch page html', () => {
+    const html = `
+      <html>
+        <script>
+          var ytInitialPlayerResponse = {
+            "playabilityStatus": { "status": "OK" },
+            "captions": {
+              "playerCaptionsTracklistRenderer": {
+                "captionTracks": [
+                  {
+                    "baseUrl": "https://www.youtube.com/api/timedtext?v=abc",
+                    "languageCode": "en"
+                  }
+                ]
+              }
+            }
+          };
+        </script>
+      </html>
+    `;
+
+    const result = extractInitialPlayerResponse(html);
+
+    expect(result?.playabilityStatus?.status).toBe('OK');
+    expect(result?.captions?.playerCaptionsTracklistRenderer?.captionTracks).toHaveLength(1);
+    expect(
+      result?.captions?.playerCaptionsTracklistRenderer?.captionTracks?.[0]?.languageCode,
+    ).toBe('en');
+  });
+
+  it('returns null when player response is missing', () => {
+    expect(extractInitialPlayerResponse('<html><body>no player response</body></html>')).toBeNull();
+  });
+});
+
+describe('pickEnglishCaptionTrack', () => {
+  it('prefers manual english captions over auto-generated english captions', () => {
+    const result = pickEnglishCaptionTrack([
+      {
+        baseUrl: 'https://example.com/en-asr',
+        languageCode: 'en',
+        kind: 'asr',
+      },
+      {
+        baseUrl: 'https://example.com/en-manual',
+        languageCode: 'en',
+      },
+    ]);
+
+    expect(result?.baseUrl).toBe('https://example.com/en-manual');
+  });
+
+  it('returns null when no english track exists', () => {
+    const result = pickEnglishCaptionTrack([
+      {
+        baseUrl: 'https://example.com/es',
+        languageCode: 'es',
+      },
+    ]);
+
+    expect(result).toBeNull();
+  });
+});
+
+describe('rankSubtitleFiles', () => {
+  it('prefers english manual subtitle files and excludes live chat', () => {
+    const result = rankSubtitleFiles([
+      'video.live_chat.en.vtt',
+      'video.en-orig.vtt',
+      'video.en.vtt',
+      'video.es.vtt',
+    ]);
+
+    expect(result).toEqual(['video.en.vtt', 'video.en-orig.vtt', 'video.es.vtt']);
   });
 });

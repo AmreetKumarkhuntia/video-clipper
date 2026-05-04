@@ -40,6 +40,33 @@ export function appendSystemActivity(
   };
 }
 
+export function upsertChunkStarted(
+  state: AnalysisActivityState,
+  chunkIndex: number,
+): AnalysisActivityState {
+  const id = `chunk-${chunkIndex}`;
+  const existing = state.items.find((item) => item.id === id);
+
+  if (existing) {
+    return state;
+  }
+
+  return {
+    ...state,
+    items: [
+      ...state.items,
+      {
+        id,
+        kind: 'chunk',
+        chunkIndex,
+        title: `Analyzing chunk ${chunkIndex + 1}`,
+        status: 'running',
+        detail: 'Preparing this transcript window for model analysis.',
+      },
+    ],
+  };
+}
+
 export function upsertChunkProgress(
   state: AnalysisActivityState,
   chunkIndex: number,
@@ -158,6 +185,33 @@ export function upsertSegmentProgress(
         status: 'running',
         detail: 'Tightening clip boundaries around the selected moment.',
         rawText: text,
+      },
+    ],
+  };
+}
+
+export function upsertSegmentStarted(
+  state: AnalysisActivityState,
+  rank: number,
+): AnalysisActivityState {
+  const id = `segment-${rank}`;
+  const existing = state.items.find((item) => item.id === id);
+
+  if (existing) {
+    return state;
+  }
+
+  return {
+    ...state,
+    items: [
+      ...state.items,
+      {
+        id,
+        kind: 'segment',
+        rank,
+        title: `Refining candidate ${rank}`,
+        status: 'running',
+        detail: 'Tightening clip boundaries around the selected moment.',
       },
     ],
   };

@@ -39,8 +39,41 @@ export interface AnalyzeChunksOpts {
   maxRetries: number;
   systemPrompt: string;
   model: LanguageModel;
-  callbacks?: Pick<StreamCallbacks, 'onChunkTextDelta' | 'onChunkAnalyzed'>;
+  callbacks?: Pick<StreamCallbacks, 'onChunkStarted' | 'onChunkTextDelta' | 'onChunkAnalyzed'>;
   requestId?: string;
+}
+
+function toSuccessEvaluation(
+  chunk: LLMChunk,
+  chunkIndex: number,
+  segment: AnalyzedSegment,
+): Extract<ChunkEvaluation, { status: 'success' }> {
+  return {
+    status: 'success',
+    chunk_index: chunkIndex,
+    chunk_start: chunk.start,
+    chunk_end: chunk.end,
+    interesting: segment.interesting,
+    score: segment.score,
+    reason: segment.reason,
+    clip_start: segment.clip_start,
+    clip_end: segment.clip_end,
+  };
+}
+
+function toFailedEvaluation(
+  chunk: LLMChunk,
+  chunkIndex: number,
+  error: unknown,
+): Extract<ChunkEvaluation, { status: 'failed' }> {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  return {
+    status: 'failed',
+    chunk_index: chunkIndex,
+    chunk_start: chunk.start,
+    chunk_end: chunk.end,
+    error: errorMessage,
+  };
 }
 
 function isRateLimitError(err: unknown): boolean {
@@ -227,52 +260,39 @@ export async function analyzeChunks(
   );
 
   const limit = pLimit(concurrency);
-  const results = await Promise.allSettled(
-    chunks.map((chunk, i) => {
-      const chunkLines = lines.filter((l) => l.start >= chunk.start && l.start < chunk.end);
-      const chunkAudioEvents = audioEvents.filter(
-        (e) => e.time >= chunk.start && e.time < chunk.end,
-      );
-      return limit(() =>
-        analyzeChunk(chunk, chunkLines, chunkAudioEvents, cache, noCache, i, opts),
-      );
-    }),
+  const evaluations = await Promise.all(
+    chunks.map((chunk, i) =>
+      limit(async () => {
+        const chunkLines = lines.filter((l) => l.start >= chunk.start && l.start < chunk.end);
+        const chunkAudioEvents = audioEvents.filter(
+          (e) => e.time >= chunk.start && e.time < chunk.end,
+        );
+        opts.callbacks?.onChunkStarted?.(i);
+
+        try {
+          const seg = await analyzeChunk(
+            chunk,
+            chunkLines,
+            chunkAudioEvents,
+            cache,
+            noCache,
+            i,
+            opts,
+          );
+          const evaluation = toSuccessEvaluation(chunk, i, seg);
+          opts.callbacks?.onChunkAnalyzed?.(i, evaluation);
+          return evaluation;
+        } catch (error) {
+          const failedEvaluation = toFailedEvaluation(chunk, i, error);
+          log.warn(`[chunk ${i}] LLM analysis skipped: ${failedEvaluation.error}`);
+          opts.callbacks?.onChunkAnalyzed?.(i, failedEvaluation);
+          return failedEvaluation;
+        }
+      }),
+    ),
   );
 
-  let succeeded = 0;
-  const evaluations: ChunkEvaluation[] = await Promise.all(
-    results.map(async (result, i) => {
-      const chunk = chunks[i];
-      if (result.status === 'fulfilled') {
-        succeeded++;
-        const seg: AnalyzedSegment = result.value;
-        const evaluation: ChunkEvaluation = {
-          status: 'success' as const,
-          chunk_index: i,
-          chunk_start: chunk.start,
-          chunk_end: chunk.end,
-          interesting: seg.interesting,
-          score: seg.score,
-          reason: seg.reason,
-          clip_start: seg.clip_start,
-          clip_end: seg.clip_end,
-        };
-        opts.callbacks?.onChunkAnalyzed?.(i, evaluation);
-        return evaluation;
-      } else {
-        const error =
-          result.reason instanceof Error ? result.reason.message : String(result.reason);
-        log.warn(`[chunk ${i}] LLM analysis skipped: ${error}`);
-        return {
-          status: 'failed' as const,
-          chunk_index: i,
-          chunk_start: chunk.start,
-          chunk_end: chunk.end,
-          error,
-        };
-      }
-    }),
-  );
+  const succeeded = evaluations.filter((evaluation) => evaluation.status === 'success').length;
 
   log.info(`Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`);
   done({ succeeded, total: chunks.length });
