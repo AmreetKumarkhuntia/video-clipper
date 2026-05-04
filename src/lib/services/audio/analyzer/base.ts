@@ -8,7 +8,7 @@ import type { AudioEvent } from '../types.js';
  * return so downstream code knows which backend produced them.
  *
  * Usage:
- *   const analyzer = new GeminiAudioAnalyzer();
+ *   const analyzer = new GeminiAudioAnalyzer(config);
  *   const events   = await analyzer.detect(audioPath, gameProfile, offsetSec, durationSec);
  */
 export abstract class AudioAnalyzer {

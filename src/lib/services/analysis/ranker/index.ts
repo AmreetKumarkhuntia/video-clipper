@@ -1,19 +1,18 @@
 import type { MergedCandidate, RankedSegment, ChunkEvaluation, AudioEvent } from '../types.js';
-import { config } from '@lib/config/index.js';
 
 export function mergeSignals(
   llmSegments: ChunkEvaluation[],
   audioEvents: AudioEvent[],
-  boostWindow?: number,
-  scoreBoost?: number,
-  preRoll?: number,
-  postRoll?: number,
+  boostWindow: number,
+  scoreBoost: number,
+  preRoll: number,
+  postRoll: number,
 ): MergedCandidate[] {
   const candidates: MergedCandidate[] = [];
-  const windowSec = boostWindow ?? config.AUDIO_LLM_BOOST_WINDOW;
-  const boost = scoreBoost ?? config.AUDIO_LLM_SCORE_BOOST;
-  const pre = preRoll ?? config.AUDIO_CLIP_PRE_ROLL;
-  const post = postRoll ?? config.AUDIO_CLIP_POST_ROLL;
+  const windowSec = boostWindow;
+  const boost = scoreBoost;
+  const pre = preRoll;
+  const post = postRoll;
 
   const successfulSegments = llmSegments.filter((s) => s.status === 'success');
 

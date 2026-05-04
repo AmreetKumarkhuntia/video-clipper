@@ -2,9 +2,15 @@ import { execa } from 'execa';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import pLimit from 'p-limit';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { RankedSegment, DownloadMode, DownloadResult } from '../../types.js';
+import type { YtDlpCookies } from './metadata.js';
+
+export interface DownloaderConfig extends YtDlpCookies {
+  downloadDir: string;
+  timestampOffset: number;
+  llmConcurrency: number;
+}
 
 /**
  * Formats a timestamp for yt-dlp --download-sections.
@@ -33,8 +39,12 @@ function formatTimestamp(seconds: number): string {
  * @returns Absolute path to the downloaded mp4 file
  * @throws {Error} if yt-dlp is not installed or the download fails
  */
-export async function downloadFullVideo(videoId: string, customPath?: string): Promise<string> {
-  const downloadDir = customPath || config.DOWNLOAD_DIR;
+export async function downloadFullVideo(
+  videoId: string,
+  dlConfig: DownloaderConfig,
+  customPath?: string,
+): Promise<string> {
+  const downloadDir = customPath || dlConfig.downloadDir;
   await fs.mkdir(downloadDir, { recursive: true });
 
   const outputPath = join(downloadDir, `${videoId}.mp4`);
@@ -60,10 +70,10 @@ export async function downloadFullVideo(videoId: string, customPath?: string): P
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
 
-    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
-      args.splice(0, 0, '--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
-    } else if (config.YT_DLP_COOKIES_FILE) {
-      args.splice(0, 0, '--cookies', config.YT_DLP_COOKIES_FILE);
+    if (dlConfig.cookiesFromBrowser) {
+      args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
+    } else if (dlConfig.cookiesFile) {
+      args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
     }
 
     const subprocess = execa('yt-dlp', args);
@@ -102,13 +112,14 @@ async function downloadSegment(
   videoId: string,
   segment: RankedSegment,
   index: number,
+  dlConfig: DownloaderConfig,
   customPath?: string,
 ): Promise<string> {
-  const downloadDir = customPath || config.DOWNLOAD_DIR;
+  const downloadDir = customPath || dlConfig.downloadDir;
   await fs.mkdir(downloadDir, { recursive: true });
 
-  const adjustedStart = Math.max(0, segment.start + config.TIMESTAMP_OFFSET_SECONDS);
-  const adjustedEnd = Math.max(adjustedStart + 1, segment.end + config.TIMESTAMP_OFFSET_SECONDS);
+  const adjustedStart = Math.max(0, segment.start + dlConfig.timestampOffset);
+  const adjustedEnd = Math.max(adjustedStart + 1, segment.end + dlConfig.timestampOffset);
   const startInt = Math.floor(adjustedStart);
   const endInt = Math.ceil(adjustedEnd);
   const outputPath = join(downloadDir, `${videoId}_${startInt}_${endInt}.mp4`);
@@ -124,9 +135,9 @@ async function downloadSegment(
 
   log.info(`Downloading segment ${index + 1}: ${startTs} - ${endTs} (${segment.reason})`);
   log.info(`  Requested: ${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s`);
-  if (config.TIMESTAMP_OFFSET_SECONDS !== 0) {
+  if (dlConfig.timestampOffset !== 0) {
     log.info(
-      `  Adjusted: ${adjustedStart.toFixed(2)}s - ${adjustedEnd.toFixed(2)}s (offset: ${config.TIMESTAMP_OFFSET_SECONDS}s)`,
+      `  Adjusted: ${adjustedStart.toFixed(2)}s - ${adjustedEnd.toFixed(2)}s (offset: ${dlConfig.timestampOffset}s)`,
     );
   }
 
@@ -145,10 +156,10 @@ async function downloadSegment(
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
 
-    if (config.YT_DLP_COOKIES_FROM_BROWSER) {
-      args.splice(0, 0, '--cookies-from-browser', config.YT_DLP_COOKIES_FROM_BROWSER);
-    } else if (config.YT_DLP_COOKIES_FILE) {
-      args.splice(0, 0, '--cookies', config.YT_DLP_COOKIES_FILE);
+    if (dlConfig.cookiesFromBrowser) {
+      args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
+    } else if (dlConfig.cookiesFile) {
+      args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
     }
 
     const subprocess = execa('yt-dlp', args);
@@ -180,22 +191,20 @@ async function downloadSegment(
   return outputPath;
 }
 
-/**
- * Downloads multiple segments in parallel.
- */
 async function downloadSegments(
   videoId: string,
   segments: RankedSegment[],
+  dlConfig: DownloaderConfig,
   customPath?: string,
 ): Promise<string[]> {
   if (segments.length === 0) {
     return [];
   }
 
-  const limit = pLimit(Math.min(config.LLM_CONCURRENCY, 3));
+  const limit = pLimit(Math.min(dlConfig.llmConcurrency, 3));
   const results: Array<PromiseSettledResult<string>> = await Promise.allSettled(
     segments.map((segment, index) =>
-      limit(() => downloadSegment(videoId, segment, index, customPath)),
+      limit(() => downloadSegment(videoId, segment, index, dlConfig, customPath)),
     ),
   );
 
@@ -229,10 +238,11 @@ export async function downloadVideo(
   videoId: string,
   mode: DownloadMode = 'all',
   segments: RankedSegment[] = [],
+  dlConfig: DownloaderConfig,
   customPath?: string,
 ): Promise<DownloadResult> {
   if (mode === 'all') {
-    const path = await downloadFullVideo(videoId, customPath);
+    const path = await downloadFullVideo(videoId, dlConfig, customPath);
     return { mode: 'all', path };
   }
 
@@ -243,7 +253,7 @@ export async function downloadVideo(
     }
 
     log.info(`Downloading ${segments.length} segments in parallel...`);
-    const paths = await downloadSegments(videoId, segments, customPath);
+    const paths = await downloadSegments(videoId, segments, dlConfig, customPath);
     return { mode: 'segments', paths };
   }
 

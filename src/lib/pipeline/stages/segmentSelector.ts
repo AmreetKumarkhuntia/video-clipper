@@ -21,7 +21,14 @@ export function selectSegments(
   audioEvents: AudioEvent[],
   opts: SegmentSelectorOpts,
 ): RankedSegment[] {
-  const merged = mergeSignals(chunkEvals, audioEvents);
+  const merged = mergeSignals(
+    chunkEvals,
+    audioEvents,
+    opts.boostWindow,
+    opts.scoreBoost,
+    opts.preRoll,
+    opts.postRoll,
+  );
   const ranked = rankSegments(merged, opts.threshold, opts.topN);
 
   if (ranked.length === 0) {

@@ -5,6 +5,8 @@ import type {
   LLMChunk,
 } from '../services/analysis/transcript/types.js';
 import type { ChunkEvaluation } from '../services/analysis/types.js';
+import type { LanguageModel } from 'ai';
+import type { TranscriptChainConfig } from '../services/audio/transcriber/factory.js';
 
 /** A half-open time window [start, end) in seconds. Returned by `buildWindows`. */
 export interface ChunkWindow {
@@ -31,6 +33,15 @@ export interface SegmentAnalyzerOpts {
   maxChunks?: number;
   maxParallel: number;
   noCache: boolean;
+  transcriptProvider: string;
+  transcriptChainConfig: TranscriptChainConfig;
+  microBlockSec: number;
+  chunkLengthSec: number;
+  chunkOverlapSec: number;
+  model: LanguageModel;
+  maxRetries: number;
+  systemPrompt: string;
+  llmModel: string;
 }
 
 export interface SegmentAnalyzerResult {
@@ -43,6 +54,10 @@ export interface SegmentAnalyzerResult {
 export interface SegmentSelectorOpts {
   threshold: number;
   topN: number;
+  boostWindow: number;
+  scoreBoost: number;
+  preRoll: number;
+  postRoll: number;
 }
 
 export interface ClipExporterOpts {
@@ -57,4 +72,5 @@ export interface ClipExporterOpts {
   downloadSections: 'all' | number | undefined;
   /** Custom output/download directory (overrides config.DOWNLOAD_DIR / config.OUTPUT_DIR). */
   videoPath?: string;
+  clipConcurrency: number;
 }

@@ -9,6 +9,7 @@ import type {
   ChunkEvaluation,
   RankedSegment,
 } from '../src/lib/types/index.js';
+import type { LanguageModel } from 'ai';
 
 // ---------------------------------------------------------------------------
 // Module mocks — must be declared before any imports that touch these modules
@@ -80,6 +81,22 @@ function makeCache(): Cache {
   return {} as unknown as Cache;
 }
 
+function makeModel(): LanguageModel {
+  return {} as unknown as LanguageModel;
+}
+
+function makeAnalyzer(detector: TranscriptDetector, cache: Cache = makeCache()): LLMAnalyzer {
+  return new LLMAnalyzer(
+    detector,
+    cache,
+    makeModel(),
+    undefined,
+    3,
+    'default prompt',
+    'test-model',
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -100,7 +117,7 @@ describe('LLMAnalyzer', () => {
       });
       vi.mocked(analyzeChunks).mockResolvedValue([SUCCESS_EVAL]);
 
-      const analyzer = new LLMAnalyzer(detector, makeCache());
+      const analyzer = makeAnalyzer(detector);
       const result = await analyzer.analyze({
         videoId: 'abc123',
         audioPath: null,
@@ -124,7 +141,7 @@ describe('LLMAnalyzer', () => {
       const cache = makeCache();
       vi.mocked(analyzeChunks).mockResolvedValue([SUCCESS_EVAL]);
 
-      const analyzer = new LLMAnalyzer(detector, cache);
+      const analyzer = makeAnalyzer(detector, cache);
       await analyzer.analyze({
         videoId: 'vid-xyz',
         audioPath: '/tmp/audio.wav',
@@ -147,7 +164,7 @@ describe('LLMAnalyzer', () => {
       });
       vi.mocked(analyzeChunks).mockResolvedValue([SUCCESS_EVAL]);
 
-      const analyzer = new LLMAnalyzer(detector, makeCache());
+      const analyzer = makeAnalyzer(detector);
       await analyzer.analyze({
         videoId: 'abc123',
         audioPath: null,
@@ -160,9 +177,13 @@ describe('LLMAnalyzer', () => {
         CHUNKS,
         LINES,
         audioEvents,
-        1, // maxParallel
-        expect.anything(), // cache
-        true, // noCache
+        1,
+        expect.anything(),
+        true,
+        expect.objectContaining({
+          maxRetries: 3,
+          systemPrompt: 'default prompt',
+        }),
       );
     });
 
@@ -179,7 +200,7 @@ describe('LLMAnalyzer', () => {
       });
       vi.mocked(analyzeChunks).mockResolvedValue([SUCCESS_EVAL]);
 
-      const analyzer = new LLMAnalyzer(detector, makeCache());
+      const analyzer = makeAnalyzer(detector);
       await analyzer.analyze({
         videoId: 'abc123',
         audioPath: null,
@@ -208,7 +229,7 @@ describe('LLMAnalyzer', () => {
       });
       vi.mocked(analyzeChunks).mockResolvedValue([failedEval]);
 
-      const analyzer = new LLMAnalyzer(detector, makeCache());
+      const analyzer = makeAnalyzer(detector);
 
       await expect(
         analyzer.analyze({
@@ -224,7 +245,7 @@ describe('LLMAnalyzer', () => {
     it('propagates errors thrown by transcriptDetector.detect', async () => {
       const detector = makeTranscriptDetector(new Error('no transcript available'));
 
-      const analyzer = new LLMAnalyzer(detector, makeCache());
+      const analyzer = makeAnalyzer(detector);
 
       await expect(
         analyzer.analyze({
@@ -245,9 +266,8 @@ describe('LLMAnalyzer', () => {
       const refined: RankedSegment = { ...RANKED_SEGMENT, start: 12, end: 58 };
       vi.mocked(refineSegments).mockResolvedValue([refined]);
 
-      const analyzer = new LLMAnalyzer(
+      const analyzer = makeAnalyzer(
         makeTranscriptDetector({ lines: LINES, microBlocks: MICRO_BLOCKS, chunks: CHUNKS }),
-        makeCache(),
       );
       const result = await analyzer.refine([RANKED_SEGMENT], MICRO_BLOCKS, {
         maxParallel: 2,
@@ -260,9 +280,8 @@ describe('LLMAnalyzer', () => {
     it('passes segments, microBlocks, maxParallel and noCache to refineSegments', async () => {
       vi.mocked(refineSegments).mockResolvedValue([RANKED_SEGMENT]);
 
-      const analyzer = new LLMAnalyzer(
+      const analyzer = makeAnalyzer(
         makeTranscriptDetector({ lines: LINES, microBlocks: MICRO_BLOCKS, chunks: CHUNKS }),
-        makeCache(),
       );
       await analyzer.refine([RANKED_SEGMENT], MICRO_BLOCKS, { maxParallel: 4, noCache: true });
 
@@ -272,15 +291,17 @@ describe('LLMAnalyzer', () => {
         4,
         expect.anything(),
         true,
+        expect.objectContaining({
+          maxRetries: 3,
+        }),
       );
     });
 
     it('returns an empty array when passed no segments', async () => {
       vi.mocked(refineSegments).mockResolvedValue([]);
 
-      const analyzer = new LLMAnalyzer(
+      const analyzer = makeAnalyzer(
         makeTranscriptDetector({ lines: LINES, microBlocks: MICRO_BLOCKS, chunks: CHUNKS }),
-        makeCache(),
       );
       const result = await analyzer.refine([], MICRO_BLOCKS, { maxParallel: 1, noCache: true });
 

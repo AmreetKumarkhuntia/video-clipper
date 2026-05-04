@@ -1,9 +1,16 @@
 import { log } from '@lib/utils/logger.js';
 import { AudioAnalyzer } from './base.js';
 import { GeminiAudioAnalyzer } from './gemini.js';
+import type { GeminiAnalyzerConfig } from './gemini.js';
 import { WhisperAudioAnalyzer } from './whisper.js';
 import { YAMNetAudioAnalyzer } from './yamnet.js';
 import type { AudioProviderName } from '@lib/types/index.js';
+
+export interface AnalyzerChainConfig {
+  confidenceThreshold: number;
+  whisperModel: string;
+  gemini: GeminiAnalyzerConfig;
+}
 
 const KNOWN_PROVIDERS = new Set<AudioProviderName>(['gemini', 'whisper', 'yamnet']);
 
@@ -53,17 +60,20 @@ export function parseProviderChain(providerString: string): AudioProviderName[] 
  *   // AUDIO_PROVIDER=gemini,whisper  →  [GeminiAudioAnalyzer, WhisperAudioAnalyzer]
  *   const chain = createAnalyzerChain(config.AUDIO_PROVIDER);
  */
-export function createAnalyzerChain(providerString: string): AudioAnalyzer[] {
+export function createAnalyzerChain(
+  providerString: string,
+  chainConfig: AnalyzerChainConfig,
+): AudioAnalyzer[] {
   const names = parseProviderChain(providerString);
 
   return names.map((name) => {
     switch (name) {
       case 'gemini':
-        return new GeminiAudioAnalyzer();
+        return new GeminiAudioAnalyzer(chainConfig.gemini);
       case 'whisper':
-        return new WhisperAudioAnalyzer();
+        return new WhisperAudioAnalyzer(chainConfig.confidenceThreshold, chainConfig.whisperModel);
       case 'yamnet':
-        return new YAMNetAudioAnalyzer();
+        return new YAMNetAudioAnalyzer(chainConfig.confidenceThreshold);
     }
   });
 }

@@ -1,9 +1,7 @@
 import { generateObject } from 'ai';
 import pLimit from 'p-limit';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
-import { getModel } from '@lib/utils/modelFactory.js';
 import { AnalyzedSegmentSchema } from '../types.js';
 import type {
   LLMChunk,
@@ -13,6 +11,7 @@ import type {
   AudioEvent,
 } from '../types.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
+import type { LanguageModel } from 'ai';
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
@@ -31,6 +30,12 @@ Interesting moments include:
 
 If audio events are listed in the segment, treat them as strong positive signals —
 they indicate high-action or high-energy moments that are often clip-worthy.`;
+
+export interface AnalyzeChunksOpts {
+  maxRetries: number;
+  systemPrompt: string;
+  model: LanguageModel;
+}
 
 function isRateLimitError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
@@ -98,6 +103,7 @@ async function analyzeChunk(
   cache: CacheBackend,
   noCache: boolean,
   chunkIndex: number,
+  opts: AnalyzeChunksOpts,
 ): Promise<AnalyzedSegment> {
   if (!noCache) {
     const cached = await cache.readChunk(chunk, chunkAudioEvents);
@@ -115,13 +121,18 @@ async function analyzeChunk(
 
   let lastError: unknown;
 
-  for (let attempt = 0; attempt <= config.LLM_MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
     try {
-      const prompt = buildPrompt(chunk, chunkLines, chunkAudioEvents, !!config.LLM_SYSTEM_PROMPT);
+      const prompt = buildPrompt(
+        chunk,
+        chunkLines,
+        chunkAudioEvents,
+        opts.systemPrompt !== DEFAULT_SYSTEM_PROMPT,
+      );
       const { object } = await generateObject({
-        model: getModel(),
+        model: opts.model,
         schema: AnalyzedSegmentSchema,
-        system: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        system: opts.systemPrompt,
         prompt: prompt,
         maxRetries: 0,
       });
@@ -146,10 +157,10 @@ async function analyzeChunk(
     } catch (err) {
       lastError = err;
 
-      if (isRateLimitError(err) && attempt < config.LLM_MAX_RETRIES) {
+      if (isRateLimitError(err) && attempt < opts.maxRetries) {
         const delay = BACKOFF_BASE_MS * Math.pow(2, attempt) + Math.random() * BACKOFF_JITTER_MS;
         log.warn(
-          `[chunk] Rate limit hit (attempt ${attempt + 1}/${config.LLM_MAX_RETRIES + 1}). ` +
+          `[chunk] Rate limit hit (attempt ${attempt + 1}/${opts.maxRetries + 1}). ` +
             `Retrying in ${Math.round(delay)}ms...`,
         );
         await sleep(delay);
@@ -176,7 +187,8 @@ export async function analyzeChunks(
   audioEvents: AudioEvent[],
   concurrency: number,
   cache: CacheBackend,
-  noCache = false,
+  noCache: boolean,
+  opts: AnalyzeChunksOpts,
 ): Promise<ChunkEvaluation[]> {
   log.info(
     `Analyzing ${chunks.length} chunk${chunks.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
@@ -189,7 +201,9 @@ export async function analyzeChunks(
       const chunkAudioEvents = audioEvents.filter(
         (e) => e.time >= chunk.start && e.time < chunk.end,
       );
-      return limit(() => analyzeChunk(chunk, chunkLines, chunkAudioEvents, cache, noCache, i));
+      return limit(() =>
+        analyzeChunk(chunk, chunkLines, chunkAudioEvents, cache, noCache, i, opts),
+      );
     }),
   );
 

@@ -1,11 +1,10 @@
 import { generateObject } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
-import { getModel } from '@lib/utils/modelFactory.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type { RankedSegment, MicroBlock } from '../types.js';
+import type { LanguageModel } from 'ai';
 
 const CONTEXT_PADDING_SEC = 30;
 
@@ -69,11 +68,17 @@ Rules:
  * Returns the segment with updated start/end if successful.
  * Falls back to the original boundaries on failure.
  */
+export interface RefineSegmentsOpts {
+  maxRetries: number;
+  model: LanguageModel;
+}
+
 async function refineSegment(
   segment: RankedSegment,
   allBlocks: MicroBlock[],
   cache: CacheBackend,
   noCache: boolean,
+  opts: RefineSegmentsOpts,
 ): Promise<RankedSegment> {
   if (!noCache) {
     const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
@@ -86,10 +91,10 @@ async function refineSegment(
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
   const { object } = await generateObject({
-    model: getModel(),
+    model: opts.model,
     schema: RefinedBoundariesSchema,
     prompt: buildPrompt(segment, text, windowStart, windowEnd),
-    maxRetries: config.LLM_MAX_RETRIES,
+    maxRetries: opts.maxRetries,
   });
 
   /** Clamp to context window to prevent LLM from hallucinating out-of-range values */
@@ -117,7 +122,8 @@ export async function refineSegments(
   allBlocks: MicroBlock[],
   concurrency: number,
   cache: CacheBackend,
-  noCache = false,
+  noCache: boolean,
+  opts: RefineSegmentsOpts,
 ): Promise<RankedSegment[]> {
   log.info(
     `Refining boundaries for ${segments.length} segment${segments.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
@@ -125,7 +131,7 @@ export async function refineSegments(
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
-    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, cache, noCache))),
+    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, cache, noCache, opts))),
   );
 
   const refined = results.map((result, i) => {

@@ -1,6 +1,5 @@
 import { buildMicroBlocks, buildLLMChunks } from './chunker/index.js';
 import { log } from '@lib/utils/logger.js';
-import { config } from '@lib/config/index.js';
 import type { TranscriptAnalyzer } from '../../audio/transcriber/base.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type { TranscriptLine, MicroBlock, LLMChunk, TranscriptDetectorResult } from '../types.js';
@@ -30,7 +29,12 @@ import type { TranscriptLine, MicroBlock, LLMChunk, TranscriptDetectorResult } f
  *   const { lines, microBlocks, chunks } = await detector.detect(videoId, audioPath, cache);
  */
 export class TranscriptDetector {
-  constructor(private readonly chain: TranscriptAnalyzer[]) {
+  constructor(
+    private readonly chain: TranscriptAnalyzer[],
+    private readonly microBlockSec: number,
+    private readonly chunkLengthSec: number,
+    private readonly chunkOverlapSec: number,
+  ) {
     if (chain.length === 0) {
       throw new Error('TranscriptDetector requires at least one TranscriptAnalyzer in the chain.');
     }
@@ -107,11 +111,11 @@ export class TranscriptDetector {
 
   /** Groups raw transcript lines into micro-blocks. */
   private buildMicroBlocks(lines: TranscriptLine[]): MicroBlock[] {
-    return buildMicroBlocks(lines, config.MICRO_BLOCK_SEC);
+    return buildMicroBlocks(lines, this.microBlockSec);
   }
 
   /** Builds overlapping LLM analysis chunks from micro-blocks. */
   private buildChunks(microBlocks: MicroBlock[]): LLMChunk[] {
-    return buildLLMChunks(microBlocks, config.CHUNK_LENGTH_SEC, config.CHUNK_OVERLAP_SEC);
+    return buildLLMChunks(microBlocks, this.chunkLengthSec, this.chunkOverlapSec);
   }
 }

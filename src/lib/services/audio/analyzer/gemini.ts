@@ -1,10 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import { z } from 'zod';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { AudioEvent } from '../types.js';
 import { AudioAnalyzer } from './base.js';
+
+export interface GeminiAnalyzerConfig {
+  apiKey: string;
+  model: string;
+  extraInstructions?: string;
+}
 
 /**
  * Gemini returns timestamps inconsistently as either:
@@ -79,20 +84,24 @@ export function normalizeGeminiTime(value: number, chunkDurationSec: number): nu
 export class GeminiAudioAnalyzer extends AudioAnalyzer {
   readonly source = 'gemini' as const;
 
+  constructor(private readonly geminiConfig: GeminiAnalyzerConfig) {
+    super();
+  }
+
   async detect(
     audioPath: string,
     gameProfile: string,
     chunkOffsetSec: number,
     chunkDurationSec: number,
   ): Promise<AudioEvent[]> {
-    const genai = new GoogleGenerativeAI(config.GOOGLE_GENERATIVE_AI_API_KEY!);
-    const model = genai.getGenerativeModel({ model: config.AUDIO_GEMINI_MODEL });
+    const genai = new GoogleGenerativeAI(this.geminiConfig.apiKey);
+    const model = genai.getGenerativeModel({ model: this.geminiConfig.model });
 
     const audioData = fs.readFileSync(audioPath);
     const base64Audio = audioData.toString('base64');
 
-    const extraInstructions = config.AUDIO_EXTRA_INSTRUCTIONS
-      ? `\nAdditional instructions:\n${config.AUDIO_EXTRA_INSTRUCTIONS}\n`
+    const extraInstructions = this.geminiConfig.extraInstructions
+      ? `\nAdditional instructions:\n${this.geminiConfig.extraInstructions}\n`
       : '';
 
     const prompt = `${GAME_PROFILE_PROMPTS[gameProfile] ?? GAME_PROFILE_PROMPTS.general} ${extraInstructions}

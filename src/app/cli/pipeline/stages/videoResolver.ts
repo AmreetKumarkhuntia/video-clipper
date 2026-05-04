@@ -1,20 +1,14 @@
 import { parseUrl } from '@lib/services/video/source/youtube/parser.js';
 import { extractMetadata } from '@lib/services/video/source/youtube/metadata.js';
+import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import type { VideoResolverResult } from '@lib/types/index.js';
 
-/**
- * Stage 1 — Video Resolver
- *
- * Parses a raw YouTube URL into a validated video ID, fetches metadata
- * (title + duration), and enforces the optional --max-duration guard.
- *
- * @throws {Error} on invalid URL, metadata fetch failure, or exceeded duration
- */
 export async function resolveVideo(
   rawUrl: string,
-  maxDurationSec?: number,
+  maxDurationSec: number | undefined,
+  cookies: YtDlpCookies,
 ): Promise<VideoResolverResult> {
   let videoId: string;
   try {
@@ -24,7 +18,7 @@ export async function resolveVideo(
   }
 
   log.info(`Fetching metadata for ${videoId}...`);
-  const metadata = await extractMetadata(videoId);
+  const metadata = await extractMetadata(videoId, cookies);
   log.info(
     `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
   );

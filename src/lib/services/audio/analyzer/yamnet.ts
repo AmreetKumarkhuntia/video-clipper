@@ -1,18 +1,15 @@
 import { execa } from 'execa';
-import { config } from '@lib/config/index.js';
 import type { AudioEvent } from '../types.js';
 import { AudioAnalyzer } from './base.js';
 import { getPythonBin } from '@lib/utils/pythonBin.js';
 import { scriptPath } from '@lib/utils/paths.js';
 
-/**
- * Uses YAMNet (TensorFlow Hub) via a Python script to classify audio frames
- * against a fixed set of game-relevant sound classes (gunshot, explosion, etc.).
- *
- * Requires: pip install tensorflow-hub soundfile numpy
- */
 export class YAMNetAudioAnalyzer extends AudioAnalyzer {
   readonly source = 'yamnet' as const;
+
+  constructor(private readonly confidenceThreshold: number) {
+    super();
+  }
 
   async detect(
     audioPath: string,
@@ -27,7 +24,7 @@ export class YAMNetAudioAnalyzer extends AudioAnalyzer {
       const result = await execa(python, [
         scriptPath('detect_events.py'),
         audioPath,
-        String(config.AUDIO_CONFIDENCE_THRESHOLD),
+        String(this.confidenceThreshold),
       ]);
       stdout = result.stdout;
     } catch (err) {

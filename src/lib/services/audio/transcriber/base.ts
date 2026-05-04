@@ -8,7 +8,7 @@ import type { TranscriptLine } from '../../analysis/transcript/types.js';
  * downstream logging knows which backend produced them.
  *
  * Usage:
- *   const analyzer = new YtDlpTranscriptAnalyzer();
+ *   const analyzer = new YtDlpTranscriptAnalyzer(cookies);
  *   const lines    = await analyzer.detect(videoId, null);
  */
 export abstract class TranscriptAnalyzer {
