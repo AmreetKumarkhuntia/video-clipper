@@ -162,3 +162,197 @@ export const ConfigSchema = z
   });
 
 export type Config = z.infer<typeof ConfigSchema>;
+
+export const CONFIG_GROUPS = [
+  {
+    id: 'llm',
+    label: 'LLM',
+    fields: [
+      'LLM_PROVIDER',
+      'LLM_MODEL',
+      'LLM_MAX_RETRIES',
+      'LLM_CONCURRENCY',
+      'LLM_SYSTEM_PROMPT',
+    ],
+  },
+  {
+    id: 'api-keys',
+    label: 'API Keys',
+    fields: [
+      'OPENAI_API_KEY',
+      'ANTHROPIC_API_KEY',
+      'GOOGLE_GENERATIVE_AI_API_KEY',
+      'XAI_API_KEY',
+      'MISTRAL_API_KEY',
+      'GROQ_API_KEY',
+      'ZAI_API_KEY',
+      'OPENROUTER_API_KEY',
+      'CUSTOM_OPENAI_API_KEY',
+      'CUSTOM_OPENAI_BASE_URL',
+    ],
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    fields: ['YOUTUBE_API_KEY', 'YT_DLP_COOKIES_FROM_BROWSER', 'YT_DLP_COOKIES_FILE'],
+  },
+  {
+    id: 'chunking',
+    label: 'Chunking',
+    fields: ['CHUNK_LENGTH_SEC', 'CHUNK_OVERLAP_SEC', 'MICRO_BLOCK_SEC', 'MAX_CHUNKS'],
+  },
+  { id: 'selection', label: 'Segment Selection', fields: ['SCORE_THRESHOLD', 'TOP_N_SEGMENTS'] },
+  { id: 'transcript', label: 'Transcript', fields: ['TRANSCRIPT_PROVIDER'] },
+  {
+    id: 'audio',
+    label: 'Audio Detection',
+    fields: [
+      'AUDIO_DETECTION_ENABLED',
+      'AUDIO_PROVIDER',
+      'AUDIO_GEMINI_MODEL',
+      'AUDIO_EXTRA_INSTRUCTIONS',
+      'AUDIO_WHISPER_MODEL',
+      'AUDIO_CONFIDENCE_THRESHOLD',
+      'AUDIO_CLIP_PRE_ROLL',
+      'AUDIO_CLIP_POST_ROLL',
+      'AUDIO_LLM_BOOST_WINDOW',
+      'AUDIO_LLM_SCORE_BOOST',
+      'GAME_PROFILE',
+    ],
+  },
+  {
+    id: 'ffmpeg',
+    label: 'FFmpeg & Download',
+    fields: [
+      'DOWNLOAD_SECTIONS_MODE',
+      'FFMPEG_PATH',
+      'FFPROBE_PATH',
+      'FFMPEG_PRESET',
+      'TIMESTAMP_OFFSET_SECONDS',
+    ],
+  },
+  {
+    id: 'output',
+    label: 'Output',
+    fields: ['DOWNLOAD_DIR', 'OUTPUT_DIR', 'CACHE_DIR', 'DUMP_OUTPUTS', 'CLIP_CONCURRENCY'],
+  },
+  {
+    id: 'cache',
+    label: 'Cache',
+    fields: ['CACHE_BACKEND', 'MONGODB_URI', 'MONGODB_DATABASE', 'CACHE_TTL_SECONDS'],
+  },
+] as const;
+
+export type ConfigWidget = 'text' | 'number' | 'toggle' | 'select' | 'slider';
+
+export interface ConfigFieldMeta {
+  description: string;
+  widget: ConfigWidget;
+  secret?: boolean;
+  placeholder?: string;
+}
+
+export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
+  LLM_PROVIDER: { description: 'Which LLM provider to use', widget: 'select' },
+  LLM_MODEL: {
+    description: 'Model ID passed to the provider',
+    widget: 'text',
+    placeholder: 'gpt-4o',
+  },
+  LLM_MAX_RETRIES: { description: 'Retry count for rate-limited LLM calls', widget: 'number' },
+  LLM_CONCURRENCY: { description: 'Max parallel LLM calls', widget: 'number' },
+  LLM_SYSTEM_PROMPT: { description: 'Custom system prompt override', widget: 'text' },
+  OPENAI_API_KEY: { description: 'OpenAI API key', widget: 'text', secret: true },
+  ANTHROPIC_API_KEY: { description: 'Anthropic API key', widget: 'text', secret: true },
+  GOOGLE_GENERATIVE_AI_API_KEY: {
+    description: 'Google Generative AI API key',
+    widget: 'text',
+    secret: true,
+  },
+  XAI_API_KEY: { description: 'xAI API key', widget: 'text', secret: true },
+  MISTRAL_API_KEY: { description: 'Mistral API key', widget: 'text', secret: true },
+  GROQ_API_KEY: { description: 'Groq API key', widget: 'text', secret: true },
+  ZAI_API_KEY: { description: 'Zai API key', widget: 'text', secret: true },
+  OPENROUTER_API_KEY: { description: 'OpenRouter API key', widget: 'text', secret: true },
+  CUSTOM_OPENAI_API_KEY: {
+    description: 'Custom OpenAI-compatible API key',
+    widget: 'text',
+    secret: true,
+  },
+  CUSTOM_OPENAI_BASE_URL: { description: 'Custom OpenAI-compatible base URL', widget: 'text' },
+  YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
+  YT_DLP_COOKIES_FROM_BROWSER: {
+    description: 'Browser profile for cookies (e.g. chrome:Profile 1)',
+    widget: 'text',
+  },
+  YT_DLP_COOKIES_FILE: { description: 'Path to cookies.txt file', widget: 'text' },
+  SCORE_THRESHOLD: { description: 'Min score (1-10) for a segment to be kept', widget: 'slider' },
+  TOP_N_SEGMENTS: { description: 'Max segments returned', widget: 'number' },
+  CHUNK_LENGTH_SEC: { description: 'LLM chunk window size in seconds', widget: 'number' },
+  CHUNK_OVERLAP_SEC: { description: 'Overlap between consecutive chunks', widget: 'number' },
+  MICRO_BLOCK_SEC: { description: 'Micro-block grouping window in seconds', widget: 'number' },
+  MAX_CHUNKS: {
+    description: 'Cap on LLM chunks for cost control (empty = unlimited)',
+    widget: 'number',
+  },
+  TRANSCRIPT_PROVIDER: {
+    description: 'Ordered fallback chain (comma-separated): ytdlp, whisper, gemini',
+    widget: 'text',
+  },
+  AUDIO_DETECTION_ENABLED: {
+    description: 'Enable/disable audio event detection',
+    widget: 'toggle',
+  },
+  AUDIO_PROVIDER: {
+    description: 'Audio analysis providers (comma-separated): gemini, whisper, yamnet',
+    widget: 'text',
+  },
+  AUDIO_GEMINI_MODEL: { description: 'Gemini model for audio detection', widget: 'text' },
+  AUDIO_EXTRA_INSTRUCTIONS: {
+    description: 'Extra instructions for Gemini audio prompt',
+    widget: 'text',
+  },
+  AUDIO_WHISPER_MODEL: { description: 'Whisper model size', widget: 'select' },
+  AUDIO_CONFIDENCE_THRESHOLD: {
+    description: 'Min confidence (0-1) to keep an audio event',
+    widget: 'slider',
+  },
+  AUDIO_CLIP_PRE_ROLL: { description: 'Seconds before audio event for clip', widget: 'number' },
+  AUDIO_CLIP_POST_ROLL: { description: 'Seconds after audio event for clip', widget: 'number' },
+  AUDIO_LLM_BOOST_WINDOW: {
+    description: 'Time window for audio-to-LLM score boosting',
+    widget: 'number',
+  },
+  AUDIO_LLM_SCORE_BOOST: {
+    description: 'Score boost when audio event near LLM segment',
+    widget: 'number',
+  },
+  GAME_PROFILE: { description: 'Game-specific event detection profile', widget: 'select' },
+  DOWNLOAD_SECTIONS_MODE: {
+    description: 'yt-dlp download mode ("all" or section count)',
+    widget: 'text',
+  },
+  FFMPEG_PATH: { description: 'Custom ffmpeg binary path (empty = auto-detect)', widget: 'text' },
+  FFPROBE_PATH: { description: 'Custom ffprobe binary path (empty = auto-detect)', widget: 'text' },
+  FFMPEG_PRESET: { description: 'Encoding speed/quality trade-off', widget: 'select' },
+  TIMESTAMP_OFFSET_SECONDS: {
+    description: 'Adjust all clip timestamps if transcript misaligned',
+    widget: 'number',
+  },
+  DOWNLOAD_DIR: { description: 'yt-dlp output directory', widget: 'text' },
+  OUTPUT_DIR: { description: 'Clips, dumps, artifacts directory', widget: 'text' },
+  CACHE_DIR: { description: 'File-based cache directory', widget: 'text' },
+  DUMP_OUTPUTS: {
+    description: 'Write transcript + analysis JSON files after each run',
+    widget: 'toggle',
+  },
+  CLIP_CONCURRENCY: { description: 'Max parallel clip generation operations', widget: 'number' },
+  CACHE_BACKEND: { description: 'Cache storage backend', widget: 'select' },
+  MONGODB_URI: {
+    description: 'MongoDB connection URI (required if backend=mongodb)',
+    widget: 'text',
+    secret: true,
+  },
+  MONGODB_DATABASE: { description: 'MongoDB database name', widget: 'text' },
+  CACHE_TTL_SECONDS: { description: 'Cache TTL in seconds (0 = no expiry)', widget: 'number' },
+};
