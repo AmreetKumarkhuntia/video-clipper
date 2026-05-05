@@ -41,6 +41,9 @@ export const ConfigSchema = z
     CUSTOM_OPENAI_API_KEY: z.string().optional(),
     CUSTOM_OPENAI_BASE_URL: z.string().url().optional(),
     YOUTUBE_API_KEY: z.string().optional(),
+    YOUTUBE_OAUTH_CLIENT_ID: z.string().optional(),
+    YOUTUBE_OAUTH_CLIENT_SECRET: z.string().optional(),
+    YOUTUBE_OAUTH_REDIRECT_URI: z.string().url().optional(),
 
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
@@ -119,6 +122,15 @@ export const ConfigSchema = z
     MONGODB_URI: z.string().optional(),
     MONGODB_DATABASE: z.string().default('video-clipper-cache'),
     CACHE_TTL_SECONDS: z.coerce.number().min(0).default(0),
+
+    // ---- YouTube publish defaults --------------------------------------------
+    YT_DEFAULT_CATEGORY_ID: z.string().default('22'),
+    YT_DEFAULT_PRIVACY: z.enum(['private', 'unlisted', 'public']).default('private'),
+    YT_DEFAULT_LICENSE: z.enum(['youtube', 'creativeCommon']).default('youtube'),
+    YT_DEFAULT_MADE_FOR_KIDS: z.coerce.boolean().default(false),
+    YT_DEFAULT_EMBEDDABLE: z.coerce.boolean().default(true),
+    YT_DEFAULT_PUBLIC_STATS_VIEWABLE: z.coerce.boolean().default(true),
+    YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA: z.coerce.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -195,7 +207,21 @@ export const CONFIG_GROUPS = [
   {
     id: 'youtube',
     label: 'YouTube',
-    fields: ['YOUTUBE_API_KEY', 'YT_DLP_COOKIES_FROM_BROWSER', 'YT_DLP_COOKIES_FILE'],
+    fields: [
+      'YOUTUBE_API_KEY',
+      'YOUTUBE_OAUTH_CLIENT_ID',
+      'YOUTUBE_OAUTH_CLIENT_SECRET',
+      'YOUTUBE_OAUTH_REDIRECT_URI',
+      'YT_DLP_COOKIES_FROM_BROWSER',
+      'YT_DLP_COOKIES_FILE',
+      'YT_DEFAULT_CATEGORY_ID',
+      'YT_DEFAULT_PRIVACY',
+      'YT_DEFAULT_LICENSE',
+      'YT_DEFAULT_MADE_FOR_KIDS',
+      'YT_DEFAULT_EMBEDDABLE',
+      'YT_DEFAULT_PUBLIC_STATS_VIEWABLE',
+      'YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA',
+    ],
   },
   {
     id: 'chunking',
@@ -283,6 +309,21 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   },
   CUSTOM_OPENAI_BASE_URL: { description: 'Custom OpenAI-compatible base URL', widget: 'text' },
   YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
+  YOUTUBE_OAUTH_CLIENT_ID: {
+    description: 'Google OAuth client ID for YouTube uploads',
+    widget: 'text',
+    secret: true,
+  },
+  YOUTUBE_OAUTH_CLIENT_SECRET: {
+    description: 'Google OAuth client secret for YouTube uploads',
+    widget: 'text',
+    secret: true,
+  },
+  YOUTUBE_OAUTH_REDIRECT_URI: {
+    description: 'Google OAuth redirect URI for YouTube uploads',
+    widget: 'text',
+    placeholder: 'http://localhost:5002/api/youtube/auth/callback',
+  },
   YT_DLP_COOKIES_FROM_BROWSER: {
     description: 'Browser profile for cookies (e.g. chrome:Profile 1)',
     widget: 'text',
@@ -362,4 +403,34 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   },
   MONGODB_DATABASE: { description: 'MongoDB database name', widget: 'text' },
   CACHE_TTL_SECONDS: { description: 'Cache TTL in seconds (0 = no expiry)', widget: 'number' },
+  YT_DEFAULT_CATEGORY_ID: {
+    description:
+      'Default YouTube category ID for new publish drafts (e.g. 22=People & Blogs, 27=Education, 28=Science & Technology)',
+    widget: 'text',
+    placeholder: '22',
+  },
+  YT_DEFAULT_PRIVACY: {
+    description: 'Default privacy status for new publish draft items',
+    widget: 'select',
+  },
+  YT_DEFAULT_LICENSE: {
+    description: 'Default license for new publish draft items',
+    widget: 'select',
+  },
+  YT_DEFAULT_MADE_FOR_KIDS: {
+    description: 'Default "made for kids" (COPPA) flag for new publish draft items',
+    widget: 'toggle',
+  },
+  YT_DEFAULT_EMBEDDABLE: {
+    description: 'Default embeddable setting for new publish draft items',
+    widget: 'toggle',
+  },
+  YT_DEFAULT_PUBLIC_STATS_VIEWABLE: {
+    description: 'Default public stats visibility for new publish draft items',
+    widget: 'toggle',
+  },
+  YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA: {
+    description: 'Default AI-generated content disclosure for new publish draft items',
+    widget: 'toggle',
+  },
 };

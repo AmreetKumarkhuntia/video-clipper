@@ -9,11 +9,18 @@ import type { ClipArtifact, CreateClipsRequest } from '@app/web/types/analysis.j
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import type { Config } from '@lib/types/config.js';
+import { log } from '@lib/utils/logger.js';
 
 export async function generateWebClips(
   input: CreateClipsRequest,
   cfg: Config,
+  requestId?: string,
 ): Promise<ClipArtifact[]> {
+  const downloadMode = cfg.PARTIAL_DOWNLOAD_ENABLED ? input.segments.length : 'all';
+  log.info(
+    `${requestId ?? 'no-request-id'} [clips] [request] | analysisId=${input.analysisId} videoId=${input.videoId} segments=${input.segments.length} downloadSections=${downloadMode} concurrency=${cfg.CLIP_CONCURRENCY}`,
+  );
+
   const cookies: YtDlpCookies = {
     cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
     cookiesFile: cfg.YT_DLP_COOKIES_FILE,
@@ -66,6 +73,10 @@ export async function generateWebClips(
       createdAt,
     };
   });
+
+  log.info(
+    `${requestId ?? 'no-request-id'} [clips] [generated] | analysisId=${input.analysisId} requested=${input.segments.length} created=${artifacts.length}`,
+  );
 
   return saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);
 }

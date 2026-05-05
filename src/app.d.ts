@@ -1,4 +1,4 @@
-import type { Config } from '$lib/types/config.js';
+import type { Config } from '@lib/types/config.js';
 
 declare global {
   namespace App {

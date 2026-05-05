@@ -3,6 +3,7 @@
 
   export let value = '';
   export let options: string[] = [];
+  export let optionLabels: string[] = [];
   export let disabled = false;
 
   const dispatch = createEventDispatcher<{ change: string }>();
@@ -15,8 +16,8 @@
 </script>
 
 <select class="select" {disabled} on:change={handleChange} bind:value>
-  {#each options as option (option)}
-    <option value={option}>{option}</option>
+  {#each options as option, i (option)}
+    <option value={option}>{optionLabels[i] ?? option}</option>
   {/each}
 </select>
 

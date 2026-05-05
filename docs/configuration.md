@@ -107,6 +107,25 @@ cp .env.example .env
 | `YT_DLP_COOKIES_FROM_BROWSER` | —       | Extract cookies from browser: `chrome`, `firefox`, `safari`, `brave`, `edge`, `opera`, `chromium` |
 | `YT_DLP_COOKIES_FILE`         | —       | Path to a Netscape-format cookies file for yt-dlp authentication                                  |
 
+### YouTube Upload OAuth
+
+| Variable                      | Default | Description                                                                                     |
+| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `YOUTUBE_OAUTH_CLIENT_ID`     | —       | Google OAuth client ID for YouTube uploads                                                      |
+| `YOUTUBE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for YouTube uploads                                                  |
+| `YOUTUBE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/youtube/auth/callback` |
+
+These are app-level defaults. The web Settings page can override them, but if you leave those
+fields empty the app falls back to the values from `.env` automatically.
+
+For the current manual-token publish flow:
+
+- You can paste only an access token for short-lived testing.
+- If you also paste a refresh token, the app can keep the session alive after access-token expiry.
+- If `YOUTUBE_OAUTH_CLIENT_ID` and `YOUTUBE_OAUTH_CLIENT_SECRET` are already set in `.env` (or in
+  Settings), you do not need to paste them again in the Publish page unless you want to override
+  the defaults for that connection.
+
 > `YT_DLP_COOKIES_FROM_BROWSER` and `YT_DLP_COOKIES_FILE` are mutually exclusive.
 
 #### Specifying a Chrome profile

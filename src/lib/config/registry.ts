@@ -12,6 +12,7 @@ export interface ConfigFieldDescriptor {
   min?: number;
   max?: number;
   options?: string[];
+  optionLabels?: string[];
   placeholder?: string;
 }
 
@@ -25,7 +26,10 @@ export interface ConfigRegistryResponse {
   groups: ConfigGroupDescriptor[];
 }
 
-const FIELD_CONSTRAINTS: Record<string, { min?: number; max?: number; options?: string[] }> = {
+const FIELD_CONSTRAINTS: Record<
+  string,
+  { min?: number; max?: number; options?: string[]; optionLabels?: string[] }
+> = {
   LLM_PROVIDER: {
     options: [
       'openai',
@@ -61,6 +65,47 @@ const FIELD_CONSTRAINTS: Record<string, { min?: number; max?: number; options?: 
   CACHE_BACKEND: { options: ['file', 'mongodb'] },
   CACHE_TTL_SECONDS: { min: 0 },
   TIMESTAMP_OFFSET_SECONDS: {},
+  YT_DEFAULT_CATEGORY_ID: {
+    options: [
+      '1',
+      '2',
+      '10',
+      '15',
+      '17',
+      '19',
+      '20',
+      '22',
+      '23',
+      '24',
+      '25',
+      '26',
+      '27',
+      '28',
+      '29',
+    ],
+    optionLabels: [
+      'Film & Animation',
+      'Autos & Vehicles',
+      'Music',
+      'Pets & Animals',
+      'Sports',
+      'Travel & Events',
+      'Gaming',
+      'People & Blogs',
+      'Comedy',
+      'Entertainment',
+      'News & Politics',
+      'How-to & Style',
+      'Education',
+      'Science & Technology',
+      'Nonprofits & Activism',
+    ],
+  },
+  YT_DEFAULT_PRIVACY: { options: ['private', 'unlisted', 'public'] },
+  YT_DEFAULT_LICENSE: {
+    options: ['youtube', 'creativeCommon'],
+    optionLabels: ['Standard YouTube License', 'Creative Commons — Attribution'],
+  },
 };
 
 const REQUIRED_FIELDS = new Set(['LLM_PROVIDER', 'LLM_MODEL']);
@@ -102,6 +147,7 @@ function buildFieldDescriptor(key: string): ConfigFieldDescriptor | null {
     min: constraints.min,
     max: constraints.max,
     options: constraints.options,
+    optionLabels: constraints.optionLabels,
     placeholder: meta.placeholder,
   };
 }
