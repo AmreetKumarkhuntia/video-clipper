@@ -142,6 +142,22 @@ async function downloadSegment(
   }
 
   try {
+    // NOTE: cookies are intentionally NOT passed here.
+    //
+    // When --cookies-from-browser or --cookies is present, yt-dlp is forced
+    // into the TV + web_creator client path for --download-sections requests.
+    // That path downloads tv-player-ias.js and attempts to solve the n-challenge
+    // using it; the TV player JS references self.location.origin (a browser-only
+    // global) which crashes in every non-browser JS runtime (Deno, Node.js).
+    //
+    // Without cookies, yt-dlp automatically selects the ANDROID_VR client.
+    // The ANDROID_VR client generates pre-signed DASH URLs (c=ANDROID_VR)
+    // that work even when n-challenge solving fails — so the download succeeds
+    // at full quality (1080p60 DASH) for any public video.
+    //
+    // Trade-off: private or age-gated videos cannot be downloaded this way.
+    // For those, set PARTIAL_DOWNLOAD_ENABLED=false and use the full-video path
+    // which passes cookies and uses the web client (no TV player JS involved).
     const args = [
       '-f',
       'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
@@ -155,12 +171,6 @@ async function downloadSegment(
       '--newline',
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
-
-    if (dlConfig.cookiesFromBrowser) {
-      args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
-    } else if (dlConfig.cookiesFile) {
-      args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
-    }
 
     const subprocess = execa('yt-dlp', args);
 

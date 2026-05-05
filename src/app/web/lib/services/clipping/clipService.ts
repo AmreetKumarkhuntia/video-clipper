@@ -41,7 +41,7 @@ export async function generateWebClips(
     input.videoId,
     segments,
     {
-      downloadSections: 'all',
+      downloadSections: cfg.PARTIAL_DOWNLOAD_ENABLED ? segments.length : 'all',
       clipConcurrency: cfg.CLIP_CONCURRENCY,
     },
     exporterConfig,

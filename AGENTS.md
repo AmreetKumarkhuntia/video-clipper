@@ -174,6 +174,16 @@ When working on transcript fetch code:
 - `YT_DLP_COOKIES_FROM_BROWSER` supports a profile suffix: `chrome:Profile 1`; bare `chrome` uses the Default profile which may have stale cookies
 - Auth errors from the direct fetch are caught and re-thrown as human-readable messages pointing to the cookie config vars
 
+### Download segment notes (`src/lib/services/video/source/youtube/downloader.ts`)
+
+- **Cookies are intentionally omitted from `downloadSegment()`** — supplying cookies forces yt-dlp into the TV+web_creator client, which downloads `tv-player-ias.js` and tries to solve the n-challenge inside it. That JS file uses `self.location.origin` (a browser-only global) and crashes in both Deno and Node.js with `TypeError: Cannot read properties of undefined (reading 'origin')`. Without cookies, yt-dlp auto-selects the `ANDROID_VR` client whose pre-signed `c=ANDROID_VR` DASH URLs bypass the n-challenge entirely. The n-challenge warning still appears in logs but is harmless.
+- **Consequence**: `PARTIAL_DOWNLOAD_ENABLED=true` (per-segment download path) is incompatible with private and age-gated videos. Those must use `PARTIAL_DOWNLOAD_ENABLED=false` (full-video download path), which passes cookies normally and does not invoke the TV client.
+- Do not add cookie flags back to `downloadSegment()` — doing so silently breaks all public video downloads on Node.js.
+
+### Clip output cache (`src/lib/services/video/clipper/index.ts`)
+
+Both `generateClips()` and `remuxClips()` check whether `{outputDir}/{videoId}_{startInt}_{endInt}.mp4` already exists before doing any work. If the file is present they log `Clip already exists, skipping: <path>` and return the cached path immediately. This mirrors the same `fs.access` pattern used in `downloadSegment()` for `downloads/`. Do not remove these checks — they prevent redundant re-encodes and re-remuxes on repeated runs.
+
 ## Naming
 
 - Files: `camelCase.ts`
