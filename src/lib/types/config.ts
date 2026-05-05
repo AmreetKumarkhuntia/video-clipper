@@ -134,6 +134,7 @@ export const ConfigSchema = z
     YT_DEFAULT_EMBEDDABLE: z.coerce.boolean().default(true),
     YT_DEFAULT_PUBLIC_STATS_VIEWABLE: z.coerce.boolean().default(true),
     YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA: z.coerce.boolean().default(false),
+    YT_DEFAULT_IS_SHORT: z.coerce.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -227,6 +228,7 @@ export const CONFIG_GROUPS = [
       'YT_DEFAULT_EMBEDDABLE',
       'YT_DEFAULT_PUBLIC_STATS_VIEWABLE',
       'YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA',
+      'YT_DEFAULT_IS_SHORT',
     ],
   },
   {
@@ -454,6 +456,10 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   },
   YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA: {
     description: 'Default AI-generated content disclosure for new publish draft items',
+    widget: 'toggle',
+  },
+  YT_DEFAULT_IS_SHORT: {
+    description: 'Default format for new publish draft items — enable to upload as YouTube Shorts',
     widget: 'toggle',
   },
 };
