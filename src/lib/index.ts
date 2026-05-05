@@ -32,37 +32,33 @@ export type { SegmentRefinement } from './types/cache.js';
 
 export type { TranscriptProviderName, AudioProviderName } from './types/factory.js';
 
-// ── Types re-exported from domain modules ──
-export {
-  TranscriptLineSchema,
-  MicroBlockSchema,
-  LLMChunkSchema,
-} from './services/analysis/transcript/types.js';
-export type { TranscriptLine, MicroBlock, LLMChunk } from './services/analysis/transcript/types.js';
+// ── Types re-exported from types/ ──
+export { TranscriptLineSchema, MicroBlockSchema, LLMChunkSchema } from './types/transcript.js';
+export type { TranscriptLine, MicroBlock, LLMChunk } from './types/transcript.js';
 
 export {
   AnalyzedSegmentSchema,
   RankedSegmentSchema,
   ChunkEvaluationSchema,
-} from './services/analysis/types.js';
-export type { AnalyzedSegment, RankedSegment, ChunkEvaluation } from './services/analysis/types.js';
+} from './types/segment.js';
+export type { AnalyzedSegment, RankedSegment, ChunkEvaluation } from './types/segment.js';
 export type {
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
   TranscriptDetectorResult,
-} from './services/analysis/types.js';
+} from './types/analyzer.js';
 
-export { AudioEventSchema, MergedCandidateSchema } from './services/audio/types.js';
-export type { AudioEvent, MergedCandidate } from './services/audio/types.js';
+export { AudioEventSchema, MergedCandidateSchema } from './types/audio.js';
+export type { AudioEvent, MergedCandidate } from './types/audio.js';
 
-export { VideoMetadataSchema, PipelineResultSchema } from './services/video/types.js';
-export type { VideoMetadata, PipelineResult } from './services/video/types.js';
+export { VideoMetadataSchema, PipelineResultSchema } from './types/video.js';
+export type { VideoMetadata, PipelineResult } from './types/video.js';
 export type {
   DownloadMode,
   DownloadResultAll,
   DownloadResultSegments,
   DownloadResult,
-} from './services/video/types.js';
+} from './types/video.js';
 
 export {
   ChannelSummarySchema,
@@ -70,14 +66,14 @@ export {
   VideoDetailsSchema,
   VideoPageSchema,
   YouTubeThumbnailSchema,
-} from './services/video/source/youtube/types.js';
+} from './types/youtube.js';
 export type {
   ChannelSummary,
   VideoSummary,
   VideoDetails,
   VideoPage,
   YouTubeThumbnail,
-} from './services/video/source/youtube/types.js';
+} from './types/youtube.js';
 
 // ── Utils ──
 export { log } from './utils/logger.js';

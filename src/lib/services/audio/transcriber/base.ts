@@ -1,4 +1,4 @@
-import type { TranscriptLine } from '../../analysis/transcript/types.js';
+import type { TranscriptLine } from '@lib/types/transcript.js';
 
 /**
  * Contract every transcript analyzer implementation must satisfy.

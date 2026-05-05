@@ -4,7 +4,7 @@ import { join } from 'path';
 import pLimit from 'p-limit';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
-import type { RankedSegment } from '../types.js';
+import type { RankedSegment } from '@lib/types/segment.js';
 
 export interface ClipperConfig {
   ffmpegPath?: string;

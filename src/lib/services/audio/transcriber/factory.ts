@@ -1,14 +1,12 @@
 import { log } from '@lib/utils/logger.js';
 import { TranscriptAnalyzer } from './base.js';
 import { YtDlpTranscriptAnalyzer } from '../../video/source/youtube/subtitles.js';
-import type { YtDlpCookies } from '../../video/source/youtube/metadata.js';
+import type { TranscriptChainConfig } from '@lib/types/downloader.js';
 import { WhisperTranscriptAnalyzer } from './whisper.js';
 import { GeminiTranscriptAnalyzer } from './gemini.js';
 import type { TranscriptProviderName } from '@lib/types/index.js';
 
-export interface TranscriptChainConfig extends YtDlpCookies {
-  whisperModel: string;
-}
+export type { TranscriptChainConfig } from '@lib/types/downloader.js';
 
 const KNOWN_PROVIDERS = new Set<TranscriptProviderName>(['ytdlp', 'whisper', 'gemini']);
 

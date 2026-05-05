@@ -10,7 +10,7 @@ export {
 } from './source/youtube/catalog.js';
 export type { YouTubeCatalogService } from './source/youtube/catalog.js';
 export { generateClips, organizeClips } from './clipper/index.js';
-export { VideoMetadataSchema, PipelineResultSchema } from './types.js';
+export { VideoMetadataSchema, PipelineResultSchema } from '@lib/types/video.js';
 export type {
   VideoMetadata,
   PipelineResult,
@@ -18,18 +18,18 @@ export type {
   DownloadResultAll,
   DownloadResultSegments,
   DownloadResult,
-} from './types.js';
+} from '@lib/types/video.js';
 export {
   ChannelSummarySchema,
   VideoSummarySchema,
   VideoDetailsSchema,
   VideoPageSchema,
   YouTubeThumbnailSchema,
-} from './source/youtube/types.js';
+} from '@lib/types/youtube.js';
 export type {
   ChannelSummary,
   VideoSummary,
   VideoDetails,
   VideoPage,
   YouTubeThumbnail,
-} from './source/youtube/types.js';
+} from '@lib/types/youtube.js';

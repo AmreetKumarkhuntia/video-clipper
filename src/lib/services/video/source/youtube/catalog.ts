@@ -5,8 +5,8 @@ import {
   VideoDetailsSchema,
   VideoPageSchema,
   VideoSummarySchema,
-} from './types.js';
-import type { ChannelSummary, VideoDetails, VideoPage, VideoSummary } from './types.js';
+} from '@lib/types/youtube.js';
+import type { ChannelSummary, VideoDetails, VideoPage, VideoSummary } from '@lib/types/youtube.js';
 
 export interface YouTubeCatalogService {
   resolveChannel(input: string): Promise<ChannelSummary>;

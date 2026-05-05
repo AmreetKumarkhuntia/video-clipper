@@ -3,7 +3,7 @@ import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
-import type { RankedSegment, MicroBlock, StreamCallbacks } from '../types.js';
+import type { RankedSegment, MicroBlock, StreamCallbacks } from '@lib/types/index.js';
 import type { LanguageModel } from 'ai';
 
 const CONTEXT_PADDING_SEC = 30;

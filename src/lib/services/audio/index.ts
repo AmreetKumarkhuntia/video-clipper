@@ -8,5 +8,5 @@ export {
   parseTranscriptProviderChain,
 } from './transcriber/index.js';
 export { AudioAnalyzer, createAnalyzerChain, parseProviderChain } from './analyzer/index.js';
-export { AudioEventSchema, MergedCandidateSchema } from './types.js';
-export type { AudioEvent, MergedCandidate } from './types.js';
+export { AudioEventSchema, MergedCandidateSchema } from '@lib/types/audio.js';
+export type { AudioEvent, MergedCandidate } from '@lib/types/audio.js';

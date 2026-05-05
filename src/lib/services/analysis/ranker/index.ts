@@ -1,4 +1,9 @@
-import type { MergedCandidate, RankedSegment, ChunkEvaluation, AudioEvent } from '../types.js';
+import type {
+  MergedCandidate,
+  RankedSegment,
+  ChunkEvaluation,
+  AudioEvent,
+} from '@lib/types/index.js';
 
 export function mergeSignals(
   llmSegments: ChunkEvaluation[],

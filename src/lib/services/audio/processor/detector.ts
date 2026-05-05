@@ -1,6 +1,6 @@
 import { log } from '@lib/utils/logger.js';
 import type { AudioAnalyzer } from '../analyzer/base.js';
-import type { AudioEvent } from '../types.js';
+import type { AudioEvent } from '@lib/types/audio.js';
 
 /**
  * Top-level audio event detector.

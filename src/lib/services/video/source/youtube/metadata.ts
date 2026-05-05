@@ -1,11 +1,9 @@
 import { execa } from 'execa';
 import { log } from '@lib/utils/logger.js';
-import type { VideoMetadata } from '../../types.js';
+import type { VideoMetadata } from '@lib/types/video.js';
+import type { YtDlpCookies } from '@lib/types/downloader.js';
 
-export interface YtDlpCookies {
-  cookiesFromBrowser?: string;
-  cookiesFile?: string;
-}
+export type { YtDlpCookies } from '@lib/types/downloader.js';
 
 const OEMBED_URL = 'https://www.youtube.com/oembed';
 

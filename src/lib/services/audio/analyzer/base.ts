@@ -1,4 +1,4 @@
-import type { AudioEvent } from '../types.js';
+import type { AudioEvent } from '@lib/types/audio.js';
 
 /**
  * Contract every audio analyzer implementation must satisfy.

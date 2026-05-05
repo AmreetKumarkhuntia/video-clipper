@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { RankedSegmentSchema, ChunkEvaluationSchema } from '../analysis/types.js';
-
-export type { RankedSegment } from '../analysis/types.js';
+import { RankedSegmentSchema, ChunkEvaluationSchema } from './segment.js';
 
 export const VideoMetadataSchema = z.object({
   videoId: z.string().length(11),

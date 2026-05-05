@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { log } from '@lib/utils/logger.js';
-import type { TranscriptLine } from '../../../analysis/transcript/types.js';
+import type { TranscriptLine } from '@lib/types/transcript.js';
 import { TranscriptAnalyzer } from '../../../audio/transcriber/base.js';
-import type { YtDlpCookies } from './metadata.js';
+import type { YtDlpCookies } from '@lib/types/downloader.js';
 
 interface YouTubeCaptionTrack {
   baseUrl: string;
