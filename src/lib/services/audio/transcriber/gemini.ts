@@ -1,4 +1,4 @@
-import type { TranscriptLine } from '../../analysis/transcript/types.js';
+import type { TranscriptLine } from '@lib/types/transcript.js';
 import { TranscriptAnalyzer } from './base.js';
 
 /**

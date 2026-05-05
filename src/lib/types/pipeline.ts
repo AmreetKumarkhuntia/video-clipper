@@ -1,12 +1,9 @@
-import type { VideoMetadata } from '../services/video/types.js';
-import type {
-  TranscriptLine,
-  MicroBlock,
-  LLMChunk,
-} from '../services/analysis/transcript/types.js';
-import type { ChunkEvaluation, StreamCallbacks } from '../services/analysis/types.js';
+import type { VideoMetadata } from './video.js';
+import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
+import type { ChunkEvaluation } from './segment.js';
+import type { StreamCallbacks } from './analyzer.js';
 import type { LanguageModel } from 'ai';
-import type { TranscriptChainConfig } from '../services/audio/transcriber/factory.js';
+import type { TranscriptChainConfig } from './downloader.js';
 
 /** A half-open time window [start, end) in seconds. Returned by `buildWindows`. */
 export interface ChunkWindow {
@@ -44,6 +41,8 @@ export interface SegmentAnalyzerOpts {
   systemPrompt: string;
   llmModel: string;
   callbacks?: StreamCallbacks;
+  /** Optional video title, threaded to the refiner prompt for boundary context. */
+  videoTitle?: string;
 }
 
 export interface SegmentAnalyzerResult {

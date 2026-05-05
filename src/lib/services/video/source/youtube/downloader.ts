@@ -3,14 +3,10 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import pLimit from 'p-limit';
 import { log } from '@lib/utils/logger.js';
-import type { RankedSegment, DownloadMode, DownloadResult } from '../../types.js';
-import type { YtDlpCookies } from './metadata.js';
+import type { RankedSegment, DownloadMode, DownloadResult } from '@lib/types/index.js';
+import type { DownloaderConfig } from '@lib/types/downloader.js';
 
-export interface DownloaderConfig extends YtDlpCookies {
-  downloadDir: string;
-  timestampOffset: number;
-  llmConcurrency: number;
-}
+export type { DownloaderConfig } from '@lib/types/downloader.js';
 
 /**
  * Formats a timestamp for yt-dlp --download-sections.

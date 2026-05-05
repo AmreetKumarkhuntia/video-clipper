@@ -2,7 +2,11 @@ export { analyzeChunks } from './llm/index.js';
 export { LLMAnalyzer } from './llm/LLMAnalyzer.js';
 export { refineSegments } from './refiner/index.js';
 export { mergeSignals, rankSegments } from './ranker/index.js';
-export { AnalyzedSegmentSchema, RankedSegmentSchema, ChunkEvaluationSchema } from './types.js';
+export {
+  AnalyzedSegmentSchema,
+  RankedSegmentSchema,
+  ChunkEvaluationSchema,
+} from '@lib/types/segment.js';
 export type {
   AnalyzedSegment,
   RankedSegment,
@@ -10,7 +14,7 @@ export type {
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
   TranscriptDetectorResult,
-} from './types.js';
+} from '@lib/types/index.js';
 
 export {
   buildMicroBlocks,

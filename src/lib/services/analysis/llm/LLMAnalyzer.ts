@@ -12,7 +12,7 @@ import type {
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
   StreamCallbacks,
-} from '../types.js';
+} from '@lib/types/index.js';
 
 export class LLMAnalyzer {
   constructor(

@@ -3,7 +3,7 @@ import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
-import { AnalyzedSegmentSchema } from '../types.js';
+import { AnalyzedSegmentSchema } from '@lib/types/segment.js';
 import type {
   LLMChunk,
   TranscriptLine,
@@ -11,7 +11,7 @@ import type {
   ChunkEvaluation,
   AudioEvent,
   StreamCallbacks,
-} from '../types.js';
+} from '@lib/types/index.js';
 import type { CacheBackend } from '@lib/utils/cacheBackend.js';
 import type { LanguageModel } from 'ai';
 

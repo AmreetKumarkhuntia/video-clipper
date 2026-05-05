@@ -1,4 +1,4 @@
-import type { TranscriptLine, MicroBlock, LLMChunk } from '../types.js';
+import type { TranscriptLine, MicroBlock, LLMChunk } from '@lib/types/transcript.js';
 
 /**
  * Groups raw transcript lines into micro-blocks of approximately `windowSec` seconds.

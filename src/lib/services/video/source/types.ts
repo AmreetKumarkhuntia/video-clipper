@@ -1,5 +1,5 @@
-import type { VideoMetadata, DownloadResult } from '../types.js';
-import type { TranscriptLine } from '../../analysis/transcript/types.js';
+import type { VideoMetadata, DownloadResult } from '@lib/types/video.js';
+import type { TranscriptLine } from '@lib/types/transcript.js';
 
 export interface VideoSource {
   readonly name: string;

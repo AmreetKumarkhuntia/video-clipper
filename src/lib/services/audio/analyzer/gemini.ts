@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import type { AudioEvent } from '../types.js';
+import type { AudioEvent } from '@lib/types/audio.js';
 import { AudioAnalyzer } from './base.js';
 
 export interface GeminiAnalyzerConfig {

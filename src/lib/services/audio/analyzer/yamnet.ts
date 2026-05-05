@@ -1,5 +1,5 @@
 import { execa } from 'execa';
-import type { AudioEvent } from '../types.js';
+import type { AudioEvent } from '@lib/types/audio.js';
 import { AudioAnalyzer } from './base.js';
 import { getPythonBin } from '@lib/utils/pythonBin.js';
 import { scriptPath } from '@lib/utils/paths.js';

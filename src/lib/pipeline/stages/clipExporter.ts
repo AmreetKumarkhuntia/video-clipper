@@ -1,5 +1,5 @@
 import { downloadVideo } from '@lib/services/video/source/youtube/downloader.js';
-import type { DownloaderConfig } from '@lib/services/video/source/youtube/downloader.js';
+import type { DownloaderConfig } from '@lib/types/downloader.js';
 import { generateClips, organizeClips, remuxClips } from '@lib/services/video/clipper/index.js';
 import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
 import { log } from '@lib/utils/logger.js';

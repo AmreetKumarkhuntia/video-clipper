@@ -2,11 +2,9 @@ import { execa } from 'execa';
 import * as fs from 'fs';
 import * as path from 'path';
 import { log } from '@lib/utils/logger.js';
-import type { YtDlpCookies } from '../../video/source/youtube/metadata.js';
+import type { AudioDownloadConfig } from '@lib/types/downloader.js';
 
-export interface AudioDownloadConfig extends YtDlpCookies {
-  ffmpegPath?: string;
-}
+export type { AudioDownloadConfig } from '@lib/types/downloader.js';
 
 export async function downloadAudio(
   videoId: string,
