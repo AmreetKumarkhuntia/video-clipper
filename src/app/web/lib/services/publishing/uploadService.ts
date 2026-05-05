@@ -185,10 +185,14 @@ async function uploadToYouTube(
 ): Promise<{ videoId: string; youtubeUrl: string }> {
   const file = await fs.readFile(item.path);
   const boundary = `video-clipper-${Date.now()}`;
+  const description =
+    item.isShort && !item.description.includes('#Shorts')
+      ? `${item.description}\n\n#Shorts`.trim()
+      : item.description;
   const metadata = {
     snippet: {
       title: item.title,
-      description: item.description,
+      description,
       tags: item.tags,
       categoryId: item.categoryId,
     },

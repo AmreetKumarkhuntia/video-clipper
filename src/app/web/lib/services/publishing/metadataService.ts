@@ -1,4 +1,4 @@
-import { generateObject } from 'ai';
+import { generateText, tool } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
 import { getModel } from '@lib/utils/modelFactory.js';
@@ -11,6 +11,7 @@ import {
   type MetadataGenerationContext,
 } from '@app/web/types/publish.js';
 import type { Config } from '@lib/types/config.js';
+import { readMetadataCache, writeMetadataCache } from './metadataCache.js';
 
 export type { MetadataGenerationContext } from '@app/web/types/publish.js';
 
@@ -39,7 +40,9 @@ Rules:
 - Do not invent facts that are not supported by the provided clip context.
 - For categoryId, pick the single most relevant YouTube category ID from this list:
   ${CATEGORY_LIST}
-  Default to "22" (People & Blogs) when the content does not fit a more specific category.`;
+  Default to "22" (People & Blogs) when the content does not fit a more specific category.
+- If Format is "YouTube Short": keep the title under 60 chars and the description under 300 chars; lead with the most compelling line first.
+- If Format is "YouTube Video": standard YouTube title and description length rules apply.`;
 
 export async function generatePublishMetadata(
   workflowTitle: string,
@@ -50,30 +53,83 @@ export async function generatePublishMetadata(
 ): Promise<GeneratedPublishMetadata[]> {
   const done = log.fnCalled('generatePublishMetadata', { items: items.length }, requestId);
 
+  const concurrency = Math.max(1, Math.min(cfg.LLM_CONCURRENCY, 2));
   const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
     ZAI_API_KEY: cfg.ZAI_API_KEY,
     OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
     CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
     CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
   });
-  const limit = pLimit(Math.max(1, Math.min(cfg.LLM_CONCURRENCY, 2)));
+  log.info(
+    `[publish-metadata] model=${cfg.LLM_PROVIDER}/${cfg.LLM_MODEL} concurrency=${concurrency}`,
+  );
+  const limit = pLimit(concurrency);
+  const effectiveSystemPrompt =
+    cfg.PUBLISH_METADATA_SYSTEM_PROMPT ?? DEFAULT_METADATA_SYSTEM_PROMPT;
 
-  const jobs = items.map((item) =>
+  const jobs = items.map((item, itemIndex) =>
     limit(async () => {
-      const result = await generateObject({
+      const label = `clip ${itemIndex + 1}/${items.length} ${item.filename}`;
+      const t0 = Date.now();
+      log.info(
+        `[publish-metadata] → ${label} (${item.startSec.toFixed(1)}s–${item.endSec.toFixed(1)}s)`,
+      );
+
+      const prompt = buildMetadataPrompt(workflowTitle, item, context);
+
+      const cached = await readMetadataCache(cfg.CACHE_DIR, effectiveSystemPrompt, prompt);
+      if (cached) {
+        log.info(`[publish-metadata] cache hit for ${label}`);
+        return GeneratedPublishMetadataSchema.parse({
+          clipArtifactId: item.clipArtifactId,
+          ...cached,
+        });
+      }
+      log.info(`[publish-metadata] cache miss for ${label} — calling LLM`);
+
+      const result = await generateText({
         model,
-        system: cfg.PUBLISH_METADATA_SYSTEM_PROMPT ?? DEFAULT_METADATA_SYSTEM_PROMPT,
-        prompt: buildMetadataPrompt(workflowTitle, item, context),
-        schema: PublishMetadataSchema,
-        schemaName: 'PublishMetadata',
-        schemaDescription: 'YouTube clip upload metadata',
+        system: effectiveSystemPrompt,
+        prompt,
+        tools: {
+          register_metadata: tool({
+            description: 'Register YouTube clip upload metadata',
+            inputSchema: PublishMetadataSchema,
+          }),
+        },
+        toolChoice: { type: 'tool', toolName: 'register_metadata' },
         maxRetries: cfg.LLM_MAX_RETRIES,
       });
 
-      return GeneratedPublishMetadataSchema.parse({
+      log.info(
+        `[publish-metadata] ← ${label} toolCalls=${result.toolCalls.length} finishReason=${result.finishReason} (${Date.now() - t0}ms)`,
+      );
+
+      const toolCall = result.toolCalls.find((tc) => tc.toolName === 'register_metadata');
+      if (!toolCall) {
+        const names = result.toolCalls.map((tc) => tc.toolName).join(', ') || 'none';
+        log.error(
+          `[publish-metadata] no register_metadata call for ${label} — toolCalls=[${names}] finishReason=${result.finishReason}`,
+        );
+        throw new Error('No metadata registered: model did not call register_metadata');
+      }
+
+      const metadata = GeneratedPublishMetadataSchema.parse({
         clipArtifactId: item.clipArtifactId,
-        ...result.object,
+        ...(toolCall.input as Record<string, unknown>),
       });
+      log.info(
+        `[publish-metadata] ✓ ${label} title="${metadata.title}" category=${metadata.categoryId} tags=${metadata.tags.length}`,
+      );
+
+      await writeMetadataCache(cfg.CACHE_DIR, effectiveSystemPrompt, prompt, {
+        title: metadata.title,
+        description: metadata.description,
+        tags: metadata.tags,
+        categoryId: metadata.categoryId,
+      });
+
+      return metadata;
     }),
   );
 
@@ -90,7 +146,7 @@ export async function generatePublishMetadata(
     }
 
     const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-    log.warn(`[publish-metadata] failed for ${item.filename}: ${reason}`);
+    log.error(`[publish-metadata] ✗ clip ${index + 1}/${items.length} ${item.filename}: ${reason}`);
   }
 
   done({ generated: generated.length });
@@ -117,6 +173,7 @@ function buildMetadataPrompt(
   return `${contextBlock}Workflow title: ${workflowTitle}
 Clip file: ${item.filename}
 Clip timing: ${item.startSec.toFixed(1)}s to ${item.endSec.toFixed(1)}s
+Format: ${item.isShort ? 'YouTube Short' : 'YouTube Video'}
 Current title draft: ${item.title || 'none'}
 Current description draft: ${item.description || 'none'}
 Current categoryId: ${item.categoryId}

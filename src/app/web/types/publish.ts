@@ -45,6 +45,7 @@ export const PublishDraftItemSchema = z.object({
   embeddable: z.boolean().default(true),
   publicStatsViewable: z.boolean().default(true),
   containsSyntheticMedia: z.boolean().default(false),
+  isShort: z.boolean().default(false),
   thumbnailPath: z.string().optional(),
   playlistId: z.string().optional(),
 });

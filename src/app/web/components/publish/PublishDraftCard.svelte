@@ -163,6 +163,18 @@
     </FormField>
 
     <!-- Row 5: Boolean toggles -->
+    <FormField label="Format">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          checked={item.isShort}
+          onchange={(event) =>
+            patchItem({ isShort: (event.currentTarget as HTMLInputElement).checked })}
+        />
+        <span>Upload as YouTube Short</span>
+      </label>
+    </FormField>
+
     <FormField label="Made for kids">
       <label class="checkbox-label">
         <input

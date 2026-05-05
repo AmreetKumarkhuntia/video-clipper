@@ -97,5 +97,6 @@ function buildDraftItem(clip: ClipArtifact, analysis: ClipPlan, cfg: Config): Pu
     embeddable: cfg.YT_DEFAULT_EMBEDDABLE,
     publicStatsViewable: cfg.YT_DEFAULT_PUBLIC_STATS_VIEWABLE,
     containsSyntheticMedia: cfg.YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA,
+    isShort: cfg.YT_DEFAULT_IS_SHORT,
   };
 }
