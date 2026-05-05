@@ -117,6 +117,8 @@ export const ConfigSchema = z
     GAME_PROFILE: z.enum(['valorant', 'fps', 'boss_fight', 'general']).default('general'),
     YT_DLP_COOKIES_FROM_BROWSER: z.string().optional(),
     YT_DLP_COOKIES_FILE: z.string().optional(),
+    YT_DLP_QUIET: z.coerce.boolean().default(false),
+    YT_DLP_RETRY_COUNT: z.coerce.number().int().min(0).max(5).default(0),
 
     // ---- Cache backend -------------------------------------------------------
     CACHE_BACKEND: z.enum(['file', 'mongodb']).default('file'),
@@ -216,6 +218,8 @@ export const CONFIG_GROUPS = [
       'YOUTUBE_OAUTH_REDIRECT_URI',
       'YT_DLP_COOKIES_FROM_BROWSER',
       'YT_DLP_COOKIES_FILE',
+      'YT_DLP_QUIET',
+      'YT_DLP_RETRY_COUNT',
       'YT_DEFAULT_CATEGORY_ID',
       'YT_DEFAULT_PRIVACY',
       'YT_DEFAULT_LICENSE',
@@ -339,6 +343,15 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     widget: 'text',
   },
   YT_DLP_COOKIES_FILE: { description: 'Path to cookies.txt file', widget: 'text' },
+  YT_DLP_QUIET: {
+    description:
+      'Suppress yt-dlp stderr/stdout output in terminal (errors still caught and reported)',
+    widget: 'toggle',
+  },
+  YT_DLP_RETRY_COUNT: {
+    description: 'Retry failed yt-dlp calls with exponential backoff — 2s, 4s, 8s… (0 = no retry)',
+    widget: 'number',
+  },
   SCORE_THRESHOLD: { description: 'Min score (1-10) for a segment to be kept', widget: 'slider' },
   TOP_N_SEGMENTS: { description: 'Max segments returned', widget: 'number' },
   CHUNK_LENGTH_SEC: { description: 'LLM chunk window size in seconds', widget: 'number' },

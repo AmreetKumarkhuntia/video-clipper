@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import pLimit from 'p-limit';
 import { log } from '@lib/utils/logger.js';
+import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { RankedSegment, DownloadMode, DownloadResult } from '@lib/types/index.js';
 import type { DownloaderConfig } from '@lib/types/downloader.js';
 
@@ -53,31 +54,38 @@ export async function downloadFullVideo(
 
   log.info(`Downloading full video ${videoId} via yt-dlp...`);
 
+  const args = [
+    '-f',
+    'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+    '--merge-output-format',
+    'mp4',
+    '-o',
+    outputPath,
+    '--no-playlist',
+    '--newline',
+    `https://www.youtube.com/watch?v=${videoId}`,
+  ];
+
+  if (dlConfig.cookiesFromBrowser) {
+    args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
+  } else if (dlConfig.cookiesFile) {
+    args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
+  }
+
   try {
-    const args = [
-      '-f',
-      'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
-      '--merge-output-format',
-      'mp4',
-      '-o',
-      outputPath,
-      '--no-playlist',
-      '--newline',
-      `https://www.youtube.com/watch?v=${videoId}`,
-    ];
-
-    if (dlConfig.cookiesFromBrowser) {
-      args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
-    } else if (dlConfig.cookiesFile) {
-      args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
-    }
-
-    const subprocess = execa('yt-dlp', args);
-
-    subprocess.stdout?.on('data', log.progress);
-    subprocess.stderr?.on('data', log.progress);
-
-    await subprocess;
+    await retryAsync(
+      async () => {
+        const subprocess = execa('yt-dlp', args);
+        if (!dlConfig.quiet) {
+          subprocess.stdout?.on('data', log.progress);
+          subprocess.stderr?.on('data', log.progress);
+        }
+        await subprocess;
+      },
+      dlConfig.retryCount ?? 0,
+      2000,
+      `yt-dlp:${videoId}`,
+    );
     process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -169,12 +177,19 @@ async function downloadSegment(
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
 
-    const subprocess = execa('yt-dlp', args);
-
-    subprocess.stdout?.on('data', log.progress);
-    subprocess.stderr?.on('data', log.progress);
-
-    await subprocess;
+    await retryAsync(
+      async () => {
+        const subprocess = execa('yt-dlp', args);
+        if (!dlConfig.quiet) {
+          subprocess.stdout?.on('data', log.progress);
+          subprocess.stderr?.on('data', log.progress);
+        }
+        await subprocess;
+      },
+      dlConfig.retryCount ?? 0,
+      2000,
+      `yt-dlp:${videoId}:seg${index + 1}`,
+    );
     process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

@@ -52,6 +52,7 @@ const FIELD_CONSTRAINTS: Record<
   LLM_CONCURRENCY: { min: 1 },
   MAX_CHUNKS: { min: 1 },
   CLIP_CONCURRENCY: { min: 1 },
+  YT_DLP_RETRY_COUNT: { min: 0, max: 5 },
   AUDIO_CONFIDENCE_THRESHOLD: { min: 0, max: 1 },
   AUDIO_CLIP_PRE_ROLL: { min: 0 },
   AUDIO_CLIP_POST_ROLL: { min: 0 },

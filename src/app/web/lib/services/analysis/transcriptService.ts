@@ -15,6 +15,8 @@ export async function getTranscriptBundle(videoId: string, cfg: Config): Promise
   const cookies: YtDlpCookies = {
     cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
     cookiesFile: cfg.YT_DLP_COOKIES_FILE,
+    quiet: cfg.YT_DLP_QUIET,
+    retryCount: cfg.YT_DLP_RETRY_COUNT,
   };
 
   const transcriptChainConfig: TranscriptChainConfig = {
