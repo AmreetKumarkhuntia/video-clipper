@@ -81,6 +81,7 @@ export async function downloadFullVideo(
     process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    log.error(`Video download failed: ${String(err)}`);
 
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
@@ -177,7 +178,7 @@ async function downloadSegment(
     process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-
+    log.error(`Segment ${index + 1} download failed: ${String(err)}`);
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
     }
