@@ -57,16 +57,17 @@
   }
 
   .btn:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 
   .btn--primary:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--c-primary) 80%, white 20%);
     box-shadow: var(--shadow-panel);
   }
 
   .btn--outline:hover:not(:disabled) {
     border-color: var(--c-border-strong);
-    background: var(--c-surface);
+    background: var(--c-surface-muted);
   }
 
   .btn:disabled {
