@@ -2,6 +2,7 @@ import { execa } from 'execa';
 import * as fs from 'fs';
 import * as path from 'path';
 import { log } from '@lib/utils/logger.js';
+import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { AudioDownloadConfig } from '@lib/types/downloader.js';
 
 export type { AudioDownloadConfig } from '@lib/types/downloader.js';
@@ -24,37 +25,44 @@ export async function downloadAudio(
 
   console.log(`[audio] Downloading audio for ${videoId}...`);
 
+  const args = [
+    '-x',
+    '--audio-format',
+    'wav',
+    '--audio-quality',
+    '0',
+    '--postprocessor-args',
+    'ffmpeg:-ar 16000 -ac 1',
+    '-o',
+    outputPath,
+    '--newline',
+    `https://youtube.com/watch?v=${videoId}`,
+  ];
+
+  if (audioConfig.ffmpegPath) {
+    args.unshift('--ffmpeg-location', audioConfig.ffmpegPath);
+  }
+
+  if (audioConfig.cookiesFromBrowser) {
+    args.unshift('--cookies-from-browser', audioConfig.cookiesFromBrowser);
+  } else if (audioConfig.cookiesFile) {
+    args.unshift('--cookies', audioConfig.cookiesFile);
+  }
+
   try {
-    const args = [
-      '-x',
-      '--audio-format',
-      'wav',
-      '--audio-quality',
-      '0',
-      '--postprocessor-args',
-      'ffmpeg:-ar 16000 -ac 1',
-      '-o',
-      outputPath,
-      '--newline',
-      `https://youtube.com/watch?v=${videoId}`,
-    ];
-
-    if (audioConfig.ffmpegPath) {
-      args.unshift('--ffmpeg-location', audioConfig.ffmpegPath);
-    }
-
-    if (audioConfig.cookiesFromBrowser) {
-      args.unshift('--cookies-from-browser', audioConfig.cookiesFromBrowser);
-    } else if (audioConfig.cookiesFile) {
-      args.unshift('--cookies', audioConfig.cookiesFile);
-    }
-
-    const subprocess = execa('yt-dlp', args);
-
-    subprocess.stdout?.on('data', log.progress);
-    subprocess.stderr?.on('data', log.progress);
-
-    await subprocess;
+    await retryAsync(
+      async () => {
+        const subprocess = execa('yt-dlp', args);
+        if (!audioConfig.quiet) {
+          subprocess.stdout?.on('data', log.progress);
+          subprocess.stderr?.on('data', log.progress);
+        }
+        await subprocess;
+      },
+      audioConfig.retryCount ?? 0,
+      2000,
+      `yt-dlp:audio:${videoId}`,
+    );
     process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

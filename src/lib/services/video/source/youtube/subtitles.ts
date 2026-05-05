@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { log } from '@lib/utils/logger.js';
+import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import { TranscriptAnalyzer } from '../../../audio/transcriber/base.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
@@ -385,10 +386,15 @@ async function fetchTranscriptViaYtDlp(
     }
 
     try {
-      await execa('yt-dlp', args);
+      await retryAsync(
+        () => execa('yt-dlp', args),
+        cookies.retryCount ?? 0,
+        2000,
+        `yt-dlp:subtitles:${videoId}`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-
+      log.error(`yt-dlp subtitle download failed: ${message}`);
       if (
         message.includes('Sign in to confirm') ||
         message.includes('confirm you’re not a bot') ||

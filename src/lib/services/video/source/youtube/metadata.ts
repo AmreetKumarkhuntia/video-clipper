@@ -1,5 +1,6 @@
 import { execa } from 'execa';
 import { log } from '@lib/utils/logger.js';
+import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { VideoMetadata } from '@lib/types/video.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
 
@@ -29,7 +30,12 @@ async function extractViaYtDlp(
       args.unshift('--cookies', cookies.cookiesFile);
     }
 
-    const { stdout } = await execa('yt-dlp', args);
+    const { stdout } = await retryAsync(
+      () => execa('yt-dlp', args),
+      cookies.retryCount ?? 0,
+      2000,
+      `yt-dlp:metadata:${videoId}`,
+    );
     const data = JSON.parse(stdout) as YtDlpJson;
     return {
       videoId,

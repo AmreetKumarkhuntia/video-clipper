@@ -64,6 +64,8 @@ export async function runPipeline(args: CliArgs): Promise<void> {
   const cookies: YtDlpCookies = {
     cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
     cookiesFile: config.YT_DLP_COOKIES_FILE,
+    quiet: config.YT_DLP_QUIET,
+    retryCount: config.YT_DLP_RETRY_COUNT,
   };
 
   const audioDownloadConfig: AudioDownloadConfig = {
