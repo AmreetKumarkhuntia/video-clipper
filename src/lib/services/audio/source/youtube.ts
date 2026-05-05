@@ -59,6 +59,8 @@ export async function downloadAudio(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 
+    log.error(`[audio] Download failed: ${message}`);
+
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
     }

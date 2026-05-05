@@ -60,6 +60,7 @@ export const ConfigSchema = z
     LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
     CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
     LLM_SYSTEM_PROMPT: z.string().optional(),
+    PUBLISH_METADATA_SYSTEM_PROMPT: z.string().optional(),
     AUDIO_GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
     AUDIO_EXTRA_INSTRUCTIONS: z.string().optional(),
     DOWNLOAD_SECTIONS_MODE: z.union([z.literal('all'), z.number().int().positive()]).default('all'),
@@ -186,6 +187,7 @@ export const CONFIG_GROUPS = [
       'LLM_MAX_RETRIES',
       'LLM_CONCURRENCY',
       'LLM_SYSTEM_PROMPT',
+      'PUBLISH_METADATA_SYSTEM_PROMPT',
     ],
   },
   {
@@ -271,7 +273,7 @@ export const CONFIG_GROUPS = [
   },
 ] as const;
 
-export type ConfigWidget = 'text' | 'number' | 'toggle' | 'select' | 'slider';
+export type ConfigWidget = 'text' | 'textarea' | 'number' | 'toggle' | 'select' | 'slider';
 
 export interface ConfigFieldMeta {
   description: string;
@@ -289,7 +291,15 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   },
   LLM_MAX_RETRIES: { description: 'Retry count for rate-limited LLM calls', widget: 'number' },
   LLM_CONCURRENCY: { description: 'Max parallel LLM calls', widget: 'number' },
-  LLM_SYSTEM_PROMPT: { description: 'Custom system prompt override', widget: 'text' },
+  LLM_SYSTEM_PROMPT: {
+    description: 'Override the transcript analysis system prompt (leave blank to use the default)',
+    widget: 'textarea',
+  },
+  PUBLISH_METADATA_SYSTEM_PROMPT: {
+    description:
+      'Override the YouTube title/description/tags generation prompt (leave blank to use the default)',
+    widget: 'textarea',
+  },
   OPENAI_API_KEY: { description: 'OpenAI API key', widget: 'text', secret: true },
   ANTHROPIC_API_KEY: { description: 'Anthropic API key', widget: 'text', secret: true },
   GOOGLE_GENERATIVE_AI_API_KEY: {

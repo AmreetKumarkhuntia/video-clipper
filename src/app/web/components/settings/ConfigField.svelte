@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
   import ConfigInputText from './ConfigInputText.svelte';
+  import ConfigInputTextarea from './ConfigInputTextarea.svelte';
   import ConfigInputNumber from './ConfigInputNumber.svelte';
   import ConfigInputToggle from './ConfigInputToggle.svelte';
   import ConfigInputSelect from './ConfigInputSelect.svelte';
@@ -46,6 +47,7 @@
       <ConfigInputSelect
         value={String(resolvedValue)}
         options={field.options}
+        optionLabels={field.optionLabels ?? []}
         on:change={(e) => emit(e.detail)}
       />
     {:else if field.widget === 'toggle'}
@@ -63,6 +65,12 @@
         min={field.min}
         max={field.max}
         placeholder={field.placeholder ?? String(field.defaultValue ?? '')}
+        on:change={(e) => emit(e.detail)}
+      />
+    {:else if field.widget === 'textarea'}
+      <ConfigInputTextarea
+        value={String(resolvedValue ?? '')}
+        placeholder={field.placeholder ?? ''}
         on:change={(e) => emit(e.detail)}
       />
     {:else}
