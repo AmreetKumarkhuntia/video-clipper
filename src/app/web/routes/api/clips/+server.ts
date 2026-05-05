@@ -15,7 +15,13 @@ export const POST: RequestHandler = async (event) => {
   const reqDone = log.request('POST', '/api/clips', event.locals.requestId);
   try {
     const input = await parseJsonBody(event, CreateClipsRequestSchema);
-    const clips = await generateWebClips(input, event.locals.config);
+    log.info(
+      `${event.locals.requestId} [clips] [api] | analysisId=${input.analysisId} videoId=${input.videoId} segments=${input.segments.length}`,
+    );
+    const clips = await generateWebClips(input, event.locals.config, event.locals.requestId);
+    log.info(
+      `${event.locals.requestId} [clips] [api-result] | analysisId=${input.analysisId} generated=${clips.length}`,
+    );
     reqDone(200);
     return jsonOk({ clips });
   } catch (error) {

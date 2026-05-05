@@ -1,12 +1,32 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { listClipArtifacts } from '@app/web/lib/services/artifacts/artifactStore.js';
+import { z } from 'zod';
+import {
+  listClipArtifacts,
+  listClipArtifactsByAnalysisId,
+} from '@app/web/lib/services/artifacts/artifactStore.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 
-export const GET: RequestHandler = async ({ locals }) => {
+const ListClipsQuerySchema = z.object({
+  analysisId: z.string().min(1).optional(),
+});
+
+export const GET: RequestHandler = async ({ locals, url }) => {
   const reqDone = log.request('GET', '/api/library/clips', locals.requestId);
+
+  const parsed = ListClipsQuerySchema.safeParse({
+    analysisId: url.searchParams.get('analysisId') ?? undefined,
+  });
+
+  if (!parsed.success) {
+    reqDone(400);
+    return jsonError(400, 'Invalid clip listing request.', parsed.error.issues[0]?.message);
+  }
+
   try {
-    const clips = await listClipArtifacts(locals.config.OUTPUT_DIR);
+    const clips = parsed.data.analysisId
+      ? await listClipArtifactsByAnalysisId(locals.config.OUTPUT_DIR, parsed.data.analysisId)
+      : await listClipArtifacts(locals.config.OUTPUT_DIR);
     reqDone(200);
     return jsonOk({ clips });
   } catch (error) {
