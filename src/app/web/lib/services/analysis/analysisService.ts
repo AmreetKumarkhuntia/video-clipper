@@ -28,6 +28,31 @@ they indicate high-action or high-energy moments that are often clip-worthy.
 
 After analyzing the segment, call the report_analysis tool with your findings.`;
 
+/**
+ * Builds a system prompt that prepends source video context (title, channel, description)
+ * before the base scoring instructions. All fields are optional — if none are provided
+ * the base prompt is returned unchanged.
+ */
+function buildAnalysisSystemPrompt(
+  base: string,
+  title?: string,
+  channelTitle?: string,
+  description?: string,
+): string {
+  const lines: string[] = [];
+
+  if (title) lines.push(`Video title: ${title}`);
+  if (channelTitle) lines.push(`Channel: ${channelTitle}`);
+  if (description) {
+    const trimmed = description.trim().slice(0, 500);
+    lines.push(`Video description (supporting context — transcript is primary):\n${trimmed}`);
+  }
+
+  if (lines.length === 0) return base;
+
+  return `${lines.join('\n')}\n\n${base}`;
+}
+
 const DEFAULT_WEB_LLM_CONCURRENCY = 1;
 
 export async function analyzeTranscriptForWeb(
@@ -57,6 +82,11 @@ export async function analyzeTranscriptForWeb(
   });
 
   try {
+    const basePrompt = cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT;
+    const systemPrompt = cfg.LLM_SYSTEM_PROMPT
+      ? basePrompt
+      : buildAnalysisSystemPrompt(basePrompt, input.title, input.channelTitle, input.description);
+
     const { lines, microBlocks, chunkEvals } = await analyzeSegments(
       videoIdFrom(input),
       null,
@@ -74,8 +104,9 @@ export async function analyzeTranscriptForWeb(
         chunkOverlapSec: cfg.CHUNK_OVERLAP_SEC,
         model,
         maxRetries: cfg.LLM_MAX_RETRIES,
-        systemPrompt: cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        systemPrompt,
         llmModel: cfg.LLM_MODEL,
+        videoTitle: input.title,
         callbacks,
       },
     );
@@ -97,6 +128,7 @@ export async function analyzeTranscriptForWeb(
             maxRetries: cfg.LLM_MAX_RETRIES,
             model,
             requestId,
+            videoTitle: input.title,
             callbacks,
           })
         : rankedSegments;

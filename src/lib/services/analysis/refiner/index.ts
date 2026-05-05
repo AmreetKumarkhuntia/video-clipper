@@ -34,10 +34,13 @@ function buildPrompt(
   contextText: string,
   windowStart: number,
   windowEnd: number,
+  videoTitle?: string,
 ): string {
+  const videoLine = videoTitle ? `Video: ${videoTitle}\n\n` : '';
+
   return `You are a video editor refining clip boundaries.
 
-Goal: tighten the clip so it starts just before the interesting moment begins
+${videoLine}Goal: tighten the clip so it starts just before the interesting moment begins
 and ends just after it concludes, giving it a natural entry and exit point.
 Avoid cutting in the middle of a sentence.
 
@@ -63,6 +66,8 @@ export interface RefineSegmentsOpts {
   model: LanguageModel;
   callbacks?: Pick<StreamCallbacks, 'onSegmentStarted' | 'onSegmentTextDelta' | 'onSegmentRefined'>;
   requestId?: string;
+  /** Optional source video title shown in the prompt for context. */
+  videoTitle?: string;
 }
 
 function createReportRefinedBoundariesTool() {
@@ -103,7 +108,7 @@ async function refineSegment(
     model: opts.model,
     tools: { report_refined_boundaries: createReportRefinedBoundariesTool() },
     toolChoice: 'required',
-    prompt: buildPrompt(segment, text, windowStart, windowEnd),
+    prompt: buildPrompt(segment, text, windowStart, windowEnd, opts.videoTitle),
     maxRetries: opts.maxRetries,
   });
 

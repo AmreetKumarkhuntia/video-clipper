@@ -91,6 +91,8 @@
         {
           videoId,
           title: video?.title,
+          description: video?.description,
+          channelTitle: video?.channelTitle,
           durationSec: video?.durationSec,
           options: { refine: true, noCache: false },
         },

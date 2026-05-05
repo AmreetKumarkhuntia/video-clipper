@@ -1,10 +1,6 @@
 import { z } from 'zod';
-import {
-  TranscriptLineSchema,
-  MicroBlockSchema,
-  LLMChunkSchema,
-} from '@lib/services/analysis/transcript/types.js';
-import { ChunkEvaluationSchema } from '@lib/services/analysis/types.js';
+import { TranscriptLineSchema, MicroBlockSchema, LLMChunkSchema } from '@lib/types/transcript.js';
+import { ChunkEvaluationSchema } from '@lib/types/segment.js';
 
 export const TranscriptBundleSchema = z.object({
   videoId: z.string(),
@@ -42,6 +38,8 @@ export type AnalysisOptions = z.infer<typeof AnalysisOptionsSchema>;
 export const CreateAnalysisRequestSchema = z.object({
   videoId: z.string().min(1),
   title: z.string().optional(),
+  description: z.string().optional(),
+  channelTitle: z.string().optional(),
   durationSec: z.number().nonnegative().optional(),
   options: AnalysisOptionsSchema.default({ noCache: false, refine: true }),
 });
