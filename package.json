@@ -60,7 +60,7 @@
   "scripts": {
     "start": "tsx src/app/cli/index.ts",
     "build": "tsc && tsc-alias",
-    "web:dev": "vite --host 0.0.0.0",
+    "web:dev": "vite --host 0.0.0.0 --port 5002",
     "web:build": "vite build",
     "web:preview": "vite preview --host 0.0.0.0",
     "web:check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.web.json",
