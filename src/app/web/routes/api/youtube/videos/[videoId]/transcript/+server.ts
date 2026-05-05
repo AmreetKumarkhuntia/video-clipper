@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
   }
 
   try {
-    const transcript = await getTranscriptBundle(parsed.data.videoId);
+    const transcript = await getTranscriptBundle(parsed.data.videoId, locals.config);
     reqDone(200);
     return jsonOk(transcript);
   } catch (error) {

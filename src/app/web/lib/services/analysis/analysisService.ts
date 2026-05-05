@@ -1,4 +1,3 @@
-import { config } from '@lib/config/index.js';
 import { Cache } from '@lib/utils/cache.js';
 import { createCacheBackend } from '@lib/utils/cacheFactory.js';
 import { getModel } from '@lib/utils/modelFactory.js';
@@ -10,6 +9,7 @@ import type { ClipCandidate, ClipPlan, CreateAnalysisRequest } from '@app/web/ty
 import type { RankedSegment, TranscriptLine, StreamCallbacks } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
+import type { Config } from '@lib/types/config.js';
 
 const DEFAULT_SYSTEM_PROMPT = `You are an expert video editor analyzing a YouTube transcript segment.
 
@@ -32,27 +32,28 @@ const DEFAULT_WEB_LLM_CONCURRENCY = 1;
 
 export async function analyzeTranscriptForWeb(
   input: CreateAnalysisRequest,
+  cfg: Config,
   callbacks?: StreamCallbacks,
   requestId?: string,
 ): Promise<ClipPlan> {
-  const backend = await createCacheBackend(config, input.options.noCache);
+  const backend = await createCacheBackend(cfg, input.options.noCache);
   const cache = new Cache(backend);
 
   const cookies: YtDlpCookies = {
-    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
-    cookiesFile: config.YT_DLP_COOKIES_FILE,
+    cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
+    cookiesFile: cfg.YT_DLP_COOKIES_FILE,
   };
 
   const transcriptChainConfig: TranscriptChainConfig = {
     ...cookies,
-    whisperModel: config.AUDIO_WHISPER_MODEL,
+    whisperModel: cfg.AUDIO_WHISPER_MODEL,
   };
 
-  const model = getModel(config.LLM_PROVIDER, config.LLM_MODEL, {
-    ZAI_API_KEY: config.ZAI_API_KEY,
-    OPENROUTER_API_KEY: config.OPENROUTER_API_KEY,
-    CUSTOM_OPENAI_BASE_URL: config.CUSTOM_OPENAI_BASE_URL,
-    CUSTOM_OPENAI_API_KEY: config.CUSTOM_OPENAI_API_KEY,
+  const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
+    ZAI_API_KEY: cfg.ZAI_API_KEY,
+    OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
+    CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
+    CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
   });
 
   try {
@@ -62,30 +63,30 @@ export async function analyzeTranscriptForWeb(
       [],
       cache,
       {
-        maxChunks: input.options.maxChunks ?? config.MAX_CHUNKS,
+        maxChunks: input.options.maxChunks ?? cfg.MAX_CHUNKS,
         maxParallel: input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY,
         noCache: input.options.noCache,
         requestId,
-        transcriptProvider: config.TRANSCRIPT_PROVIDER,
+        transcriptProvider: cfg.TRANSCRIPT_PROVIDER,
         transcriptChainConfig,
-        microBlockSec: config.MICRO_BLOCK_SEC,
-        chunkLengthSec: config.CHUNK_LENGTH_SEC,
-        chunkOverlapSec: config.CHUNK_OVERLAP_SEC,
+        microBlockSec: cfg.MICRO_BLOCK_SEC,
+        chunkLengthSec: cfg.CHUNK_LENGTH_SEC,
+        chunkOverlapSec: cfg.CHUNK_OVERLAP_SEC,
         model,
-        maxRetries: config.LLM_MAX_RETRIES,
-        systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
-        llmModel: config.LLM_MODEL,
+        maxRetries: cfg.LLM_MAX_RETRIES,
+        systemPrompt: cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        llmModel: cfg.LLM_MODEL,
         callbacks,
       },
     );
 
     const rankedSegments = selectSegments(chunkEvals, [], {
-      threshold: input.options.threshold ?? config.SCORE_THRESHOLD,
-      topN: input.options.topN ?? config.TOP_N_SEGMENTS,
-      boostWindow: config.AUDIO_LLM_BOOST_WINDOW,
-      scoreBoost: config.AUDIO_LLM_SCORE_BOOST,
-      preRoll: config.AUDIO_CLIP_PRE_ROLL,
-      postRoll: config.AUDIO_CLIP_POST_ROLL,
+      threshold: input.options.threshold ?? cfg.SCORE_THRESHOLD,
+      topN: input.options.topN ?? cfg.TOP_N_SEGMENTS,
+      boostWindow: cfg.AUDIO_LLM_BOOST_WINDOW,
+      scoreBoost: cfg.AUDIO_LLM_SCORE_BOOST,
+      preRoll: cfg.AUDIO_CLIP_PRE_ROLL,
+      postRoll: cfg.AUDIO_CLIP_POST_ROLL,
     });
 
     const finalSegments =
@@ -93,7 +94,7 @@ export async function analyzeTranscriptForWeb(
         ? await refineRankedSegments(rankedSegments, microBlocks, cache, {
             maxParallel: input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY,
             noCache: input.options.noCache,
-            maxRetries: config.LLM_MAX_RETRIES,
+            maxRetries: cfg.LLM_MAX_RETRIES,
             model,
             requestId,
             callbacks,
@@ -111,7 +112,7 @@ export async function analyzeTranscriptForWeb(
       createdAt,
     });
 
-    return saveAnalysis(plan, config.OUTPUT_DIR);
+    return saveAnalysis(plan, cfg.OUTPUT_DIR);
   } finally {
     await cache.close();
   }

@@ -1,5 +1,4 @@
 import { basename } from 'path';
-import { config } from '@lib/config/index.js';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
 import {
@@ -9,28 +8,32 @@ import {
 import type { ClipArtifact, CreateClipsRequest } from '@app/web/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
+import type { Config } from '@lib/types/config.js';
 
-export async function generateWebClips(input: CreateClipsRequest): Promise<ClipArtifact[]> {
+export async function generateWebClips(
+  input: CreateClipsRequest,
+  cfg: Config,
+): Promise<ClipArtifact[]> {
   const cookies: YtDlpCookies = {
-    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
-    cookiesFile: config.YT_DLP_COOKIES_FILE,
+    cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
+    cookiesFile: cfg.YT_DLP_COOKIES_FILE,
   };
 
   const exporterConfig: ClipExporterConfig = {
     downloader: {
       ...cookies,
-      downloadDir: config.DOWNLOAD_DIR,
-      timestampOffset: config.TIMESTAMP_OFFSET_SECONDS,
-      llmConcurrency: config.LLM_CONCURRENCY,
+      downloadDir: cfg.DOWNLOAD_DIR,
+      timestampOffset: cfg.TIMESTAMP_OFFSET_SECONDS,
+      llmConcurrency: cfg.LLM_CONCURRENCY,
     },
     clipper: {
-      ffmpegPath: config.FFMPEG_PATH,
-      ffprobePath: config.FFPROBE_PATH,
-      timestampOffset: config.TIMESTAMP_OFFSET_SECONDS,
-      ffmpegPreset: config.FFMPEG_PRESET,
-      outputDir: config.OUTPUT_DIR,
+      ffmpegPath: cfg.FFMPEG_PATH,
+      ffprobePath: cfg.FFPROBE_PATH,
+      timestampOffset: cfg.TIMESTAMP_OFFSET_SECONDS,
+      ffmpegPreset: cfg.FFMPEG_PRESET,
+      outputDir: cfg.OUTPUT_DIR,
     },
-    downloadSectionsMode: config.DOWNLOAD_SECTIONS_MODE,
+    downloadSectionsMode: cfg.DOWNLOAD_SECTIONS_MODE,
   };
 
   const segments = input.segments.map(toRankedSegment);
@@ -39,7 +42,7 @@ export async function generateWebClips(input: CreateClipsRequest): Promise<ClipA
     segments,
     {
       downloadSections: 'all',
-      clipConcurrency: config.CLIP_CONCURRENCY,
+      clipConcurrency: cfg.CLIP_CONCURRENCY,
     },
     exporterConfig,
   );
@@ -64,7 +67,7 @@ export async function generateWebClips(input: CreateClipsRequest): Promise<ClipA
     };
   });
 
-  return saveClipArtifacts(artifacts, config.OUTPUT_DIR);
+  return saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);
 }
 
 function toRankedSegment(segment: CreateClipsRequest['segments'][number]): RankedSegment {

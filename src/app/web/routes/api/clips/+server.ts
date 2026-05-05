@@ -15,7 +15,7 @@ export const POST: RequestHandler = async (event) => {
   const reqDone = log.request('POST', '/api/clips', event.locals.requestId);
   try {
     const input = await parseJsonBody(event, CreateClipsRequestSchema);
-    const clips = await generateWebClips(input);
+    const clips = await generateWebClips(input, event.locals.config);
     reqDone(200);
     return jsonOk({ clips });
   } catch (error) {
