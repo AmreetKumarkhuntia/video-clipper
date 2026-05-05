@@ -143,11 +143,12 @@ The CLI will find the existing video in `downloads/`, skip the download step, an
 
 1. For top N segments: `yt-dlp --download-sections "*{start}-{end}" <url>`
 2. Downloads are parallel (concurrency controlled by `LLM_CONCURRENCY`)
-3. No ffmpeg cutting needed — segments are pre-cut by yt-dlp
-4. yt-dlp's `--download-sections` ensures proper audio/video sync
-5. Only top N segments (by score) are downloaded
+3. Lossless remux via `ffmpeg -c:v copy -c:a copy -avoid_negative_ts make_zero` — fixes A/V sync without re-encoding
+4. Only top N segments (by score) are downloaded
 
-**Note:** The full download mode re-encodes clips to ensure audio/video synchronization, which is slower but produces accurate results. The segments download mode relies on yt-dlp's built-in cutting which also maintains proper sync.
+**Note:** The segments mode uses a lossless ffmpeg remux (stream copy, no re-encode) to normalise timestamps and fix A/V sync. This is faster than re-encoding and produces bit-perfect video. The full download mode re-encodes with libx264+aac for maximum compatibility.
+
+**Cookie behaviour in segments mode:** `--download-sections` intentionally omits all cookie flags. Supplying cookies forces yt-dlp into the TV+web_creator client, which downloads `tv-player-ias.js` and tries to solve the n-challenge using it. That JS file references `self.location.origin` (a browser-only global) and crashes in every server-side JS runtime (Node.js, Deno). Without cookies, yt-dlp auto-selects the `ANDROID_VR` client, whose pre-signed DASH URLs bypass the n-challenge entirely. Consequence: `PARTIAL_DOWNLOAD_ENABLED=true` (segment download path) does not support private or age-gated videos — use `PARTIAL_DOWNLOAD_ENABLED=false` (full-video path) for those.
 
 ### Millisecond Precision
 
@@ -164,6 +165,16 @@ The `--download-sections` mode now uses millisecond precision (HH:MM:SS.mmm form
 ```
 *00:02:00.500-00:02:30.000  # Preserves exact timestamp (120.5s kept as 120.500s)
 ```
+
+### Clip Output Cache
+
+Both `generateClips` (full-download mode) and `remuxClips` (segments mode) check whether the output clip already exists before doing any work:
+
+- Expected output path: `{OUTPUT_DIR}/{videoId}_{startInt}_{endInt}.mp4`
+- If the file is present: logs `Clip already exists, skipping: <path>` and returns immediately
+- If the file is absent: proceeds with the normal cut or remux
+
+This means re-running the same URL with the same segments is always safe — previously exported clips are served from disk instantly. To force a re-export, delete the relevant file from `OUTPUT_DIR` (default: `outputs/`).
 
 ### Timestamp Offset
 

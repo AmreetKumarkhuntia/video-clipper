@@ -60,6 +60,7 @@ export const ConfigSchema = z
     AUDIO_GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
     AUDIO_EXTRA_INSTRUCTIONS: z.string().optional(),
     DOWNLOAD_SECTIONS_MODE: z.union([z.literal('all'), z.number().int().positive()]).default('all'),
+    PARTIAL_DOWNLOAD_ENABLED: z.coerce.boolean().default(false),
     FFMPEG_PATH: z.string().optional(),
     FFPROBE_PATH: z.string().optional(),
     FFMPEG_PRESET: z
@@ -225,6 +226,7 @@ export const CONFIG_GROUPS = [
     label: 'FFmpeg & Download',
     fields: [
       'DOWNLOAD_SECTIONS_MODE',
+      'PARTIAL_DOWNLOAD_ENABLED',
       'FFMPEG_PATH',
       'FFPROBE_PATH',
       'FFMPEG_PRESET',
@@ -331,6 +333,11 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   DOWNLOAD_SECTIONS_MODE: {
     description: 'yt-dlp download mode ("all" or section count)',
     widget: 'text',
+  },
+  PARTIAL_DOWNLOAD_ENABLED: {
+    description:
+      'Download only the clipped portion via yt-dlp --download-sections instead of the full video. Lossless output — no re-encode.',
+    widget: 'toggle',
   },
   FFMPEG_PATH: { description: 'Custom ffmpeg binary path (empty = auto-detect)', widget: 'text' },
   FFPROBE_PATH: { description: 'Custom ffprobe binary path (empty = auto-detect)', widget: 'text' },

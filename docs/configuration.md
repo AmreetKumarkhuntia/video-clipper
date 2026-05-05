@@ -81,14 +81,15 @@ cp .env.example .env
 
 ### Video Download & Clip Cutting
 
-| Variable                   | Default | Description                                                                                            |
-| -------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `DOWNLOAD_SECTIONS_MODE`   | `all`   | `all` = full video download; `N` = download only top N segments via `--download-sections`              |
-| `FFMPEG_PATH`              | —       | Custom path to `ffmpeg` binary (optional)                                                              |
-| `FFPROBE_PATH`             | —       | Custom path to `ffprobe` binary (optional)                                                             |
-| `FFMPEG_PRESET`            | `fast`  | Encoding preset: `ultrafast`, `superfast`, `veryfast`, `fast`, `medium`, `slow`, `slower`              |
-| `TIMESTAMP_OFFSET_SECONDS` | `0`     | Adjust all clip timestamps (positive = later, negative = earlier) — see [audio-sync.md](audio-sync.md) |
-| `CLIP_CONCURRENCY`         | `1`     | Max parallel ffmpeg clip jobs                                                                          |
+| Variable                   | Default | Description                                                                                                                                                                                     |
+| -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOWNLOAD_SECTIONS_MODE`   | `all`   | `all` = full video download; `N` = download only top N segments via `--download-sections`                                                                                                       |
+| `PARTIAL_DOWNLOAD_ENABLED` | `false` | Web UI only: download each segment individually instead of the full video; uses lossless remux (`-c:v copy -c:a copy`); incompatible with private/age-gated videos (must use `false` for those) |
+| `FFMPEG_PATH`              | —       | Custom path to `ffmpeg` binary (optional)                                                                                                                                                       |
+| `FFPROBE_PATH`             | —       | Custom path to `ffprobe` binary (optional)                                                                                                                                                      |
+| `FFMPEG_PRESET`            | `fast`  | Encoding preset: `ultrafast`, `superfast`, `veryfast`, `fast`, `medium`, `slow`, `slower`                                                                                                       |
+| `TIMESTAMP_OFFSET_SECONDS` | `0`     | Adjust all clip timestamps (positive = later, negative = earlier) — see [audio-sync.md](audio-sync.md)                                                                                          |
+| `CLIP_CONCURRENCY`         | `1`     | Max parallel ffmpeg clip jobs                                                                                                                                                                   |
 
 ### Paths & Output
 

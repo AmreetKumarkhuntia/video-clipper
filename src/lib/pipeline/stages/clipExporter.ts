@@ -1,6 +1,6 @@
 import { downloadVideo } from '@lib/services/video/source/youtube/downloader.js';
 import type { DownloaderConfig } from '@lib/services/video/source/youtube/downloader.js';
-import { generateClips, organizeClips } from '@lib/services/video/clipper/index.js';
+import { generateClips, organizeClips, remuxClips } from '@lib/services/video/clipper/index.js';
 import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { RankedSegment, ClipExporterOpts } from '@lib/types/index.js';
@@ -55,7 +55,7 @@ export async function exportClips(
       throw new Error('Expected segments download result but got full-video result.');
     }
 
-    return organizeClips(
+    return remuxClips(
       downloadResult.paths,
       videoId,
       exporterConfig.clipper,

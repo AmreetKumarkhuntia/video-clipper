@@ -63,6 +63,24 @@ function cutClip(
 }
 
 /**
+ * Remuxes a pre-downloaded segment file via ffmpeg stream copy.
+ * Normalises timestamps with -avoid_negative_ts make_zero to fix A/V sync
+ * without re-encoding — lossless, no quality loss.
+ */
+function remuxSegment(sourcePath: string, outputPath: string, cfg: ClipperConfig): Promise<string> {
+  return new Promise((resolve, reject) => {
+    ffmpeg(sourcePath)
+      .outputOptions('-c:v', 'copy')
+      .outputOptions('-c:a', 'copy')
+      .outputOptions('-avoid_negative_ts', 'make_zero')
+      .output(outputPath)
+      .on('end', () => resolve(outputPath))
+      .on('error', (err: Error) => reject(err))
+      .run();
+  });
+}
+
+/**
  * Copies a pre-downloaded segment file to the output directory.
  * Used when videos are downloaded via --download-sections segments mode.
  */
@@ -120,6 +138,12 @@ export async function generateClips(
       const startInt = Math.floor(segment.start);
       const endInt = Math.ceil(segment.end);
       const outputPath = join(outputDir, `${videoId}_${startInt}_${endInt}.mp4`);
+
+      try {
+        await fs.access(outputPath);
+        log.info(`Clip already exists, skipping: ${outputPath}`);
+        return outputPath;
+      } catch {}
 
       log.info(
         `Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`,
@@ -201,6 +225,71 @@ export async function organizeClips(
       const sourcePath = sourcePaths[i];
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log.warn(`Failed to organize clip ${sourcePath}: ${reason}`);
+    }
+  }
+
+  return paths;
+}
+
+/**
+ * Remuxes pre-downloaded segment files to the output directory via ffmpeg stream copy.
+ * Fixes A/V sync by normalising timestamps without re-encoding (lossless).
+ *
+ * @param sourcePaths - Paths to the pre-downloaded segment files in downloads/
+ * @param videoId - Used to verify file naming
+ * @param customPath - Custom output directory (optional, overrides OUTPUT_DIR)
+ * @param concurrency - Maximum number of parallel remux operations (default: 1)
+ * @returns Array of remuxed clip file paths in outputs/
+ */
+export async function remuxClips(
+  sourcePaths: string[],
+  videoId: string,
+  cfg: ClipperConfig,
+  customPath?: string,
+  concurrency: number = 1,
+): Promise<string[]> {
+  if (sourcePaths.length === 0) {
+    log.warn('No pre-downloaded segments to remux.');
+    return [];
+  }
+
+  const outputDir = customPath || cfg.outputDir;
+  configureFfmpeg(cfg);
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const limit = pLimit(concurrency);
+  log.info(
+    `Remuxing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (lossless, max ${concurrency} parallel)...`,
+  );
+
+  const jobs = sourcePaths.map((sourcePath) =>
+    limit(async () => {
+      const filename = sourcePath.split('/').pop() || '';
+      const outputPath = join(outputDir, filename);
+
+      try {
+        await fs.access(outputPath);
+        log.info(`Clip already exists, skipping: ${outputPath}`);
+        return outputPath;
+      } catch {}
+
+      log.info(`Remuxing clip: ${sourcePath} → ${outputPath}`);
+      return remuxSegment(sourcePath, outputPath, cfg);
+    }),
+  );
+
+  const results = await Promise.allSettled(jobs);
+
+  const paths: string[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === 'fulfilled') {
+      log.info(`Clip ready: ${result.value}`);
+      paths.push(result.value);
+    } else {
+      const sourcePath = sourcePaths[i];
+      const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      log.warn(`Failed to remux clip ${sourcePath}: ${reason}`);
     }
   }
 

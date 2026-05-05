@@ -429,6 +429,10 @@ pip install tensorflow tensorflow-hub soundfile numpy
 - ✅ Module 7 — Clip Refinement Pass
 - ✅ Module 8 — Video Downloader
 - ✅ Module 9 — Clip Generator
+  - ✅ Full-download mode: ffmpeg re-encode (libx264 + aac) for maximum compatibility
+  - ✅ Segments mode: lossless remux (`-c:v copy -c:a copy -avoid_negative_ts make_zero`) for fast A/V sync
+  - ✅ Clip output cache — skip re-export if `outputs/{videoId}_{start}_{end}.mp4` already exists
+  - ✅ `PARTIAL_DOWNLOAD_ENABLED` web UI toggle for per-segment downloads
 - 🆕 Module 3b — Audio Downloader (yt-dlp audio-only, 16kHz mono WAV)
 - 🆕 Module 3c — Gemini Flash audio detector (chunked audio + game prompt)
 - 🆕 Module 3c — YAMNet fallback (Python script + Node execa caller)
