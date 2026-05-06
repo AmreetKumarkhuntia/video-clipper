@@ -53,6 +53,18 @@ const FIELD_CONSTRAINTS: Record<
   MAX_CHUNKS: { min: 1 },
   CLIP_CONCURRENCY: { min: 1 },
   YT_DLP_RETRY_COUNT: { min: 0, max: 5 },
+  YT_DLP_SLEEP_REQUESTS: { min: 0, max: 30 },
+  YT_DLP_PLAYER_CLIENT: {
+    options: ['auto', 'android_vr', 'mweb', 'web', 'android', 'ios'],
+    optionLabels: [
+      'Auto (yt-dlp default)',
+      'Android VR (bypass bot-check)',
+      'Mobile Web',
+      'Desktop Web',
+      'Android',
+      'iOS',
+    ],
+  },
   AUDIO_CONFIDENCE_THRESHOLD: { min: 0, max: 1 },
   AUDIO_CLIP_PRE_ROLL: { min: 0 },
   AUDIO_CLIP_POST_ROLL: { min: 0 },

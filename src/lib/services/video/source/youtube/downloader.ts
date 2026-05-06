@@ -23,6 +23,38 @@ function formatTimestamp(seconds: number): string {
 }
 
 /**
+ * Builds yt-dlp flags that are shared across all download functions based on
+ * the configurable strategy fields (player client, SSL, IPv4, geo-bypass,
+ * sleep).  These flags are prepended/appended to the per-function arg list so
+ * every call honours the same settings.
+ */
+function buildSharedFlags(dlConfig: DownloaderConfig): string[] {
+  const flags: string[] = [];
+
+  if (dlConfig.playerClient && dlConfig.playerClient !== 'auto') {
+    flags.push('--extractor-args', `youtube:player_client=${dlConfig.playerClient}`);
+  }
+
+  if (dlConfig.noCheckCertificates) {
+    flags.push('--no-check-certificates');
+  }
+
+  if (dlConfig.forceIpv4) {
+    flags.push('--force-ipv4');
+  }
+
+  if (dlConfig.geoBypass) {
+    flags.push('--geo-bypass');
+  }
+
+  if (dlConfig.sleepRequests && dlConfig.sleepRequests > 0) {
+    flags.push('--sleep-requests', String(dlConfig.sleepRequests));
+  }
+
+  return flags;
+}
+
+/**
  * Downloads a YouTube video using yt-dlp and returns the local file path.
  *
  * Strategy:
@@ -63,6 +95,7 @@ export async function downloadFullVideo(
     outputPath,
     '--no-playlist',
     '--newline',
+    ...buildSharedFlags(dlConfig),
     `https://www.youtube.com/watch?v=${videoId}`,
   ];
 
@@ -147,7 +180,7 @@ async function downloadSegment(
   }
 
   try {
-    // NOTE: cookies are intentionally NOT passed here.
+    // NOTE: cookies are intentionally NOT passed here by default.
     //
     // When --cookies-from-browser or --cookies is present, yt-dlp is forced
     // into the TV + web_creator client path for --download-sections requests.
@@ -161,6 +194,8 @@ async function downloadSegment(
     // at full quality (1080p60 DASH) for any public video.
     //
     // Trade-off: private or age-gated videos cannot be downloaded this way.
+    // Enable YT_DLP_SEGMENT_COOKIES_ENABLED=true to pass cookies here — but
+    // be aware it forces the TV client and may break public video downloads.
     // For those, set PARTIAL_DOWNLOAD_ENABLED=false and use the full-video path
     // which passes cookies and uses the web client (no TV player JS involved).
     const args = [
@@ -174,8 +209,17 @@ async function downloadSegment(
       outputPath,
       '--no-playlist',
       '--newline',
+      ...buildSharedFlags(dlConfig),
       `https://www.youtube.com/watch?v=${videoId}`,
     ];
+
+    if (dlConfig.segmentCookiesEnabled) {
+      if (dlConfig.cookiesFromBrowser) {
+        args.splice(0, 0, '--cookies-from-browser', dlConfig.cookiesFromBrowser);
+      } else if (dlConfig.cookiesFile) {
+        args.splice(0, 0, '--cookies', dlConfig.cookiesFile);
+      }
+    }
 
     await retryAsync(
       async () => {

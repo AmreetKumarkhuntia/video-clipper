@@ -66,6 +66,12 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     cookiesFile: config.YT_DLP_COOKIES_FILE,
     quiet: config.YT_DLP_QUIET,
     retryCount: config.YT_DLP_RETRY_COUNT,
+    segmentCookiesEnabled: config.YT_DLP_SEGMENT_COOKIES_ENABLED,
+    playerClient: config.YT_DLP_PLAYER_CLIENT,
+    noCheckCertificates: config.YT_DLP_NO_CHECK_CERTIFICATES,
+    forceIpv4: config.YT_DLP_FORCE_IPV4,
+    geoBypass: config.YT_DLP_GEO_BYPASS,
+    sleepRequests: config.YT_DLP_SLEEP_REQUESTS,
   };
 
   const audioDownloadConfig: AudioDownloadConfig = {
