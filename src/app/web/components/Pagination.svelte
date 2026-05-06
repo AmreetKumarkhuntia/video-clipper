@@ -1,23 +1,26 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import Button from './Button.svelte';
+  interface Props {
+    hasPrev?: boolean;
+    hasNext?: boolean;
+    onprev?: () => void;
+    onnext?: () => void;
+  }
 
-  export let hasPrev = false;
-  export let hasNext = false;
-
-  const dispatch = createEventDispatcher<{ prev: void; next: void }>();
+  let { hasPrev = false, hasNext = false, onprev, onnext }: Props = $props();
 </script>
 
 <div class="pager">
-  <Button variant="outline" disabled={!hasPrev} on:click={() => dispatch('prev')}>Previous</Button>
-  <Button variant="outline" disabled={!hasNext} on:click={() => dispatch('next')}>Next</Button>
+  <button class="vc-btn vc-btn--secondary" disabled={!hasPrev} onclick={onprev}>
+    ← Previous
+  </button>
+  <button class="vc-btn vc-btn--secondary" disabled={!hasNext} onclick={onnext}> Next → </button>
 </div>
 
 <style>
   .pager {
     display: flex;
     justify-content: center;
-    gap: var(--s-sm);
-    margin-top: var(--s-xl);
+    gap: 12px;
+    margin-top: var(--vc-space-6);
   }
 </style>

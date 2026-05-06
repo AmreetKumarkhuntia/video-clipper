@@ -1,22 +1,28 @@
 <script lang="ts">
   import type { AnalysisActivityItem, ActivityPhase } from '@app/web/types/activity.js';
 
-  export let analyzedChunks = 0;
-  export let totalChunks = 0;
-  export let phase: ActivityPhase = 'idle';
-  export let items: AnalysisActivityItem[] = [];
+  interface Props {
+    analyzedChunks?: number;
+    totalChunks?: number;
+    phase?: ActivityPhase;
+    items?: AnalysisActivityItem[];
+  }
 
-  $: pct = totalChunks > 0 ? Math.round((analyzedChunks / totalChunks) * 100) : 0;
-  $: phaseLabel =
+  let { analyzedChunks = 0, totalChunks = 0, phase = 'idle', items = [] }: Props = $props();
+
+  let pct = $derived(totalChunks > 0 ? Math.round((analyzedChunks / totalChunks) * 100) : 0);
+
+  let phaseLabel = $derived(
     phase === 'idle'
       ? 'Analysis not started'
       : phase === 'analyzing'
         ? 'Analyzing transcript'
         : phase === 'refining'
           ? 'Refining clip windows'
-          : 'Analysis complete';
+          : 'Analysis complete',
+  );
 
-  $: statusTone = phase === 'complete' ? 'done' : phase === 'idle' ? 'idle' : 'running';
+  let statusTone = $derived(phase === 'complete' ? 'done' : phase === 'idle' ? 'idle' : 'running');
 </script>
 
 <div class="progress">
@@ -102,19 +108,19 @@
 <style>
   .progress {
     display: grid;
-    gap: var(--s-lg);
+    gap: var(--vc-space-5);
   }
 
   .hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-md);
+    gap: var(--vc-space-4);
     align-items: start;
   }
 
   .hero-copy {
     display: grid;
-    gap: var(--s-xs);
+    gap: var(--vc-space-2);
   }
 
   .status-row {
@@ -125,35 +131,35 @@
   }
 
   .label {
-    font-weight: var(--fw-semibold);
+    font-weight: 600;
     font-size: 18px;
   }
 
   .subhead {
     max-width: 46ch;
     margin: 0;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
     line-height: 1.5;
   }
 
   .status-dot {
     width: 10px;
     height: 10px;
-    border-radius: var(--r-full);
-    background: var(--c-accent);
-    box-shadow: 0 0 0 8px var(--c-accent-soft);
+    border-radius: 50%;
+    background: var(--vc-clay-500);
+    box-shadow: 0 0 0 8px var(--vc-clay-soft);
     animation: pulse 1.4s ease-in-out infinite;
   }
 
   .status-dot--done {
-    background: var(--c-success);
-    box-shadow: 0 0 0 8px var(--c-success-soft);
+    background: var(--vc-success);
+    box-shadow: 0 0 0 8px var(--vc-success-soft);
     animation: none;
   }
 
   .status-dot--idle {
-    background: var(--c-border-strong);
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--c-surface-strong) 80%, white 20%);
+    background: var(--vc-border-strong);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--vc-surface-2) 80%, white 20%);
     animation: none;
   }
 
@@ -166,12 +172,12 @@
 
   .counter {
     font-size: 26px;
-    font-weight: var(--fw-bold);
+    font-weight: 700;
   }
 
   .counter-label {
     font-size: 12px;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
@@ -179,7 +185,7 @@
   .bar-track {
     height: 8px;
     border-radius: 999px;
-    background: var(--c-surface-strong);
+    background: var(--vc-surface-2);
     overflow: hidden;
   }
 
@@ -188,20 +194,20 @@
     border-radius: 999px;
     background: linear-gradient(
       90deg,
-      var(--c-accent),
-      color-mix(in srgb, var(--c-accent) 65%, white 35%)
+      var(--vc-clay-500),
+      color-mix(in srgb, var(--vc-clay-500) 65%, white 35%)
     );
     transition: width 0.2s ease;
   }
 
   .thread {
     display: grid;
-    gap: var(--s-sm);
+    gap: var(--vc-space-3);
   }
 
   .empty {
     margin: 0;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
   }
 
   .entry {
@@ -220,25 +226,25 @@
   .bullet {
     width: 10px;
     height: 10px;
-    border-radius: var(--r-full);
-    background: var(--c-accent);
-    box-shadow: 0 0 0 5px var(--c-accent-soft);
+    border-radius: 50%;
+    background: var(--vc-clay-500);
+    box-shadow: 0 0 0 5px var(--vc-clay-soft);
   }
 
   .bullet--done {
-    background: var(--c-success);
-    box-shadow: 0 0 0 5px var(--c-success-soft);
+    background: var(--vc-success);
+    box-shadow: 0 0 0 5px var(--vc-success-soft);
   }
 
   .bullet--error {
-    background: var(--c-error);
+    background: var(--vc-error);
     box-shadow: 0 0 0 5px rgba(173, 49, 49, 0.12);
   }
 
   .line {
     width: 1px;
     height: 100%;
-    background: var(--c-border);
+    background: var(--vc-border);
   }
 
   .entry:last-child .line {
@@ -247,14 +253,14 @@
 
   .content {
     display: grid;
-    gap: var(--s-xs);
-    padding-bottom: var(--s-sm);
+    gap: var(--vc-space-2);
+    padding-bottom: var(--vc-space-3);
   }
 
   .entry-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-sm);
+    gap: var(--vc-space-3);
     align-items: center;
   }
 
@@ -267,27 +273,27 @@
   .badge {
     padding: 4px 8px;
     border-radius: 999px;
-    background: var(--c-surface-muted);
-    color: var(--c-text-muted);
+    background: var(--vc-surface-2);
+    color: var(--vc-text-muted);
     font-size: 11px;
-    font-weight: var(--fw-semibold);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
 
   .badge[data-status='done'] {
-    background: var(--c-success-soft);
-    color: var(--c-success);
+    background: var(--vc-success-soft);
+    color: var(--vc-success);
   }
 
   .badge[data-status='error'] {
     background: rgba(173, 49, 49, 0.12);
-    color: var(--c-error);
+    color: var(--vc-error);
   }
 
   .detail {
     margin: 0;
-    color: var(--c-text-secondary);
+    color: var(--vc-text-muted);
     line-height: 1.45;
   }
 
@@ -298,20 +304,20 @@
   summary {
     cursor: pointer;
     font-size: 12px;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
     user-select: none;
   }
 
   .reasoning {
-    margin: var(--s-xs) 0 0;
-    padding: var(--s-sm);
+    margin: var(--vc-space-2) 0 0;
+    padding: var(--vc-space-3);
     max-height: 180px;
     overflow-y: auto;
-    background: var(--c-surface-muted);
-    border-radius: var(--r-sm);
+    background: var(--vc-surface-2);
+    border-radius: var(--vc-radius-sm);
     font-size: 11px;
     line-height: 1.4;
-    color: var(--c-text-secondary);
+    color: var(--vc-text-muted);
     white-space: pre-wrap;
     word-break: break-word;
   }
@@ -322,7 +328,6 @@
       transform: scale(1);
       opacity: 1;
     }
-
     50% {
       transform: scale(0.88);
       opacity: 0.82;
@@ -334,7 +339,6 @@
     .entry-head {
       grid-template-columns: 1fr;
     }
-
     .counter-block {
       justify-items: start;
       text-align: left;

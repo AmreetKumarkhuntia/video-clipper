@@ -1,134 +1,205 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Video Clipper — Screens</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="ds/fonts.css">
-<link rel="stylesheet" href="ds/tokens.css">
-<link rel="stylesheet" href="ds/components.css">
-<link rel="stylesheet" href="screens.css">
-<style>
-  /* Canvas page background — matches DC default but warmer */
-  html, body { margin: 0; height: 100%; background: #f0eee9; }
-  /* Each artboard is a 1440x900 frame; the screen-root inside fills it. */
-  .artboard-host { width: 100%; height: 100%; overflow: hidden; }
+  <head>
+    <meta charset="utf-8" />
+    <title>Video Clipper — Screens</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="ds/fonts.css" />
+    <link rel="stylesheet" href="ds/tokens.css" />
+    <link rel="stylesheet" href="ds/components.css" />
+    <link rel="stylesheet" href="screens.css" />
+    <style>
+      /* Canvas page background — matches DC default but warmer */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #f0eee9;
+      }
+      /* Each artboard is a 1440x900 frame; the screen-root inside fills it. */
+      .artboard-host {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
 
-  /* Top-of-canvas header banner */
-  .canvas-banner {
-    position: fixed;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 999px;
-    padding: 8px 16px 8px 14px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    display: flex; align-items: center; gap: 12px;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 13px;
-    color: #2a251f;
-  }
-  .canvas-banner__dot { width: 8px; height: 8px; border-radius: 999px; background: #D97757; }
-  .canvas-banner__sub { color: rgba(60,50,40,0.55); margin-left: 8px; padding-left: 12px; border-left: 1px solid rgba(0,0,0,0.08); }
-  .canvas-banner button {
-    border: 1px solid rgba(0,0,0,0.08);
-    background: white;
-    border-radius: 999px;
-    padding: 4px 10px;
-    font: inherit;
-    font-size: 12px;
-    color: #2a251f;
-    cursor: pointer;
-    margin-left: 4px;
-    transition: background 120ms;
-  }
-  .canvas-banner button:hover { background: #f5f1ea; }
-  .canvas-banner button.is-active { background: #2a251f; color: white; border-color: #2a251f; }
-</style>
+      /* Top-of-canvas header banner */
+      .canvas-banner {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 999px;
+        padding: 8px 16px 8px 14px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        font-size: 13px;
+        color: #2a251f;
+      }
+      .canvas-banner__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #d97757;
+      }
+      .canvas-banner__sub {
+        color: rgba(60, 50, 40, 0.55);
+        margin-left: 8px;
+        padding-left: 12px;
+        border-left: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .canvas-banner button {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: white;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font: inherit;
+        font-size: 12px;
+        color: #2a251f;
+        cursor: pointer;
+        margin-left: 4px;
+        transition: background 120ms;
+      }
+      .canvas-banner button:hover {
+        background: #f5f1ea;
+      }
+      .canvas-banner button.is-active {
+        background: #2a251f;
+        color: white;
+        border-color: #2a251f;
+      }
+    </style>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-</head>
-<body>
-<div id="root"></div>
+    <script
+      src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+      integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+      integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+      integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div id="root"></div>
 
-<!-- Components and screens (load order matters; each exposes via window) -->
-<script type="text/babel" src="design-canvas.jsx"></script>
-<script type="text/babel" src="screens/icons.jsx"></script>
-<script type="text/babel" src="screens/topbar.jsx"></script>
-<script type="text/babel" src="screens/main.jsx"></script>
-<script type="text/babel" src="screens/start.jsx"></script>
-<script type="text/babel" src="screens/analyzing.jsx"></script>
-<script type="text/babel" src="screens/results.jsx"></script>
-<script type="text/babel" src="screens/clip-detail.jsx"></script>
-<script type="text/babel" src="screens/settings.jsx"></script>
+    <!-- Components and screens (load order matters; each exposes via window) -->
+    <script type="text/babel" src="design-canvas.jsx"></script>
+    <script type="text/babel" src="screens/icons.jsx"></script>
+    <script type="text/babel" src="screens/topbar.jsx"></script>
+    <script type="text/babel" src="screens/main.jsx"></script>
+    <script type="text/babel" src="screens/start.jsx"></script>
+    <script type="text/babel" src="screens/analyzing.jsx"></script>
+    <script type="text/babel" src="screens/results.jsx"></script>
+    <script type="text/babel" src="screens/clip-detail.jsx"></script>
+    <script type="text/babel" src="screens/settings.jsx"></script>
 
-<script type="text/babel" data-presets="react">
-const { useState } = React;
-const _W = window;
+    <script type="text/babel" data-presets="react">
+      const { useState } = React;
+      const _W = window;
 
-const App = () => {
-  const [theme, setTheme] = useState("light");
-  const toggle = () => setTheme(t => t === "light" ? "dark" : "light");
+      const App = () => {
+        const [theme, setTheme] = useState('light');
+        const toggle = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
 
-  return (
-    <>
-      <div className="canvas-banner">
-        <span className="canvas-banner__dot"></span>
-        <strong>Video Clipper</strong>
-        <span>· improved screens</span>
-        <span className="canvas-banner__sub">Theme</span>
-        <button className={theme === "light" ? "is-active" : ""} onClick={() => setTheme("light")}>Light</button>
-        <button className={theme === "dark" ? "is-active" : ""} onClick={() => setTheme("dark")}>Dark</button>
-      </div>
-
-      <_W.DesignCanvas storageKey="video-clipper-screens" initialZoom={0.5}>
-        <_W.DCSection id="primary" title="Primary screens" subtitle="The main pipeline → segments → clips flow">
-          <_W.DCArtboard id="start" label="01 · Start state" width={1440} height={900}>
-            <div data-screen-label="01 Start" className="artboard-host">
-              <_W.StartScreen theme={theme} onTheme={toggle} />
+        return (
+          <>
+            <div className="canvas-banner">
+              <span className="canvas-banner__dot"></span>
+              <strong>Video Clipper</strong>
+              <span>· improved screens</span>
+              <span className="canvas-banner__sub">Theme</span>
+              <button
+                className={theme === 'light' ? 'is-active' : ''}
+                onClick={() => setTheme('light')}
+              >
+                Light
+              </button>
+              <button
+                className={theme === 'dark' ? 'is-active' : ''}
+                onClick={() => setTheme('dark')}
+              >
+                Dark
+              </button>
             </div>
-          </_W.DCArtboard>
-          <_W.DCArtboard id="analyzing" label="02 · Analyzing" width={1440} height={900}>
-            <div data-screen-label="02 Analyzing" className="artboard-host">
-              <_W.AnalyzingScreen theme={theme} onTheme={toggle} />
-            </div>
-          </_W.DCArtboard>
-          <_W.DCArtboard id="main" label="03 · Main app · run done" width={1440} height={900}>
-            <div data-screen-label="03 Main" className="artboard-host">
-              <_W.MainScreen theme={theme} onTheme={toggle} />
-            </div>
-          </_W.DCArtboard>
-          <_W.DCArtboard id="results" label="04 · Results · clips cut" width={1440} height={900}>
-            <div data-screen-label="04 Results" className="artboard-host">
-              <_W.ResultsScreen theme={theme} onTheme={toggle} />
-            </div>
-          </_W.DCArtboard>
-        </_W.DCSection>
 
-        <_W.DCSection id="detail" title="Detail + Settings" subtitle="Refining a single clip and configuring the run">
-          <_W.DCArtboard id="clip-detail" label="05 · Clip detail · refine" width={1440} height={900}>
-            <div data-screen-label="05 Clip detail" className="artboard-host">
-              <_W.ClipDetailScreen theme={theme} onTheme={toggle} />
-            </div>
-          </_W.DCArtboard>
-          <_W.DCArtboard id="settings" label="06 · Settings" width={1440} height={900}>
-            <div data-screen-label="06 Settings" className="artboard-host">
-              <_W.SettingsScreen theme={theme} onTheme={toggle} />
-            </div>
-          </_W.DCArtboard>
-        </_W.DCSection>
-      </_W.DesignCanvas>
-    </>
-  );
-};
+            <_W.DesignCanvas storageKey="video-clipper-screens" initialZoom={0.5}>
+              <_W.DCSection
+                id="primary"
+                title="Primary screens"
+                subtitle="The main pipeline → segments → clips flow"
+              >
+                <_W.DCArtboard id="start" label="01 · Start state" width={1440} height={900}>
+                  <div data-screen-label="01 Start" className="artboard-host">
+                    <_W.StartScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+                <_W.DCArtboard id="analyzing" label="02 · Analyzing" width={1440} height={900}>
+                  <div data-screen-label="02 Analyzing" className="artboard-host">
+                    <_W.AnalyzingScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+                <_W.DCArtboard id="main" label="03 · Main app · run done" width={1440} height={900}>
+                  <div data-screen-label="03 Main" className="artboard-host">
+                    <_W.MainScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+                <_W.DCArtboard
+                  id="results"
+                  label="04 · Results · clips cut"
+                  width={1440}
+                  height={900}
+                >
+                  <div data-screen-label="04 Results" className="artboard-host">
+                    <_W.ResultsScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+              </_W.DCSection>
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
-</body>
+              <_W.DCSection
+                id="detail"
+                title="Detail + Settings"
+                subtitle="Refining a single clip and configuring the run"
+              >
+                <_W.DCArtboard
+                  id="clip-detail"
+                  label="05 · Clip detail · refine"
+                  width={1440}
+                  height={900}
+                >
+                  <div data-screen-label="05 Clip detail" className="artboard-host">
+                    <_W.ClipDetailScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+                <_W.DCArtboard id="settings" label="06 · Settings" width={1440} height={900}>
+                  <div data-screen-label="06 Settings" className="artboard-host">
+                    <_W.SettingsScreen theme={theme} onTheme={toggle} />
+                  </div>
+                </_W.DCArtboard>
+              </_W.DCSection>
+            </_W.DesignCanvas>
+          </>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
 </html>

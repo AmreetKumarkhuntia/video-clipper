@@ -1,19 +1,27 @@
 <script lang="ts">
-  import Panel from '@web/components/Panel.svelte';
   import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
 
-  export let videoId: string;
-  export let title: string;
+  interface Props {
+    videoId: string;
+    title: string;
+  }
+
+  let { videoId, title }: Props = $props();
 </script>
 
-<Panel tag="section" padded={false}>
-  <div class="video-panel">
-    <YouTubeEmbed {videoId} {title} />
-  </div>
-</Panel>
+<div class="player-embed">
+  <YouTubeEmbed {videoId} {title} />
+</div>
 
 <style>
-  .video-panel {
-    padding: 16px;
+  .player-embed {
+    position: absolute;
+    inset: 0;
+  }
+
+  .player-embed :global(.embed) {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
   }
 </style>

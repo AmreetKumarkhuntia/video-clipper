@@ -7,8 +7,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--c-bg);
-  color: var(--c-text);
+  background: var(--vc-bg);
+  color: var(--vc-text);
   font-family:
     Inter,
     ui-sans-serif,

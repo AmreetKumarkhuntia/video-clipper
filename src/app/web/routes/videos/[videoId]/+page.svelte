@@ -17,14 +17,13 @@
     upsertSegmentProgress,
     upsertSegmentStarted,
   } from '@web/lib/activity/analysisActivity.js';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
+  import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
+  import Icon from '@web/components/Icon.svelte';
   import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
   import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
   import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
   import VideoPlayerPanel from '@web/components/video/VideoPlayerPanel.svelte';
-  import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
 
   let video: VideoDetails | null = null;
   let transcript: TranscriptBundle | null = null;
@@ -54,7 +53,6 @@
   async function loadVideo(): Promise<void> {
     isLoadingVideo = true;
     errorMessage = '';
-
     try {
       video = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
     } catch (error) {
@@ -67,7 +65,6 @@
   async function loadTranscript(): Promise<void> {
     isLoadingTranscript = true;
     errorMessage = '';
-
     try {
       transcript = await apiFetch<TranscriptBundle>(`/api/youtube/videos/${videoId}/transcript`);
     } catch (error) {
@@ -104,22 +101,13 @@
           onChunkProgress: (chunkIndex, text) => {
             logAnalysisEvent(
               'chunk_progress',
-              {
-                chunkIndex,
-                textLength: text.length,
-                preview: previewStreamText(text),
-              },
+              { chunkIndex, textLength: text.length, preview: previewStreamText(text) },
               'debug',
             );
             activityState = upsertChunkProgress(activityState, chunkIndex, text);
           },
           onChunkAnalyzed: (chunkIndex, evaluation) => {
-            logAnalysisEvent('chunk_analyzed', {
-              chunkIndex,
-              status: evaluation.status,
-              interesting: evaluation.status === 'success' ? evaluation.interesting : undefined,
-              score: evaluation.status === 'success' ? evaluation.score : undefined,
-            });
+            logAnalysisEvent('chunk_analyzed', { chunkIndex, status: evaluation.status });
             totalChunks = Math.max(totalChunks, chunkIndex + 1);
             if (!completedChunkIndexes.has(chunkIndex)) {
               completedChunkIndexes = new Set(completedChunkIndexes).add(chunkIndex);
@@ -135,11 +123,7 @@
           onSegmentProgress: (rank, text) => {
             logAnalysisEvent(
               'segment_progress',
-              {
-                rank,
-                textLength: text.length,
-                preview: previewStreamText(text),
-              },
+              { rank, textLength: text.length, preview: previewStreamText(text) },
               'debug',
             );
             analysisPhase = 'refining';
@@ -167,10 +151,7 @@
         },
       );
 
-      logAnalysisEvent('analysis_complete', {
-        candidateCount: plan.candidates.length,
-      });
-
+      logAnalysisEvent('analysis_complete', { candidateCount: plan.candidates.length });
       analysisPhase = 'complete';
       activityState = appendSystemActivity(activityState, {
         title: 'Clip plan ready',
@@ -178,9 +159,7 @@
         detail: `${plan.candidates.length} candidate moments are ready for review.`,
       });
     } catch (error) {
-      if (!errorMessage) {
-        errorMessage = error instanceof Error ? error.message : String(error);
-      }
+      if (!errorMessage) errorMessage = error instanceof Error ? error.message : String(error);
     } finally {
       isAnalyzing = false;
     }
@@ -188,26 +167,58 @@
 </script>
 
 {#if isLoadingVideo}
-  <MutedText>Loading video details...</MutedText>
+  <div class="analyze-loading">
+    <div class="sk sk--line" style="width:240px;height:16px"></div>
+  </div>
 {:else if errorMessage && !video}
-  <ErrorText message={errorMessage} />
+  <p class="analyze-error">{errorMessage}</p>
 {/if}
 
 {#if video}
-  <section class="video-page-columns">
-    <div class="left-column">
-      <VideoPlayerPanel {videoId} title={video.title} />
+  <div class="analyze-layout">
+    <div class="analyze-main">
+      <!-- Player -->
+      <div class="player">
+        <div class="player__bg"></div>
+        <div class="player__title">
+          <Icon name="video" size={13} />
+          {video.title}
+        </div>
+        <VideoPlayerPanel {videoId} title={video.title} />
+      </div>
 
-      <ActivityPanel
-        {analyzedChunks}
-        {totalChunks}
-        phase={analysisPhase}
-        items={activityState.items}
-        {isAnalyzing}
-      />
+      <!-- Activity log -->
+      <div class="sect">
+        <div class="sect__h">
+          <h3>Activity</h3>
+          {#if isAnalyzing}
+            <span class="vc-badge vc-badge--clay">
+              <span class="status-line__dot dot--run"></span>
+              Analyzing {analyzedChunks}/{totalChunks}
+            </span>
+          {/if}
+        </div>
+        <ActivityPanel
+          {analyzedChunks}
+          {totalChunks}
+          phase={analysisPhase}
+          items={activityState.items}
+          {isAnalyzing}
+        />
+      </div>
+
+      {#if plan}
+        <div class="sect">
+          <div class="sect__h">
+            <h3>Clip plan</h3>
+            <span class="sect__h-meta">{plan.candidates.length} candidates</span>
+          </div>
+          <ClipPlanSummary {plan} {videoId} />
+        </div>
+      {/if}
     </div>
 
-    <div class="right-column">
+    <div class="analyze-side">
       <VideoDetailsRail
         {video}
         {isLoadingTranscript}
@@ -217,55 +228,60 @@
         onPlanClips={planClips}
       />
 
-      <TranscriptPanel
-        lines={transcriptRows}
-        chunkCount={transcript?.chunks.length ?? 0}
-        highlightRanges={candidateRanges}
-      />
+      {#if transcriptRows.length > 0}
+        <div style="margin-top: 20px">
+          <TranscriptPanel
+            lines={transcriptRows}
+            chunkCount={transcript?.chunks.length ?? 0}
+            highlightRanges={candidateRanges}
+          />
+        </div>
+      {/if}
     </div>
-  </section>
-
-  <div class="plan-panel">
-    <ClipPlanSummary {plan} {videoId} />
   </div>
 {/if}
 
 <style>
-  .video-page-columns {
+  .analyze-loading {
+    padding: 32px;
+  }
+
+  .analyze-error {
+    padding: 32px;
+    color: var(--vc-error);
+    font-size: var(--vc-text-14);
+  }
+
+  .analyze-layout {
     display: grid;
-    grid-template-columns: minmax(0, var(--video-page-main)) minmax(340px, var(--video-page-rail));
-    gap: var(--s-lg);
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
     align-items: start;
   }
 
-  .left-column,
-  .right-column {
-    display: grid;
-    gap: var(--s-lg);
-    align-content: start;
+  .analyze-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
   }
 
-  .plan-panel {
-    margin-top: var(--s-lg);
+  .analyze-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
   }
 
-  @media (max-width: 980px) {
-    .video-page-columns {
-      grid-template-columns: minmax(0, var(--video-page-main-soft)) minmax(
-          300px,
-          var(--video-page-rail-soft)
-        );
-    }
+  .sect__h-meta {
+    font-family: var(--vc-font-mono);
+    font-size: var(--vc-text-12);
+    color: var(--vc-text-subtle);
   }
 
-  @media (max-width: 800px) {
-    .video-page-columns {
+  @media (max-width: 900px) {
+    .analyze-layout {
       grid-template-columns: 1fr;
-    }
-
-    .right-column,
-    .plan-panel {
-      margin-top: var(--s-lg);
     }
   }
 </style>

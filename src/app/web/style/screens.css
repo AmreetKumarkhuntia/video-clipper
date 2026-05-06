@@ -1,20 +1,9 @@
-/* ── Screen container ──────────────────────────────────────────
-   Each screen is dropped into a 1440x900 frame inside an artboard.
-   Theme is scoped to .screen-root so multiple themes can coexist on canvas.
-   ───────────────────────────────────────────────────────────── */
-.screen-root {
-  width: 1440px;
-  height: 900px;
-  background: var(--vc-bg);
-  color: var(--vc-text);
-  font-family: var(--vc-font-body);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  font-size: var(--vc-text-15);
-}
+/* Video Clipper — screen-level layout
+ * Ported from design-reference/project/screens.css.
+ * .screen-root removed (canvas-only scaffolding).
+ */
 
-/* Pulse animation used by status dots */
+/* ── Keyframes ───────────────────────────────────────────────── */
 @keyframes vc-pulse {
   0%,
   100% {
@@ -39,6 +28,28 @@
     background-position: 240px 0;
   }
 }
+@keyframes vc-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Base overrides for vc token integration ─────────────────── */
+body {
+  background: var(--vc-bg);
+  color: var(--vc-text);
+  font-family: var(--vc-font-body);
+  transition:
+    background var(--vc-dur-base) var(--vc-ease),
+    color var(--vc-dur-base) var(--vc-ease);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
 
 /* ── Top bar ──────────────────────────────────────────────────── */
 .topbar {
@@ -49,6 +60,9 @@
   border-bottom: 1px solid var(--vc-border);
   background: var(--vc-surface);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .topbar__brand {
   display: flex;
@@ -67,6 +81,11 @@
   display: flex;
   align-items: center;
   gap: var(--vc-space-2);
+}
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--vc-space-1);
 }
 .topbar__chip {
   display: inline-flex;
@@ -87,16 +106,48 @@
   background: var(--vc-success);
   flex-shrink: 0;
 }
+.topbar__nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: var(--vc-text-14);
+  color: var(--vc-text-muted);
+  border-radius: var(--vc-radius-sm);
+  transition:
+    background var(--vc-dur-fast) var(--vc-ease),
+    color var(--vc-dur-fast) var(--vc-ease);
+}
+.topbar__nav-link:hover {
+  background: var(--vc-surface-2);
+  color: var(--vc-text);
+}
+.topbar__nav-link.is-active {
+  color: var(--vc-text);
+  font-weight: 500;
+}
 
-/* ── Shell layout ─────────────────────────────────────────────── */
+/* ── App shell ────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Shell layout (for video workflow routes) ─────────────────── */
 .shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
+  grid-template-columns: 280px 1fr;
   min-height: 0;
   overflow: hidden;
 }
-.shell--detail {
+.shell--with-side {
   grid-template-columns: 280px 1fr 320px;
 }
 .rail {
@@ -346,20 +397,6 @@
 .player__play:hover {
   transform: scale(1.05);
 }
-.player__caption {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--vc-font-display);
-  font-size: 22px;
-  font-style: italic;
-  color: rgba(255, 255, 255, 0.92);
-  text-align: center;
-  max-width: 70%;
-  line-height: 1.3;
-  text-wrap: pretty;
-}
 
 /* ── Timeline ─────────────────────────────────────────────────── */
 .timeline {
@@ -389,52 +426,6 @@
   border-radius: var(--vc-radius-sm);
   overflow: hidden;
 }
-.timeline__seg {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: var(--vc-clay-soft);
-  border-left: 2px solid var(--vc-clay-500);
-  border-right: 2px solid var(--vc-clay-500);
-}
-.timeline__seg--active {
-  background: var(--vc-clay-100);
-}
-.timeline__seg--cut {
-  background: var(--vc-success-soft);
-  border-color: var(--vc-success);
-}
-.timeline__seg__label {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  font-family: var(--vc-font-mono);
-  font-size: 10px;
-  color: var(--vc-clay-700);
-}
-[data-theme='dark'] .timeline__seg__label {
-  color: var(--vc-clay-400);
-}
-.timeline__seg--cut .timeline__seg__label {
-  color: var(--vc-success);
-}
-.timeline__head__cursor {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 2px;
-  background: var(--vc-text);
-}
-.timeline__head__cursor::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -4px;
-  width: 10px;
-  height: 6px;
-  background: var(--vc-text);
-  border-radius: 2px;
-}
 .timeline__skeleton {
   position: absolute;
   top: 8px;
@@ -460,7 +451,7 @@
   color: var(--vc-text-subtle);
 }
 
-/* ── Sections + headings ──────────────────────────────────────── */
+/* ── Sections ─────────────────────────────────────────────────── */
 .sect {
   margin-top: 28px;
 }
@@ -565,18 +556,8 @@
 .segment--streaming {
   animation: vc-fadein 0.32s var(--vc-ease);
 }
-@keyframes vc-fadein {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 
-/* Skeleton row */
+/* Skeleton rows */
 .segment--skeleton {
   display: grid;
   grid-template-columns: 32px 100px 1fr 80px;
@@ -639,6 +620,7 @@
 }
 .empty__glyph {
   margin-bottom: 24px;
+  color: var(--vc-text-subtle);
 }
 .empty__lede {
   font-family: var(--vc-font-display);
@@ -647,7 +629,6 @@
   color: var(--vc-text-muted);
   max-width: 520px;
   margin-bottom: 32px;
-  text-wrap: pretty;
 }
 .empty__url {
   width: 100%;
@@ -672,6 +653,7 @@
   gap: 6px;
 }
 
+/* ── Recents / recent row ─────────────────────────────────────── */
 .recents {
   width: 100%;
   text-align: left;
@@ -739,6 +721,7 @@
   font-family: var(--vc-font-mono);
 }
 
+/* Tips block */
 .side__group--tips {
   display: flex;
   flex-direction: column;
@@ -802,7 +785,7 @@
   line-height: 1.4;
 }
 
-/* ── Live log (analyzing state) ───────────────────────────────── */
+/* ── Live log ─────────────────────────────────────────────────── */
 .log {
   background: var(--vc-bg);
   border: 1px solid var(--vc-border);
@@ -1080,13 +1063,6 @@
   height: 14px;
   background: rgba(255, 255, 255, 0.7);
   border-radius: 1px;
-}
-.wave__cursor {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 2px;
-  background: var(--vc-text);
 }
 .wave__controls {
   display: grid;

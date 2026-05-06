@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Panel from '@web/components/Panel.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import type { UploadArtifact } from '@app/web/types/publish.js';
   import type { UploadQueueItem } from '@web/lib/uploadStream.js';
 
@@ -16,106 +16,136 @@
   let error = $derived(upload?.error ?? queueItem?.error);
 </script>
 
-<Panel tag="article">
-  <div class="head">
-    <div>
-      <p class="eyebrow">Upload</p>
-      <h2>{title}</h2>
+<article class="vc-card upload-card">
+  <div class="card-head">
+    <div class="card-info">
+      <p class="card-eyebrow">Upload</p>
+      <p class="card-title">{title}</p>
     </div>
+
     {#if status === 'uploading'}
-      <span class="status status-uploading">
+      <span class="status status--uploading">
         <span class="spinner" aria-hidden="true"></span>
         Uploading
       </span>
-    {:else}
-      <span
-        class="status"
-        class:status-success={status === 'uploaded'}
-        class:status-error={status === 'failed'}
-      >
-        {status}
+    {:else if status === 'uploaded'}
+      <span class="status status--ok">
+        <Icon name="check" size={11} />
+        Uploaded
       </span>
+    {:else if status === 'failed'}
+      <span class="status status--err">Failed</span>
+    {:else}
+      <span class="status status--queued">{status}</span>
     {/if}
   </div>
 
   {#if youtubeUrl}
-    <p><a href={youtubeUrl} target="_blank" rel="noreferrer">Open uploaded video</a></p>
+    <p class="card-link">
+      <a href={youtubeUrl} target="_blank" rel="noreferrer" class="vc-link">
+        Open on YouTube <Icon name="external-link" size={12} />
+      </a>
+    </p>
   {/if}
 
   {#if error}
-    <p class="error">{error}</p>
+    <p class="card-error">{error}</p>
   {/if}
-</Panel>
+</article>
 
 <style>
-  .head {
+  .upload-card {
     display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: var(--s-md);
+    flex-direction: column;
+    gap: 0;
   }
 
-  h2 {
-    margin: 4px 0 0;
-    font-size: 20px;
-    line-height: 1.2;
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .card-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .card-title {
+    font-size: var(--vc-text-16);
+    font-weight: 500;
+    color: var(--vc-text);
+    margin: 0;
+    overflow-wrap: anywhere;
   }
 
   .status {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-height: 28px;
-    padding: 0 10px;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 3px 10px;
     border-radius: 999px;
-    background: var(--c-surface-muted);
-    color: var(--c-text-muted);
-    font-size: 12px;
-    font-weight: var(--fw-bold);
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    gap: 8px;
+    letter-spacing: 0.07em;
   }
 
-  .status-success {
-    background: var(--c-success-soft);
-    color: var(--c-success);
+  .status--queued {
+    background: var(--vc-surface-raised);
+    color: var(--vc-text-muted);
   }
 
-  .status-error {
-    background: color-mix(in srgb, var(--c-error) 10%, var(--c-surface));
-    color: var(--c-error);
+  .status--uploading {
+    background: color-mix(in srgb, var(--vc-accent) 12%, var(--vc-surface));
+    color: var(--vc-accent);
   }
 
-  .status-uploading {
-    background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
-    color: var(--c-accent);
+  .status--ok {
+    background: color-mix(in srgb, var(--vc-success, #16a34a) 12%, var(--vc-surface));
+    color: var(--vc-success, #16a34a);
+  }
+
+  .status--err {
+    background: color-mix(in srgb, var(--vc-error) 12%, var(--vc-surface));
+    color: var(--vc-error);
   }
 
   .spinner {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
     border: 2px solid currentColor;
     border-right-color: transparent;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: vc-spin 0.8s linear infinite;
   }
 
-  p {
-    margin: var(--s-md) 0 0;
-    color: var(--c-text-secondary);
+  .card-link {
+    margin: 12px 0 0;
+    font-size: var(--vc-text-14);
   }
 
-  .error {
-    color: var(--c-error);
+  .vc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--vc-accent);
+    text-decoration: none;
   }
 
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+  .vc-link:hover {
+    text-decoration: underline;
+  }
+
+  .card-error {
+    margin: 10px 0 0;
+    font-size: var(--vc-text-13);
+    color: var(--vc-error);
   }
 </style>

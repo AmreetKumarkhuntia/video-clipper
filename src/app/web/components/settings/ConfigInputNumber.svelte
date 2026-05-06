@@ -1,19 +1,27 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  interface Props {
+    value?: number;
+    min?: number;
+    max?: number;
+    placeholder?: string;
+    disabled?: boolean;
+    onchange?: (value: number | undefined) => void;
+  }
 
-  export let value: number | undefined = undefined;
-  export let min: number | undefined = undefined;
-  export let max: number | undefined = undefined;
-  export let placeholder = '';
-  export let disabled = false;
-
-  const dispatch = createEventDispatcher<{ change: number | undefined }>();
+  let {
+    value = $bindable(undefined),
+    min,
+    max,
+    placeholder = '',
+    disabled = false,
+    onchange,
+  }: Props = $props();
 
   function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     const parsed = target.value === '' ? undefined : Number(target.value);
     value = parsed;
-    dispatch('change', parsed);
+    onchange?.(parsed);
   }
 </script>
 
@@ -24,7 +32,7 @@
   {min}
   {max}
   class="input"
-  on:input={handleInput}
+  oninput={handleInput}
   value={value ?? ''}
 />
 
@@ -33,10 +41,10 @@
     width: 100%;
     min-height: 40px;
     padding: 0 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    background: var(--c-surface);
-    color: var(--c-text);
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    color: var(--vc-text);
     font-size: 14px;
     font-family: inherit;
     transition: border-color 0.16s ease;
@@ -44,7 +52,7 @@
 
   .input:focus {
     outline: none;
-    border-color: var(--c-accent);
+    border-color: var(--vc-clay-500);
   }
 
   .input:disabled {

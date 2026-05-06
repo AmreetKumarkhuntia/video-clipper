@@ -1,70 +1,75 @@
 <script lang="ts">
   import type { ClipPlan } from '@app/web/types/analysis.js';
-  import MutedText from '@web/components/MutedText.svelte';
-  import Panel from '@web/components/Panel.svelte';
 
-  export let plan: ClipPlan | null = null;
-  export let videoId: string;
+  interface Props {
+    plan?: ClipPlan | null;
+    videoId: string;
+  }
+
+  let { plan = null, videoId }: Props = $props();
 </script>
 
-<Panel tag="section">
+<section class="vc-card plan-card">
   <div class="panel-head">
-    <div>
-      <p class="eyebrow">Clip plan</p>
-      <h2>Review the candidate moments generated from this run.</h2>
-    </div>
+    <p class="panel-eyebrow">Clip plan</p>
+    <h2 class="panel-title">Review the candidate moments generated from this run.</h2>
   </div>
 
   {#if plan}
     <div class="plan-summary">
-      <p>
+      <p class="plan-count">
         {plan.candidates.length} candidate {plan.candidates.length === 1 ? 'moment' : 'moments'} ready.
       </p>
-      <a class="btn-link" href={`/videos/${videoId}/analysis/${plan.id}`}>Review clip candidates</a>
+      <a class="vc-btn vc-btn--primary" href={`/videos/${videoId}/analysis/${plan.id}`}>
+        Review clip candidates
+      </a>
     </div>
   {:else}
-    <MutedText>No clip plan generated yet.</MutedText>
+    <p class="plan-muted">No clip plan generated yet.</p>
   {/if}
-</Panel>
+</section>
 
 <style>
   .panel-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-md);
-    align-items: start;
-    margin-bottom: var(--s-lg);
+    margin-bottom: 20px;
   }
 
-  h2 {
+  .panel-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .panel-title {
     margin: 0;
-    font-size: clamp(22px, 2.8vw, 28px);
+    font-family: var(--vc-font-display);
+    font-size: clamp(20px, 2.8vw, 26px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
     line-height: 1.1;
+    color: var(--vc-text);
   }
 
   .plan-summary {
     display: grid;
-    grid-template-columns: minmax(0, var(--video-page-main)) minmax(220px, var(--video-page-rail));
-    gap: var(--s-md);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
     align-items: center;
   }
 
-  .plan-summary p {
+  .plan-count {
     margin: 0;
-    color: var(--c-text-secondary);
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
   }
 
-  .btn-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 16px;
-    border-radius: 14px;
-    background: var(--c-primary);
-    color: var(--c-primary-text);
-    font-weight: var(--fw-bold);
-    box-shadow: var(--shadow-soft);
+  .plan-muted {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+    margin: 0;
   }
 
   @media (max-width: 980px) {

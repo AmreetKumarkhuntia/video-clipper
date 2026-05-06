@@ -1,7 +1,5 @@
 <script lang="ts">
-  import Button from '@web/components/Button.svelte';
-  import FormField from '@web/components/FormField.svelte';
-  import Panel from '@web/components/Panel.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
   import { apiFetch } from '@web/lib/api.js';
   import {
@@ -69,19 +67,19 @@
   }
 </script>
 
-<Panel tag="article">
+<article class="vc-card draft-card">
   <div class="card-head">
     <div>
-      <p class="eyebrow">Clip {index + 1}</p>
-      <h2>{item.filename}</h2>
-      <p class="meta">
+      <p class="card-eyebrow">Clip {index + 1}</p>
+      <h3 class="card-title">{item.filename}</h3>
+      <p class="card-meta">
         {formatTime(item.startSec)} to {formatTime(item.endSec)} · {formatDuration(
           item.durationSec,
         )}
       </p>
     </div>
 
-    <label class="toggle">
+    <label class="include-toggle">
       <input
         type="checkbox"
         checked={item.selected}
@@ -93,36 +91,49 @@
   </div>
 
   <div class="field-grid">
-    <!-- Row 1: Title (full width) -->
-    <FormField label="Title" full>
+    <!-- Title (full width) -->
+    <div class="vc-field field--full">
+      <label class="vc-label" for="draft-title-{index}">Title</label>
       <input
+        id="draft-title-{index}"
+        class="vc-input"
         value={item.title}
-        oninput={(event) => patchItem({ title: (event.currentTarget as HTMLInputElement).value })}
         maxlength="100"
+        oninput={(event) => patchItem({ title: (event.currentTarget as HTMLInputElement).value })}
       />
-    </FormField>
+    </div>
 
-    <!-- Row 2: Description (full width) -->
-    <FormField label="Description" full>
+    <!-- Description (full width) -->
+    <div class="vc-field field--full">
+      <label class="vc-label" for="draft-desc-{index}">Description</label>
       <textarea
-        rows="5"
+        id="draft-desc-{index}"
+        class="vc-textarea"
+        rows={5}
         oninput={(event) =>
           patchItem({ description: (event.currentTarget as HTMLTextAreaElement).value })}
         >{item.description}</textarea
       >
-    </FormField>
+    </div>
 
-    <!-- Row 3: Tags + Privacy -->
-    <FormField label="Tags">
+    <!-- Tags -->
+    <div class="vc-field">
+      <label class="vc-label" for="draft-tags-{index}">Tags</label>
       <input
+        id="draft-tags-{index}"
+        class="vc-input"
         value={item.tags.join(', ')}
         placeholder="tag1, tag2, tag3"
         oninput={(event) => updateTags((event.currentTarget as HTMLInputElement).value)}
       />
-    </FormField>
+    </div>
 
-    <FormField label="Privacy">
+    <!-- Privacy -->
+    <div class="vc-field">
+      <label class="vc-label" for="draft-privacy-{index}">Privacy</label>
       <select
+        id="draft-privacy-{index}"
+        class="vc-select"
         value={item.privacyStatus}
         onchange={(event) =>
           patchItem({
@@ -133,11 +144,14 @@
           <option value={option}>{option}</option>
         {/each}
       </select>
-    </FormField>
+    </div>
 
-    <!-- Row 4: Category + License -->
-    <FormField label="Category">
+    <!-- Category -->
+    <div class="vc-field">
+      <label class="vc-label" for="draft-cat-{index}">Category</label>
       <select
+        id="draft-cat-{index}"
+        class="vc-select"
         value={item.categoryId}
         onchange={(event) =>
           patchItem({ categoryId: (event.currentTarget as HTMLSelectElement).value })}
@@ -146,10 +160,14 @@
           <option value={id}>{label}</option>
         {/each}
       </select>
-    </FormField>
+    </div>
 
-    <FormField label="License">
+    <!-- License -->
+    <div class="vc-field">
+      <label class="vc-label" for="draft-license-{index}">License</label>
       <select
+        id="draft-license-{index}"
+        class="vc-select"
         value={item.license}
         onchange={(event) =>
           patchItem({
@@ -160,11 +178,12 @@
           <option value={opt.value}>{opt.label}</option>
         {/each}
       </select>
-    </FormField>
+    </div>
 
-    <!-- Row 5: Boolean toggles -->
-    <FormField label="Format">
-      <label class="checkbox-label">
+    <!-- Boolean toggles -->
+    <div class="vc-field">
+      <span class="vc-label">Format</span>
+      <label class="check-row">
         <input
           type="checkbox"
           checked={item.isShort}
@@ -173,10 +192,11 @@
         />
         <span>Upload as YouTube Short</span>
       </label>
-    </FormField>
+    </div>
 
-    <FormField label="Made for kids">
-      <label class="checkbox-label">
+    <div class="vc-field">
+      <span class="vc-label">Made for kids</span>
+      <label class="check-row">
         <input
           type="checkbox"
           checked={item.selfDeclaredMadeForKids}
@@ -187,10 +207,11 @@
         />
         <span>This content is made for children</span>
       </label>
-    </FormField>
+    </div>
 
-    <FormField label="Embeddable">
-      <label class="checkbox-label">
+    <div class="vc-field">
+      <span class="vc-label">Embeddable</span>
+      <label class="check-row">
         <input
           type="checkbox"
           checked={item.embeddable}
@@ -199,10 +220,11 @@
         />
         <span>Allow embedding on other sites</span>
       </label>
-    </FormField>
+    </div>
 
-    <FormField label="Public stats">
-      <label class="checkbox-label">
+    <div class="vc-field">
+      <span class="vc-label">Public stats</span>
+      <label class="check-row">
         <input
           type="checkbox"
           checked={item.publicStatsViewable}
@@ -211,10 +233,11 @@
         />
         <span>Make view count visible to others</span>
       </label>
-    </FormField>
+    </div>
 
-    <FormField label="AI-generated content">
-      <label class="checkbox-label">
+    <div class="vc-field">
+      <span class="vc-label">AI-generated content</span>
+      <label class="check-row">
         <input
           type="checkbox"
           checked={item.containsSyntheticMedia}
@@ -225,10 +248,11 @@
         />
         <span>Contains AI-generated content</span>
       </label>
-    </FormField>
+    </div>
 
-    <!-- Row 6: Thumbnail (full width) -->
-    <FormField label="Thumbnail" full>
+    <!-- Thumbnail (full width) -->
+    <div class="vc-field field--full">
+      <span class="vc-label">Thumbnail</span>
       <div class="thumbnail-row">
         <input
           type="file"
@@ -238,21 +262,23 @@
           class="file-input"
         />
         {#if isUploadingThumbnail}
-          <span class="thumb-status">Uploading...</span>
+          <span class="thumb-note">Uploading...</span>
         {:else if item.thumbnailPath}
-          <span class="thumb-status thumb-status--ok"
-            >Saved: {item.thumbnailPath.split('/').pop()}</span
+          <span class="thumb-note thumb-note--ok">Saved: {item.thumbnailPath.split('/').pop()}</span
           >
         {/if}
         {#if thumbnailError}
-          <span class="thumb-status thumb-status--err">{thumbnailError}</span>
+          <span class="thumb-note thumb-note--err">{thumbnailError}</span>
         {/if}
       </div>
-    </FormField>
+    </div>
 
-    <!-- Row 7: Playlist ID (full width) -->
-    <FormField label="Add to playlist (optional)" full>
+    <!-- Playlist ID (full width) -->
+    <div class="vc-field field--full">
+      <label class="vc-label" for="draft-playlist-{index}">Add to playlist (optional)</label>
       <input
+        id="draft-playlist-{index}"
+        class="vc-input"
         value={item.playlistId ?? ''}
         placeholder="PLxxxxxxxxxxxx..."
         oninput={(event) => {
@@ -260,126 +286,172 @@
           patchItem({ playlistId: val || undefined });
         }}
       />
-    </FormField>
+    </div>
   </div>
 
   {#if item.transcriptExcerpt}
     <div class="excerpt">
-      <p class="eyebrow">Transcript excerpt</p>
-      <p>{item.transcriptExcerpt}</p>
+      <p class="excerpt-eyebrow">Transcript excerpt</p>
+      <p class="excerpt-text">{item.transcriptExcerpt}</p>
     </div>
   {/if}
 
-  <div class="actions">
-    <Button variant="outline" on:click={() => ongenerate?.({ index, item })}>
-      AI regenerate metadata
-    </Button>
+  <div class="card-footer">
+    <button
+      class="vc-btn vc-btn--secondary vc-btn--sm"
+      onclick={() => ongenerate?.({ index, item })}
+    >
+      <Icon name="sparkles" size={13} /> AI regenerate metadata
+    </button>
   </div>
-</Panel>
+</article>
 
 <style>
-  .actions {
+  .draft-card {
     display: flex;
-    justify-content: flex-start;
-    margin-top: var(--s-lg);
+    flex-direction: column;
+    gap: 0;
   }
 
   .card-head {
     display: flex;
-    align-items: start;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--s-md);
-    margin-bottom: var(--s-lg);
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
   }
 
-  h2 {
-    margin: 4px 0 0;
-    font-size: 22px;
-    line-height: 1.15;
+  .card-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
   }
 
-  .meta {
-    margin: var(--s-xs) 0 0;
-    color: var(--c-text-secondary);
+  .card-title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-18);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    color: var(--vc-text);
   }
 
-  .toggle {
+  .card-meta {
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
+    margin: 0;
+  }
+
+  .include-toggle {
     display: inline-flex;
     align-items: center;
-    gap: var(--s-xs);
-    color: var(--c-text-secondary);
-    font-size: 14px;
-    font-weight: var(--fw-semibold);
+    gap: 8px;
+    font-size: var(--vc-text-13);
+    font-weight: 500;
+    color: var(--vc-text-muted);
+    cursor: pointer;
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .include-toggle input[type='checkbox'] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--vc-accent);
+    cursor: pointer;
   }
 
   .field-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-md);
+    gap: 12px;
   }
 
-  .checkbox-label {
+  .field--full {
+    grid-column: 1 / -1;
+  }
+
+  .check-row {
     display: inline-flex;
     align-items: center;
-    gap: var(--s-xs);
-    font-size: 14px;
-    color: var(--c-text-secondary);
+    gap: 8px;
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
     cursor: pointer;
     padding: 10px 0;
   }
 
-  .checkbox-label input[type='checkbox'] {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    accent-color: var(--c-accent);
+  .check-row input[type='checkbox'] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--vc-accent);
     cursor: pointer;
+    flex-shrink: 0;
   }
 
   .thumbnail-row {
     display: flex;
     flex-direction: column;
-    gap: var(--s-xs);
+    gap: 6px;
   }
 
   .file-input {
     font: inherit;
-    color: var(--c-text-secondary);
-    font-size: 14px;
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
   }
 
-  .thumb-status {
-    font-size: 13px;
-    color: var(--c-text-muted);
+  .thumb-note {
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
   }
 
-  .thumb-status--ok {
-    color: var(--c-success, #16a34a);
+  .thumb-note--ok {
+    color: var(--vc-success, #16a34a);
   }
-
-  .thumb-status--err {
-    color: var(--c-error, #dc2626);
+  .thumb-note--err {
+    color: var(--vc-error);
   }
 
   .excerpt {
-    margin-top: var(--s-lg);
-    padding-top: var(--s-md);
-    border-top: 1px solid var(--c-border);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--vc-divider);
   }
 
-  .excerpt p:last-child {
-    margin: var(--s-xs) 0 0;
-    color: var(--c-text-secondary);
+  .excerpt-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 6px;
+  }
+
+  .excerpt-text {
+    margin: 0;
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
     line-height: 1.6;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--vc-divider);
   }
 
   @media (max-width: 760px) {
     .card-head {
       flex-direction: column;
-      align-items: start;
+      align-items: flex-start;
     }
-
     .field-grid {
       grid-template-columns: 1fr;
     }

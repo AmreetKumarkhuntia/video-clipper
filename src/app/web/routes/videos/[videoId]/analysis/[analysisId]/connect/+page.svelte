@@ -2,13 +2,7 @@
   import { page } from '$app/state';
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/toastStore.js';
-  import Button from '@web/components/Button.svelte';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import FormField from '@web/components/FormField.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
-  import NavLink from '@web/components/NavLink.svelte';
-  import PageHead from '@web/components/PageHead.svelte';
-  import Panel from '@web/components/Panel.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import type { SaveYouTubeManualAuthRequest, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let authStatus = $state<YouTubeAuthStatus | null>(null);
@@ -28,21 +22,16 @@
   let authError = $derived(page.url.searchParams.get('authError'));
 
   $effect(() => {
-    if (analysisId) {
-      void loadAuthStatus();
-    }
+    if (analysisId) void loadAuthStatus();
   });
 
   $effect(() => {
-    if (authError) {
-      errorMessage = authError;
-    }
+    if (authError) errorMessage = authError;
   });
 
   async function loadAuthStatus(): Promise<void> {
     isLoading = true;
     errorMessage = '';
-
     try {
       authStatus = await apiFetch<YouTubeAuthStatus>('/api/youtube/auth/status');
     } catch (error) {
@@ -56,7 +45,6 @@
   async function connectManualToken(): Promise<void> {
     isSavingAuth = true;
     errorMessage = '';
-
     try {
       authStatus = await apiFetch<YouTubeAuthStatus>('/api/youtube/auth/manual', {
         method: 'POST',
@@ -80,9 +68,7 @@
 
   async function disconnectAccount(): Promise<void> {
     try {
-      await apiFetch<{ success: boolean }>('/api/youtube/auth/disconnect', {
-        method: 'POST',
-      });
+      await apiFetch<{ success: boolean }>('/api/youtube/auth/disconnect', { method: 'POST' });
       authStatus = { connected: false, oauthConfigured: authStatus?.oauthConfigured ?? false };
       accessToken = '';
       refreshToken = '';
@@ -102,172 +88,209 @@
   }
 </script>
 
-{#if isLoading}
-  <MutedText>Loading YouTube connection...</MutedText>
-{:else if errorMessage && !authStatus}
-  <ErrorText message={errorMessage} />
-{/if}
-
-<PageHead eyebrow="Connect" heading="Connect the YouTube channel you want to publish to">
-  <div class="actions" slot="action">
-    <NavLink href={`/videos/${videoId}/analysis/${analysisId}`}>Back to Clip</NavLink>
-    {#if authStatus?.connected}
-      <NavLink href={`/videos/${videoId}/analysis/${analysisId}/prepare`}>
-        Continue to Prepare
-      </NavLink>
-    {/if}
-  </div>
-</PageHead>
-
-{#if errorMessage}
-  <ErrorText message={errorMessage} />
-{/if}
-
-<Panel tag="section">
-  <div class="panel-head">
+<div class="connect-page">
+  <div class="connect-head">
     <div>
-      <p class="eyebrow">YouTube account</p>
-      <h2>{authStatus?.connected ? authStatus.channel?.title : 'Connect a channel'}</h2>
+      <p class="connect-eyebrow">Step 3 · Connect</p>
+      <h2 class="connect-title">Connect YouTube channel</h2>
+      <p class="connect-sub">Connect the channel you want to publish clips to.</p>
+    </div>
+    <div class="connect-nav">
+      <a
+        href={`/videos/${videoId}/analysis/${analysisId}`}
+        class="vc-btn vc-btn--secondary vc-btn--sm"
+      >
+        ← Back to Clip
+      </a>
+      {#if authStatus?.connected}
+        <a
+          href={`/videos/${videoId}/analysis/${analysisId}/prepare`}
+          class="vc-btn vc-btn--primary"
+        >
+          Continue to Prepare <Icon name="arrow-right" size={14} />
+        </a>
+      {/if}
+    </div>
+  </div>
+
+  {#if errorMessage}
+    <p class="connect-error">{errorMessage}</p>
+  {/if}
+
+  {#if isLoading}
+    <div class="provider-grid">
+      {#each Array(2) as _}
+        <div class="provider">
+          <div class="sk sk--line" style="width:120px;height:14px;margin-bottom:8px"></div>
+          <div class="sk sk--line sk--short"></div>
+        </div>
+      {/each}
+    </div>
+  {:else}
+    <div class="provider-grid" style="max-width:640px">
+      <div class="provider" class:is-active={authStatus?.connected}>
+        <div class="provider__head">
+          <Icon name="youtube" size={20} />
+          <span class="provider__name">YouTube</span>
+        </div>
+        <p class="provider__model">
+          {#if authStatus?.connected}
+            {authStatus.channel?.title ?? 'Connected'}
+          {:else}
+            Not connected
+          {/if}
+        </p>
+        {#if authStatus?.connected}
+          <div class="provider__check"><Icon name="check" size={12} /></div>
+        {/if}
+      </div>
     </div>
 
-    {#if authStatus?.connected}
-      <Button variant="outline" on:click={disconnectAccount}>Disconnect</Button>
-    {/if}
-  </div>
-
-  {#if authStatus?.connected}
-    <p class="helper">
-      Connected as {authStatus.channel?.title}. You can continue to Prepare once the channel looks
-      correct.
-    </p>
-  {:else}
-    <div class="panel-actions">
-      {#if authStatus?.oauthConfigured}
-        <Button on:click={startOAuth}>Connect to YouTube</Button>
+    <div class="connect-actions" style="margin-top:20px">
+      {#if authStatus?.connected}
+        <button class="vc-btn vc-btn--danger" onclick={disconnectAccount}>Disconnect</button>
+      {:else if authStatus?.oauthConfigured}
+        <button class="vc-btn vc-btn--primary" onclick={startOAuth}>
+          <Icon name="external-link" size={14} /> Connect to YouTube
+        </button>
       {:else}
-        <div class="oauth-warning">
-          <p class="helper">
-            Configure `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET`, and
-            `YOUTUBE_OAUTH_REDIRECT_URI` in `.env` or Settings before connecting YouTube.
+        <div class="vc-card" style="max-width:480px">
+          <p style="font-size:var(--vc-text-13);color:var(--vc-text-muted);margin:0">
+            Configure <code>YOUTUBE_OAUTH_CLIENT_ID</code>,
+            <code>YOUTUBE_OAUTH_CLIENT_SECRET</code>, and <code>YOUTUBE_OAUTH_REDIRECT_URI</code> in
+            <code>.env</code> or Settings before connecting.
           </p>
         </div>
       {/if}
     </div>
 
-    <button
-      class="advanced-toggle"
-      type="button"
-      onclick={() => (showAdvancedAuth = !showAdvancedAuth)}
-    >
-      {showAdvancedAuth ? 'Hide advanced manual token entry' : 'Advanced: use manual token'}
-    </button>
+    <div class="advanced-section">
+      <button
+        class="advanced-toggle"
+        type="button"
+        onclick={() => (showAdvancedAuth = !showAdvancedAuth)}
+      >
+        {showAdvancedAuth ? 'Hide' : 'Advanced:'} manual token entry
+        <Icon name={showAdvancedAuth ? 'chevron-down' : 'chevron-right'} size={13} />
+      </button>
 
-    {#if showAdvancedAuth}
-      <div class="field-grid">
-        <FormField label="Access token" full>
-          <textarea rows="4" bind:value={accessToken}></textarea>
-        </FormField>
-
-        <FormField label="Refresh token (optional)" full>
-          <textarea rows="3" bind:value={refreshToken}></textarea>
-        </FormField>
-
-        <FormField label="Client ID override (optional)">
-          <input bind:value={clientId} />
-        </FormField>
-
-        <FormField label="Client secret override (optional)">
-          <input bind:value={clientSecret} />
-        </FormField>
-
-        <FormField label="Expiry timestamp in ms (optional)" full>
-          <input bind:value={expiryDate} inputmode="numeric" />
-        </FormField>
-      </div>
-
-      <div class="panel-actions panel-actions--manual">
-        <Button
-          variant="outline"
-          on:click={connectManualToken}
-          disabled={isSavingAuth || accessToken.trim() === ''}
-        >
-          {isSavingAuth ? 'Connecting...' : 'Connect token'}
-        </Button>
-      </div>
-    {/if}
+      {#if showAdvancedAuth}
+        <div class="settings-form" style="max-width:560px;margin-top:16px">
+          <div class="vc-field">
+            <label class="vc-label" for="access-token">Access token</label>
+            <textarea id="access-token" class="vc-textarea" rows={4} bind:value={accessToken}
+            ></textarea>
+          </div>
+          <div class="vc-field">
+            <label class="vc-label" for="refresh-token">Refresh token (optional)</label>
+            <textarea id="refresh-token" class="vc-textarea" rows={3} bind:value={refreshToken}
+            ></textarea>
+          </div>
+          <div class="settings-form--two">
+            <div class="vc-field">
+              <label class="vc-label" for="client-id">Client ID override</label>
+              <input id="client-id" class="vc-input" bind:value={clientId} />
+            </div>
+            <div class="vc-field">
+              <label class="vc-label" for="client-secret">Client secret override</label>
+              <input id="client-secret" class="vc-input" bind:value={clientSecret} />
+            </div>
+          </div>
+          <div class="vc-field">
+            <label class="vc-label" for="expiry">Expiry timestamp in ms (optional)</label>
+            <input id="expiry" class="vc-input" inputmode="numeric" bind:value={expiryDate} />
+          </div>
+          <div>
+            <button
+              class="vc-btn vc-btn--secondary"
+              onclick={connectManualToken}
+              disabled={isSavingAuth || accessToken.trim() === ''}
+            >
+              {isSavingAuth ? 'Connecting…' : 'Connect token'}
+            </button>
+          </div>
+        </div>
+      {/if}
+    </div>
   {/if}
-</Panel>
+</div>
 
 <style>
-  .actions {
+  .connect-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .connect-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .connect-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .connect-title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-26);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    color: var(--vc-text);
+  }
+
+  .connect-sub {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+    margin: 0;
+  }
+
+  .connect-nav {
     display: flex;
     align-items: center;
-    gap: var(--s-sm);
+    gap: 8px;
   }
-
-  .panel-head {
+  .connect-error {
+    color: var(--vc-error);
+    font-size: var(--vc-text-14);
+    margin-bottom: 16px;
+  }
+  .connect-actions {
     display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: var(--s-md);
-    margin-bottom: var(--s-md);
+    gap: 8px;
   }
 
-  h2 {
-    margin: 4px 0 0;
-    font-size: clamp(22px, 2.6vw, 28px);
-    line-height: 1.12;
-    overflow-wrap: anywhere;
-  }
-
-  .helper {
-    margin: 0;
-    color: var(--c-text-secondary);
-    line-height: 1.6;
-  }
-
-  .panel-actions {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: var(--s-md);
-  }
-
-  .panel-actions--manual {
-    margin-top: var(--s-lg);
+  .advanced-section {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--vc-divider);
   }
 
   .advanced-toggle {
-    margin-top: var(--s-md);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 0;
     border: none;
     background: none;
-    color: var(--c-accent);
+    color: var(--vc-clay-600);
     font: inherit;
-    font-weight: var(--fw-semibold);
-    text-align: left;
+    font-size: var(--vc-text-13);
+    font-weight: 500;
     cursor: pointer;
   }
 
-  .oauth-warning {
-    max-width: 56ch;
-  }
-
-  .field-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-md);
-    margin-top: var(--s-md);
-  }
-
-  @media (max-width: 760px) {
-    .actions {
-      width: 100%;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .field-grid {
-      grid-template-columns: 1fr;
-    }
+  [data-theme='dark'] .advanced-toggle {
+    color: var(--vc-clay-400);
   }
 </style>
