@@ -161,6 +161,13 @@
   box-shadow: var(--vc-shadow-focus);
 }
 
+.vc-input:disabled,
+.vc-select:disabled,
+.vc-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .vc-input--with-icon {
   padding-left: 40px;
 }

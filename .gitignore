@@ -16,3 +16,5 @@ outputs/audio
 outputs
 
 .playwright-mcp
+
+temp/

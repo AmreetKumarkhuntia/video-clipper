@@ -197,6 +197,7 @@ Both `generateClips()` and `remuxClips()` check whether `{outputDir}/{videoId}_{
 - Write unit tests for pure functions (URL parser, chunker, ranker, deduplicator)
 - Do not unit test functions that call external services (LLM, yt-dlp, ffmpeg) — integration test those separately
 - Test files live in `tests/` at the project root, mirroring the module name (e.g. `tests/urlParser.test.ts`)
+- When taking screenshots etc via playwright keep it in temp/ folder(always)
 
 ## Git
 

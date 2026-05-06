@@ -8,10 +8,23 @@
     resetToDefaults,
   } from '@web/lib/configStore.js';
   import ConfigSection from '@web/components/settings/ConfigSection.svelte';
+  import Icon from '@web/components/Icon.svelte';
+  import { GROUP_CONFIG } from '@web/components/settings/groupConfig.js';
 
   $effect(() => {
     void initConfig();
   });
+
+  let activeGroupId = $state<string | null>(null);
+
+  let activeGroup = $derived.by(() => {
+    if (!$configRegistry) return null;
+    const groups = $configRegistry.groups;
+    if (!groups.length) return null;
+    return groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  });
+
+  let activeGroupConfig = $derived(activeGroup ? GROUP_CONFIG[activeGroup.id] : undefined);
 
   function handleUpdate(key: string, value: unknown): void {
     updateField(key, value);
@@ -29,18 +42,46 @@
 {#if !$configLoaded}
   <p class="settings-loading">Loading settings...</p>
 {:else if $configRegistry}
-  <div class="settings-head">
-    <div>
-      <p class="settings-eyebrow">Configuration</p>
-      <h1 class="settings-title">Settings</h1>
-    </div>
-    <button class="vc-btn vc-btn--secondary" onclick={handleReset}> Reset to Defaults </button>
-  </div>
+  <div class="settings-shell">
+    <nav class="settings-nav">
+      <p class="settings-nav__h">Configuration</p>
+      {#each $configRegistry.groups as group (group.id)}
+        <button
+          type="button"
+          class="settings-nav__item"
+          class:is-active={group.id === activeGroup?.id}
+          onclick={() => (activeGroupId = group.id)}
+        >
+          {#if GROUP_CONFIG[group.id]}
+            <Icon name={GROUP_CONFIG[group.id].icon} size={16} />
+          {/if}
+          {group.label}
+        </button>
+      {/each}
+    </nav>
 
-  <div class="settings-grid">
-    {#each $configRegistry.groups as group (group.id)}
-      <ConfigSection {group} values={$configValues} onupdate={handleUpdate} />
-    {/each}
+    <main class="settings-main">
+      {#if activeGroup}
+        <div class="settings-head">
+          <h2>{activeGroup.label}</h2>
+          {#if activeGroupConfig?.subtitle}
+            <p class="settings-head__sub">{activeGroupConfig.subtitle}</p>
+          {/if}
+        </div>
+
+        <ConfigSection
+          group={activeGroup}
+          values={$configValues}
+          sections={activeGroupConfig?.sections}
+          onupdate={handleUpdate}
+        />
+
+        <div class="settings-foot">
+          <span class="meta">Changes are saved automatically.</span>
+          <button class="vc-btn vc-btn--ghost" onclick={handleReset}>Reset to defaults</button>
+        </div>
+      {/if}
+    </main>
   </div>
 {/if}
 
@@ -48,37 +89,6 @@
   .settings-loading {
     font-size: var(--vc-text-14);
     color: var(--vc-text-muted);
-  }
-
-  .settings-head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-  }
-
-  .settings-eyebrow {
-    font-family: var(--vc-font-mono);
-    font-size: 11px;
-    color: var(--vc-text-subtle);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 4px;
-  }
-
-  .settings-title {
-    font-family: var(--vc-font-display);
-    font-size: clamp(28px, 4vw, 40px);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    margin: 0;
-    color: var(--vc-text);
-  }
-
-  .settings-grid {
-    display: grid;
-    gap: 16px;
+    padding: 40px 56px;
   }
 </style>

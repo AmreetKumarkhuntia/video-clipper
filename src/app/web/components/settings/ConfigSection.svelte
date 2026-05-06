@@ -1,88 +1,71 @@
 <script lang="ts">
   import type { ConfigGroupDescriptor } from '@lib/config/registry.js';
+  import type { SectionConfig } from './groupConfig.js';
   import ConfigField from './ConfigField.svelte';
 
   interface Props {
     group: ConfigGroupDescriptor;
     values: Record<string, unknown>;
+    sections?: SectionConfig[];
     onupdate?: (key: string, value: unknown) => void;
   }
 
-  let { group, values, onupdate }: Props = $props();
+  let { group, values, sections, onupdate }: Props = $props();
 
-  let collapsed = $state(false);
+  // Build a lookup from field key → descriptor for fast resolution inside sections.
+  let fieldMap = $derived(Object.fromEntries(group.fields.map((f) => [f.key, f])));
+
+  // Flat fallback: split all group fields by widget type.
+  let flatRegular = $derived(group.fields.filter((f) => f.widget !== 'toggle'));
+  let flatToggles = $derived(group.fields.filter((f) => f.widget === 'toggle'));
 </script>
 
-<section class="config-section">
-  <button type="button" class="section-header" onclick={() => (collapsed = !collapsed)}>
-    <h2 class="section-title">{group.label}</h2>
-    <span class="section-toggle" class:section-toggle--collapsed={collapsed}>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
-    </span>
-  </button>
+{#if sections && sections.length > 0}
+  {#each sections as section (section.h3)}
+    {@const sectionFields = section.fields.map((k) => fieldMap[k]).filter(Boolean)}
+    {@const regular = sectionFields.filter((f) => f.widget !== 'toggle')}
+    {@const toggles = sectionFields.filter((f) => f.widget === 'toggle')}
 
-  {#if !collapsed}
-    <div class="section-fields">
-      {#each group.fields as field (field.key)}
-        <ConfigField
-          {field}
-          value={values[field.key]}
-          onupdate={(key, value) => onupdate?.(key, value)}
-        />
+    <div class="settings-section">
+      <div class="settings-section__h">
+        <h3>{section.h3}</h3>
+        {#if section.meta}
+          <span class="meta">{section.meta}</span>
+        {/if}
+      </div>
+
+      {#if regular.length > 0}
+        <div class="settings-form" class:settings-form--two={section.layout === 'two'}>
+          {#each regular as field (field.key)}
+            <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+          {/each}
+        </div>
+      {/if}
+
+      {#if toggles.length > 0}
+        <div class="settings-toggles">
+          {#each toggles as field (field.key)}
+            <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/each}
+{:else}
+  <!-- Flat fallback for groups without a sections config -->
+  {#if flatRegular.length > 0}
+    <div class="settings-form">
+      {#each flatRegular as field (field.key)}
+        <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
       {/each}
     </div>
   {/if}
-</section>
 
-<style>
-  .config-section {
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-lg);
-    background: color-mix(in srgb, var(--vc-surface) 80%, white 20%);
-    overflow: hidden;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: var(--vc-space-4) var(--vc-space-5);
-    border: none;
-    background: var(--vc-surface-2);
-    cursor: pointer;
-    font-family: inherit;
-    transition: background-color 0.16s ease;
-  }
-
-  .section-header:hover {
-    background: var(--vc-surface-2);
-    filter: brightness(0.97);
-  }
-
-  .section-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--vc-text);
-    margin: 0;
-  }
-
-  .section-toggle {
-    display: flex;
-    align-items: center;
-    color: var(--vc-text-muted);
-    transition: transform 0.2s ease;
-  }
-
-  .section-toggle--collapsed {
-    transform: rotate(-90deg);
-  }
-
-  .section-fields {
-    display: grid;
-    gap: var(--vc-space-5);
-    padding: var(--vc-space-5);
-  }
-</style>
+  {#if flatToggles.length > 0}
+    <div class="settings-toggles">
+      {#each flatToggles as field (field.key)}
+        <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+      {/each}
+    </div>
+  {/if}
+{/if}

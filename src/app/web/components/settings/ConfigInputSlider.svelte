@@ -19,64 +19,35 @@
   }
 </script>
 
-<div class="slider-wrapper">
+<div class="slider-wrap">
   <input
     type="range"
-    class="slider"
+    class="vc-slider"
     {disabled}
     {min}
     {max}
     value={displayValue}
     oninput={handleInput}
   />
-  <span class="slider-value">{displayValue}</span>
+  <span class="slider-val">{displayValue}</span>
 </div>
 
 <style>
-  .slider-wrapper {
+  .slider-wrap {
     display: flex;
     align-items: center;
     gap: var(--vc-space-3);
   }
 
-  .slider {
+  .vc-slider {
     flex: 1;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--vc-border);
-    appearance: none;
-    cursor: pointer;
   }
 
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--vc-clay-500);
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  }
-
-  .slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--vc-clay-500);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  }
-
-  .slider:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .slider-value {
+  .slider-val {
     min-width: 32px;
     text-align: right;
-    font-size: 14px;
+    font-family: var(--vc-font-mono);
+    font-size: var(--vc-text-13);
     font-weight: 600;
     color: var(--vc-text);
   }
