@@ -53,7 +53,7 @@ function buildAnalysisSystemPrompt(
   return `${lines.join('\n')}\n\n${base}`;
 }
 
-const DEFAULT_WEB_LLM_CONCURRENCY = 1;
+const DEFAULT_WEB_LLM_CONCURRENCY = 3;
 
 export async function analyzeTranscriptForWeb(
   input: CreateAnalysisRequest,
