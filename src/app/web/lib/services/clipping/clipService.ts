@@ -1,10 +1,7 @@
 import { basename } from 'path';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
-import {
-  createArtifactId,
-  saveClipArtifacts,
-} from '@app/web/lib/services/artifacts/artifactStore.js';
+import { saveClipArtifacts } from '@app/web/lib/services/artifacts/artifactStore.js';
 import type { ClipArtifact, CreateClipsRequest } from '@app/web/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
@@ -26,6 +23,12 @@ export async function generateWebClips(
     cookiesFile: cfg.YT_DLP_COOKIES_FILE,
     quiet: cfg.YT_DLP_QUIET,
     retryCount: cfg.YT_DLP_RETRY_COUNT,
+    segmentCookiesEnabled: cfg.YT_DLP_SEGMENT_COOKIES_ENABLED,
+    playerClient: cfg.YT_DLP_PLAYER_CLIENT,
+    noCheckCertificates: cfg.YT_DLP_NO_CHECK_CERTIFICATES,
+    forceIpv4: cfg.YT_DLP_FORCE_IPV4,
+    geoBypass: cfg.YT_DLP_GEO_BYPASS,
+    sleepRequests: cfg.YT_DLP_SLEEP_REQUESTS,
   };
 
   const exporterConfig: ClipExporterConfig = {
@@ -63,7 +66,7 @@ export async function generateWebClips(
     const endSec = source.endSec;
 
     return {
-      id: createArtifactId(`clip-${input.videoId}`),
+      id: `clip-${input.videoId}-${source.id}`,
       videoId: input.videoId,
       analysisId: input.analysisId,
       segmentId: source.id,
