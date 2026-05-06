@@ -1,3 +1,35 @@
+# [1.8.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.7.0...v1.8.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* **button:** improve hover animation visibility ([9a02c7a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9a02c7a12fff81b8327dd7de476b47495261029e))
+* **clip-service:** deduplicate clip artifacts by videoId and segmentId ([503ab44](https://github.com/AmreetKumarkhuntia/video-clipper/commit/503ab44bac4ca7ceb516272ebbb67ab18953cb87))
+* **logging:** include request ids in analysis function logs ([1889726](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1889726a576dace89f7c3837d20a205cfc87fcc1))
+* **transcript:** add --format mhtml to yt-dlp subtitle fetch and target correct Chrome profile ([999b560](https://github.com/AmreetKumarkhuntia/video-clipper/commit/999b560e73867b457bdd54e7f2de0536d62b6cd1))
+
+
+### Features
+
+* **analysis:** add streaming LLM progress via SSE and StreamCallbacks ([6112ece](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6112ece91eef7787c70f74076cf17b08512a8f64))
+* **analysis:** enrich LLM prompts with source video context ([1828919](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1828919736a7ff8d81645abb4d686d31d6855ddc))
+* **clip-exporter:** add partial download mode, lossless remux, and clip output cache ([874c88f](https://github.com/AmreetKumarkhuntia/video-clipper/commit/874c88f98aed7667cc9f3eccb74ac1320407a87a))
+* **logging:** add structured per-request logging with request ids ([f259034](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f259034764dc8c51c5cfba3a41d13299998424e1))
+* **publish-metadata:** add isShort toggle, metadata cache, and improved logging ([91a9970](https://github.com/AmreetKumarkhuntia/video-clipper/commit/91a99706a822fa1ef41741cf439a218f2b213e45)), closes [#Shorts](https://github.com/AmreetKumarkhuntia/video-clipper/issues/Shorts)
+* **publish:** add workflow UI components and pages ([336d9b6](https://github.com/AmreetKumarkhuntia/video-clipper/commit/336d9b66718a302a27bdc0033c0635b1875dbd83))
+* **publish:** add YouTube clip publishing pipeline with config defaults ([d45e9e7](https://github.com/AmreetKumarkhuntia/video-clipper/commit/d45e9e767cd4fbaa2bc154ca7a1f3630139a7998))
+* **settings:** add dynamic config settings page with toast notifications ([6eee10a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6eee10a6f664b416b288a582e4f1937ca94e236e))
+* **settings:** add textarea widget and PUBLISH_METADATA_SYSTEM_PROMPT ([645df35](https://github.com/AmreetKumarkhuntia/video-clipper/commit/645df35fb547fdb0447a87a1c3d3fb1b3d84c7f4))
+* **web:** add SvelteKit web workbench shell and YouTube API integration ([7210e8a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/7210e8ac51256de024675033b4f794644c4bbffd))
+* **web:** refresh workspace layout and analysis activity flow ([91fa100](https://github.com/AmreetKumarkhuntia/video-clipper/commit/91fa100d79da6cd77cbed520066e218863b68aa6))
+* **yt-dlp:** add extended download strategy config fields ([9c1dd5b](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9c1dd5bfeb8d7ef37cbc71921d3b88166f3e1c97))
+* **yt-dlp:** add quiet mode and configurable retry with exponential backoff ([f6f9463](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f6f9463e2396cb0e88d1a1912c119209509eaa0e))
+
+
+### Performance Improvements
+
+* **analysis:** increase default web LLM concurrency to 3 ([84e1021](https://github.com/AmreetKumarkhuntia/video-clipper/commit/84e1021c3395d2282ef8a1f7fe8ca44a4f7f2e52))
+
 # [1.7.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.6.0...v1.7.0) (2026-03-30)
 
 
