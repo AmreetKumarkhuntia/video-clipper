@@ -3,12 +3,7 @@
   import { apiFetch } from '@web/lib/api.js';
   import { streamUploads, type UploadQueueItem } from '@web/lib/uploadStream.js';
   import { showToast } from '@web/lib/toastStore.js';
-  import Button from '@web/components/Button.svelte';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
-  import NavLink from '@web/components/NavLink.svelte';
-  import PageHead from '@web/components/PageHead.svelte';
-  import Panel from '@web/components/Panel.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import UploadStatusCard from '@web/components/publish/UploadStatusCard.svelte';
   import type { PublishDraft, UploadArtifact, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
@@ -23,15 +18,12 @@
   let analysisId = $derived(page.params.analysisId);
 
   $effect(() => {
-    if (analysisId) {
-      void loadPage();
-    }
+    if (analysisId) void loadPage();
   });
 
   async function loadPage(): Promise<void> {
     isLoading = true;
     errorMessage = '';
-
     try {
       const [draftData, authData, uploadData] = await Promise.all([
         apiFetch<{ draft: PublishDraft }>(`/api/publish/drafts/${analysisId}`),
@@ -40,7 +32,6 @@
           `/api/youtube/uploads?analysisId=${encodeURIComponent(analysisId)}`,
         ),
       ]);
-
       draft = draftData.draft;
       authStatus = authData;
       uploads = uploadData.uploads;
@@ -54,11 +45,9 @@
 
   async function uploadSelected(): Promise<void> {
     if (!draft) return;
-
     isUploading = true;
     errorMessage = '';
     resetQueue();
-
     try {
       const finalUploads = await streamUploads(analysisId, {
         onUploadStarted: (clipArtifactId) => {
@@ -84,7 +73,6 @@
           errorMessage = message;
         },
       });
-
       uploads = finalUploads;
       showToast('success', 'Upload run completed.');
     } catch (error) {
@@ -114,192 +102,289 @@
 </script>
 
 {#if isLoading}
-  <MutedText>Loading publish workspace...</MutedText>
+  <div class="publish-loading">
+    <div class="sk sk--line" style="width:220px;height:16px;margin-bottom:10px"></div>
+    <div class="sk sk--line sk--short"></div>
+  </div>
 {:else if errorMessage && !draft}
-  <ErrorText message={errorMessage} />
+  <p class="publish-error">{errorMessage}</p>
 {/if}
 
 {#if draft}
-  <PageHead eyebrow="Publish" heading="Upload prepared clips to your YouTube channel">
-    <div class="actions" slot="action">
-      <NavLink href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/prepare`}>
-        Back to Prepare
-      </NavLink>
-      <Button on:click={uploadSelected} disabled={isUploading || !authStatus?.connected}>
-        {isUploading ? 'Uploading...' : 'Upload selected clips'}
-      </Button>
+  <div class="publish-page">
+    <div class="publish-head">
+      <div>
+        <p class="publish-eyebrow">Step 5 · Publish</p>
+        <h2 class="publish-title">Upload clips to YouTube</h2>
+        <p class="publish-sub">Upload your prepared clips to your connected YouTube channel.</p>
+      </div>
+      <div class="publish-nav">
+        <a
+          href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/prepare`}
+          class="vc-btn vc-btn--secondary vc-btn--sm"
+        >
+          ← Back to Prepare
+        </a>
+        <button
+          class="vc-btn vc-btn--primary"
+          onclick={uploadSelected}
+          disabled={isUploading || !authStatus?.connected}
+        >
+          {#if isUploading}
+            <Icon name="loader" size={14} /> Uploading…
+          {:else}
+            <Icon name="upload" size={14} /> Upload selected clips
+          {/if}
+        </button>
+      </div>
     </div>
-  </PageHead>
 
-  {#if errorMessage}
-    <ErrorText message={errorMessage} />
-  {/if}
+    {#if errorMessage}
+      <p class="publish-error">{errorMessage}</p>
+    {/if}
 
-  <div class="publish-grid">
-    <Panel tag="section">
-      <div class="panel-head">
-        <div>
-          <p class="eyebrow">Connected channel</p>
-          <h2>{authStatus?.channel?.title ?? 'No connected channel'}</h2>
+    <!-- Summary cards -->
+    <div class="summary-grid">
+      <div class="vc-card">
+        <p class="sect-eyebrow">Connected channel</p>
+        <p class="sect-title">{authStatus?.channel?.title ?? 'No connected channel'}</p>
+        <p class="sect-body">
+          {#if authStatus?.connected}
+            Uploading as <strong>{authStatus.channel?.title}</strong>.
+          {:else}
+            No channel connected. Go back to the <a
+              href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/connect`}
+              class="vc-link">Connect</a
+            > step.
+          {/if}
+        </p>
+      </div>
+
+      <div class="vc-card">
+        <p class="sect-eyebrow">Draft summary</p>
+        <p class="sect-title">{draft.title}</p>
+        <p class="sect-body">
+          {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected.
+        </p>
+        <ul class="draft-list">
+          {#each draft.items.filter((i) => i.selected) as item (item.clipArtifactId)}
+            <li class="draft-item">
+              <span class="draft-item__title">{item.title}</span>
+              <span class="draft-item__privacy">{item.privacyStatus}</span>
+            </li>
+          {/each}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Live upload queue -->
+    <section class="history-sect">
+      <div class="history-head">
+        <p class="sect-eyebrow">Upload queue</p>
+        <h3 class="sect-heading">Live upload progress</h3>
+      </div>
+      {#if uploadQueue.length === 0}
+        <p class="publish-muted">No uploads queued yet. Select clips and press Upload.</p>
+      {:else}
+        <div class="history-list">
+          {#each uploadQueue as item (item.clipArtifactId)}
+            <UploadStatusCard queueItem={item} />
+          {/each}
         </div>
+      {/if}
+    </section>
+
+    <!-- Upload history -->
+    <section class="history-sect">
+      <div class="history-head">
+        <p class="sect-eyebrow">Upload history</p>
+        <h3 class="sect-heading">Recent publish attempts</h3>
       </div>
-
-      <p class="helper">
-        Uploading as {authStatus?.channel?.title}. {draft.items.filter((item) => item.selected)
-          .length}
-        clips are queued from this prepared draft.
-      </p>
-    </Panel>
-
-    <Panel tag="section">
-      <p class="eyebrow">Draft summary</p>
-      <h2>{draft.title}</h2>
-      <p class="helper">
-        {draft.items.filter((item) => item.selected).length} of {draft.items.length} clips selected.
-      </p>
-      <ul class="draft-list">
-        {#each draft.items.filter((item) => item.selected) as item}
-          <li>
-            <strong>{item.title}</strong>
-            <span>{item.privacyStatus}</span>
-          </li>
-        {/each}
-      </ul>
-    </Panel>
+      {#if uploads.length === 0}
+        <p class="publish-muted">No uploads recorded yet.</p>
+      {:else}
+        <div class="history-list">
+          {#each uploads as upload (upload.id)}
+            <UploadStatusCard {upload} />
+          {/each}
+        </div>
+      {/if}
+    </section>
   </div>
-
-  <section class="history">
-    <div class="history-head">
-      <div>
-        <p class="eyebrow">Upload queue</p>
-        <h2>Live upload progress</h2>
-      </div>
-    </div>
-
-    {#if uploadQueue.length === 0}
-      <MutedText>No selected uploads queued yet.</MutedText>
-    {:else}
-      <div class="history-list">
-        {#each uploadQueue as item (item.clipArtifactId)}
-          <UploadStatusCard queueItem={item} />
-        {/each}
-      </div>
-    {/if}
-  </section>
-
-  <section class="history">
-    <div class="history-head">
-      <div>
-        <p class="eyebrow">Upload history</p>
-        <h2>Recent publish attempts</h2>
-      </div>
-    </div>
-
-    {#if uploads.length === 0}
-      <MutedText>No uploads recorded yet.</MutedText>
-    {:else}
-      <div class="history-list">
-        {#each uploads as upload (upload.id)}
-          <UploadStatusCard {upload} />
-        {/each}
-      </div>
-    {/if}
-  </section>
 {/if}
 
 <style>
-  .actions {
+  .publish-loading {
+    padding: 24px 0;
+  }
+  .publish-error {
+    color: var(--vc-error);
+    font-size: var(--vc-text-14);
+    margin-bottom: 16px;
+  }
+  .publish-muted {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+    margin: 0;
+  }
+
+  .publish-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .publish-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .publish-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .publish-title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-26);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    color: var(--vc-text);
+  }
+
+  .publish-sub {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+    margin: 0;
+  }
+
+  .publish-nav {
     display: flex;
     align-items: center;
-    gap: var(--s-sm);
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
-  .publish-grid {
+  /* Summary grid */
+  .summary-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-    gap: var(--s-lg);
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 16px;
+    margin-bottom: 28px;
   }
 
-  .panel-head,
-  .history-head {
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: var(--s-md);
-    margin-bottom: var(--s-md);
+  .sect-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
   }
 
-  h2 {
-    margin: 4px 0 0;
-    font-size: clamp(22px, 2.6vw, 28px);
-    line-height: 1.12;
+  .sect-title {
+    font-size: var(--vc-text-18);
+    font-weight: 500;
+    color: var(--vc-text);
+    margin: 0 0 8px;
     overflow-wrap: anywhere;
   }
 
-  .helper {
-    margin: 0;
-    color: var(--c-text-secondary);
+  .sect-body {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
     line-height: 1.6;
+    margin: 0;
+  }
+
+  .vc-link {
+    color: var(--vc-accent);
+    text-decoration: none;
+  }
+  .vc-link:hover {
+    text-decoration: underline;
   }
 
   .draft-list {
-    margin: var(--s-md) 0 0;
+    margin: 12px 0 0;
     padding: 0;
     list-style: none;
-    display: grid;
-    gap: var(--s-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .draft-list li {
+  .draft-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--s-md);
-    padding: 12px 14px;
-    border: 1px solid var(--c-border);
-    border-radius: 14px;
-    background: var(--c-surface-muted);
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--vc-divider);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-raised);
   }
 
-  .draft-list strong {
-    min-width: 0;
+  .draft-item__title {
+    font-size: var(--vc-text-13);
+    color: var(--vc-text);
     overflow-wrap: anywhere;
-    word-break: break-word;
+    min-width: 0;
   }
 
-  .draft-list span {
+  .draft-item__privacy {
     flex-shrink: 0;
-    color: var(--c-text-muted);
-    font-size: 13px;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
+    color: var(--vc-text-subtle);
   }
 
-  .history {
-    margin-top: var(--s-lg);
+  /* History sections */
+  .history-sect {
+    margin-bottom: 28px;
+  }
+
+  .history-head {
+    margin-bottom: 14px;
+  }
+
+  .sect-heading {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-18);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--vc-text);
   }
 
   .history-list {
-    display: grid;
-    gap: var(--s-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   @media (max-width: 900px) {
-    .publish-grid {
+    .summary-grid {
       grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 760px) {
-    .actions {
+  @media (max-width: 640px) {
+    .publish-nav {
       width: 100%;
       flex-direction: column;
       align-items: stretch;
-    }
-
-    .draft-list li {
-      align-items: start;
-      flex-direction: column;
     }
   }
 </style>

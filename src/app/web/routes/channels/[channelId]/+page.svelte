@@ -1,29 +1,24 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import type { VideoPage } from '@lib/types/index.js';
   import { apiFetch } from '@web/lib/api.js';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
-  import PageHead from '@web/components/PageHead.svelte';
   import VideoCard from '@web/components/VideoCard.svelte';
-  import Pagination from '@web/components/Pagination.svelte';
 
-  let videos: VideoPage['videos'] = [];
-  let nextPageToken: string | undefined;
-  let prevPageToken: string | undefined;
-  let isLoading = false;
-  let errorMessage = '';
+  let channelId = $derived(page.params.channelId);
 
-  $: channelId = $page.params.channelId;
+  let videos = $state<VideoPage['videos']>([]);
+  let nextPageToken = $state<string | undefined>(undefined);
+  let prevPageToken = $state<string | undefined>(undefined);
+  let isLoading = $state(false);
+  let errorMessage = $state('');
 
-  $: if (channelId) {
-    void loadVideos();
-  }
+  $effect(() => {
+    if (channelId) void loadVideos();
+  });
 
   async function loadVideos(pageToken?: string): Promise<void> {
     isLoading = true;
     errorMessage = '';
-
     try {
       const query = pageToken ? `?pageToken=${encodeURIComponent(pageToken)}` : '';
       const data = await apiFetch<VideoPage>(`/api/youtube/channels/${channelId}/videos${query}`);
@@ -38,35 +33,102 @@
   }
 </script>
 
-<PageHead eyebrow="Channel" heading="Uploaded videos">
-  <a slot="action" href="/">Change channel</a>
-</PageHead>
+<div class="channel-page">
+  <div class="channel-page__head">
+    <div>
+      <p class="channel-page__eyebrow">Channel</p>
+      <h2 class="channel-page__title">Uploaded videos</h2>
+    </div>
+    <a href="/" class="vc-btn vc-btn--secondary vc-btn--sm">Change channel</a>
+  </div>
 
-{#if isLoading}
-  <MutedText>Loading videos...</MutedText>
-{:else if errorMessage}
-  <ErrorText message={errorMessage} />
-{:else if videos.length === 0}
-  <MutedText>No public uploads found for this channel.</MutedText>
-{:else}
-  <section class="video-grid" aria-label="Channel videos">
-    {#each videos as video}
-      <VideoCard {video} />
-    {/each}
-  </section>
+  {#if isLoading}
+    <div class="clipgrid">
+      {#each Array(8) as _}
+        <div class="clipcard">
+          <div class="clipcard__thumb"><div class="clipcard__thumb-bg"></div></div>
+          <div class="clipcard__body">
+            <div class="sk sk--line" style="width:90%;margin-bottom:8px"></div>
+            <div class="sk sk--line sk--short"></div>
+          </div>
+        </div>
+      {/each}
+    </div>
+  {:else if errorMessage}
+    <p class="error-msg">{errorMessage}</p>
+  {:else if videos.length === 0}
+    <p class="empty-msg">No public uploads found for this channel.</p>
+  {:else}
+    <section class="clipgrid" aria-label="Channel videos">
+      {#each videos as video}
+        <VideoCard {video} />
+      {/each}
+    </section>
 
-  <Pagination
-    hasPrev={!!prevPageToken}
-    hasNext={!!nextPageToken}
-    on:prev={() => loadVideos(prevPageToken)}
-    on:next={() => loadVideos(nextPageToken)}
-  />
-{/if}
+    {#if prevPageToken || nextPageToken}
+      <div class="pagination">
+        <button
+          class="vc-btn vc-btn--secondary"
+          disabled={!prevPageToken}
+          onclick={() => loadVideos(prevPageToken)}>← Previous</button
+        >
+        <button
+          class="vc-btn vc-btn--secondary"
+          disabled={!nextPageToken}
+          onclick={() => loadVideos(nextPageToken)}>Next →</button
+        >
+      </div>
+    {/if}
+  {/if}
+</div>
 
 <style>
-  .video-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--s-lg) var(--s-md);
+  .channel-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  .channel-page__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+
+  .channel-page__eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .channel-page__title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-32);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--vc-text);
+  }
+
+  .error-msg {
+    color: var(--vc-error);
+    font-size: var(--vc-text-14);
+  }
+
+  .empty-msg {
+    color: var(--vc-text-muted);
+    font-size: var(--vc-text-14);
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
   }
 </style>

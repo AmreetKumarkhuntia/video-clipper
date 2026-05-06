@@ -1,136 +1,163 @@
 <script lang="ts">
   import type { VideoDetails } from '@lib/types/index.js';
   import { formatDuration } from '@web/lib/format.js';
-  import Button from '@web/components/Button.svelte';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import Panel from '@web/components/Panel.svelte';
 
-  export let video: VideoDetails;
-  export let isLoadingTranscript = false;
-  export let isAnalyzing = false;
-  export let errorMessage = '';
-  export let onLoadTranscript: () => void;
-  export let onPlanClips: () => void;
+  interface Props {
+    video: VideoDetails;
+    isLoadingTranscript?: boolean;
+    isAnalyzing?: boolean;
+    errorMessage?: string;
+    onLoadTranscript?: () => void;
+    onPlanClips?: () => void;
+  }
+
+  let {
+    video,
+    isLoadingTranscript = false,
+    isAnalyzing = false,
+    errorMessage = '',
+    onLoadTranscript,
+    onPlanClips,
+  }: Props = $props();
 </script>
 
-<Panel tag="aside">
-  <div class="details">
-    <div class="title-block">
-      <p class="eyebrow">Video workspace</p>
-      <h1>{video.title}</h1>
-      <p class="channel">{video.channelTitle}</p>
-    </div>
-
-    <dl class="stats">
-      <div>
-        <dt>Published</dt>
-        <dd>{new Date(video.publishedAt).toLocaleDateString()}</dd>
-      </div>
-      <div>
-        <dt>Duration</dt>
-        <dd>{formatDuration(video.durationSec)}</dd>
-      </div>
-      <div>
-        <dt>Views</dt>
-        <dd>{video.viewCount?.toLocaleString() ?? 'unknown'}</dd>
-      </div>
-    </dl>
-
-    <p class="description">{video.description || 'No video description available.'}</p>
-
-    <div class="actions">
-      <Button
-        variant="outline"
-        on:click={onLoadTranscript}
-        disabled={isLoadingTranscript || isAnalyzing}
-      >
-        {isLoadingTranscript ? 'Fetching transcript...' : 'Load transcript'}
-      </Button>
-      <Button on:click={onPlanClips} disabled={isAnalyzing}>
-        {isAnalyzing ? 'Planning clips...' : 'Plan clip candidates'}
-      </Button>
-    </div>
-
-    {#if errorMessage}
-      <ErrorText message={errorMessage} />
-    {/if}
+<aside class="vc-card rail-card">
+  <div class="title-block">
+    <p class="rail-eyebrow">Video workspace</p>
+    <h1 class="rail-title">{video.title}</h1>
+    <p class="rail-channel">{video.channelTitle}</p>
   </div>
-</Panel>
+
+  <dl class="stats">
+    <div>
+      <dt>Published</dt>
+      <dd>{new Date(video.publishedAt).toLocaleDateString()}</dd>
+    </div>
+    <div>
+      <dt>Duration</dt>
+      <dd>{formatDuration(video.durationSec)}</dd>
+    </div>
+    <div>
+      <dt>Views</dt>
+      <dd>{video.viewCount?.toLocaleString() ?? 'unknown'}</dd>
+    </div>
+  </dl>
+
+  <p class="rail-desc">{video.description || 'No video description available.'}</p>
+
+  <div class="rail-actions">
+    <button
+      class="vc-btn vc-btn--secondary"
+      onclick={onLoadTranscript}
+      disabled={isLoadingTranscript || isAnalyzing}
+    >
+      {isLoadingTranscript ? 'Fetching transcript...' : 'Load transcript'}
+    </button>
+    <button class="vc-btn vc-btn--primary" onclick={onPlanClips} disabled={isAnalyzing}>
+      {isAnalyzing ? 'Planning clips...' : 'Plan clip candidates'}
+    </button>
+  </div>
+
+  {#if errorMessage}
+    <p class="rail-error">{errorMessage}</p>
+  {/if}
+</aside>
 
 <style>
-  .details {
+  .rail-card {
     display: grid;
-    gap: var(--s-lg);
+    gap: 20px;
     align-self: stretch;
   }
 
   .title-block {
     display: grid;
-    gap: var(--s-xs);
+    gap: 6px;
   }
 
-  h1 {
+  .rail-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     margin: 0;
-    font-size: clamp(30px, 4vw, 40px);
-    line-height: 1.02;
   }
 
-  .channel {
+  .rail-title {
     margin: 0;
-    color: var(--c-text-secondary);
-    font-weight: var(--fw-semibold);
+    font-family: var(--vc-font-display);
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--vc-text);
+  }
+
+  .rail-channel {
+    margin: 0;
+    font-size: var(--vc-text-14);
+    font-weight: 600;
+    color: var(--vc-text-muted);
   }
 
   .stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--s-sm);
+    gap: 10px;
     margin: 0;
   }
 
   .stats div {
-    padding: 14px;
-    border: 1px solid var(--c-border);
-    border-radius: 14px;
-    background: var(--c-surface-muted);
+    padding: 12px 14px;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-raised);
   }
 
   dt {
-    color: var(--c-text-muted);
-    font-size: 12px;
-    font-weight: var(--fw-semibold);
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: var(--vc-text-muted);
   }
 
   dd {
-    margin: 8px 0 0;
-    font-size: 15px;
-    font-weight: var(--fw-bold);
+    margin: 6px 0 0;
+    font-size: var(--vc-text-14);
+    font-weight: 700;
+    color: var(--vc-text);
   }
 
-  .description {
+  .rail-desc {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    color: var(--c-text-secondary);
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
     line-height: 1.6;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 5;
     line-clamp: 5;
   }
 
-  .actions {
+  .rail-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-sm);
+    gap: 10px;
+  }
+
+  .rail-error {
+    margin: 0;
+    font-size: var(--vc-text-13);
+    color: var(--vc-error);
   }
 
   @media (max-width: 980px) {
-    .actions {
+    .rail-actions {
       grid-template-columns: 1fr;
     }
-
     .stats {
       grid-template-columns: 1fr;
     }

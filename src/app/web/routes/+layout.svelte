@@ -1,11 +1,17 @@
 <script lang="ts">
-  import { appName } from '@web/lib/index.js';
+  import { page } from '$app/stores';
+  import { theme } from '@web/lib/stores/theme.js';
   import Toaster from '@web/components/Toaster.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import '../style/index.css';
+
+  function toggleTheme() {
+    theme.update((t) => (t === 'light' ? 'dark' : 'light'));
+  }
 </script>
 
 <svelte:head>
-  <title>{appName}</title>
+  <title>Video Clipper</title>
   <meta
     name="description"
     content="Local YouTube transcript analysis and clip generation workbench"
@@ -14,68 +20,40 @@
 
 <div class="app-shell">
   <header class="topbar">
-    <a class="brand" href="/">{appName}</a>
-    <nav aria-label="Primary navigation">
-      <a href="/">Channels</a>
-      <a href="/settings">Settings</a>
+    <div class="topbar__brand">
+      <a href="/" class="vc-wordmark">
+        Video<span class="vc-wordmark__accent">Clipper</span><span class="vc-wordmark__dot"></span>
+      </a>
+    </div>
+
+    <nav class="topbar__nav" aria-label="Primary navigation">
+      <a href="/" class="topbar__nav-link" class:is-active={$page.url.pathname === '/'}>Channels</a>
+      <a
+        href="/settings"
+        class="topbar__nav-link"
+        class:is-active={$page.url.pathname.startsWith('/settings')}
+        ><Icon name="settings" size={14} /> Settings</a
+      >
     </nav>
+
+    <div class="topbar__actions">
+      <button
+        class="vc-btn vc-btn--ghost vc-btn--icon"
+        aria-label="Toggle theme"
+        onclick={toggleTheme}
+      >
+        {#if $theme === 'dark'}
+          <Icon name="sun" />
+        {:else}
+          <Icon name="moon" />
+        {/if}
+      </button>
+    </div>
   </header>
-  <main>
+
+  <div class="app-content">
     <slot />
-  </main>
+  </div>
+
   <Toaster />
 </div>
-
-<style>
-  .app-shell {
-    min-height: 100vh;
-  }
-
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--s-lg);
-    height: 64px;
-    width: min(var(--layout-max), calc(100vw - 32px));
-    margin: 0 auto;
-    padding: 0 6px;
-    border-bottom: 1px solid var(--c-border);
-    background: color-mix(in srgb, var(--c-bg) 90%, white 10%);
-    backdrop-filter: blur(16px);
-  }
-
-  .brand {
-    font-size: 15px;
-    font-weight: var(--fw-semibold);
-  }
-
-  nav {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    color: var(--c-text-muted);
-    font-size: 14px;
-  }
-
-  main {
-    width: min(var(--layout-max), calc(100vw - 32px));
-    margin: 0 auto;
-    padding: 32px 0 64px;
-  }
-
-  @media (max-width: 720px) {
-    .topbar {
-      width: min(100vw - 24px, var(--layout-max));
-      padding: 0;
-    }
-
-    main {
-      width: min(100vw - 24px, var(--layout-max));
-      padding-top: 20px;
-    }
-  }
-</style>

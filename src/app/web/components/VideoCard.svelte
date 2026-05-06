@@ -2,7 +2,11 @@
   import type { VideoSummary } from '@lib/types/index.js';
   import { formatDuration } from '@web/lib/format.js';
 
-  export let video: VideoSummary;
+  interface Props {
+    video: VideoSummary;
+  }
+
+  let { video }: Props = $props();
 </script>
 
 <a class="video-card" href={`/videos/${video.id}`}>
@@ -10,26 +14,28 @@
     {#if video.thumbnail}
       <img src={video.thumbnail.url} alt="" loading="lazy" />
     {/if}
-    <span>{formatDuration(video.durationSec)}</span>
+    <span class="duration">{formatDuration(video.durationSec)}</span>
   </div>
-  <h2>{video.title}</h2>
-  <p class="meta">{video.channelTitle}</p>
-  <p class="meta">{new Date(video.publishedAt).toLocaleDateString()}</p>
+  <h2 class="video-title">{video.title}</h2>
+  <p class="video-meta">{video.channelTitle}</p>
+  <p class="video-meta">{new Date(video.publishedAt).toLocaleDateString()}</p>
 </a>
 
 <style>
   .video-card {
     display: grid;
-    gap: var(--s-xs);
+    gap: 8px;
     min-width: 0;
+    text-decoration: none;
+    color: inherit;
   }
 
   .thumb {
     position: relative;
     overflow: hidden;
     aspect-ratio: 16 / 9;
-    border-radius: var(--r-md);
-    background: var(--c-thumb-bg);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-raised);
   }
 
   .thumb img {
@@ -38,32 +44,34 @@
     object-fit: cover;
   }
 
-  .thumb span {
+  .duration {
     position: absolute;
-    right: var(--s-xs);
-    bottom: var(--s-xs);
+    right: 6px;
+    bottom: 6px;
     padding: 3px 6px;
-    border-radius: var(--r-sm);
-    background: var(--c-overlay);
-    color: var(--c-primary-text);
+    border-radius: var(--vc-radius-sm);
+    background: var(--vc-overlay);
+    color: #fff;
     font-size: 12px;
-    font-weight: var(--fw-bold);
+    font-weight: 700;
   }
 
-  h2 {
+  .video-title {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    font-size: 15px;
-    line-height: 1.3;
+    font-size: var(--vc-text-14);
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--vc-text);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
 
-  .meta {
+  .video-meta {
     margin: 0;
-    color: var(--c-text-secondary);
-    font-size: 13px;
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
   }
 </style>

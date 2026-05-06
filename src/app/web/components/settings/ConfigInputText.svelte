@@ -1,31 +1,37 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  interface Props {
+    value?: string;
+    secret?: boolean;
+    placeholder?: string;
+    disabled?: boolean;
+    onchange?: (value: string) => void;
+  }
 
-  export let value = '';
-  export let secret = false;
-  export let placeholder = '';
-  export let disabled = false;
+  let {
+    value = $bindable(''),
+    secret = false,
+    placeholder = '',
+    disabled = false,
+    onchange,
+  }: Props = $props();
 
-  let revealed = false;
-
-  const dispatch = createEventDispatcher<{ change: string }>();
+  let revealed = $state(false);
+  let type = $derived(secret && !revealed ? 'password' : 'text');
 
   function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     value = target.value;
-    dispatch('change', value);
+    onchange?.(value);
   }
-
-  $: type = secret && !revealed ? 'password' : 'text';
 </script>
 
 <div class="text-input">
-  <input {type} {placeholder} {disabled} class="input" on:input={handleInput} bind:value />
+  <input {type} {placeholder} {disabled} class="input" oninput={handleInput} bind:value />
   {#if secret}
     <button
       type="button"
       class="toggle-reveal"
-      on:click={() => (revealed = !revealed)}
+      onclick={() => (revealed = !revealed)}
       title={revealed ? 'Hide' : 'Reveal'}
     >
       {revealed ? 'Hide' : 'Show'}
@@ -38,17 +44,17 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: var(--s-xs);
+    gap: var(--vc-space-2);
   }
 
   .input {
     flex: 1;
     min-height: 40px;
     padding: 0 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    background: var(--c-surface);
-    color: var(--c-text);
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    color: var(--vc-text);
     font-size: 14px;
     font-family: inherit;
     transition: border-color 0.16s ease;
@@ -56,7 +62,7 @@
 
   .input:focus {
     outline: none;
-    border-color: var(--c-accent);
+    border-color: var(--vc-clay-500);
   }
 
   .input:disabled {
@@ -70,13 +76,13 @@
     padding: 4px 8px;
     border: none;
     background: none;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
     font-size: 12px;
     cursor: pointer;
     font-family: inherit;
   }
 
   .toggle-reveal:hover {
-    color: var(--c-text);
+    color: var(--vc-text);
   }
 </style>

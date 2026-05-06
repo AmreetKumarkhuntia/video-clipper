@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import {
     configRegistry,
     configValues,
@@ -8,17 +7,14 @@
     updateField,
     resetToDefaults,
   } from '@web/lib/configStore.js';
-  import PageHead from '@web/components/PageHead.svelte';
-  import Button from '@web/components/Button.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
   import ConfigSection from '@web/components/settings/ConfigSection.svelte';
 
-  onMount(() => {
+  $effect(() => {
     void initConfig();
   });
 
-  function handleUpdate(event: CustomEvent<{ key: string; value: unknown }>): void {
-    updateField(event.detail.key, event.detail.value);
+  function handleUpdate(key: string, value: unknown): void {
+    updateField(key, value);
   }
 
   function handleReset(): void {
@@ -31,31 +27,58 @@
 </svelte:head>
 
 {#if !$configLoaded}
-  <MutedText>Loading settings...</MutedText>
+  <p class="settings-loading">Loading settings...</p>
 {:else if $configRegistry}
-  <PageHead eyebrow="Configuration" heading="Settings">
-    <div class="header-actions" slot="action">
-      <Button variant="outline" on:click={handleReset}>Reset to Defaults</Button>
+  <div class="settings-head">
+    <div>
+      <p class="settings-eyebrow">Configuration</p>
+      <h1 class="settings-title">Settings</h1>
     </div>
-  </PageHead>
+    <button class="vc-btn vc-btn--secondary" onclick={handleReset}> Reset to Defaults </button>
+  </div>
 
   <div class="settings-grid">
     {#each $configRegistry.groups as group (group.id)}
-      <ConfigSection {group} values={$configValues} on:update={handleUpdate} />
+      <ConfigSection {group} values={$configValues} onupdate={handleUpdate} />
     {/each}
   </div>
 {/if}
 
 <style>
-  .header-actions {
+  .settings-loading {
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+  }
+
+  .settings-head {
     display: flex;
-    align-items: center;
-    gap: var(--s-md);
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .settings-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .settings-title {
+    font-family: var(--vc-font-display);
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--vc-text);
   }
 
   .settings-grid {
     display: grid;
-    gap: var(--s-lg);
-    margin-top: var(--s-lg);
+    gap: 16px;
   }
 </style>

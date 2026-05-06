@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  interface Props {
+    value?: boolean;
+    disabled?: boolean;
+    onchange?: (value: boolean) => void;
+  }
 
-  export let value = false;
-  export let disabled = false;
-
-  const dispatch = createEventDispatcher<{ change: boolean }>();
+  let { value = $bindable(false), disabled = false, onchange }: Props = $props();
 
   function toggle(): void {
     if (!disabled) {
       value = !value;
-      dispatch('change', value);
+      onchange?.(value);
     }
   }
 </script>
@@ -19,7 +20,7 @@
   class="toggle"
   class:toggle--on={value}
   {disabled}
-  on:click={toggle}
+  onclick={toggle}
   aria-label={value ? 'Enabled' : 'Disabled'}
 >
   <span class="toggle-knob"></span>
@@ -32,14 +33,14 @@
     height: 24px;
     border: none;
     border-radius: 12px;
-    background: var(--c-border);
+    background: var(--vc-border);
     cursor: pointer;
     padding: 0;
     transition: background-color 0.2s ease;
   }
 
   .toggle--on {
-    background: var(--c-accent);
+    background: var(--vc-clay-500);
   }
 
   .toggle-knob {

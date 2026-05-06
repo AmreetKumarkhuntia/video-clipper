@@ -15,14 +15,20 @@
   );
 </script>
 
-<div class="workflow-shell">
-  <VideoWorkflowStepper {steps} />
-  {@render children()}
+<div class="shell">
+  <aside class="rail">
+    <p class="rail__h">Workflow</p>
+    <VideoWorkflowStepper {steps} />
+  </aside>
+  <div class="workflow-main">
+    {@render children()}
+  </div>
 </div>
 
 <style>
-  .workflow-shell {
-    display: grid;
-    gap: var(--s-lg);
+  .workflow-main {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 28px 32px 48px;
   }
 </style>

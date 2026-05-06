@@ -6,7 +6,7 @@
 {#if $toasts.length > 0}
   <div class="toaster" role="status" aria-live="polite">
     {#each $toasts as toast (toast.id)}
-      <Toast {toast} on:dismiss={(e) => dismissToast(e.detail)} />
+      <Toast {toast} ondismiss={(id) => dismissToast(id)} />
     {/each}
   </div>
 {/if}
@@ -14,12 +14,12 @@
 <style>
   .toaster {
     position: fixed;
-    bottom: var(--s-lg);
-    right: var(--s-lg);
+    bottom: var(--vc-space-5);
+    right: var(--vc-space-5);
     z-index: 100;
     display: flex;
     flex-direction: column-reverse;
-    gap: var(--s-sm);
+    gap: var(--vc-space-3);
     pointer-events: none;
   }
 
@@ -29,9 +29,9 @@
 
   @media (max-width: 720px) {
     .toaster {
-      left: var(--s-sm);
-      right: var(--s-sm);
-      bottom: var(--s-sm);
+      left: var(--vc-space-3);
+      right: var(--vc-space-3);
+      bottom: var(--vc-space-3);
     }
   }
 </style>

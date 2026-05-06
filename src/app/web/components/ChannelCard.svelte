@@ -1,7 +1,11 @@
 <script lang="ts">
   import type { ChannelSummary } from '@lib/types/index.js';
 
-  export let channel: ChannelSummary;
+  interface Props {
+    channel: ChannelSummary;
+  }
+
+  let { channel }: Props = $props();
 </script>
 
 <article class="channel-card">
@@ -9,10 +13,10 @@
     <img src={channel.thumbnail.url} alt="" />
   {/if}
   <div>
-    <p class="eyebrow">Channel found</p>
-    <h2>{channel.title}</h2>
-    <p class="description">{channel.description}</p>
-    <a class="btn-link" href={`/channels/${channel.id}`}>Browse videos</a>
+    <p class="card-eyebrow">Channel found</p>
+    <h2 class="card-title">{channel.title}</h2>
+    <p class="card-desc">{channel.description}</p>
+    <a class="vc-btn vc-btn--primary" href={`/channels/${channel.id}`}>Browse videos</a>
   </div>
 </article>
 
@@ -23,49 +27,51 @@
     gap: 18px;
     align-items: start;
     padding: 18px 0;
-    border-top: 1px solid var(--c-border);
+    border-top: 1px solid var(--vc-divider);
   }
 
   .channel-card img {
     width: 96px;
     height: 96px;
-    border-radius: var(--r-full);
+    border-radius: 50%;
     object-fit: cover;
   }
 
-  h2 {
-    margin: 4px 0 var(--s-sm);
-    font-size: 24px;
+  .card-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
   }
 
-  .description {
+  .card-title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-22);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    color: var(--vc-text);
+  }
+
+  .card-desc {
     display: -webkit-box;
     max-width: 680px;
-    margin: 0 0 var(--s-md);
+    margin: 0 0 14px;
     overflow: hidden;
-    color: var(--c-text-muted);
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
+    line-height: 1.5;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     line-clamp: 3;
-  }
-
-  .btn-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 18px;
-    border-radius: var(--r-md);
-    background: var(--c-primary);
-    color: var(--c-primary-text);
-    font-weight: var(--fw-bold);
   }
 
   @media (max-width: 620px) {
     .channel-card {
       grid-template-columns: 1fr;
     }
-
     .channel-card img {
       width: 72px;
       height: 72px;

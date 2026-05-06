@@ -1,21 +1,22 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  interface Props {
+    value?: number;
+    min?: number;
+    max?: number;
+    disabled?: boolean;
+    onchange?: (value: number | undefined) => void;
+  }
 
-  export let value: number | undefined = undefined;
-  export let min: number | undefined = undefined;
-  export let max: number | undefined = undefined;
-  export let disabled = false;
+  let { value = $bindable(undefined), min, max, disabled = false, onchange }: Props = $props();
 
-  const dispatch = createEventDispatcher<{ change: number | undefined }>();
+  let displayValue = $derived(value ?? min ?? 0);
 
   function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     const parsed = target.value === '' ? undefined : Number(target.value);
     value = parsed;
-    dispatch('change', parsed);
+    onchange?.(parsed);
   }
-
-  $: displayValue = value ?? min ?? 0;
 </script>
 
 <div class="slider-wrapper">
@@ -26,7 +27,7 @@
     {min}
     {max}
     value={displayValue}
-    on:input={handleInput}
+    oninput={handleInput}
   />
   <span class="slider-value">{displayValue}</span>
 </div>
@@ -35,14 +36,14 @@
   .slider-wrapper {
     display: flex;
     align-items: center;
-    gap: var(--s-sm);
+    gap: var(--vc-space-3);
   }
 
   .slider {
     flex: 1;
     height: 6px;
     border-radius: 3px;
-    background: var(--c-border);
+    background: var(--vc-border);
     appearance: none;
     cursor: pointer;
   }
@@ -52,7 +53,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--c-accent);
+    background: var(--vc-clay-500);
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   }
@@ -61,7 +62,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--c-accent);
+    background: var(--vc-clay-500);
     cursor: pointer;
     border: none;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
@@ -76,7 +77,7 @@
     min-width: 32px;
     text-align: right;
     font-size: 14px;
-    font-weight: var(--fw-semibold);
-    color: var(--c-text);
+    font-weight: 600;
+    color: var(--vc-text);
   }
 </style>

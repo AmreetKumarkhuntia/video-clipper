@@ -1,20 +1,29 @@
 <script lang="ts">
   import type { AnalysisActivityItem, ActivityPhase } from '@app/web/types/activity.js';
   import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
-  import Panel from '@web/components/Panel.svelte';
 
-  export let analyzedChunks = 0;
-  export let totalChunks = 0;
-  export let phase: ActivityPhase = 'idle';
-  export let items: AnalysisActivityItem[] = [];
-  export let isAnalyzing = false;
+  interface Props {
+    analyzedChunks?: number;
+    totalChunks?: number;
+    phase?: ActivityPhase;
+    items?: AnalysisActivityItem[];
+    isAnalyzing?: boolean;
+  }
+
+  let {
+    analyzedChunks = 0,
+    totalChunks = 0,
+    phase = 'idle',
+    items = [],
+    isAnalyzing = false,
+  }: Props = $props();
 </script>
 
-<Panel tag="aside">
+<aside class="vc-card activity-card">
   <div class="panel-head">
     <div>
-      <p class="eyebrow">Activity</p>
-      <h2>Watch the analysis thread as each chunk resolves.</h2>
+      <p class="panel-eyebrow">Activity</p>
+      <h2 class="panel-title">Watch the analysis thread as each chunk resolves.</h2>
     </div>
     {#if isAnalyzing}
       <span class="live-pill">Live</span>
@@ -22,24 +31,42 @@
   </div>
 
   <AnalysisProgress {analyzedChunks} {totalChunks} {phase} {items} />
-</Panel>
+</aside>
 
 <style>
+  .activity-card {
+    display: flex;
+    flex-direction: column;
+  }
+
   .panel-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-md);
+    gap: 16px;
     align-items: start;
-    margin-bottom: var(--s-lg);
+    margin-bottom: 20px;
   }
 
-  h2 {
+  .panel-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .panel-title {
     margin: 0;
-    font-size: clamp(22px, 2.8vw, 28px);
+    font-family: var(--vc-font-display);
+    font-size: clamp(20px, 2.8vw, 26px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
     line-height: 1.1;
+    color: var(--vc-text);
   }
 
-  :global(.panel) :global(.thread) {
+  .activity-card :global(.thread) {
     max-height: 720px;
     overflow-y: auto;
     padding-right: 6px;
@@ -49,23 +76,26 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
+    min-height: 26px;
     padding: 0 10px;
     border-radius: 999px;
-    background: var(--c-accent-soft);
-    color: var(--c-accent);
-    font-size: 12px;
-    font-weight: var(--fw-semibold);
+    background: var(--vc-clay-soft);
+    color: var(--vc-clay-500);
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+  }
+
+  [data-theme='dark'] .live-pill {
+    color: var(--vc-clay-400);
   }
 
   @media (max-width: 700px) {
     .panel-head {
       grid-template-columns: 1fr;
     }
-
-    :global(.panel) :global(.thread) {
+    .activity-card :global(.thread) {
       max-height: none;
     }
   }

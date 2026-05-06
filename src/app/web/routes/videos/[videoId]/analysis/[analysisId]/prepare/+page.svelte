@@ -3,11 +3,7 @@
   import { page } from '$app/state';
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/toastStore.js';
-  import Button from '@web/components/Button.svelte';
-  import ErrorText from '@web/components/ErrorText.svelte';
-  import FormField from '@web/components/FormField.svelte';
-  import MutedText from '@web/components/MutedText.svelte';
-  import PageHead from '@web/components/PageHead.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
@@ -26,15 +22,12 @@
   let analysisId = $derived(page.params.analysisId);
 
   $effect(() => {
-    if (analysisId) {
-      void loadDraft();
-    }
+    if (analysisId) void loadDraft();
   });
 
   async function loadDraft(): Promise<void> {
     isLoading = true;
     errorMessage = '';
-
     try {
       const data = await apiFetch<{ draft: PublishDraft }>(`/api/publish/drafts/${analysisId}`);
       draft = data.draft;
@@ -48,22 +41,15 @@
 
   function updateItem(index: number, item: PublishDraftItem): void {
     if (!draft) return;
-
     const items = draft.items.slice();
     items[index] = item;
-    draft = {
-      ...draft,
-      items,
-      updatedAt: new Date().toISOString(),
-    };
+    draft = { ...draft, items, updatedAt: new Date().toISOString() };
   }
 
   async function saveDraft(): Promise<void> {
     if (!draft) return;
-
     isSaving = true;
     errorMessage = '';
-
     try {
       const data = await apiFetch<{ draft: PublishDraft }>('/api/publish/drafts', {
         method: 'POST',
@@ -75,7 +61,6 @@
           items: draft.items,
         }),
       });
-
       draft = data.draft;
       showToast('success', 'Publish draft saved.');
     } catch (error) {
@@ -98,19 +83,13 @@
 
   async function generateMetadata(items: PublishDraftItem[]): Promise<void> {
     if (!draft || items.length === 0) return;
-
     isGenerating = true;
     errorMessage = '';
-
     try {
-      // Best-effort: fetch source video details for richer LLM context.
-      // Silently omitted if YOUTUBE_API_KEY is not configured or the call fails.
       let videoDetails: VideoDetails | null = null;
       try {
         videoDetails = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
-      } catch {
-        // non-fatal — LLM will work without this context
-      }
+      } catch {}
 
       const data = await apiFetch<{ items: GeneratedPublishMetadata[] }>(
         '/api/publish/drafts/generate',
@@ -125,12 +104,10 @@
           }),
         },
       );
-
       applyGeneratedItems(data.items);
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
       showToast('error', 'Failed to generate metadata.');
-      return;
     } finally {
       isGenerating = false;
     }
@@ -138,8 +115,7 @@
 
   async function generateAll(): Promise<void> {
     if (!draft) return;
-    const selected = draft.items.filter((item) => item.selected);
-    await generateMetadata(selected);
+    await generateMetadata(draft.items.filter((item) => item.selected));
     if (!errorMessage) showToast('success', 'AI metadata generated for selected clips.');
   }
 
@@ -150,23 +126,17 @@
 
   function updateDraftTitle(value: string): void {
     if (!draft) return;
-    draft = {
-      ...draft,
-      title: value,
-      updatedAt: new Date().toISOString(),
-    };
+    draft = { ...draft, title: value, updatedAt: new Date().toISOString() };
   }
 
   function applyGeneratedItems(items: GeneratedPublishMetadata[]): void {
     if (!draft || items.length === 0) return;
-
     const generatedById = new Map(items.map((item) => [item.clipArtifactId, item]));
     draft = {
       ...draft,
       items: draft.items.map((item) => {
         const generated = generatedById.get(item.clipArtifactId);
         if (!generated) return item;
-
         return {
           ...item,
           title: generated.title,
@@ -181,42 +151,64 @@
 </script>
 
 {#if isLoading}
-  <MutedText>Loading publish draft...</MutedText>
+  <div class="prepare-loading">
+    <div class="sk sk--line" style="width:280px;height:16px"></div>
+  </div>
 {:else if errorMessage && !draft}
-  <ErrorText message={errorMessage} />
+  <p class="prepare-error">{errorMessage}</p>
 {/if}
 
 {#if draft}
-  <PageHead eyebrow="Prepare" heading="Review titles, descriptions, and privacy settings">
-    <div class="actions" slot="action">
-      <Button variant="outline" on:click={generateAll} disabled={isGenerating || isSaving}>
-        {isGenerating ? 'Generating...' : 'Generate all with AI'}
-      </Button>
-      <Button variant="outline" on:click={continueToPublish} disabled={isGenerating || isSaving}>
-        Continue to Publish
-      </Button>
-      <Button variant="outline" on:click={saveDraft} disabled={isSaving}>
-        {isSaving ? 'Saving...' : 'Save draft'}
-      </Button>
+  <div class="prepare-page">
+    <div class="prepare-head">
+      <div>
+        <p class="prepare-eyebrow">Step 4 · Prepare</p>
+        <h2 class="prepare-title">Review titles &amp; descriptions</h2>
+      </div>
+      <div class="prepare-actions">
+        <button
+          class="vc-btn vc-btn--secondary vc-btn--sm"
+          onclick={generateAll}
+          disabled={isGenerating || isSaving}
+        >
+          {#if isGenerating}<Icon name="loader" size={13} /> Generating…{:else}<Icon
+              name="sparkles"
+              size={13}
+            /> Generate all with AI{/if}
+        </button>
+        <button class="vc-btn vc-btn--secondary" onclick={saveDraft} disabled={isSaving}>
+          {isSaving ? 'Saving…' : 'Save draft'}
+        </button>
+        <button
+          class="vc-btn vc-btn--primary"
+          onclick={continueToPublish}
+          disabled={isGenerating || isSaving}
+        >
+          Continue to Publish <Icon name="arrow-right" size={14} />
+        </button>
+      </div>
     </div>
-  </PageHead>
 
-  <section class="draft-shell">
-    <div class="draft-header">
-      <FormField label="Workflow title">
-        <input
-          value={draft.title}
-          oninput={(event) => updateDraftTitle((event.currentTarget as HTMLInputElement).value)}
-        />
-      </FormField>
-      <p class="summary">
-        {draft.items.filter((item) => item.selected).length} of {draft.items.length} clips selected for
-        upload.
-      </p>
+    <!-- Workflow title -->
+    <div class="vc-card" style="margin-bottom:20px">
+      <div class="prepare-draft-header">
+        <div class="vc-field" style="flex:1">
+          <label class="vc-label" for="draft-title">Workflow title</label>
+          <input
+            id="draft-title"
+            class="vc-input"
+            value={draft.title}
+            oninput={(e) => updateDraftTitle((e.currentTarget as HTMLInputElement).value)}
+          />
+        </div>
+        <p class="prepare-summary">
+          {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected
+        </p>
+      </div>
     </div>
 
     {#if errorMessage}
-      <ErrorText message={errorMessage} />
+      <p class="prepare-error">{errorMessage}</p>
     {/if}
 
     <div class="draft-list">
@@ -229,59 +221,76 @@
         />
       {/each}
     </div>
-  </section>
+  </div>
 {/if}
 
 <style>
-  .actions {
+  .prepare-loading,
+  .prepare-error {
+    padding: 24px 0;
+  }
+  .prepare-error {
+    color: var(--vc-error);
+    font-size: var(--vc-text-14);
+  }
+
+  .prepare-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .prepare-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .prepare-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .prepare-title {
+    font-family: var(--vc-font-display);
+    font-size: var(--vc-text-26);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--vc-text);
+  }
+
+  .prepare-actions {
     display: flex;
     align-items: center;
-    gap: var(--s-sm);
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
-  .draft-shell {
-    display: grid;
-    gap: var(--s-lg);
+  .prepare-draft-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
   }
 
-  .draft-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-md);
-    align-items: end;
-    padding: clamp(18px, 2.4vw, 28px);
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-xl);
-    background: color-mix(in srgb, var(--c-surface) 80%, white 20%);
-    box-shadow: var(--shadow-soft);
-  }
-
-  .summary {
+  .prepare-summary {
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
     margin: 0;
-    color: var(--c-text-secondary);
-    font-weight: var(--fw-semibold);
     white-space: nowrap;
+    padding-bottom: 10px;
   }
 
   .draft-list {
-    display: grid;
-    gap: var(--s-lg);
-  }
-
-  @media (max-width: 760px) {
-    .actions,
-    .draft-header {
-      grid-template-columns: 1fr;
-    }
-
-    .actions {
-      width: 100%;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .summary {
-      white-space: normal;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 </style>

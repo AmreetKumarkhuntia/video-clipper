@@ -1,36 +1,36 @@
 /* Video Clipper — design tokens
- * Light is default. Add `data-theme="dark"` on <html> or any ancestor for dark.
+ * Light is default. Add `data-theme="dark"` on <html> for dark.
  */
 
 :root {
   /* ── Surfaces (light) ───────────────────────────────────────── */
-  --vc-bg: #f5f1ea; /* page bg — warm cream */
-  --vc-surface: #faf7f1; /* card bg, raised */
-  --vc-surface-2: #efe9dd; /* chrome, sidebar, deeper recess */
-  --vc-overlay: rgba(31, 28, 22, 0.45); /* modal scrim */
+  --vc-bg: #f5f1ea;
+  --vc-surface: #faf7f1;
+  --vc-surface-2: #efe9dd;
+  --vc-overlay: rgba(31, 28, 22, 0.45);
 
   /* ── Text (light) ──────────────────────────────────────────── */
-  --vc-text: #1f1c16; /* deep cocoa, never pure black */
+  --vc-text: #1f1c16;
   --vc-text-muted: #6b6358;
   --vc-text-subtle: #9a9387;
   --vc-text-onAccent: #ffffff;
 
   /* ── Border (light) ────────────────────────────────────────── */
-  --vc-border: #e1d8c7; /* hairline cocoa */
+  --vc-border: #e1d8c7;
   --vc-border-strong: #c9beaa;
   --vc-divider: #ebe3d2;
 
-  /* ── Accent — Clay (the one) ───────────────────────────────── */
+  /* ── Accent — Clay ─────────────────────────────────────────── */
   --vc-clay-50: #fbefe6;
   --vc-clay-100: #f4d9c4;
   --vc-clay-200: #ecbc97;
   --vc-clay-400: #e0926a;
-  --vc-clay-500: #d97757; /* primary */
+  --vc-clay-500: #d97757;
   --vc-clay-600: #c65f3f;
   --vc-clay-700: #a14b30;
   --vc-clay-soft: rgba(217, 119, 87, 0.1);
 
-  /* ── Status (muted, sits next to cream) ────────────────────── */
+  /* ── Status ────────────────────────────────────────────────── */
   --vc-success: #6b8f71;
   --vc-success-soft: rgba(107, 143, 113, 0.12);
   --vc-warn: #c8995a;
@@ -97,7 +97,6 @@
   --vc-dur-slow: 260ms;
 }
 
-/* ── Dark theme — a true rethink, not an inversion ───────────── */
 [data-theme='dark'] {
   --vc-bg: #1b1812;
   --vc-surface: #24201a;
@@ -117,7 +116,7 @@
   --vc-clay-100: rgba(217, 119, 87, 0.16);
   --vc-clay-200: #a8674b;
   --vc-clay-400: #e48663;
-  --vc-clay-500: #ed8e6b; /* lifted in luminance for dark */
+  --vc-clay-500: #ed8e6b;
   --vc-clay-600: #d97757;
   --vc-clay-700: #b85f3f;
   --vc-clay-soft: rgba(237, 142, 107, 0.14);
@@ -135,67 +134,4 @@
   --vc-shadow-2: 0 2px 4px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.4);
   --vc-shadow-3: 0 4px 8px rgba(0, 0, 0, 0.4), 0 24px 48px rgba(0, 0, 0, 0.55);
   --vc-shadow-focus: 0 0 0 3px rgba(237, 142, 107, 0.3);
-}
-
-/* ── Reset / base ──────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--vc-bg);
-  color: var(--vc-text);
-  font-family: var(--vc-font-body);
-  font-size: var(--vc-text-15);
-  line-height: var(--vc-leading-body);
-  font-feature-settings: 'cv11', 'ss01';
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-body {
-  transition:
-    background var(--vc-dur-base) var(--vc-ease),
-    color var(--vc-dur-base) var(--vc-ease);
-}
-
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--vc-font-display);
-  font-weight: 500;
-  letter-spacing: var(--vc-tracking-tight);
-  margin: 0;
-}
-h1 {
-  font-size: var(--vc-text-44);
-  line-height: var(--vc-leading-tight);
-}
-h2 {
-  font-size: var(--vc-text-32);
-  line-height: var(--vc-leading-tight);
-}
-h3 {
-  font-size: var(--vc-text-21);
-  line-height: var(--vc-leading-snug);
-  font-weight: 600;
-}
-h4 {
-  font-size: var(--vc-text-18);
-  line-height: var(--vc-leading-snug);
-  font-weight: 600;
-  font-family: var(--vc-font-body);
-  letter-spacing: 0;
-}
-p {
-  margin: 0;
-}
-
-::selection {
-  background: var(--vc-clay-200);
-  color: var(--vc-text);
 }

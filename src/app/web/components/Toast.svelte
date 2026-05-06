@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import type { Toast } from '@web/lib/toastStore.js';
 
-  export let toast: Toast;
+  interface Props {
+    toast: Toast;
+    ondismiss?: (id: string) => void;
+  }
 
-  const dispatch = createEventDispatcher<{ dismiss: string }>();
+  let { toast, ondismiss }: Props = $props();
 </script>
 
 <div
@@ -16,7 +18,7 @@
   <button
     type="button"
     class="toast-dismiss"
-    on:click={() => dispatch('dismiss', toast.id)}
+    onclick={() => ondismiss?.(toast.id)}
     aria-label="Dismiss"
   >
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -34,27 +36,27 @@
   .toast {
     display: flex;
     align-items: center;
-    gap: var(--s-sm);
+    gap: var(--vc-space-3);
     padding: 10px 14px;
-    border-radius: var(--r-md);
-    background: var(--c-surface);
-    color: var(--c-text);
-    border: 1px solid var(--c-border);
-    box-shadow: var(--shadow-soft);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    color: var(--vc-text);
+    border: 1px solid var(--vc-border);
+    box-shadow: var(--vc-shadow-1);
     font-size: 14px;
     animation: toast-in 0.2s ease-out;
     max-width: 400px;
   }
 
   .toast--success {
-    border-color: var(--c-success);
-    background: var(--c-success-soft);
+    border-color: var(--vc-success);
+    background: var(--vc-success-soft);
   }
 
   .toast--error {
-    border-color: var(--c-error);
-    background: color-mix(in srgb, var(--c-error) 10%, var(--c-surface));
-    color: var(--c-error);
+    border-color: var(--vc-error);
+    background: color-mix(in srgb, var(--vc-error) 10%, var(--vc-surface));
+    color: var(--vc-error);
   }
 
   .toast-message {
@@ -66,14 +68,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     padding: 2px;
     border: none;
+    border-radius: var(--vc-radius-sm);
     background: none;
     color: inherit;
     opacity: 0.5;
     cursor: pointer;
-    border-radius: var(--r-sm);
-    flex-shrink: 0;
   }
 
   .toast-dismiss:hover {

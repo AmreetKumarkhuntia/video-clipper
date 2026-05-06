@@ -2,15 +2,17 @@
   import type { ClipCandidate } from '@app/web/types/analysis.js';
   import { formatTime } from '@web/lib/format.js';
 
-  export let candidate: ClipCandidate;
+  interface Props {
+    candidate: ClipCandidate;
+    ontoggle?: () => void;
+  }
 
-  import { createEventDispatcher } from 'svelte';
-  const dispatch = createEventDispatcher<{ toggle: void }>();
+  let { candidate, ontoggle }: Props = $props();
 </script>
 
 <article class:selected={candidate.selected}>
   <label>
-    <input type="checkbox" checked={candidate.selected} on:change={() => dispatch('toggle')} />
+    <input type="checkbox" checked={candidate.selected} onchange={() => ontoggle?.()} />
     <span>Rank {candidate.rank}</span>
   </label>
   <div>
@@ -29,8 +31,8 @@
     grid-template-columns: 120px 1fr 64px;
     gap: 18px;
     align-items: start;
-    padding: var(--s-md) 0;
-    border-top: 1px solid var(--c-border);
+    padding: 16px 0;
+    border-top: 1px solid var(--vc-divider);
     opacity: 0.7;
   }
 
@@ -42,36 +44,42 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    color: var(--c-text-muted);
-    font-weight: var(--fw-bold);
+    color: var(--vc-text-muted);
+    font-weight: 700;
+    cursor: pointer;
   }
 
   h2 {
     margin: 0 0 6px;
-    font-size: 18px;
+    font-size: var(--vc-text-18);
+    color: var(--vc-text);
   }
 
   p {
     margin: 0;
-    color: var(--c-text-muted);
+    font-size: var(--vc-text-14);
+    color: var(--vc-text-muted);
   }
 
   blockquote {
-    margin: var(--s-sm) 0 0;
+    margin: 10px 0 0;
     padding-left: 12px;
-    border-left: 3px solid var(--c-border);
-    color: var(--c-text-muted);
+    border-left: 3px solid var(--vc-border);
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
+    line-height: 1.5;
   }
 
   strong {
     justify-self: end;
+    font-size: var(--vc-text-16);
+    color: var(--vc-text);
   }
 
   @media (max-width: 760px) {
     article {
       grid-template-columns: 1fr;
     }
-
     strong {
       justify-self: start;
     }

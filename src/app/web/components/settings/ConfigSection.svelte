@@ -1,18 +1,20 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import type { ConfigGroupDescriptor } from '@lib/config/registry.js';
   import ConfigField from './ConfigField.svelte';
 
-  export let group: ConfigGroupDescriptor;
-  export let values: Record<string, unknown>;
+  interface Props {
+    group: ConfigGroupDescriptor;
+    values: Record<string, unknown>;
+    onupdate?: (key: string, value: unknown) => void;
+  }
 
-  const dispatch = createEventDispatcher<{ update: { key: string; value: unknown } }>();
+  let { group, values, onupdate }: Props = $props();
 
-  let collapsed = false;
+  let collapsed = $state(false);
 </script>
 
 <section class="config-section">
-  <button type="button" class="section-header" on:click={() => (collapsed = !collapsed)}>
+  <button type="button" class="section-header" onclick={() => (collapsed = !collapsed)}>
     <h2 class="section-title">{group.label}</h2>
     <span class="section-toggle" class:section-toggle--collapsed={collapsed}>
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -27,7 +29,7 @@
         <ConfigField
           {field}
           value={values[field.key]}
-          on:update={(e) => dispatch('update', e.detail)}
+          onupdate={(key, value) => onupdate?.(key, value)}
         />
       {/each}
     </div>
@@ -36,9 +38,9 @@
 
 <style>
   .config-section {
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--c-surface) 80%, white 20%);
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-lg);
+    background: color-mix(in srgb, var(--vc-surface) 80%, white 20%);
     overflow: hidden;
   }
 
@@ -47,29 +49,30 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: var(--s-md) var(--s-lg);
+    padding: var(--vc-space-4) var(--vc-space-5);
     border: none;
-    background: var(--c-surface-muted);
+    background: var(--vc-surface-2);
     cursor: pointer;
     font-family: inherit;
     transition: background-color 0.16s ease;
   }
 
   .section-header:hover {
-    background: var(--c-surface-strong);
+    background: var(--vc-surface-2);
+    filter: brightness(0.97);
   }
 
   .section-title {
     font-size: 16px;
-    font-weight: var(--fw-bold);
-    color: var(--c-text);
+    font-weight: 700;
+    color: var(--vc-text);
     margin: 0;
   }
 
   .section-toggle {
     display: flex;
     align-items: center;
-    color: var(--c-text-muted);
+    color: var(--vc-text-muted);
     transition: transform 0.2s ease;
   }
 
@@ -79,7 +82,7 @@
 
   .section-fields {
     display: grid;
-    gap: var(--s-lg);
-    padding: var(--s-lg);
+    gap: var(--vc-space-5);
+    padding: var(--vc-space-5);
   }
 </style>
