@@ -119,6 +119,14 @@ export const ConfigSchema = z
     YT_DLP_COOKIES_FILE: z.string().optional(),
     YT_DLP_QUIET: z.coerce.boolean().default(false),
     YT_DLP_RETRY_COUNT: z.coerce.number().int().min(0).max(5).default(0),
+    YT_DLP_SEGMENT_COOKIES_ENABLED: z.coerce.boolean().default(false),
+    YT_DLP_PLAYER_CLIENT: z
+      .enum(['auto', 'android_vr', 'mweb', 'web', 'android', 'ios'])
+      .default('auto'),
+    YT_DLP_NO_CHECK_CERTIFICATES: z.coerce.boolean().default(false),
+    YT_DLP_FORCE_IPV4: z.coerce.boolean().default(false),
+    YT_DLP_GEO_BYPASS: z.coerce.boolean().default(false),
+    YT_DLP_SLEEP_REQUESTS: z.coerce.number().int().min(0).max(30).default(0),
 
     // ---- Cache backend -------------------------------------------------------
     CACHE_BACKEND: z.enum(['file', 'mongodb']).default('file'),
@@ -221,6 +229,12 @@ export const CONFIG_GROUPS = [
       'YT_DLP_COOKIES_FILE',
       'YT_DLP_QUIET',
       'YT_DLP_RETRY_COUNT',
+      'YT_DLP_SEGMENT_COOKIES_ENABLED',
+      'YT_DLP_PLAYER_CLIENT',
+      'YT_DLP_NO_CHECK_CERTIFICATES',
+      'YT_DLP_FORCE_IPV4',
+      'YT_DLP_GEO_BYPASS',
+      'YT_DLP_SLEEP_REQUESTS',
       'YT_DEFAULT_CATEGORY_ID',
       'YT_DEFAULT_PRIVACY',
       'YT_DEFAULT_LICENSE',
@@ -352,6 +366,35 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   },
   YT_DLP_RETRY_COUNT: {
     description: 'Retry failed yt-dlp calls with exponential backoff — 2s, 4s, 8s… (0 = no retry)',
+    widget: 'number',
+  },
+  YT_DLP_SEGMENT_COOKIES_ENABLED: {
+    description:
+      'Pass cookies during per-segment (partial) downloads. Enable for private or bot-gated videos. Note: disables the ANDROID_VR client bypass — may fail on some public videos.',
+    widget: 'toggle',
+  },
+  YT_DLP_PLAYER_CLIENT: {
+    description:
+      'Force a specific yt-dlp player client. "Auto" lets yt-dlp decide. "Android VR" bypasses bot-detection for public videos without cookies.',
+    widget: 'select',
+  },
+  YT_DLP_NO_CHECK_CERTIFICATES: {
+    description:
+      'Skip SSL certificate verification (--no-check-certificates). Try this if downloads fail due to certificate errors.',
+    widget: 'toggle',
+  },
+  YT_DLP_FORCE_IPV4: {
+    description:
+      'Force all yt-dlp connections to use IPv4 (--force-ipv4). Helps on networks where IPv6 is unreliable.',
+    widget: 'toggle',
+  },
+  YT_DLP_GEO_BYPASS: {
+    description: 'Attempt to bypass geographic content restrictions (--geo-bypass).',
+    widget: 'toggle',
+  },
+  YT_DLP_SLEEP_REQUESTS: {
+    description:
+      'Seconds to sleep between yt-dlp requests (0 = no sleep). Increase to avoid rate-limiting on large batches.',
     widget: 'number',
   },
   SCORE_THRESHOLD: { description: 'Min score (1-10) for a segment to be kept', widget: 'slider' },
