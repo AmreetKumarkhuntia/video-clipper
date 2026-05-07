@@ -129,6 +129,24 @@
     draft = { ...draft, title: value, updatedAt: new Date().toISOString() };
   }
 
+  function selectAll(): void {
+    if (!draft) return;
+    draft = {
+      ...draft,
+      items: draft.items.map((i) => ({ ...i, selected: true })),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function deselectAll(): void {
+    if (!draft) return;
+    draft = {
+      ...draft,
+      items: draft.items.map((i) => ({ ...i, selected: false })),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   function applyGeneratedItems(items: GeneratedPublishMetadata[]): void {
     if (!draft || items.length === 0) return;
     const generatedById = new Map(items.map((item) => [item.clipArtifactId, item]));
@@ -166,6 +184,20 @@
         <h2 class="prepare-title">Review titles &amp; descriptions</h2>
       </div>
       <div class="prepare-actions">
+        <button
+          class="vc-btn vc-btn--secondary vc-btn--sm"
+          onclick={selectAll}
+          disabled={isGenerating || isSaving}
+        >
+          Select all
+        </button>
+        <button
+          class="vc-btn vc-btn--secondary vc-btn--sm"
+          onclick={deselectAll}
+          disabled={isGenerating || isSaving}
+        >
+          Deselect all
+        </button>
         <button
           class="vc-btn vc-btn--secondary vc-btn--sm"
           onclick={generateAll}
