@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brand — Video Clipper</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { padding: 64px 80px; max-width: 1100px; margin: 0 auto; }
+  .eyebrow { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-clay-600); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  header { margin-bottom: 48px; }
+  .group { margin-bottom: 56px; }
+  .group h3 { margin-bottom: 16px; }
+  .lockup { background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-lg); padding: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+  .lockup--inverted { background: var(--vc-text); color: var(--vc-bg); }
+  .lockup--inverted .vc-wordmark { color: var(--vc-bg); }
+  .voice { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .voice__col { background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-md); padding: 24px; }
+  .voice__h { font-family: var(--vc-font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+  .voice__do  { color: var(--vc-success); }
+  .voice__dont { color: var(--vc-error); }
+  .voice ul { margin: 0; padding-left: 18px; color: var(--vc-text-muted); font-size: 14px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Brand</div>
+  <h1>Video Clipper.</h1>
+  <p style="color: var(--vc-text-muted); margin-top: 12px; max-width: 56ch;">A wordmark-only mark. The serif carries the weight; the clay dot is a quiet signature, used at large sizes only.</p>
+</header>
+
+<div class="group">
+  <h3>Wordmark</h3>
+  <div class="lockup">
+    <span class="vc-wordmark" style="font-size: 72px;">Video Clipper<span class="vc-wordmark__dot" style="width: 10px; height: 10px; margin-left: 6px;"></span></span>
+    <span class="vc-wordmark" style="font-size: 32px;">Video Clipper<span class="vc-wordmark__dot"></span></span>
+    <span class="vc-wordmark" style="font-size: 18px;">Video Clipper</span>
+    <div style="font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle);">The clay dot drops below 21px. Below 14px, use mono caps: <code>VIDEO-CLIPPER</code>.</div>
+  </div>
+</div>
+
+<div class="group">
+  <h3>Inverted</h3>
+  <div class="lockup lockup--inverted">
+    <span class="vc-wordmark" style="font-size: 56px;">Video Clipper<span class="vc-wordmark__dot" style="background: var(--vc-clay-500);"></span></span>
+  </div>
+</div>
+
+<div class="group">
+  <h3>Voice</h3>
+  <div class="voice">
+    <div class="voice__col">
+      <div class="voice__h voice__do">Do</div>
+      <ul>
+        <li>"Analyzing transcript chunks."</li>
+        <li>"Top 10 segments, ranked by score."</li>
+        <li>"yt-dlp returned 403. Add cookies in Settings → Auth."</li>
+        <li>"Paste a YouTube URL to begin."</li>
+      </ul>
+    </div>
+    <div class="voice__col">
+      <div class="voice__h voice__dont">Don't</div>
+      <ul>
+        <li>"✨ AI magic happening!"</li>
+        <li>"Discover the BEST moments instantly!"</li>
+        <li>"Oops! Something went wrong 😬"</li>
+        <li>"Welcome aboard, creator!"</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>
