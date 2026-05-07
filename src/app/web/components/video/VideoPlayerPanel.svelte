@@ -1,12 +1,17 @@
 <script lang="ts">
   import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
-  import type { VideoPlayerPanelProps } from '@app/web/types/componentProps.js';
 
-  let { videoId, title }: VideoPlayerPanelProps = $props();
+  interface Props {
+    videoId: string;
+    title: string;
+    startSec?: number;
+  }
+
+  let { videoId, title, startSec }: Props = $props();
 </script>
 
 <div class="player-embed">
-  <YouTubeEmbed {videoId} {title} />
+  <YouTubeEmbed {videoId} {title} {startSec} />
 </div>
 
 <style>

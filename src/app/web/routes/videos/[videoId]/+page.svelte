@@ -21,34 +21,46 @@
   import Icon from '@web/components/Icon.svelte';
   import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
   import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
+  import ClipTimeline from '@web/components/video/ClipTimeline.svelte';
+  import SegmentPreview from '@web/components/video/SegmentPreview.svelte';
   import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
   import VideoPlayerPanel from '@web/components/video/VideoPlayerPanel.svelte';
 
-  let video: VideoDetails | null = null;
-  let transcript: TranscriptBundle | null = null;
-  let plan: ClipPlan | null = null;
-  let isLoadingVideo = false;
-  let isLoadingTranscript = false;
-  let isAnalyzing = false;
-  let errorMessage = '';
+  let video = $state<VideoDetails | null>(null);
+  let transcript = $state<TranscriptBundle | null>(null);
+  let plan = $state<ClipPlan | null>(null);
+  let isLoadingVideo = $state(false);
+  let isLoadingTranscript = $state(false);
+  let isAnalyzing = $state(false);
+  let errorMessage = $state('');
 
-  let analyzedChunks = 0;
-  let totalChunks = 0;
-  let analysisPhase: ActivityPhase = 'idle';
-  let activityState = createInitialActivityState();
-  let completedChunkIndexes = new Set<number>();
+  let analyzedChunks = $state(0);
+  let totalChunks = $state(0);
+  let analysisPhase = $state<ActivityPhase>('idle');
+  let activityState = $state(createInitialActivityState());
+  let completedChunkIndexes = $state<Set<number>>(new Set());
 
-  $: videoId = $page.params.videoId;
+  let selectedCandidateId = $state<string | null>(null);
+  let seekToSec = $state<number | undefined>(undefined);
 
-  $: if (videoId) {
-    void loadVideo();
-  }
+  let videoId = $derived($page.params.videoId);
 
-  $: transcriptRows = transcript?.lines ?? [];
-  $: candidateRanges =
+  let transcriptRows = $derived(transcript?.lines ?? []);
+  let candidateRanges = $derived(
     plan?.candidates.map((candidate) => ({ start: candidate.startSec, end: candidate.endSec })) ??
-    [];
+      [],
+  );
+
+  let selectedCandidate = $derived(
+    selectedCandidateId ? plan?.candidates.find((c) => c.id === selectedCandidateId) : null,
+  );
+
+  let activeRange = $derived(
+    selectedCandidate
+      ? { start: selectedCandidate.startSec, end: selectedCandidate.endSec }
+      : undefined,
+  );
 
   async function loadVideo(): Promise<void> {
     isLoadingVideo = true;
@@ -61,6 +73,10 @@
       isLoadingVideo = false;
     }
   }
+
+  $effect(() => {
+    if (videoId) void loadVideo();
+  });
 
   async function loadTranscript(): Promise<void> {
     isLoadingTranscript = true;
@@ -164,6 +180,24 @@
       isAnalyzing = false;
     }
   }
+
+  function selectCandidate(id: string): void {
+    if (selectedCandidateId === id) {
+      selectedCandidateId = null;
+      seekToSec = undefined;
+      return;
+    }
+    selectedCandidateId = id;
+    const c = plan?.candidates.find((c) => c.id === id);
+    if (c) {
+      seekToSec = c.startSec;
+    }
+  }
+
+  function closePreview(): void {
+    selectedCandidateId = null;
+    seekToSec = undefined;
+  }
 </script>
 
 {#if isLoadingVideo}
@@ -184,8 +218,43 @@
           <Icon name="video" size={13} />
           {video.title}
         </div>
-        <VideoPlayerPanel {videoId} title={video.title} />
+        <VideoPlayerPanel {videoId} title={video.title} startSec={seekToSec} />
       </div>
+
+      <!-- Timeline -->
+      {#if plan && video.durationSec}
+        <div class="sect">
+          <div class="sect__h">
+            <h3>Segments</h3>
+            <span class="sect__h-meta">{plan.candidates.length} found</span>
+          </div>
+          <ClipTimeline
+            durationSec={video.durationSec}
+            candidates={plan.candidates}
+            activeCandidateId={selectedCandidateId ?? undefined}
+            onSelect={selectCandidate}
+          />
+        </div>
+      {/if}
+
+      <!-- Segment preview -->
+      {#if selectedCandidate && transcript}
+        <div class="sect">
+          <SegmentPreview
+            candidate={selectedCandidate}
+            transcriptLines={transcript.lines}
+            onClose={closePreview}
+          />
+        </div>
+      {:else if plan}
+        <div class="sect">
+          <div class="sect__h">
+            <h3>Clip plan</h3>
+            <span class="sect__h-meta">{plan.candidates.length} candidates</span>
+          </div>
+          <ClipPlanSummary {plan} {videoId} />
+        </div>
+      {/if}
 
       <!-- Activity log -->
       <div class="sect">
@@ -206,16 +275,6 @@
           {isAnalyzing}
         />
       </div>
-
-      {#if plan}
-        <div class="sect">
-          <div class="sect__h">
-            <h3>Clip plan</h3>
-            <span class="sect__h-meta">{plan.candidates.length} candidates</span>
-          </div>
-          <ClipPlanSummary {plan} {videoId} />
-        </div>
-      {/if}
     </div>
 
     <div class="analyze-side">
@@ -234,6 +293,7 @@
             lines={transcriptRows}
             chunkCount={transcript?.chunks.length ?? 0}
             highlightRanges={candidateRanges}
+            {activeRange}
           />
         </div>
       {/if}
