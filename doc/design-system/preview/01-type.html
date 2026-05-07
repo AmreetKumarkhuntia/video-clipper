@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Type — Video Clipper</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { padding: 64px 80px; max-width: 1100px; margin: 0 auto; }
+  .row { display: grid; grid-template-columns: 200px 1fr; gap: 32px; padding: 24px 0; border-bottom: 1px solid var(--vc-divider); align-items: baseline; }
+  .row:last-child { border-bottom: none; }
+  .row__meta { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle); }
+  .row__meta strong { display: block; color: var(--vc-text-muted); font-weight: 500; margin-bottom: 4px; }
+  .display { font-family: var(--vc-font-display); font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; color: var(--vc-text); }
+  .body    { font-family: var(--vc-font-body); color: var(--vc-text); }
+  .mono    { font-family: var(--vc-font-mono); color: var(--vc-text); }
+  header { margin-bottom: 32px; }
+  header .eyebrow { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-clay-600); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Type</div>
+  <h1>Source Serif 4 · Inter · JetBrains Mono</h1>
+  <p style="color: var(--vc-text-muted); margin-top: 12px; max-width: 60ch;">A serif display for moments that should feel considered. Inter for everything functional. JetBrains Mono where numbers and timestamps appear as data.</p>
+</header>
+
+<div class="row">
+  <div class="row__meta"><strong>Display / 56</strong>Source Serif 4 · 500 · −0.02em</div>
+  <div class="display" style="font-size: 56px;">Find the moments that matter.</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>H1 / 44</strong>Source Serif 4 · 500</div>
+  <div class="display" style="font-size: 44px;">Analyze a YouTube video</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>H2 / 32</strong>Source Serif 4 · 500</div>
+  <div class="display" style="font-size: 32px;">Top segments, ranked by score</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>H3 / 21</strong>Source Serif 4 · 600</div>
+  <div class="display" style="font-size: 21px; font-weight: 600;">Segment 02 · 02:14 → 02:48</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>H4 / 18</strong>Inter · 600</div>
+  <div class="body" style="font-size: 18px; font-weight: 600;">Audio event detection</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>Body / 16</strong>Inter · 400 · 1.55</div>
+  <div class="body" style="font-size: 16px; max-width: 56ch;">A TypeScript pipeline that parses a transcript, runs parallel LLM analysis, merges with audio events, and refines clip boundaries — then optionally cuts mp4 files with ffmpeg.</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>Body small / 14</strong>Inter · 400</div>
+  <div class="body" style="font-size: 14px; color: var(--vc-text-muted); max-width: 56ch;">Use this size for card metadata, helper text under inputs, and dense list rows.</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>Caption / 12</strong>Inter · 500 · uppercase + 0.08em</div>
+  <div class="body" style="font-size: 12px; color: var(--vc-text-subtle); text-transform: uppercase; letter-spacing: 0.08em;">Pipeline · Step 02 of 04</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>Mono / 14</strong>JetBrains Mono · 500</div>
+  <div class="mono" style="font-size: 14px;">02:14 → 02:48 &nbsp; score 9/10 &nbsp; src=both</div>
+</div>
+<div class="row">
+  <div class="row__meta"><strong>Mono inline</strong>For paths, IDs, code in prose</div>
+  <div class="body" style="font-size: 15px;">Run <code class="mono" style="background: var(--vc-surface-2); padding: 2px 6px; border-radius: 4px; font-size: 13px;">video-clipper &lt;url&gt; --clip</code> to cut clips automatically.</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+/* Video Clipper — design tokens
+ * Light is default. Add `data-theme="dark"` on <html> or any ancestor for dark.
+ */
+
+:root {
+  /* ── Surfaces (light) ───────────────────────────────────────── */
+  --vc-bg:           #F5F1EA;   /* page bg — warm cream */
+  --vc-surface:      #FAF7F1;   /* card bg, raised */
+  --vc-surface-2:    #EFE9DD;   /* chrome, sidebar, deeper recess */
+  --vc-overlay:      rgba(31, 28, 22, 0.45); /* modal scrim */
+
+  /* ── Text (light) ──────────────────────────────────────────── */
+  --vc-text:         #1F1C16;   /* deep cocoa, never pure black */
+  --vc-text-muted:   #6B6358;
+  --vc-text-subtle:  #9A9387;
+  --vc-text-onAccent:#FFFFFF;
+
+  /* ── Border (light) ────────────────────────────────────────── */
+  --vc-border:       #E1D8C7;   /* hairline cocoa */
+  --vc-border-strong:#C9BEAA;
+  --vc-divider:      #EBE3D2;
+
+  /* ── Accent — Clay (the one) ───────────────────────────────── */
+  --vc-clay-50:      #FBEFE6;
+  --vc-clay-100:     #F4D9C4;
+  --vc-clay-200:     #ECBC97;
+  --vc-clay-400:     #E0926A;
+  --vc-clay-500:     #D97757;   /* primary */
+  --vc-clay-600:     #C65F3F;
+  --vc-clay-700:     #A14B30;
+  --vc-clay-soft:    rgba(217, 119, 87, 0.10);
+
+  /* ── Status (muted, sits next to cream) ────────────────────── */
+  --vc-success:      #6B8F71;
+  --vc-success-soft: rgba(107, 143, 113, 0.12);
+  --vc-warn:         #C8995A;
+  --vc-warn-soft:    rgba(200, 153, 90, 0.14);
+  --vc-error:        #B65A4E;
+  --vc-error-soft:   rgba(182, 90, 78, 0.12);
+  --vc-info:         #6F8AAB;
+  --vc-info-soft:    rgba(111, 138, 171, 0.12);
+
+  /* ── Type ──────────────────────────────────────────────────── */
+  --vc-font-display: "Source Serif 4", "Tiempos Headline", Georgia, serif;
+  --vc-font-body:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --vc-font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --vc-text-12: 12px;
+  --vc-text-13: 13px;
+  --vc-text-14: 14px;
+  --vc-text-15: 15px;
+  --vc-text-16: 16px;
+  --vc-text-18: 18px;
+  --vc-text-21: 21px;
+  --vc-text-26: 26px;
+  --vc-text-32: 32px;
+  --vc-text-44: 44px;
+  --vc-text-56: 56px;
+
+  --vc-leading-tight: 1.15;
+  --vc-leading-snug:  1.35;
+  --vc-leading-body:  1.55;
+  --vc-leading-loose: 1.7;
+
+  --vc-tracking-tight:  -0.02em;
+  --vc-tracking-normal: 0;
+  --vc-tracking-wide:   0.04em;
+
+  /* ── Spacing (4px base) ────────────────────────────────────── */
+  --vc-space-1:  4px;
+  --vc-space-2:  8px;
+  --vc-space-3:  12px;
+  --vc-space-4:  16px;
+  --vc-space-5:  24px;
+  --vc-space-6:  32px;
+  --vc-space-7:  48px;
+  --vc-space-8:  64px;
+  --vc-space-9:  96px;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --vc-radius-sm: 6px;
+  --vc-radius-md: 10px;
+  --vc-radius-lg: 14px;
+  --vc-radius-xl: 20px;
+  --vc-radius-pill: 999px;
+
+  /* ── Elevation ─────────────────────────────────────────────── */
+  --vc-shadow-1: 0 1px 2px rgba(31, 28, 22, 0.04), 0 2px 6px rgba(31, 28, 22, 0.06);
+  --vc-shadow-2: 0 2px 4px rgba(31, 28, 22, 0.05), 0 8px 24px rgba(31, 28, 22, 0.10);
+  --vc-shadow-3: 0 4px 8px rgba(31, 28, 22, 0.06), 0 24px 48px rgba(31, 28, 22, 0.16);
+  --vc-shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.30);
+
+  /* ── Motion ────────────────────────────────────────────────── */
+  --vc-ease:        cubic-bezier(0.2, 0, 0, 1);
+  --vc-dur-fast:    120ms;
+  --vc-dur-base:    180ms;
+  --vc-dur-slow:    260ms;
+}
+
+/* ── Dark theme — a true rethink, not an inversion ───────────── */
+[data-theme="dark"] {
+  --vc-bg:           #1B1812;
+  --vc-surface:      #24201A;
+  --vc-surface-2:    #2E2922;
+  --vc-overlay:      rgba(0, 0, 0, 0.55);
+
+  --vc-text:         #F1ECE0;
+  --vc-text-muted:   #B5AC9A;
+  --vc-text-subtle:  #847B6B;
+  --vc-text-onAccent:#1B1812;
+
+  --vc-border:       #3A3429;
+  --vc-border-strong:#52483A;
+  --vc-divider:      #2F2A22;
+
+  --vc-clay-50:      rgba(217, 119, 87, 0.08);
+  --vc-clay-100:     rgba(217, 119, 87, 0.16);
+  --vc-clay-200:     #A8674B;
+  --vc-clay-400:     #E48663;
+  --vc-clay-500:     #ED8E6B;   /* lifted in luminance for dark */
+  --vc-clay-600:     #D97757;
+  --vc-clay-700:     #B85F3F;
+  --vc-clay-soft:    rgba(237, 142, 107, 0.14);
+
+  --vc-success:      #8AAD8E;
+  --vc-success-soft: rgba(138, 173, 142, 0.14);
+  --vc-warn:         #DCB374;
+  --vc-warn-soft:    rgba(220, 179, 116, 0.16);
+  --vc-error:        #D08074;
+  --vc-error-soft:   rgba(208, 128, 116, 0.14);
+  --vc-info:         #8FA8C4;
+  --vc-info-soft:    rgba(143, 168, 196, 0.14);
+
+  --vc-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px rgba(0, 0, 0, 0.30);
+  --vc-shadow-2: 0 2px 4px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.40);
+  --vc-shadow-3: 0 4px 8px rgba(0, 0, 0, 0.40), 0 24px 48px rgba(0, 0, 0, 0.55);
+  --vc-shadow-focus: 0 0 0 3px rgba(237, 142, 107, 0.30);
+}
+
+/* ── Reset / base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--vc-bg);
+  color: var(--vc-text);
+  font-family: var(--vc-font-body);
+  font-size: var(--vc-text-15);
+  line-height: var(--vc-leading-body);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { transition: background var(--vc-dur-base) var(--vc-ease), color var(--vc-dur-base) var(--vc-ease); }
+
+h1, h2, h3, h4 { font-family: var(--vc-font-display); font-weight: 500; letter-spacing: var(--vc-tracking-tight); margin: 0; }
+h1 { font-size: var(--vc-text-44); line-height: var(--vc-leading-tight); }
+h2 { font-size: var(--vc-text-32); line-height: var(--vc-leading-tight); }
+h3 { font-size: var(--vc-text-21); line-height: var(--vc-leading-snug); font-weight: 600; }
+h4 { font-size: var(--vc-text-18); line-height: var(--vc-leading-snug); font-weight: 600; font-family: var(--vc-font-body); letter-spacing: 0; }
+p  { margin: 0; }
+
+::selection { background: var(--vc-clay-200); color: var(--vc-text); }
