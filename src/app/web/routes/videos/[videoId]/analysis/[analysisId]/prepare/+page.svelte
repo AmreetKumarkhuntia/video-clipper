@@ -3,12 +3,15 @@
   import { page } from '$app/state';
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/toastStore.js';
+  import { configValues, configLoaded, initConfig } from '@web/lib/configStore.js';
+  import { get } from 'svelte/store';
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
   import PublishDraftEditor from '@web/components/publish/PublishDraftEditor.svelte';
   import Button from '@web/components/Button.svelte';
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
+  import Toggle from '@web/components/Toggle.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
     GeneratedPublishMetadata,
@@ -22,13 +25,67 @@
   let isGenerating = $state(false);
   let errorMessage = $state('');
   let openIndex = $state<number | null>(null);
+  let scheduleEnabled = $state(true);
+  let scheduleStart = $state('');
+  let scheduleInterval = $state(45);
+
+  function toLocalDatetime(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
 
   let videoId = $derived(page.params.videoId);
   let analysisId = $derived(page.params.analysisId);
 
   $effect(() => {
     if (analysisId) void loadDraft();
+    if (!get(configLoaded)) void initConfig();
   });
+
+  $effect(() => {
+    if (!get(configLoaded)) return;
+    const vals = get(configValues);
+    scheduleEnabled = vals.YT_SCHEDULE_ENABLED !== false;
+    scheduleInterval =
+      typeof vals.YT_SCHEDULE_INTERVAL_MIN === 'number' ? vals.YT_SCHEDULE_INTERVAL_MIN : 45;
+  });
+
+  $effect(() => {
+    if (scheduleEnabled && !scheduleStart) {
+      scheduleStart = toLocalDatetime(new Date());
+    }
+  });
+
+  function applySchedule(): void {
+    if (!draft || !scheduleEnabled || !scheduleStart) return;
+    const start = new Date(scheduleStart).getTime();
+    const intervalMs = scheduleInterval * 60_000;
+    const selectedItems = draft.items.filter((i) => i.selected);
+    let selectedIdx = 0;
+    draft = {
+      ...draft,
+      items: draft.items.map((item) => {
+        if (!item.selected) return { ...item, scheduledAt: undefined };
+        const scheduledAt = new Date(start + selectedIdx * intervalMs).toISOString();
+        selectedIdx++;
+        return { ...item, scheduledAt };
+      }),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function clearSchedule(): void {
+    if (!draft) return;
+    draft = {
+      ...draft,
+      items: draft.items.map((item) => ({ ...item, scheduledAt: undefined })),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function setScheduleNow(): void {
+    scheduleStart = toLocalDatetime(new Date());
+  }
 
   async function loadDraft(): Promise<void> {
     isLoading = true;
@@ -224,9 +281,89 @@
       </div>
     </div>
 
-    {#if errorMessage}
-      <p class="prepare-error">{errorMessage}</p>
-    {/if}
+    <!-- Schedule section -->
+    <div class="vc-card" style="margin-bottom:20px">
+      <div class="schedule-header">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <label class="toggle-row" style="margin:0">
+            <div class="toggle-row__text">
+              <span class="toggle-row__t">Schedule publish</span>
+              <span class="toggle-row__d">
+                {scheduleEnabled
+                  ? 'Clips will go live at staggered times'
+                  : 'Publish immediately on upload'}
+              </span>
+            </div>
+            <Toggle
+              checked={scheduleEnabled}
+              ariaLabel="Schedule publish"
+              onchange={(c) => {
+                scheduleEnabled = c;
+                if (c) applySchedule();
+                else clearSchedule();
+              }}
+            />
+          </label>
+        </div>
+      </div>
+      {#if scheduleEnabled}
+        <div class="schedule-controls">
+          <Field label="Start time" for="schedule-start">
+            <div class="schedule-datetime-row">
+              <input
+                id="schedule-start"
+                type="datetime-local"
+                class="schedule-datetime-input"
+                bind:value={scheduleStart}
+                onchange={() => applySchedule()}
+              />
+              <Button variant="ghost" size="sm" onclick={setScheduleNow}>Now</Button>
+            </div>
+          </Field>
+          <Field label="Interval (minutes)" for="schedule-interval">
+            <InputText
+              id="schedule-interval"
+              type="number"
+              value={String(scheduleInterval)}
+              min={1}
+              oninput={(v) => {
+                const n = parseInt(v, 10);
+                if (!isNaN(n) && n > 0) {
+                  scheduleInterval = n;
+                  applySchedule();
+                }
+              }}
+            />
+          </Field>
+          <div class="schedule-actions">
+            <Button variant="secondary" size="sm" onclick={applySchedule}>
+              <Icon name="clock" size={13} /> Apply schedule
+            </Button>
+          </div>
+        </div>
+        {#if draft}
+          <div class="schedule-preview">
+            {#each draft.items.filter((i) => i.selected) as item, idx (item.clipArtifactId)}
+              <span class="schedule-chip">
+                <span class="schedule-chip__label">Clip {idx + 1}</span>
+                <span class="schedule-chip__time">
+                  {#if item.scheduledAt}
+                    {new Date(item.scheduledAt).toLocaleString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  {:else}
+                    —
+                  {/if}
+                </span>
+              </span>
+            {/each}
+          </div>
+        {/if}
+      {/if}
+    </div>
 
     <div class="draft-grid">
       {#each draft.items as item, index (item.clipArtifactId)}
@@ -319,5 +456,76 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 16px;
+  }
+
+  .schedule-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .schedule-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vc-divider);
+  }
+
+  .schedule-datetime-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .schedule-datetime-input {
+    font: inherit;
+    font-size: var(--vc-text-14);
+    padding: 6px 10px;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    color: var(--vc-text);
+  }
+
+  .schedule-datetime-input:focus {
+    outline: none;
+    border-color: var(--vc-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--vc-accent) 20%, transparent);
+  }
+
+  .schedule-actions {
+    padding-bottom: 4px;
+  }
+
+  .schedule-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vc-divider);
+  }
+
+  .schedule-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--vc-divider);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-raised);
+    font-size: var(--vc-text-13);
+  }
+
+  .schedule-chip__label {
+    color: var(--vc-text-muted);
+  }
+
+  .schedule-chip__time {
+    color: var(--vc-text);
+    font-weight: 500;
   }
 </style>

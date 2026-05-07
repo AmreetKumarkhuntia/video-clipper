@@ -201,6 +201,9 @@ async function uploadToYouTube(
       license: item.license,
       publicStatsViewable: item.publicStatsViewable,
       containsSyntheticMedia: item.containsSyntheticMedia,
+      ...(item.scheduledAt && (item.privacyStatus === 'public' || item.privacyStatus === 'unlisted')
+        ? { publishAt: item.scheduledAt }
+        : {}),
     },
   };
 
