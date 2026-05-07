@@ -21,11 +21,9 @@ const YOUTUBE_THUMBNAILS_URL = 'https://www.googleapis.com/upload/youtube/v3/thu
 const YOUTUBE_PLAYLIST_ITEMS_URL =
   'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet';
 
-export interface UploadDraftClipsCallbacks {
-  onUploadStarted?: (item: PublishDraftItem) => void;
-  onUploadFinished?: (upload: UploadArtifact) => void;
-  onUploadFailed?: (upload: UploadArtifact) => void;
-}
+import type { UploadDraftClipsCallbacks } from '@app/web/types/upload.js';
+
+export type { UploadDraftClipsCallbacks };
 
 export async function uploadDraftClips(
   input: CreateUploadsRequest,

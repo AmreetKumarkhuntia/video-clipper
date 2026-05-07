@@ -5,17 +5,9 @@ import type { VideoMetadata } from '@lib/types/video.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
 
 export type { YtDlpCookies } from '@lib/types/downloader.js';
+import type { YtDlpJson, OEmbedResponse } from '@lib/types/youtube.js';
 
 const OEMBED_URL = 'https://www.youtube.com/oembed';
-
-interface YtDlpJson {
-  title: string;
-  duration: number;
-}
-
-interface OEmbedResponse {
-  title: string;
-}
 
 async function extractViaYtDlp(
   videoId: string,

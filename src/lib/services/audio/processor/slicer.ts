@@ -1,10 +1,8 @@
 import * as path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
+import type { SlicerConfig } from '@lib/types/audio.js';
 
-export interface SlicerConfig {
-  ffmpegPath?: string;
-  ffprobePath?: string;
-}
+export type { SlicerConfig } from '@lib/types/audio.js';
 
 export async function sliceAudio(
   inputPath: string,

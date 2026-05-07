@@ -194,7 +194,7 @@
                 </span>
               </div>
               <p class="clipcard__title">
-                {candidate.title ?? candidate.reason ?? 'Clip candidate'}
+                {candidate.reason ?? 'Clip candidate'}
               </p>
             </div>
           </button>

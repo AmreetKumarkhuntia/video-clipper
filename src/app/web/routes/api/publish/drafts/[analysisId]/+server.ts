@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { getPublishDraft } from '@app/web/lib/services/artifacts/artifactStore.js';
 import { buildPublishDraft } from '@app/web/lib/services/publishing/draftService.js';
@@ -9,10 +8,7 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
-
-const DraftParamsSchema = z.object({
-  analysisId: z.string().min(1),
-});
+import { DraftParamsSchema } from '@app/web/types/publish.js';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   const reqDone = log.request('GET', '/api/publish/drafts/[analysisId]', locals.requestId, {

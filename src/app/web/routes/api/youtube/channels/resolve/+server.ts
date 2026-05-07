@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { createYouTubeCatalogService } from '@app/web/lib/services/youtube/catalogFactory.js';
 import {
@@ -8,10 +7,7 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
-
-const ResolveChannelQuerySchema = z.object({
-  input: z.string().min(1),
-});
+import { ResolveChannelQuerySchema } from '@app/web/types/youtube.js';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
   const input = url.searchParams.get('input') ?? '';

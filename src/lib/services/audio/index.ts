@@ -1,4 +1,4 @@
-export type { AudioSource } from './source/types.js';
+export type { AudioSource } from '@lib/types/audio.js';
 export { downloadAudio } from './source/youtube.js';
 export { sliceAudio } from './processor/slicer.js';
 export { EventDetector } from './processor/detector.js';

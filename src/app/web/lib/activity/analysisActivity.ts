@@ -1,10 +1,9 @@
 import type { ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
 import type { AnalysisActivityItem, ActivityStatus } from '@app/web/types/activity.js';
 
-export interface AnalysisActivityState {
-  items: AnalysisActivityItem[];
-  nextId: number;
-}
+import type { AnalysisActivityState } from '@app/web/types/activity.js';
+
+export type { AnalysisActivityState };
 
 export function createInitialActivityState(): AnalysisActivityState {
   return {

@@ -302,6 +302,43 @@ export interface ConfigFieldMeta {
   placeholder?: string;
 }
 
+export interface ModelFactoryApiKeys {
+  ZAI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+  CUSTOM_OPENAI_BASE_URL?: string;
+  CUSTOM_OPENAI_API_KEY?: string;
+}
+
+export interface SetConfigResult {
+  success: boolean;
+  warnings: string[];
+}
+
+export interface ConfigFieldDescriptor {
+  key: string;
+  label: string;
+  description: string;
+  widget: ConfigWidget;
+  required: boolean;
+  secret: boolean;
+  defaultValue: unknown;
+  min?: number;
+  max?: number;
+  options?: string[];
+  optionLabels?: string[];
+  placeholder?: string;
+}
+
+export interface ConfigGroupDescriptor {
+  id: string;
+  label: string;
+  fields: ConfigFieldDescriptor[];
+}
+
+export interface ConfigRegistryResponse {
+  groups: ConfigGroupDescriptor[];
+}
+
 export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   LLM_PROVIDER: { description: 'Which LLM provider to use', widget: 'select' },
   LLM_MODEL: {

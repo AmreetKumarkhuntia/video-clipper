@@ -1,13 +1,7 @@
 import { config } from '@lib/config/index.js';
+import type { WebServerConfig } from '@app/web/types/web.js';
 
-export interface WebServerConfig {
-  youtubeApiKey: string | undefined;
-  outputDir: string;
-  cacheDir: string;
-  defaultThreshold: number;
-  defaultTopN: number;
-  defaultConcurrency: number;
-}
+export type { WebServerConfig };
 
 export function getWebServerConfig(): WebServerConfig {
   return {

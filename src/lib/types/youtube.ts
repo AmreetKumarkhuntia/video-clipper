@@ -50,3 +50,54 @@ export const VideoPageSchema = z.object({
   prevPageToken: z.string().optional(),
 });
 export type VideoPage = z.infer<typeof VideoPageSchema>;
+
+export interface YouTubeCatalogService {
+  resolveChannel(input: string): Promise<ChannelSummary>;
+  listChannelVideos(channelId: string, pageToken?: string): Promise<VideoPage>;
+  getVideoDetails(videoId: string): Promise<VideoDetails>;
+}
+
+export type ChannelLookup =
+  | { kind: 'id'; value: string }
+  | { kind: 'handle'; value: string }
+  | { kind: 'username'; value: string };
+
+export interface YtDlpJson {
+  title: string;
+  duration: number;
+}
+
+export interface OEmbedResponse {
+  title: string;
+}
+
+export interface YouTubeCaptionTrack {
+  baseUrl: string;
+  kind?: string;
+  languageCode: string;
+}
+
+export interface YouTubePlayerResponse {
+  playabilityStatus?: {
+    status?: string;
+    reason?: string;
+    errorScreen?: {
+      playerErrorMessageRenderer?: {
+        reason?: {
+          simpleText?: string;
+        };
+        subreason?: {
+          simpleText?: string;
+          runs?: Array<{
+            text?: string;
+          }>;
+        };
+      };
+    };
+  };
+  captions?: {
+    playerCaptionsTracklistRenderer?: {
+      captionTracks?: YouTubeCaptionTrack[];
+    };
+  };
+}

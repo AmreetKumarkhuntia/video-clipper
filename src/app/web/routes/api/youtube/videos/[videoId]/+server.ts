@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { createYouTubeCatalogService } from '@app/web/lib/services/youtube/catalogFactory.js';
 import {
@@ -8,10 +7,7 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
-
-const VideoParamsSchema = z.object({
-  videoId: z.string().min(1),
-});
+import { VideoParamsSchema } from '@app/web/types/youtube.js';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   const reqDone = log.request('GET', '/api/youtube/videos/[videoId]', locals.requestId, {

@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { getTranscriptBundle } from '@app/web/lib/services/analysis/transcriptService.js';
 import {
@@ -8,10 +7,7 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
-
-const TranscriptParamsSchema = z.object({
-  videoId: z.string().min(1),
-});
+import { TranscriptParamsSchema } from '@app/web/types/analysis.js';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   const reqDone = log.request('GET', '/api/youtube/videos/[videoId]/transcript', locals.requestId, {

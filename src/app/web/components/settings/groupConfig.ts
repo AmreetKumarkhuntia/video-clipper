@@ -1,18 +1,6 @@
-// Web-layer presentation metadata for settings groups.
-// Keeps icon names, subtitles, and sub-section structure out of @lib.
+import type { SectionConfig, GroupConfig } from '@app/web/types/web.js';
 
-export interface SectionConfig {
-  h3: string;
-  meta?: string;
-  fields: string[];
-  layout?: 'two';
-}
-
-export interface GroupConfig {
-  icon: string;
-  subtitle: string;
-  sections: SectionConfig[];
-}
+export type { SectionConfig, GroupConfig };
 
 export const GROUP_CONFIG: Record<string, GroupConfig> = {
   llm: {

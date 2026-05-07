@@ -7,7 +7,7 @@ import { getModel } from '@lib/utils/modelFactory.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
 import { processAudio } from './stages/audioProcessor.js';
-import type { AudioProcessorConfig } from './stages/audioProcessor.js';
+import type { AudioProcessorConfig } from '@lib/types/index.js';
 import { analyzeSegments, refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';

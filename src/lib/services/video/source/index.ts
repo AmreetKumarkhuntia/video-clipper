@@ -1,4 +1,4 @@
-export type { VideoSource } from './types.js';
+export type { VideoSource } from '@lib/types/video.js';
 export { parseUrl } from './youtube/parser.js';
 export { extractMetadata } from './youtube/metadata.js';
 export { downloadVideo } from './youtube/downloader.js';
@@ -8,4 +8,4 @@ export {
   parseChannelInput,
   parseYouTubeDuration,
 } from './youtube/catalog.js';
-export type { YouTubeCatalogService } from './youtube/catalog.js';
+export type { YouTubeCatalogService } from '@lib/types/youtube.js';

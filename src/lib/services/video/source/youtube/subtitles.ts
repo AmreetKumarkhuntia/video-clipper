@@ -7,37 +7,7 @@ import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import { TranscriptAnalyzer } from '../../../audio/transcriber/base.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
-
-interface YouTubeCaptionTrack {
-  baseUrl: string;
-  kind?: string;
-  languageCode: string;
-}
-
-interface YouTubePlayerResponse {
-  playabilityStatus?: {
-    status?: string;
-    reason?: string;
-    errorScreen?: {
-      playerErrorMessageRenderer?: {
-        reason?: {
-          simpleText?: string;
-        };
-        subreason?: {
-          simpleText?: string;
-          runs?: Array<{
-            text?: string;
-          }>;
-        };
-      };
-    };
-  };
-  captions?: {
-    playerCaptionsTracklistRenderer?: {
-      captionTracks?: YouTubeCaptionTrack[];
-    };
-  };
-}
+import type { YouTubeCaptionTrack, YouTubePlayerResponse } from '@lib/types/youtube.js';
 
 const WATCH_PAGE_URL = 'https://www.youtube.com/watch';
 const ACCEPT_LANGUAGE_HEADER = 'en-US,en;q=0.9';

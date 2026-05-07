@@ -18,7 +18,7 @@
     secret?: boolean;
     error?: boolean;
     maxlength?: number;
-    autocomplete?: string;
+    autocomplete?: HTMLInputElement['autocomplete'];
     inputmode?: InputMode;
     /** Snippet rendered as the leading icon inside the input */
     icon?: Snippet;

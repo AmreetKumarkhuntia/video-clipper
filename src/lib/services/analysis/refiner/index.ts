@@ -2,16 +2,13 @@ import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import type { CacheBackend } from '@lib/utils/cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type { RankedSegment, MicroBlock, StreamCallbacks } from '@lib/types/index.js';
+import type { RefineSegmentsOpts } from '@lib/types/analyzer.js';
+import { RefinedBoundariesSchema } from '@lib/types/analyzer.js';
 import type { LanguageModel } from 'ai';
 
 const CONTEXT_PADDING_SEC = 30;
-
-const RefinedBoundariesSchema = z.object({
-  clip_start: z.number().describe('Refined clip start time in seconds'),
-  clip_end: z.number().describe('Refined clip end time in seconds'),
-});
 
 function buildContextText(
   segment: RankedSegment,
@@ -59,15 +56,6 @@ Rules:
 - Only make small adjustments (seconds, not minutes)
 
 After analyzing, call the report_refined_boundaries tool with your refined clip boundaries.`;
-}
-
-export interface RefineSegmentsOpts {
-  maxRetries: number;
-  model: LanguageModel;
-  callbacks?: Pick<StreamCallbacks, 'onSegmentStarted' | 'onSegmentTextDelta' | 'onSegmentRefined'>;
-  requestId?: string;
-  /** Optional source video title shown in the prompt for context. */
-  videoTitle?: string;
 }
 
 function createReportRefinedBoundariesTool() {

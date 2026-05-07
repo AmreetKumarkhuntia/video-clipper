@@ -1,15 +1,9 @@
 import { execa } from 'execa';
-import { z } from 'zod';
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import { TranscriptAnalyzer } from './base.js';
 import { getPythonBin } from '@lib/utils/pythonBin.js';
 import { scriptPath } from '@lib/utils/paths.js';
-
-const WhisperSegmentSchema = z.object({
-  text: z.string(),
-  start: z.number(),
-  duration: z.number(),
-});
+import { WhisperSegmentSchema } from '@lib/types/audio.js';
 
 /**
  * Generates a transcript by running OpenAI Whisper locally on the downloaded

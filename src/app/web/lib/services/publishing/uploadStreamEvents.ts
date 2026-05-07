@@ -1,11 +1,8 @@
 import { log } from '@lib/utils/logger.js';
 
-export type UploadStreamEventName =
-  | 'upload_started'
-  | 'upload_finished'
-  | 'upload_failed'
-  | 'upload_complete'
-  | 'error';
+import type { UploadStreamEventName } from '@app/web/types/upload.js';
+
+export type { UploadStreamEventName };
 
 export function serializeUploadSSE(eventName: UploadStreamEventName, data: unknown): string {
   return `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;

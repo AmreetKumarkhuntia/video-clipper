@@ -1,16 +1,10 @@
 import { log } from '@lib/utils/logger.js';
 import { AudioAnalyzer } from './base.js';
 import { GeminiAudioAnalyzer } from './gemini.js';
-import type { GeminiAnalyzerConfig } from './gemini.js';
 import { WhisperAudioAnalyzer } from './whisper.js';
 import { YAMNetAudioAnalyzer } from './yamnet.js';
 import type { AudioProviderName } from '@lib/types/index.js';
-
-export interface AnalyzerChainConfig {
-  confidenceThreshold: number;
-  whisperModel: string;
-  gemini: GeminiAnalyzerConfig;
-}
+import type { GeminiAnalyzerConfig, AnalyzerChainConfig } from '@lib/types/audio.js';
 
 const KNOWN_PROVIDERS = new Set<AudioProviderName>(['gemini', 'whisper', 'yamnet']);
 

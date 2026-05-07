@@ -13,12 +13,8 @@ import {
   parseJsonBody,
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
-import { CreateUploadsRequestSchema } from '@app/web/types/publish.js';
+import { CreateUploadsRequestSchema, ListUploadsQuerySchema } from '@app/web/types/publish.js';
 import { log } from '@lib/utils/logger.js';
-
-const ListUploadsQuerySchema = z.object({
-  analysisId: z.string().min(1),
-});
 
 export const GET: RequestHandler = async ({ locals, url }) => {
   const reqDone = log.request('GET', '/api/youtube/uploads', locals.requestId);

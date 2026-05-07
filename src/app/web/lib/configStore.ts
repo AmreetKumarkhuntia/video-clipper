@@ -1,22 +1,12 @@
 import { writable, get } from 'svelte/store';
 import { apiFetch, readApiError } from '@web/lib/api.js';
 import { showToast } from '@web/lib/toastStore.js';
-import type { ConfigRegistryResponse } from '@lib/config/registry.js';
+import type { ConfigRegistryResponse } from '@lib/types/config.js';
+import type { ConfigApiResponse, ConfigUpdateResponse } from '@app/web/types/web.js';
 
 export const configValues = writable<Record<string, unknown>>({});
 export const configRegistry = writable<ConfigRegistryResponse | null>(null);
 export const configLoaded = writable(false);
-
-interface ConfigApiResponse {
-  registry: ConfigRegistryResponse;
-  values: Record<string, unknown>;
-}
-
-interface ConfigUpdateResponse {
-  success: boolean;
-  warnings: string[];
-  values: Record<string, unknown>;
-}
 
 const dirtyKeys = new Set<string>();
 let saveTimer: ReturnType<typeof setTimeout> | null = null;

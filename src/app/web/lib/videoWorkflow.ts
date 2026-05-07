@@ -1,12 +1,6 @@
-export type VideoWorkflowStepId = 'analyze' | 'clip' | 'connect' | 'prepare' | 'publish';
+import type { VideoWorkflowStepId, VideoWorkflowStep } from '@app/web/types/workflow.js';
 
-export interface VideoWorkflowStep {
-  id: VideoWorkflowStepId;
-  label: string;
-  number: number;
-  href?: string;
-  status: 'current' | 'complete' | 'upcoming' | 'locked';
-}
+export type { VideoWorkflowStepId, VideoWorkflowStep };
 
 const STEP_ORDER: VideoWorkflowStepId[] = ['analyze', 'clip', 'connect', 'prepare', 'publish'];
 

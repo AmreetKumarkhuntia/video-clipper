@@ -12,8 +12,9 @@ import type {
   AudioEvent,
   StreamCallbacks,
 } from '@lib/types/index.js';
-import type { CacheBackend } from '@lib/utils/cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type { LanguageModel } from 'ai';
+import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
@@ -34,14 +35,6 @@ If audio events are listed in the segment, treat them as strong positive signals
 they indicate high-action or high-energy moments that are often clip-worthy.
 
 After analyzing the segment, call the report_analysis tool with your findings.`;
-
-export interface AnalyzeChunksOpts {
-  maxRetries: number;
-  systemPrompt: string;
-  model: LanguageModel;
-  callbacks?: Pick<StreamCallbacks, 'onChunkStarted' | 'onChunkTextDelta' | 'onChunkAnalyzed'>;
-  requestId?: string;
-}
 
 function toSuccessEvaluation(
   chunk: LLMChunk,
