@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ClipCandidate } from '@app/web/types/analysis.js';
   import { formatTime } from '@web/lib/format.js';
+  import Checkbox from '@web/components/Checkbox.svelte';
 
   interface Props {
     candidate: ClipCandidate;
@@ -11,10 +12,12 @@
 </script>
 
 <article class:selected={candidate.selected}>
-  <label>
-    <input type="checkbox" checked={candidate.selected} onchange={() => ontoggle?.()} />
-    <span>Rank {candidate.rank}</span>
-  </label>
+  <Checkbox
+    class="cand-chk"
+    checked={candidate.selected}
+    label="Rank {candidate.rank}"
+    onchange={() => ontoggle?.()}
+  />
   <div>
     <h2>{formatTime(candidate.startSec)} - {formatTime(candidate.endSec)}</h2>
     <p>{candidate.reason}</p>
@@ -40,13 +43,10 @@
     opacity: 1;
   }
 
-  label {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+  :global(.cand-chk) {
     color: var(--vc-text-muted);
     font-weight: 700;
-    cursor: pointer;
+    gap: 9px;
   }
 
   h2 {

@@ -16,6 +16,9 @@
 
   let { field, value, onupdate }: Props = $props();
 
+  // Stable id shared between the <label for="…"> and the underlying <input id="…">
+  const inputId = $derived(`config-${field.key}`);
+
   let resolvedValue = $derived(resolveValue(value, field));
 
   function resolveValue(val: unknown, f: ConfigFieldDescriptor): unknown {
@@ -33,7 +36,7 @@
 
 {#if field.widget === 'toggle'}
   <!-- Toggle fields render as a toggle-row (used inside .settings-toggles) -->
-  <label class="toggle-row">
+  <label class="toggle-row" for={inputId}>
     <div class="toggle-row__text">
       <span class="toggle-row__t">
         {field.label}
@@ -50,7 +53,7 @@
 {:else}
   <!-- All other fields render as a vc-field -->
   <div class="vc-field" class:field--secret={field.secret}>
-    <label class="vc-label" for="config-{field.key}">
+    <label class="vc-label" for={inputId}>
       {field.label}
       {#if field.secret}
         <span class="field-badge" title="Secret">Secret</span>
@@ -66,6 +69,7 @@
         <ConfigInputProviderGrid value={String(resolvedValue ?? '')} onchange={(v) => emit(v)} />
       {:else if field.widget === 'select' && field.options}
         <ConfigInputSelect
+          id={inputId}
           value={String(resolvedValue)}
           options={field.options}
           optionLabels={field.optionLabels ?? []}
@@ -73,6 +77,7 @@
         />
       {:else if field.widget === 'slider'}
         <ConfigInputSlider
+          id={inputId}
           value={typeof resolvedValue === 'number' ? resolvedValue : undefined}
           min={field.min}
           max={field.max}
@@ -80,6 +85,7 @@
         />
       {:else if field.widget === 'number'}
         <ConfigInputNumber
+          id={inputId}
           value={typeof resolvedValue === 'number' ? resolvedValue : undefined}
           min={field.min}
           max={field.max}
@@ -88,12 +94,14 @@
         />
       {:else if field.widget === 'textarea'}
         <ConfigInputTextarea
+          id={inputId}
           value={String(resolvedValue ?? '')}
           placeholder={field.placeholder ?? ''}
           onchange={(v) => emit(v)}
         />
       {:else}
         <ConfigInputText
+          id={inputId}
           value={String(resolvedValue ?? '')}
           secret={field.secret}
           placeholder={field.placeholder ?? String(field.defaultValue ?? '')}
@@ -122,7 +130,7 @@
   }
 
   .field-badge {
-    font-size: 10px;
+    font-size: var(--vc-text-12);
     font-weight: 600;
     padding: 1px 6px;
     border-radius: var(--vc-radius-sm);

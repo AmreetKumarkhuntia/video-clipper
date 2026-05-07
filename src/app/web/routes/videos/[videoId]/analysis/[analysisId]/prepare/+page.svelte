@@ -6,6 +6,8 @@
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
   import Button from '@web/components/Button.svelte';
+  import Field from '@web/components/Field.svelte';
+  import InputText from '@web/components/InputText.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
     GeneratedPublishMetadata,
@@ -209,14 +211,10 @@
     <!-- Workflow title -->
     <div class="vc-card" style="margin-bottom:20px">
       <div class="prepare-draft-header">
-        <div class="vc-field" style="flex:1">
-          <label class="vc-label" for="draft-title">Workflow title</label>
-          <input
-            id="draft-title"
-            class="vc-input"
-            value={draft.title}
-            oninput={(e) => updateDraftTitle((e.currentTarget as HTMLInputElement).value)}
-          />
+        <div style="flex:1">
+          <Field label="Workflow title" for="draft-title">
+            <InputText id="draft-title" value={draft.title} oninput={(v) => updateDraftTitle(v)} />
+          </Field>
         </div>
         <p class="prepare-summary">
           {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected
