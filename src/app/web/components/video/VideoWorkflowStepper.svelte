@@ -1,12 +1,9 @@
 <script lang="ts">
   import type { VideoWorkflowStep } from '@web/lib/videoWorkflow.js';
   import Icon from '@web/components/Icon.svelte';
+  import type { VideoWorkflowStepperProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    steps?: VideoWorkflowStep[];
-  }
-
-  let { steps = [] }: Props = $props();
+  let { steps = [] }: VideoWorkflowStepperProps = $props();
 
   function stepClass(status: VideoWorkflowStep['status']): string {
     if (status === 'complete') return 'pipeline__step is-done';

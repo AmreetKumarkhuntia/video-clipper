@@ -1,14 +1,12 @@
 <script lang="ts">
-  import type { AnalysisActivityItem, ActivityPhase } from '@app/web/types/activity.js';
+  import type { AnalysisProgressProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    analyzedChunks?: number;
-    totalChunks?: number;
-    phase?: ActivityPhase;
-    items?: AnalysisActivityItem[];
-  }
-
-  let { analyzedChunks = 0, totalChunks = 0, phase = 'idle', items = [] }: Props = $props();
+  let {
+    analyzedChunks = 0,
+    totalChunks = 0,
+    phase = 'idle',
+    items = [],
+  }: AnalysisProgressProps = $props();
 
   let pct = $derived(totalChunks > 0 ? Math.round((analyzedChunks / totalChunks) * 100) : 0);
 

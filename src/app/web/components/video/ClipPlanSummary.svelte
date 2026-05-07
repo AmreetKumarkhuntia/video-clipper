@@ -1,13 +1,8 @@
 <script lang="ts">
-  import type { ClipPlan } from '@app/web/types/analysis.js';
   import Button from '@web/components/Button.svelte';
+  import type { ClipPlanSummaryProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    plan?: ClipPlan | null;
-    videoId: string;
-  }
-
-  let { plan = null, videoId }: Props = $props();
+  let { plan = null, videoId }: ClipPlanSummaryProps = $props();
 </script>
 
 <section class="vc-card plan-card">

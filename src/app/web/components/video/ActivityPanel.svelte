@@ -1,14 +1,6 @@
 <script lang="ts">
-  import type { AnalysisActivityItem, ActivityPhase } from '@app/web/types/activity.js';
   import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
-
-  interface Props {
-    analyzedChunks?: number;
-    totalChunks?: number;
-    phase?: ActivityPhase;
-    items?: AnalysisActivityItem[];
-    isAnalyzing?: boolean;
-  }
+  import type { ActivityPanelProps } from '@app/web/types/componentProps.js';
 
   let {
     analyzedChunks = 0,
@@ -16,7 +8,7 @@
     phase = 'idle',
     items = [],
     isAnalyzing = false,
-  }: Props = $props();
+  }: ActivityPanelProps = $props();
 </script>
 
 <aside class="vc-card activity-card">

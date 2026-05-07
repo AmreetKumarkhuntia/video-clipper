@@ -1,12 +1,8 @@
 <script lang="ts">
-  import type { ChannelSummary } from '@lib/types/index.js';
   import Button from '@web/components/Button.svelte';
+  import type { ChannelCardProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    channel: ChannelSummary;
-  }
-
-  let { channel }: Props = $props();
+  let { channel }: ChannelCardProps = $props();
 </script>
 
 <article class="channel-card">

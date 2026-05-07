@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
   import ConfigInputText from './ConfigInputText.svelte';
   import ConfigInputTextarea from './ConfigInputTextarea.svelte';
   import ConfigInputNumber from './ConfigInputNumber.svelte';
@@ -7,14 +6,10 @@
   import ConfigInputSelect from './ConfigInputSelect.svelte';
   import ConfigInputSlider from './ConfigInputSlider.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
+  import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
+  import type { ConfigFieldProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    field: ConfigFieldDescriptor;
-    value: unknown;
-    onupdate?: (key: string, value: unknown) => void;
-  }
-
-  let { field, value, onupdate }: Props = $props();
+  let { field, value, onupdate }: ConfigFieldProps = $props();
 
   // Stable id shared between the <label for="…"> and the underlying <input id="…">
   const inputId = $derived(`config-${field.key}`);

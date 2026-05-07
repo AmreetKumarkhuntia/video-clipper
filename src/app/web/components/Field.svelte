@@ -1,15 +1,5 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-
-  interface Props {
-    label?: string;
-    for?: string;
-    help?: string;
-    error?: string;
-    required?: boolean;
-    class?: string;
-    children: Snippet;
-  }
+  import type { FieldProps } from '@app/web/types/componentProps.js';
 
   let {
     label,
@@ -19,7 +9,7 @@
     required = false,
     class: extraClass = '',
     children,
-  }: Props = $props();
+  }: FieldProps = $props();
 
   const classes = $derived(
     ['vc-field', error ? 'vc-field--error' : '', extraClass].filter(Boolean).join(' '),

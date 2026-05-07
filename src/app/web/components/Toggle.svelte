@@ -1,14 +1,13 @@
 <script lang="ts">
-  interface Props {
-    id?: string;
-    checked?: boolean;
-    disabled?: boolean;
-    /** Accessible label for the toggle — shown to screen readers */
-    ariaLabel?: string;
-    onchange?: (checked: boolean) => void;
-  }
+  import type { ToggleProps } from '@app/web/types/componentProps.js';
 
-  let { id, checked = $bindable(false), disabled = false, ariaLabel, onchange }: Props = $props();
+  let {
+    id,
+    checked = $bindable(false),
+    disabled = false,
+    ariaLabel,
+    onchange,
+  }: ToggleProps = $props();
 
   function handleChange(event: Event): void {
     const target = event.target as HTMLInputElement;

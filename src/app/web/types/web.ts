@@ -14,6 +14,11 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
+export interface SelectOption<T extends string> {
+  value: T;
+  label: string;
+}
+
 export interface WebServerConfig {
   youtubeApiKey: string | undefined;
   outputDir: string;

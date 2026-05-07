@@ -1,21 +1,5 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-
-  type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-  type Size = 'sm' | 'md' | 'lg' | 'icon';
-  type ButtonType = 'button' | 'submit' | 'reset';
-
-  interface Props {
-    variant?: Variant;
-    size?: Size;
-    type?: ButtonType;
-    disabled?: boolean;
-    href?: string;
-    class?: string;
-    onclick?: (e: MouseEvent) => void;
-    children: Snippet;
-    'aria-label'?: string;
-  }
+  import type { ButtonProps, ButtonSize } from '@app/web/types/componentProps.js';
 
   let {
     variant = 'secondary',
@@ -27,9 +11,9 @@
     onclick,
     children,
     'aria-label': ariaLabel,
-  }: Props = $props();
+  }: ButtonProps = $props();
 
-  const sizeClass: Record<Size, string> = {
+  const sizeClass: Record<ButtonSize, string> = {
     sm: 'vc-btn--sm',
     md: '',
     lg: 'vc-btn--lg',

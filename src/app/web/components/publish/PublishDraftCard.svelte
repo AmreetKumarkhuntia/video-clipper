@@ -2,16 +2,10 @@
   import Icon from '@web/components/Icon.svelte';
   import Toggle from '@web/components/Toggle.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
-  import type { PublishDraftItem, PublishDraftItemEvent } from '@app/web/types/publish.js';
+  import type { PublishDraftItem } from '@app/web/types/publish.js';
+  import type { PublishDraftCardProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    item: PublishDraftItem;
-    index: number;
-    onupdate?: (detail: PublishDraftItemEvent) => void;
-    onopen?: (detail: PublishDraftItemEvent) => void;
-  }
-
-  let { item, index, onupdate, onopen }: Props = $props();
+  let { item, index, onupdate, onopen }: PublishDraftCardProps = $props();
 
   function patchItem(patch: Partial<PublishDraftItem>): void {
     onupdate?.({ index, item: { ...item, ...patch } });

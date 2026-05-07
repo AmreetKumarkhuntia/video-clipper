@@ -1,15 +1,6 @@
 <script lang="ts">
   import InputText from '@web/components/InputText.svelte';
-
-  interface Props {
-    id?: string;
-    value?: number;
-    min?: number;
-    max?: number;
-    placeholder?: string;
-    disabled?: boolean;
-    onchange?: (value: number | undefined) => void;
-  }
+  import type { ConfigInputNumberProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -19,7 +10,7 @@
     placeholder = '',
     disabled = false,
     onchange,
-  }: Props = $props();
+  }: ConfigInputNumberProps = $props();
 
   // InputText works with strings; convert on the way in and out
   const strValue = $derived(value !== undefined ? String(value) : '');
