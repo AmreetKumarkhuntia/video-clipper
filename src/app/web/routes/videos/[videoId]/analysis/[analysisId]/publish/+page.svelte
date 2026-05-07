@@ -144,73 +144,74 @@
       <p class="publish-error">{errorMessage}</p>
     {/if}
 
-    <!-- Summary cards -->
-    <div class="summary-grid">
-      <div class="vc-card">
-        <p class="sect-eyebrow">Connected channel</p>
-        <p class="sect-title">{authStatus?.channel?.title ?? 'No connected channel'}</p>
-        <p class="sect-body">
-          {#if authStatus?.connected}
-            Uploading as <strong>{authStatus.channel?.title}</strong>.
+    <div class="publish-body">
+      <main class="publish-main">
+        <section class="history-sect">
+          <div class="history-head">
+            <p class="sect-eyebrow">Upload queue</p>
+            <h3 class="sect-heading">Live upload progress</h3>
+          </div>
+          {#if uploadQueue.length === 0}
+            <p class="publish-muted">No uploads queued yet. Select clips and press Upload.</p>
           {:else}
-            No channel connected. Go back to the <a
-              href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/connect`}
-              class="vc-link">Connect</a
-            > step.
+            <div class="history-list">
+              {#each uploadQueue as item (item.clipArtifactId)}
+                <UploadStatusCard queueItem={item} />
+              {/each}
+            </div>
           {/if}
-        </p>
-      </div>
+        </section>
 
-      <div class="vc-card">
-        <p class="sect-eyebrow">Draft summary</p>
-        <p class="sect-title">{draft.title}</p>
-        <p class="sect-body">
-          {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected.
-        </p>
-        <ul class="draft-list">
-          {#each draft.items.filter((i) => i.selected) as item (item.clipArtifactId)}
-            <li class="draft-item">
-              <span class="draft-item__title">{item.title}</span>
-              <span class="draft-item__privacy">{item.privacyStatus}</span>
-            </li>
-          {/each}
-        </ul>
-      </div>
+        <section class="history-sect">
+          <div class="history-head">
+            <p class="sect-eyebrow">Upload history</p>
+            <h3 class="sect-heading">Recent publish attempts</h3>
+          </div>
+          {#if uploads.length === 0}
+            <p class="publish-muted">No uploads recorded yet.</p>
+          {:else}
+            <div class="history-list">
+              {#each uploads as upload (upload.id)}
+                <UploadStatusCard {upload} />
+              {/each}
+            </div>
+          {/if}
+        </section>
+      </main>
+
+      <aside class="publish-side">
+        <div class="vc-card">
+          <p class="sect-eyebrow">Connected channel</p>
+          <p class="sect-title">{authStatus?.channel?.title ?? 'No connected channel'}</p>
+          <p class="sect-body">
+            {#if authStatus?.connected}
+              Uploading as <strong>{authStatus.channel?.title}</strong>.
+            {:else}
+              No channel connected. Go back to the <a
+                href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/connect`}
+                class="vc-link">Connect</a
+              > step.
+            {/if}
+          </p>
+        </div>
+
+        <div class="vc-card">
+          <p class="sect-eyebrow">Draft summary</p>
+          <p class="sect-title">{draft.title}</p>
+          <p class="sect-body">
+            {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected.
+          </p>
+          <ul class="draft-list">
+            {#each draft.items.filter((i) => i.selected) as item (item.clipArtifactId)}
+              <li class="draft-item">
+                <span class="draft-item__title">{item.title}</span>
+                <span class="draft-item__privacy">{item.privacyStatus}</span>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </aside>
     </div>
-
-    <!-- Live upload queue -->
-    <section class="history-sect">
-      <div class="history-head">
-        <p class="sect-eyebrow">Upload queue</p>
-        <h3 class="sect-heading">Live upload progress</h3>
-      </div>
-      {#if uploadQueue.length === 0}
-        <p class="publish-muted">No uploads queued yet. Select clips and press Upload.</p>
-      {:else}
-        <div class="history-list">
-          {#each uploadQueue as item (item.clipArtifactId)}
-            <UploadStatusCard queueItem={item} />
-          {/each}
-        </div>
-      {/if}
-    </section>
-
-    <!-- Upload history -->
-    <section class="history-sect">
-      <div class="history-head">
-        <p class="sect-eyebrow">Upload history</p>
-        <h3 class="sect-heading">Recent publish attempts</h3>
-      </div>
-      {#if uploads.length === 0}
-        <p class="publish-muted">No uploads recorded yet.</p>
-      {:else}
-        <div class="history-list">
-          {#each uploads as upload (upload.id)}
-            <UploadStatusCard {upload} />
-          {/each}
-        </div>
-      {/if}
-    </section>
   </div>
 {/if}
 
@@ -275,12 +276,30 @@
     flex-wrap: wrap;
   }
 
-  /* Summary grid */
-  .summary-grid {
+  .publish-body {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .publish-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .publish-main .history-sect {
+    margin-bottom: 0;
+  }
+
+  .publish-side {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    margin-bottom: 28px;
+    position: sticky;
+    top: 16px;
   }
 
   .sect-eyebrow {
@@ -376,8 +395,11 @@
   }
 
   @media (max-width: 900px) {
-    .summary-grid {
+    .publish-body {
       grid-template-columns: 1fr;
+    }
+    .publish-side {
+      position: static;
     }
   }
 

@@ -5,6 +5,7 @@
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
+  import PublishDraftEditor from '@web/components/publish/PublishDraftEditor.svelte';
   import Button from '@web/components/Button.svelte';
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
@@ -20,6 +21,7 @@
   let isSaving = $state(false);
   let isGenerating = $state(false);
   let errorMessage = $state('');
+  let openIndex = $state<number | null>(null);
 
   let videoId = $derived(page.params.videoId);
   let analysisId = $derived(page.params.analysisId);
@@ -226,17 +228,27 @@
       <p class="prepare-error">{errorMessage}</p>
     {/if}
 
-    <div class="draft-list">
+    <div class="draft-grid">
       {#each draft.items as item, index (item.clipArtifactId)}
         <PublishDraftCard
           {item}
           {index}
           onupdate={(detail) => updateItem(detail.index, detail.item)}
-          ongenerate={(detail) => generateOne(detail.index, detail.item)}
+          onopen={(detail) => (openIndex = detail.index)}
         />
       {/each}
     </div>
   </div>
+{/if}
+
+{#if draft && openIndex !== null}
+  <PublishDraftEditor
+    item={draft.items[openIndex]}
+    index={openIndex}
+    onupdate={(detail) => updateItem(detail.index, detail.item)}
+    ongenerate={(detail) => generateOne(detail.index, detail.item)}
+    onclose={() => (openIndex = null)}
+  />
 {/if}
 
 <style>
@@ -303,9 +315,9 @@
     padding-bottom: 10px;
   }
 
-  .draft-list {
-    display: flex;
-    flex-direction: column;
+  .draft-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 16px;
   }
 </style>

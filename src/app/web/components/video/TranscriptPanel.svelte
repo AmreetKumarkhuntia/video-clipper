@@ -50,10 +50,9 @@
   }
 
   .panel-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     margin-bottom: 20px;
   }
 
@@ -80,7 +79,6 @@
     margin: 0;
     font-size: var(--vc-text-13);
     color: var(--vc-text-muted);
-    white-space: nowrap;
   }
 
   .transcript-list {
@@ -135,15 +133,6 @@
     font-size: var(--vc-text-14);
     color: var(--vc-text-muted);
     margin: 0;
-  }
-
-  @media (max-width: 980px) {
-    .panel-meta {
-      white-space: normal;
-    }
-    .panel-head {
-      grid-template-columns: 1fr;
-    }
   }
 
   @media (max-width: 700px) {

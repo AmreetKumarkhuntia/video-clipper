@@ -51,6 +51,16 @@ export const PublishDraftItemSchema = z.object({
 });
 export type PublishDraftItem = z.infer<typeof PublishDraftItemSchema>;
 
+export interface PublishDraftItemEvent {
+  index: number;
+  item: PublishDraftItem;
+}
+
+export interface SelectOption<T extends string> {
+  value: T;
+  label: string;
+}
+
 export const PublishDraftSchema = z.object({
   id: z.string(),
   analysisId: z.string(),
