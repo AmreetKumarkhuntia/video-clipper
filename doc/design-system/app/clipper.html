@@ -1,306 +1,851 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Video Clipper — App</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../fonts.css">
-<link rel="stylesheet" href="../tokens.css">
-<link rel="stylesheet" href="../components.css">
-<style>
-  html, body { height: 100%; }
-  body { display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
+  <head>
+    <meta charset="utf-8" />
+    <title>Video Clipper — App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../fonts.css" />
+    <link rel="stylesheet" href="../tokens.css" />
+    <link rel="stylesheet" href="../components.css" />
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        overflow: hidden;
+      }
 
-  /* ── Top bar ────────────────────────────────────────────── */
-  .topbar { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--vc-border); background: var(--vc-surface); flex-shrink: 0; }
-  .topbar__brand { display: flex; align-items: center; gap: 10px; padding-right: 20px; border-right: 1px solid var(--vc-divider); margin-right: 4px; }
-  .topbar__url { flex: 1; max-width: 720px; }
-  .topbar__actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-  .topbar__chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-muted); padding: 6px 10px; background: var(--vc-surface-2); border-radius: var(--vc-radius-pill); }
-  .topbar__chip .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--vc-success); }
+      /* ── Top bar ────────────────────────────────────────────── */
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 24px;
+        border-bottom: 1px solid var(--vc-border);
+        background: var(--vc-surface);
+        flex-shrink: 0;
+      }
+      .topbar__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-right: 20px;
+        border-right: 1px solid var(--vc-divider);
+        margin-right: 4px;
+      }
+      .topbar__url {
+        flex: 1;
+        max-width: 720px;
+      }
+      .topbar__actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .topbar__chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-muted);
+        padding: 6px 10px;
+        background: var(--vc-surface-2);
+        border-radius: var(--vc-radius-pill);
+      }
+      .topbar__chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--vc-success);
+      }
 
-  /* ── Layout shell ──────────────────────────────────────── */
-  .shell { flex: 1; display: grid; grid-template-columns: 1fr 360px; min-height: 0; overflow: hidden; }
-  .main  { padding: 24px 32px 32px; overflow-y: auto; }
-  .side  { background: var(--vc-surface-2); border-left: 1px solid var(--vc-border); padding: 24px; overflow-y: auto; }
+      /* ── Layout shell ──────────────────────────────────────── */
+      .shell {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .main {
+        padding: 24px 32px 32px;
+        overflow-y: auto;
+      }
+      .side {
+        background: var(--vc-surface-2);
+        border-left: 1px solid var(--vc-border);
+        padding: 24px;
+        overflow-y: auto;
+      }
 
-  /* ── Player + timeline ─────────────────────────────────── */
-  .player { background: #1a1714; border-radius: var(--vc-radius-lg); overflow: hidden; aspect-ratio: 16 / 9; position: relative; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); }
-  .player__bg { position: absolute; inset: 0; background: radial-gradient(circle at 30% 40%, rgba(217,119,87,0.18), transparent 50%), radial-gradient(circle at 70% 70%, rgba(120,160,180,0.12), transparent 50%); }
-  .player__title { position: absolute; top: 16px; left: 18px; right: 18px; font-size: 13px; color: rgba(255,255,255,0.85); display: flex; gap: 10px; align-items: center; }
-  .player__title svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .player__play { position: relative; width: 72px; height: 72px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); cursor: pointer; }
-  .player__play svg { width: 28px; height: 28px; color: white; margin-left: 4px; }
+      /* ── Player + timeline ─────────────────────────────────── */
+      .player {
+        background: #1a1714;
+        border-radius: var(--vc-radius-lg);
+        overflow: hidden;
+        aspect-ratio: 16 / 9;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .player__bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 30% 40%, rgba(217, 119, 87, 0.18), transparent 50%),
+          radial-gradient(circle at 70% 70%, rgba(120, 160, 180, 0.12), transparent 50%);
+      }
+      .player__title {
+        position: absolute;
+        top: 16px;
+        left: 18px;
+        right: 18px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .player__title svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+      .player__play {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        cursor: pointer;
+      }
+      .player__play svg {
+        width: 28px;
+        height: 28px;
+        color: white;
+        margin-left: 4px;
+      }
 
-  .timeline { margin-top: 16px; background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-md); padding: 14px 16px; }
-  .timeline__head { display: flex; justify-content: space-between; align-items: center; font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle); margin-bottom: 10px; }
-  .timeline__head .now { color: var(--vc-text); }
-  .timeline__track { position: relative; height: 36px; background: var(--vc-surface-2); border-radius: var(--vc-radius-sm); overflow: hidden; }
-  .timeline__seg  { position: absolute; top: 0; bottom: 0; background: var(--vc-clay-soft); border-left: 2px solid var(--vc-clay-500); border-right: 2px solid var(--vc-clay-500); }
-  .timeline__seg--active { background: var(--vc-clay-100); }
-  .timeline__seg__label { position: absolute; top: 4px; left: 4px; font-family: var(--vc-font-mono); font-size: 10px; color: var(--vc-clay-700); }
-  [data-theme="dark"] .timeline__seg__label { color: var(--vc-clay-400); }
-  .timeline__head__cursor { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--vc-text); }
-  .timeline__ticks { display: flex; justify-content: space-between; margin-top: 6px; font-family: var(--vc-font-mono); font-size: 10px; color: var(--vc-text-subtle); }
+      .timeline {
+        margin-top: 16px;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-md);
+        padding: 14px 16px;
+      }
+      .timeline__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-subtle);
+        margin-bottom: 10px;
+      }
+      .timeline__head .now {
+        color: var(--vc-text);
+      }
+      .timeline__track {
+        position: relative;
+        height: 36px;
+        background: var(--vc-surface-2);
+        border-radius: var(--vc-radius-sm);
+        overflow: hidden;
+      }
+      .timeline__seg {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: var(--vc-clay-soft);
+        border-left: 2px solid var(--vc-clay-500);
+        border-right: 2px solid var(--vc-clay-500);
+      }
+      .timeline__seg--active {
+        background: var(--vc-clay-100);
+      }
+      .timeline__seg__label {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        color: var(--vc-clay-700);
+      }
+      [data-theme='dark'] .timeline__seg__label {
+        color: var(--vc-clay-400);
+      }
+      .timeline__head__cursor {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--vc-text);
+      }
+      .timeline__ticks {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        color: var(--vc-text-subtle);
+      }
 
-  /* ── Section headers ───────────────────────────────────── */
-  .sect { margin-top: 28px; }
-  .sect__h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-  .sect__h h3 { font-family: var(--vc-font-display); font-size: 21px; font-weight: 600; }
-  .sect__h .meta { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle); }
+      /* ── Section headers ───────────────────────────────────── */
+      .sect {
+        margin-top: 28px;
+      }
+      .sect__h {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+      }
+      .sect__h h3 {
+        font-family: var(--vc-font-display);
+        font-size: 21px;
+        font-weight: 600;
+      }
+      .sect__h .meta {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-subtle);
+      }
 
-  /* ── Segments list ─────────────────────────────────────── */
-  .segments { display: flex; flex-direction: column; gap: 8px; }
-  .segment { display: grid; grid-template-columns: 32px 80px 1fr auto; gap: 16px; align-items: center; padding: 14px 16px; background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-md); cursor: pointer; transition: border-color var(--vc-dur-fast) var(--vc-ease), background var(--vc-dur-fast) var(--vc-ease); }
-  .segment:hover { border-color: var(--vc-border-strong); }
-  .segment.is-active { border-color: var(--vc-clay-500); background: var(--vc-clay-50); }
-  .segment__rank { font-family: var(--vc-font-mono); font-size: 13px; color: var(--vc-text-subtle); text-align: center; }
-  .segment.is-active .segment__rank { color: var(--vc-clay-700); font-weight: 600; }
-  .segment__time { font-family: var(--vc-font-mono); font-size: 13px; color: var(--vc-text); }
-  .segment__time .dur { display: block; font-size: 11px; color: var(--vc-text-subtle); margin-top: 2px; }
-  .segment__body__title { font-size: 14px; font-weight: 500; color: var(--vc-text); margin-bottom: 2px; }
-  .segment__body__reason { font-size: 13px; color: var(--vc-text-muted); }
-  .segment__right { display: flex; align-items: center; gap: 10px; }
+      /* ── Segments list ─────────────────────────────────────── */
+      .segments {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .segment {
+        display: grid;
+        grid-template-columns: 32px 80px 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 14px 16px;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-md);
+        cursor: pointer;
+        transition:
+          border-color var(--vc-dur-fast) var(--vc-ease),
+          background var(--vc-dur-fast) var(--vc-ease);
+      }
+      .segment:hover {
+        border-color: var(--vc-border-strong);
+      }
+      .segment.is-active {
+        border-color: var(--vc-clay-500);
+        background: var(--vc-clay-50);
+      }
+      .segment__rank {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        color: var(--vc-text-subtle);
+        text-align: center;
+      }
+      .segment.is-active .segment__rank {
+        color: var(--vc-clay-700);
+        font-weight: 600;
+      }
+      .segment__time {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        color: var(--vc-text);
+      }
+      .segment__time .dur {
+        display: block;
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+        margin-top: 2px;
+      }
+      .segment__body__title {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--vc-text);
+        margin-bottom: 2px;
+      }
+      .segment__body__reason {
+        font-size: 13px;
+        color: var(--vc-text-muted);
+      }
+      .segment__right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-  /* ── Side panel ────────────────────────────────────────── */
-  .side h4 { font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 12px; }
-  .side .vc-field { margin-bottom: 18px; }
-  .side__group { background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-md); padding: 18px; margin-bottom: 16px; }
-  .side__row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
-  .side__row .label { color: var(--vc-text-muted); }
-  .side__row .val { font-family: var(--vc-font-mono); color: var(--vc-text); }
+      /* ── Side panel ────────────────────────────────────────── */
+      .side h4 {
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0 0 12px;
+      }
+      .side .vc-field {
+        margin-bottom: 18px;
+      }
+      .side__group {
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-md);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      .side__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        font-size: 13px;
+      }
+      .side__row .label {
+        color: var(--vc-text-muted);
+      }
+      .side__row .val {
+        font-family: var(--vc-font-mono);
+        color: var(--vc-text);
+      }
 
-  .pipeline { display: flex; flex-direction: column; gap: 0; }
-  .pipeline__step { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; padding: 10px 0; align-items: center; position: relative; }
-  .pipeline__step::before { content: ''; position: absolute; left: 11px; top: 28px; bottom: -10px; width: 2px; background: var(--vc-divider); }
-  .pipeline__step:last-child::before { display: none; }
-  .pipeline__icon { width: 24px; height: 24px; border-radius: 999px; background: var(--vc-surface-2); display: flex; align-items: center; justify-content: center; font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); border: 1px solid var(--vc-border); position: relative; z-index: 1; }
-  .pipeline__step.is-done .pipeline__icon { background: var(--vc-success-soft); color: var(--vc-success); border-color: transparent; }
-  .pipeline__step.is-running .pipeline__icon { background: var(--vc-clay-500); color: white; border-color: transparent; }
-  .pipeline__step.is-running .pipeline__icon svg { animation: vc-spin 0.9s linear infinite; }
-  @keyframes vc-spin { to { transform: rotate(360deg); } }
-  .pipeline__name { font-size: 13px; color: var(--vc-text); }
-  .pipeline__step.is-pending .pipeline__name { color: var(--vc-text-subtle); }
-  .pipeline__t { font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); }
-</style>
-</head>
-<body>
-
-<!-- Top bar -->
-<div class="topbar">
-  <div class="topbar__brand">
-    <span class="vc-wordmark" style="font-size: 18px;">Video Clipper<span class="vc-wordmark__dot" style="width: 5px; height: 5px;"></span></span>
-  </div>
-  <div class="topbar__url">
-    <div class="vc-input-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      <input class="vc-input vc-input--with-icon" value="https://youtube.com/watch?v=dQw4w9WgXcQ">
+      .pipeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .pipeline__step {
+        display: grid;
+        grid-template-columns: 24px 1fr auto;
+        gap: 12px;
+        padding: 10px 0;
+        align-items: center;
+        position: relative;
+      }
+      .pipeline__step::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 28px;
+        bottom: -10px;
+        width: 2px;
+        background: var(--vc-divider);
+      }
+      .pipeline__step:last-child::before {
+        display: none;
+      }
+      .pipeline__icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        background: var(--vc-surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+        border: 1px solid var(--vc-border);
+        position: relative;
+        z-index: 1;
+      }
+      .pipeline__step.is-done .pipeline__icon {
+        background: var(--vc-success-soft);
+        color: var(--vc-success);
+        border-color: transparent;
+      }
+      .pipeline__step.is-running .pipeline__icon {
+        background: var(--vc-clay-500);
+        color: white;
+        border-color: transparent;
+      }
+      .pipeline__step.is-running .pipeline__icon svg {
+        animation: vc-spin 0.9s linear infinite;
+      }
+      @keyframes vc-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .pipeline__name {
+        font-size: 13px;
+        color: var(--vc-text);
+      }
+      .pipeline__step.is-pending .pipeline__name {
+        color: var(--vc-text-subtle);
+      }
+      .pipeline__t {
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar__brand">
+        <span class="vc-wordmark" style="font-size: 18px"
+          >Video Clipper<span class="vc-wordmark__dot" style="width: 5px; height: 5px"></span
+        ></span>
+      </div>
+      <div class="topbar__url">
+        <div class="vc-input-wrap">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          <input
+            class="vc-input vc-input--with-icon"
+            value="https://youtube.com/watch?v=dQw4w9WgXcQ"
+          />
+        </div>
+      </div>
+      <div class="topbar__actions">
+        <span class="topbar__chip"><span class="dot"></span>OpenAI · gpt-4o-mini</span>
+        <button class="vc-btn vc-btn--secondary vc-btn--sm">Cancel run</button>
+        <button class="vc-btn vc-btn--primary">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m9.937 15.5 4.124 0M12 3l8 4.5L12 21 4 7.5 12 3Z" /></svg
+          >Analyze
+        </button>
+        <button
+          class="vc-btn vc-btn--ghost vc-btn--icon"
+          aria-label="Theme"
+          onclick="
+            document.documentElement.dataset.theme =
+              document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
+          "
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="topbar__actions">
-    <span class="topbar__chip"><span class="dot"></span>OpenAI · gpt-4o-mini</span>
-    <button class="vc-btn vc-btn--secondary vc-btn--sm">Cancel run</button>
-    <button class="vc-btn vc-btn--primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9.937 15.5 4.124 0M12 3l8 4.5L12 21 4 7.5 12 3Z"/></svg>Analyze</button>
-    <button class="vc-btn vc-btn--ghost vc-btn--icon" aria-label="Theme" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>
-  </div>
-</div>
 
-<!-- Shell -->
-<div class="shell">
+    <!-- Shell -->
+    <div class="shell">
+      <!-- Main -->
+      <div class="main">
+        <!-- Player -->
+        <div class="player">
+          <div class="player__bg"></div>
+          <div class="player__title">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+              />
+              <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+            </svg>
+            <span>How to ship great products without protecting every legacy interface</span>
+            <span style="margin-left: auto; opacity: 0.6">30:23</span>
+          </div>
+          <div class="player__play">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          </div>
+        </div>
 
-  <!-- Main -->
-  <div class="main">
-    <!-- Player -->
-    <div class="player">
-      <div class="player__bg"></div>
-      <div class="player__title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
-        <span>How to ship great products without protecting every legacy interface</span>
-        <span style="margin-left: auto; opacity: 0.6;">30:23</span>
+        <!-- Timeline -->
+        <div class="timeline">
+          <div class="timeline__head">
+            <div><span class="now">02:14</span> <span style="margin-left: 8px">/ 30:23</span></div>
+            <div>10 segments · 4 cut</div>
+          </div>
+          <div class="timeline__track">
+            <div class="timeline__seg" style="left: 4%; width: 5%">
+              <span class="timeline__seg__label">01</span>
+            </div>
+            <div class="timeline__seg timeline__seg--active" style="left: 11%; width: 6%">
+              <span class="timeline__seg__label">02</span>
+            </div>
+            <div class="timeline__seg" style="left: 22%; width: 4%">
+              <span class="timeline__seg__label">03</span>
+            </div>
+            <div class="timeline__seg" style="left: 32%; width: 7%">
+              <span class="timeline__seg__label">04</span>
+            </div>
+            <div class="timeline__seg" style="left: 44%; width: 4%">
+              <span class="timeline__seg__label">05</span>
+            </div>
+            <div class="timeline__seg" style="left: 53%; width: 5%">
+              <span class="timeline__seg__label">06</span>
+            </div>
+            <div class="timeline__seg" style="left: 63%; width: 6%">
+              <span class="timeline__seg__label">07</span>
+            </div>
+            <div class="timeline__seg" style="left: 75%; width: 4%">
+              <span class="timeline__seg__label">08</span>
+            </div>
+            <div class="timeline__seg" style="left: 84%; width: 5%">
+              <span class="timeline__seg__label">09</span>
+            </div>
+            <div class="timeline__seg" style="left: 92%; width: 5%">
+              <span class="timeline__seg__label">10</span>
+            </div>
+            <div class="timeline__head__cursor" style="left: 14%"></div>
+          </div>
+          <div class="timeline__ticks">
+            <span>00:00</span><span>05:00</span><span>10:00</span><span>15:00</span
+            ><span>20:00</span><span>25:00</span><span>30:00</span>
+          </div>
+        </div>
+
+        <!-- Segments -->
+        <div class="sect">
+          <div class="sect__h">
+            <h3>Top segments</h3>
+            <div class="meta">10 results · sorted by score</div>
+          </div>
+          <div class="segments">
+            <div class="segment">
+              <div class="segment__rank">01</div>
+              <div class="segment__time">01:14 → 01:42<span class="dur">28s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Cold open setup</div>
+                <div class="segment__body__reason">funny storytelling moment · transcript</div>
+              </div>
+              <div class="segment__right">
+                <div class="vc-score">9<span class="vc-score__den">/10</span></div>
+                <button class="vc-btn vc-btn--secondary vc-btn--sm">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" /></svg
+                  >Play
+                </button>
+              </div>
+            </div>
+
+            <div class="segment is-active">
+              <div class="segment__rank">02</div>
+              <div class="segment__time">02:14 → 02:48<span class="dur">34s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Strong controversial opinion</div>
+                <div class="segment__body__reason">
+                  "You can't ship great products and protect every legacy interface."
+                </div>
+              </div>
+              <div class="segment__right">
+                <div class="vc-score">9<span class="vc-score__den">/10</span></div>
+                <button class="vc-btn vc-btn--primary vc-btn--sm">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="6" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <line x1="20" y1="4" x2="8.12" y2="15.88" />
+                    <line x1="14.47" y1="14.48" x2="20" y2="20" />
+                    <line x1="8.12" y1="8.12" x2="12" y2="12" /></svg
+                  >Cut clip
+                </button>
+              </div>
+            </div>
+
+            <div class="segment">
+              <div class="segment__rank">03</div>
+              <div class="segment__time">06:42 → 07:14<span class="dur">32s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Audience reaction · laugh</div>
+                <div class="segment__body__reason">audio event · spike at 7:01</div>
+              </div>
+              <div class="segment__right">
+                <div class="vc-score">8<span class="vc-score__den">/10</span></div>
+                <button class="vc-btn vc-btn--secondary vc-btn--sm">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" /></svg
+                  >Play
+                </button>
+              </div>
+            </div>
+
+            <div class="segment">
+              <div class="segment__rank">04</div>
+              <div class="segment__time">09:36 → 10:18<span class="dur">42s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Counter-argument from the host</div>
+                <div class="segment__body__reason">debate moment · transcript + audio</div>
+              </div>
+              <div class="segment__right">
+                <span class="vc-badge vc-badge--success">cut · 02</span>
+                <div class="vc-score">8<span class="vc-score__den">/10</span></div>
+              </div>
+            </div>
+
+            <div class="segment">
+              <div class="segment__rank">05</div>
+              <div class="segment__time">13:22 → 13:54<span class="dur">32s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Reframe of the original question</div>
+                <div class="segment__body__reason">key insight · transcript</div>
+              </div>
+              <div class="segment__right">
+                <div class="vc-score">8<span class="vc-score__den">/10</span></div>
+                <button class="vc-btn vc-btn--secondary vc-btn--sm">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" /></svg
+                  >Play
+                </button>
+              </div>
+            </div>
+
+            <div class="segment">
+              <div class="segment__rank">06</div>
+              <div class="segment__time">16:08 → 16:35<span class="dur">27s</span></div>
+              <div class="segment__body">
+                <div class="segment__body__title">Callback to the cold open</div>
+                <div class="segment__body__reason">narrative payoff · transcript</div>
+              </div>
+              <div class="segment__right">
+                <div class="vc-score">7<span class="vc-score__den">/10</span></div>
+                <button class="vc-btn vc-btn--secondary vc-btn--sm">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" /></svg
+                  >Play
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="player__play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+
+      <!-- Side panel -->
+      <aside class="side">
+        <h4>Pipeline</h4>
+        <div class="side__group">
+          <div class="pipeline">
+            <div class="pipeline__step is-done">
+              <div class="pipeline__icon">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div class="pipeline__name">Fetch transcript</div>
+              <div class="pipeline__t">1.2s</div>
+            </div>
+            <div class="pipeline__step is-done">
+              <div class="pipeline__icon">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div class="pipeline__name">LLM analysis · 22 chunks</div>
+              <div class="pipeline__t">11.4s</div>
+            </div>
+            <div class="pipeline__step is-running">
+              <div class="pipeline__icon">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.22-8.56" />
+                </svg>
+              </div>
+              <div class="pipeline__name">Refine clip boundaries</div>
+              <div class="pipeline__t">14 / 22</div>
+            </div>
+            <div class="pipeline__step is-pending">
+              <div class="pipeline__icon">4</div>
+              <div class="pipeline__name">Cut clips with ffmpeg</div>
+              <div class="pipeline__t"></div>
+            </div>
+          </div>
+        </div>
+
+        <h4>Settings</h4>
+        <div class="side__group">
+          <div class="vc-field">
+            <label class="vc-label">Score threshold</label>
+            <input type="range" class="vc-slider" min="1" max="10" value="7" />
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                font-family: var(--vc-font-mono);
+                font-size: 11px;
+                color: var(--vc-text-subtle);
+                margin-top: 4px;
+              "
+            >
+              <span>1</span><span style="color: var(--vc-clay-600); font-weight: 500">7</span
+              ><span>10</span>
+            </div>
+          </div>
+          <div class="vc-field">
+            <label class="vc-label">Top N</label>
+            <input
+              type="number"
+              class="vc-input"
+              value="10"
+              style="font-family: var(--vc-font-mono)"
+            />
+          </div>
+          <div class="vc-field">
+            <label class="vc-label">Game profile</label>
+            <select class="vc-select">
+              <option>general</option>
+              <option>valorant</option>
+              <option>fps</option>
+              <option>boss_fight</option>
+            </select>
+          </div>
+          <label
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 13px;
+              padding-top: 4px;
+            "
+            >Audio event detection
+            <span class="vc-toggle"
+              ><input type="checkbox" checked /><span class="vc-toggle__track"></span
+              ><span class="vc-toggle__thumb"></span
+            ></span>
+          </label>
+        </div>
+
+        <h4>Run summary</h4>
+        <div class="side__group">
+          <div class="side__row">
+            <span class="label">Duration</span><span class="val">30:23</span>
+          </div>
+          <div class="side__row"><span class="label">Chunks</span><span class="val">22</span></div>
+          <div class="side__row">
+            <span class="label">Segments</span><span class="val">10</span>
+          </div>
+          <div class="side__row">
+            <span class="label">Clips cut</span><span class="val">4</span>
+          </div>
+          <div class="side__row"><span class="label">Cache</span><span class="val">hit</span></div>
+        </div>
+
+        <button class="vc-btn vc-btn--primary" style="width: 100%">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" /></svg
+          >Download all clips
+        </button>
+      </aside>
     </div>
-
-    <!-- Timeline -->
-    <div class="timeline">
-      <div class="timeline__head">
-        <div><span class="now">02:14</span> <span style="margin-left: 8px;">/ 30:23</span></div>
-        <div>10 segments · 4 cut</div>
-      </div>
-      <div class="timeline__track">
-        <div class="timeline__seg" style="left: 4%; width: 5%;"><span class="timeline__seg__label">01</span></div>
-        <div class="timeline__seg timeline__seg--active" style="left: 11%; width: 6%;"><span class="timeline__seg__label">02</span></div>
-        <div class="timeline__seg" style="left: 22%; width: 4%;"><span class="timeline__seg__label">03</span></div>
-        <div class="timeline__seg" style="left: 32%; width: 7%;"><span class="timeline__seg__label">04</span></div>
-        <div class="timeline__seg" style="left: 44%; width: 4%;"><span class="timeline__seg__label">05</span></div>
-        <div class="timeline__seg" style="left: 53%; width: 5%;"><span class="timeline__seg__label">06</span></div>
-        <div class="timeline__seg" style="left: 63%; width: 6%;"><span class="timeline__seg__label">07</span></div>
-        <div class="timeline__seg" style="left: 75%; width: 4%;"><span class="timeline__seg__label">08</span></div>
-        <div class="timeline__seg" style="left: 84%; width: 5%;"><span class="timeline__seg__label">09</span></div>
-        <div class="timeline__seg" style="left: 92%; width: 5%;"><span class="timeline__seg__label">10</span></div>
-        <div class="timeline__head__cursor" style="left: 14%;"></div>
-      </div>
-      <div class="timeline__ticks">
-        <span>00:00</span><span>05:00</span><span>10:00</span><span>15:00</span><span>20:00</span><span>25:00</span><span>30:00</span>
-      </div>
-    </div>
-
-    <!-- Segments -->
-    <div class="sect">
-      <div class="sect__h">
-        <h3>Top segments</h3>
-        <div class="meta">10 results · sorted by score</div>
-      </div>
-      <div class="segments">
-
-        <div class="segment">
-          <div class="segment__rank">01</div>
-          <div class="segment__time">01:14 → 01:42<span class="dur">28s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Cold open setup</div>
-            <div class="segment__body__reason">funny storytelling moment · transcript</div>
-          </div>
-          <div class="segment__right">
-            <div class="vc-score">9<span class="vc-score__den">/10</span></div>
-            <button class="vc-btn vc-btn--secondary vc-btn--sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play</button>
-          </div>
-        </div>
-
-        <div class="segment is-active">
-          <div class="segment__rank">02</div>
-          <div class="segment__time">02:14 → 02:48<span class="dur">34s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Strong controversial opinion</div>
-            <div class="segment__body__reason">"You can't ship great products and protect every legacy interface."</div>
-          </div>
-          <div class="segment__right">
-            <div class="vc-score">9<span class="vc-score__den">/10</span></div>
-            <button class="vc-btn vc-btn--primary vc-btn--sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>Cut clip</button>
-          </div>
-        </div>
-
-        <div class="segment">
-          <div class="segment__rank">03</div>
-          <div class="segment__time">06:42 → 07:14<span class="dur">32s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Audience reaction · laugh</div>
-            <div class="segment__body__reason">audio event · spike at 7:01</div>
-          </div>
-          <div class="segment__right">
-            <div class="vc-score">8<span class="vc-score__den">/10</span></div>
-            <button class="vc-btn vc-btn--secondary vc-btn--sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play</button>
-          </div>
-        </div>
-
-        <div class="segment">
-          <div class="segment__rank">04</div>
-          <div class="segment__time">09:36 → 10:18<span class="dur">42s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Counter-argument from the host</div>
-            <div class="segment__body__reason">debate moment · transcript + audio</div>
-          </div>
-          <div class="segment__right">
-            <span class="vc-badge vc-badge--success">cut · 02</span>
-            <div class="vc-score">8<span class="vc-score__den">/10</span></div>
-          </div>
-        </div>
-
-        <div class="segment">
-          <div class="segment__rank">05</div>
-          <div class="segment__time">13:22 → 13:54<span class="dur">32s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Reframe of the original question</div>
-            <div class="segment__body__reason">key insight · transcript</div>
-          </div>
-          <div class="segment__right">
-            <div class="vc-score">8<span class="vc-score__den">/10</span></div>
-            <button class="vc-btn vc-btn--secondary vc-btn--sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play</button>
-          </div>
-        </div>
-
-        <div class="segment">
-          <div class="segment__rank">06</div>
-          <div class="segment__time">16:08 → 16:35<span class="dur">27s</span></div>
-          <div class="segment__body">
-            <div class="segment__body__title">Callback to the cold open</div>
-            <div class="segment__body__reason">narrative payoff · transcript</div>
-          </div>
-          <div class="segment__right">
-            <div class="vc-score">7<span class="vc-score__den">/10</span></div>
-            <button class="vc-btn vc-btn--secondary vc-btn--sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Side panel -->
-  <aside class="side">
-    <h4>Pipeline</h4>
-    <div class="side__group">
-      <div class="pipeline">
-        <div class="pipeline__step is-done">
-          <div class="pipeline__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <div class="pipeline__name">Fetch transcript</div>
-          <div class="pipeline__t">1.2s</div>
-        </div>
-        <div class="pipeline__step is-done">
-          <div class="pipeline__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <div class="pipeline__name">LLM analysis · 22 chunks</div>
-          <div class="pipeline__t">11.4s</div>
-        </div>
-        <div class="pipeline__step is-running">
-          <div class="pipeline__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg></div>
-          <div class="pipeline__name">Refine clip boundaries</div>
-          <div class="pipeline__t">14 / 22</div>
-        </div>
-        <div class="pipeline__step is-pending">
-          <div class="pipeline__icon">4</div>
-          <div class="pipeline__name">Cut clips with ffmpeg</div>
-          <div class="pipeline__t"></div>
-        </div>
-      </div>
-    </div>
-
-    <h4>Settings</h4>
-    <div class="side__group">
-      <div class="vc-field">
-        <label class="vc-label">Score threshold</label>
-        <input type="range" class="vc-slider" min="1" max="10" value="7">
-        <div style="display: flex; justify-content: space-between; font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); margin-top: 4px;"><span>1</span><span style="color: var(--vc-clay-600); font-weight: 500;">7</span><span>10</span></div>
-      </div>
-      <div class="vc-field">
-        <label class="vc-label">Top N</label>
-        <input type="number" class="vc-input" value="10" style="font-family: var(--vc-font-mono);">
-      </div>
-      <div class="vc-field">
-        <label class="vc-label">Game profile</label>
-        <select class="vc-select">
-          <option>general</option>
-          <option>valorant</option>
-          <option>fps</option>
-          <option>boss_fight</option>
-        </select>
-      </div>
-      <label style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding-top: 4px;">Audio event detection
-        <span class="vc-toggle"><input type="checkbox" checked><span class="vc-toggle__track"></span><span class="vc-toggle__thumb"></span></span>
-      </label>
-    </div>
-
-    <h4>Run summary</h4>
-    <div class="side__group">
-      <div class="side__row"><span class="label">Duration</span><span class="val">30:23</span></div>
-      <div class="side__row"><span class="label">Chunks</span><span class="val">22</span></div>
-      <div class="side__row"><span class="label">Segments</span><span class="val">10</span></div>
-      <div class="side__row"><span class="label">Clips cut</span><span class="val">4</span></div>
-      <div class="side__row"><span class="label">Cache</span><span class="val">hit</span></div>
-    </div>
-
-    <button class="vc-btn vc-btn--primary" style="width: 100%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download all clips</button>
-  </aside>
-
-</div>
-
-</body>
+  </body>
 </html>

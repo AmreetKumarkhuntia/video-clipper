@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '@web/components/Button.svelte';
+
   interface Props {
     value?: string;
     secret?: boolean;
@@ -36,14 +38,15 @@
     bind:value
   />
   {#if secret}
-    <button
-      type="button"
-      class="reveal-btn vc-btn vc-btn--ghost vc-btn--sm"
+    <Button
+      variant="ghost"
+      size="sm"
+      class="reveal-btn"
       onclick={() => (revealed = !revealed)}
       title={revealed ? 'Hide' : 'Reveal'}
     >
       {revealed ? 'Hide' : 'Show'}
-    </button>
+    </Button>
   {/if}
 </div>
 
@@ -62,7 +65,7 @@
     padding-right: 68px;
   }
 
-  .reveal-btn {
+  .text-wrap :global(.reveal-btn) {
     position: absolute;
     right: 6px;
   }

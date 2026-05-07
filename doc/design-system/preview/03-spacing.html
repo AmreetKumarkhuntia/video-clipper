@@ -1,69 +1,200 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Spacing — Video Clipper</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../fonts.css">
-<link rel="stylesheet" href="../tokens.css">
-<link rel="stylesheet" href="../components.css">
-<style>
-  body { padding: 64px 80px; max-width: 1100px; margin: 0 auto; }
-  header { margin-bottom: 40px; }
-  .eyebrow { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-clay-600); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-  .group { margin-bottom: 56px; }
-  .group h3 { margin-bottom: 20px; }
-  .scale { display: grid; grid-template-columns: 80px 80px 1fr; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--vc-divider); }
-  .scale__token { font-family: var(--vc-font-mono); font-size: 13px; color: var(--vc-text); }
-  .scale__px    { font-family: var(--vc-font-mono); font-size: 13px; color: var(--vc-text-subtle); }
-  .scale__bar   { height: 12px; background: var(--vc-clay-200); border-radius: 4px; }
-  .radii { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-  .radii__item { background: var(--vc-surface); border: 1px solid var(--vc-border); padding: 24px; text-align: center; }
-  .radii__demo { width: 64px; height: 64px; background: var(--vc-clay-500); margin: 0 auto 12px; }
-  .radii__name { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-muted); }
-  .elev { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .elev__card { background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-lg); padding: 32px; text-align: center; }
-  .elev__name { font-weight: 500; margin-bottom: 4px; }
-  .elev__meta { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle); }
-</style>
-</head>
-<body>
-<header>
-  <div class="eyebrow">Spacing</div>
-  <h1>4px base. Multiples of 8 for layout.</h1>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <title>Spacing — Video Clipper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../fonts.css" />
+    <link rel="stylesheet" href="../tokens.css" />
+    <link rel="stylesheet" href="../components.css" />
+    <style>
+      body {
+        padding: 64px 80px;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      header {
+        margin-bottom: 40px;
+      }
+      .eyebrow {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-clay-600);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .group {
+        margin-bottom: 56px;
+      }
+      .group h3 {
+        margin-bottom: 20px;
+      }
+      .scale {
+        display: grid;
+        grid-template-columns: 80px 80px 1fr;
+        gap: 16px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--vc-divider);
+      }
+      .scale__token {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        color: var(--vc-text);
+      }
+      .scale__px {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        color: var(--vc-text-subtle);
+      }
+      .scale__bar {
+        height: 12px;
+        background: var(--vc-clay-200);
+        border-radius: 4px;
+      }
+      .radii {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+      }
+      .radii__item {
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        padding: 24px;
+        text-align: center;
+      }
+      .radii__demo {
+        width: 64px;
+        height: 64px;
+        background: var(--vc-clay-500);
+        margin: 0 auto 12px;
+      }
+      .radii__name {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-muted);
+      }
+      .elev {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+      .elev__card {
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-lg);
+        padding: 32px;
+        text-align: center;
+      }
+      .elev__name {
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .elev__meta {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="eyebrow">Spacing</div>
+      <h1>4px base. Multiples of 8 for layout.</h1>
+    </header>
 
-<div class="group">
-  <h3>Scale</h3>
-  <div class="scale"><div class="scale__token">--vc-space-1</div><div class="scale__px">4px</div><div class="scale__bar" style="width: 4px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-2</div><div class="scale__px">8px</div><div class="scale__bar" style="width: 8px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-3</div><div class="scale__px">12px</div><div class="scale__bar" style="width: 12px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-4</div><div class="scale__px">16px</div><div class="scale__bar" style="width: 16px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-5</div><div class="scale__px">24px</div><div class="scale__bar" style="width: 24px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-6</div><div class="scale__px">32px</div><div class="scale__bar" style="width: 32px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-7</div><div class="scale__px">48px</div><div class="scale__bar" style="width: 48px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-8</div><div class="scale__px">64px</div><div class="scale__bar" style="width: 64px;"></div></div>
-  <div class="scale"><div class="scale__token">--vc-space-9</div><div class="scale__px">96px</div><div class="scale__bar" style="width: 96px;"></div></div>
-</div>
+    <div class="group">
+      <h3>Scale</h3>
+      <div class="scale">
+        <div class="scale__token">--vc-space-1</div>
+        <div class="scale__px">4px</div>
+        <div class="scale__bar" style="width: 4px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-2</div>
+        <div class="scale__px">8px</div>
+        <div class="scale__bar" style="width: 8px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-3</div>
+        <div class="scale__px">12px</div>
+        <div class="scale__bar" style="width: 12px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-4</div>
+        <div class="scale__px">16px</div>
+        <div class="scale__bar" style="width: 16px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-5</div>
+        <div class="scale__px">24px</div>
+        <div class="scale__bar" style="width: 24px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-6</div>
+        <div class="scale__px">32px</div>
+        <div class="scale__bar" style="width: 32px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-7</div>
+        <div class="scale__px">48px</div>
+        <div class="scale__bar" style="width: 48px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-8</div>
+        <div class="scale__px">64px</div>
+        <div class="scale__bar" style="width: 64px"></div>
+      </div>
+      <div class="scale">
+        <div class="scale__token">--vc-space-9</div>
+        <div class="scale__px">96px</div>
+        <div class="scale__bar" style="width: 96px"></div>
+      </div>
+    </div>
 
-<div class="group">
-  <h3>Radius</h3>
-  <div class="radii">
-    <div class="radii__item"><div class="radii__demo" style="border-radius: 6px;"></div><div class="radii__name">sm · 6</div></div>
-    <div class="radii__item"><div class="radii__demo" style="border-radius: 10px;"></div><div class="radii__name">md · 10</div></div>
-    <div class="radii__item"><div class="radii__demo" style="border-radius: 14px;"></div><div class="radii__name">lg · 14</div></div>
-    <div class="radii__item"><div class="radii__demo" style="border-radius: 20px;"></div><div class="radii__name">xl · 20</div></div>
-    <div class="radii__item"><div class="radii__demo" style="border-radius: 999px;"></div><div class="radii__name">pill</div></div>
-  </div>
-</div>
+    <div class="group">
+      <h3>Radius</h3>
+      <div class="radii">
+        <div class="radii__item">
+          <div class="radii__demo" style="border-radius: 6px"></div>
+          <div class="radii__name">sm · 6</div>
+        </div>
+        <div class="radii__item">
+          <div class="radii__demo" style="border-radius: 10px"></div>
+          <div class="radii__name">md · 10</div>
+        </div>
+        <div class="radii__item">
+          <div class="radii__demo" style="border-radius: 14px"></div>
+          <div class="radii__name">lg · 14</div>
+        </div>
+        <div class="radii__item">
+          <div class="radii__demo" style="border-radius: 20px"></div>
+          <div class="radii__name">xl · 20</div>
+        </div>
+        <div class="radii__item">
+          <div class="radii__demo" style="border-radius: 999px"></div>
+          <div class="radii__name">pill</div>
+        </div>
+      </div>
+    </div>
 
-<div class="group">
-  <h3>Elevation</h3>
-  <div class="elev">
-    <div class="elev__card" style="box-shadow: var(--vc-shadow-1);"><div class="elev__name">Lift</div><div class="elev__meta">--vc-shadow-1 · cards on hover</div></div>
-    <div class="elev__card" style="box-shadow: var(--vc-shadow-2);"><div class="elev__name">Float</div><div class="elev__meta">--vc-shadow-2 · dropdowns, toasts</div></div>
-    <div class="elev__card" style="box-shadow: var(--vc-shadow-3);"><div class="elev__name">Modal</div><div class="elev__meta">--vc-shadow-3 · dialogs, command palette</div></div>
-  </div>
-</div>
-</body>
+    <div class="group">
+      <h3>Elevation</h3>
+      <div class="elev">
+        <div class="elev__card" style="box-shadow: var(--vc-shadow-1)">
+          <div class="elev__name">Lift</div>
+          <div class="elev__meta">--vc-shadow-1 · cards on hover</div>
+        </div>
+        <div class="elev__card" style="box-shadow: var(--vc-shadow-2)">
+          <div class="elev__name">Float</div>
+          <div class="elev__meta">--vc-shadow-2 · dropdowns, toasts</div>
+        </div>
+        <div class="elev__card" style="box-shadow: var(--vc-shadow-3)">
+          <div class="elev__name">Modal</div>
+          <div class="elev__meta">--vc-shadow-3 · dialogs, command palette</div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

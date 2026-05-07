@@ -22,7 +22,7 @@
       <blockquote>{candidate.transcriptExcerpt}</blockquote>
     {/if}
   </div>
-  <strong>{candidate.score}/10</strong>
+  <span class="vc-score score-pill">{candidate.score}<span class="vc-score__den">/10</span></span>
 </article>
 
 <style>
@@ -70,17 +70,15 @@
     line-height: 1.5;
   }
 
-  strong {
+  .score-pill {
     justify-self: end;
-    font-size: var(--vc-text-16);
-    color: var(--vc-text);
   }
 
   @media (max-width: 760px) {
     article {
       grid-template-columns: 1fr;
     }
-    strong {
+    .score-pill {
       justify-self: start;
     }
   }

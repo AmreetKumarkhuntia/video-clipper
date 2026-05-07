@@ -5,6 +5,7 @@
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
+  import Button from '@web/components/Button.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
     GeneratedPublishMetadata,
@@ -184,40 +185,24 @@
         <h2 class="prepare-title">Review titles &amp; descriptions</h2>
       </div>
       <div class="prepare-actions">
-        <button
-          class="vc-btn vc-btn--secondary vc-btn--sm"
-          onclick={selectAll}
-          disabled={isGenerating || isSaving}
-        >
+        <Button variant="secondary" onclick={selectAll} disabled={isGenerating || isSaving}>
           Select all
-        </button>
-        <button
-          class="vc-btn vc-btn--secondary vc-btn--sm"
-          onclick={deselectAll}
-          disabled={isGenerating || isSaving}
-        >
+        </Button>
+        <Button variant="secondary" onclick={deselectAll} disabled={isGenerating || isSaving}>
           Deselect all
-        </button>
-        <button
-          class="vc-btn vc-btn--secondary vc-btn--sm"
-          onclick={generateAll}
-          disabled={isGenerating || isSaving}
-        >
+        </Button>
+        <Button variant="secondary" onclick={generateAll} disabled={isGenerating || isSaving}>
           {#if isGenerating}<Icon name="loader" size={13} /> Generating…{:else}<Icon
               name="sparkles"
               size={13}
             /> Generate all with AI{/if}
-        </button>
-        <button class="vc-btn vc-btn--secondary" onclick={saveDraft} disabled={isSaving}>
+        </Button>
+        <Button variant="secondary" onclick={saveDraft} disabled={isSaving}>
           {isSaving ? 'Saving…' : 'Save draft'}
-        </button>
-        <button
-          class="vc-btn vc-btn--primary"
-          onclick={continueToPublish}
-          disabled={isGenerating || isSaving}
-        >
+        </Button>
+        <Button variant="primary" onclick={continueToPublish} disabled={isGenerating || isSaving}>
           Continue to Publish <Icon name="arrow-right" size={14} />
-        </button>
+        </Button>
       </div>
     </div>
 

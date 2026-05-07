@@ -3,6 +3,7 @@
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
   import { apiFetch } from '@web/lib/api.js';
   import Icon from '@web/components/Icon.svelte';
+  import Button from '@web/components/Button.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -110,14 +111,12 @@
       </div>
       <div class="clip-actions">
         {#if clips.length > 0}
-          <a
-            href={`/videos/${videoId}/analysis/${analysisId}/connect`}
-            class="vc-btn vc-btn--secondary"
-            >Continue to Connect <Icon name="arrow-right" size={14} /></a
+          <Button variant="secondary" href={`/videos/${videoId}/analysis/${analysisId}/connect`}
+            >Continue to Connect <Icon name="arrow-right" size={14} /></Button
           >
         {/if}
-        <button
-          class="vc-btn vc-btn--primary"
+        <Button
+          variant="primary"
           onclick={clipSelected}
           disabled={isClipping || selectedCount === 0}
         >
@@ -126,7 +125,7 @@
           {:else}
             <Icon name="scissors" size={14} /> Clip selected ({selectedCount})
           {/if}
-        </button>
+        </Button>
       </div>
     </div>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ClipPlan } from '@app/web/types/analysis.js';
+  import Button from '@web/components/Button.svelte';
 
   interface Props {
     plan?: ClipPlan | null;
@@ -20,9 +21,9 @@
       <p class="plan-count">
         {plan.candidates.length} candidate {plan.candidates.length === 1 ? 'moment' : 'moments'} ready.
       </p>
-      <a class="vc-btn vc-btn--primary" href={`/videos/${videoId}/analysis/${plan.id}`}>
+      <Button variant="primary" href={`/videos/${videoId}/analysis/${plan.id}`}>
         Review clip candidates
-      </a>
+      </Button>
     </div>
   {:else}
     <p class="plan-muted">No clip plan generated yet.</p>

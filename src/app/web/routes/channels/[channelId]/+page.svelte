@@ -3,6 +3,8 @@
   import type { VideoPage } from '@lib/types/index.js';
   import { apiFetch } from '@web/lib/api.js';
   import VideoCard from '@web/components/VideoCard.svelte';
+  import Pagination from '@web/components/Pagination.svelte';
+  import Button from '@web/components/Button.svelte';
 
   let channelId = $derived(page.params.channelId);
 
@@ -39,7 +41,7 @@
       <p class="channel-page__eyebrow">Channel</p>
       <h2 class="channel-page__title">Uploaded videos</h2>
     </div>
-    <a href="/" class="vc-btn vc-btn--secondary vc-btn--sm">Change channel</a>
+    <Button variant="secondary" size="sm" href="/">Change channel</Button>
   </div>
 
   {#if isLoading}
@@ -66,18 +68,12 @@
     </section>
 
     {#if prevPageToken || nextPageToken}
-      <div class="pagination">
-        <button
-          class="vc-btn vc-btn--secondary"
-          disabled={!prevPageToken}
-          onclick={() => loadVideos(prevPageToken)}>← Previous</button
-        >
-        <button
-          class="vc-btn vc-btn--secondary"
-          disabled={!nextPageToken}
-          onclick={() => loadVideos(nextPageToken)}>Next →</button
-        >
-      </div>
+      <Pagination
+        hasPrev={!!prevPageToken}
+        hasNext={!!nextPageToken}
+        onprev={() => loadVideos(prevPageToken)}
+        onnext={() => loadVideos(nextPageToken)}
+      />
     {/if}
   {/if}
 </div>
@@ -123,12 +119,5 @@
   .empty-msg {
     color: var(--vc-text-muted);
     font-size: var(--vc-text-14);
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 32px;
   }
 </style>

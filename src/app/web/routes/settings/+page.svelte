@@ -10,6 +10,7 @@
   import ConfigSection from '@web/components/settings/ConfigSection.svelte';
   import Icon from '@web/components/Icon.svelte';
   import { GROUP_CONFIG } from '@web/components/settings/groupConfig.js';
+  import Button from '@web/components/Button.svelte';
 
   $effect(() => {
     void initConfig();
@@ -78,7 +79,7 @@
 
         <div class="settings-foot">
           <span class="meta">Changes are saved automatically.</span>
-          <button class="vc-btn vc-btn--ghost" onclick={handleReset}>Reset to defaults</button>
+          <Button variant="ghost" onclick={handleReset}>Reset to defaults</Button>
         </div>
       {/if}
     </main>

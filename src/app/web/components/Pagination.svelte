@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '@web/components/Button.svelte';
+
   interface Props {
     hasPrev?: boolean;
     hasNext?: boolean;
@@ -10,10 +12,8 @@
 </script>
 
 <div class="pager">
-  <button class="vc-btn vc-btn--secondary" disabled={!hasPrev} onclick={onprev}>
-    ← Previous
-  </button>
-  <button class="vc-btn vc-btn--secondary" disabled={!hasNext} onclick={onnext}> Next → </button>
+  <Button variant="secondary" disabled={!hasPrev} onclick={onprev}>← Previous</Button>
+  <Button variant="secondary" disabled={!hasNext} onclick={onnext}>Next →</Button>
 </div>
 
 <style>

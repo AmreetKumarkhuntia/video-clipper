@@ -17,7 +17,7 @@
     overflow: hidden;
     aspect-ratio: 16 / 9;
     border-radius: var(--vc-radius-md);
-    background: #111;
+    background: var(--vc-overlay);
   }
 
   iframe {

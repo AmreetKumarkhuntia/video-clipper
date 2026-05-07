@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { VideoDetails } from '@lib/types/index.js';
   import { formatDuration } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
 
   interface Props {
     video: VideoDetails;
@@ -46,16 +47,16 @@
   <p class="rail-desc">{video.description || 'No video description available.'}</p>
 
   <div class="rail-actions">
-    <button
-      class="vc-btn vc-btn--secondary"
+    <Button
+      variant="secondary"
       onclick={onLoadTranscript}
       disabled={isLoadingTranscript || isAnalyzing}
     >
       {isLoadingTranscript ? 'Fetching transcript...' : 'Load transcript'}
-    </button>
-    <button class="vc-btn vc-btn--primary" onclick={onPlanClips} disabled={isAnalyzing}>
+    </Button>
+    <Button variant="primary" onclick={onPlanClips} disabled={isAnalyzing}>
       {isAnalyzing ? 'Planning clips...' : 'Plan clip candidates'}
-    </button>
+    </Button>
   </div>
 
   {#if errorMessage}
@@ -146,18 +147,6 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-  }
-
-  .rail-error {
-    margin: 0;
-    font-size: var(--vc-text-13);
-    color: var(--vc-error);
-  }
-
-  @media (max-width: 980px) {
-    .stats {
-      grid-template-columns: 1fr;
-    }
   }
 
   .rail-error {
