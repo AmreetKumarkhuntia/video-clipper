@@ -48,6 +48,7 @@ export const PublishDraftItemSchema = z.object({
   isShort: z.boolean().default(false),
   thumbnailPath: z.string().optional(),
   playlistId: z.string().optional(),
+  scheduledAt: z.string().optional(),
 });
 export type PublishDraftItem = z.infer<typeof PublishDraftItemSchema>;
 

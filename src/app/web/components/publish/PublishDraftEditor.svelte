@@ -35,6 +35,11 @@
     onupdate?.({ index, item: { ...item, ...patch } });
   }
 
+  function toLocalDatetime(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   function updateTags(value: string): void {
     patchItem({
       tags: value
@@ -290,6 +295,30 @@
             oninput={(v) => patchItem({ playlistId: v.trim() || undefined })}
           />
         </Field>
+
+        <Field label="Scheduled publish" for="draft-schedule-{index}" class="field--full">
+          <div class="schedule-datetime-row">
+            <input
+              id="draft-schedule-{index}"
+              type="datetime-local"
+              class="schedule-datetime-input"
+              value={item.scheduledAt ? toLocalDatetime(new Date(item.scheduledAt)) : ''}
+              onchange={(e) => {
+                const val = (e.currentTarget as HTMLInputElement).value;
+                patchItem({ scheduledAt: val ? new Date(val).toISOString() : undefined });
+              }}
+            />
+            {#if item.scheduledAt}
+              <button
+                type="button"
+                class="schedule-clear-btn"
+                onclick={() => patchItem({ scheduledAt: undefined })}
+              >
+                Clear
+              </button>
+            {/if}
+          </div>
+        </Field>
       </div>
 
       {#if item.transcriptExcerpt}
@@ -442,6 +471,44 @@
   }
   .thumb-note--err {
     color: var(--vc-error);
+  }
+
+  .schedule-datetime-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .schedule-datetime-input {
+    font: inherit;
+    font-size: var(--vc-text-14);
+    padding: 6px 10px;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    color: var(--vc-text);
+  }
+
+  .schedule-datetime-input:focus {
+    outline: none;
+    border-color: var(--vc-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--vc-accent) 20%, transparent);
+  }
+
+  .schedule-clear-btn {
+    font: inherit;
+    font-size: var(--vc-text-13);
+    color: var(--vc-text-muted);
+    background: none;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-sm, 6px);
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+
+  .schedule-clear-btn:hover {
+    color: var(--vc-text);
+    background: var(--vc-surface-hover, var(--vc-surface));
   }
 
   .excerpt {

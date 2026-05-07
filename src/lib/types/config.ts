@@ -143,6 +143,8 @@ export const ConfigSchema = z
     YT_DEFAULT_PUBLIC_STATS_VIEWABLE: z.coerce.boolean().default(true),
     YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA: z.coerce.boolean().default(false),
     YT_DEFAULT_IS_SHORT: z.coerce.boolean().default(false),
+    YT_SCHEDULE_ENABLED: z.coerce.boolean().default(true),
+    YT_SCHEDULE_INTERVAL_MIN: z.coerce.number().min(1).default(45),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -243,6 +245,8 @@ export const CONFIG_GROUPS = [
       'YT_DEFAULT_PUBLIC_STATS_VIEWABLE',
       'YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA',
       'YT_DEFAULT_IS_SHORT',
+      'YT_SCHEDULE_ENABLED',
+      'YT_SCHEDULE_INTERVAL_MIN',
     ],
   },
   {
@@ -541,5 +545,14 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   YT_DEFAULT_IS_SHORT: {
     description: 'Default format for new publish draft items — enable to upload as YouTube Shorts',
     widget: 'toggle',
+  },
+  YT_SCHEDULE_ENABLED: {
+    description: 'Enable scheduled publishing — stagger clip publish times using YouTube publishAt',
+    widget: 'toggle',
+  },
+  YT_SCHEDULE_INTERVAL_MIN: {
+    description:
+      'Minutes between scheduled clip publish times (used in bulk schedule on Prepare page)',
+    widget: 'number',
   },
 };

@@ -39,6 +39,16 @@
     <div class="draft-card__body">
       <div class="draft-card__row">
         <span class="draft-card__rank">Clip {index + 1}</span>
+        {#if item.scheduledAt}
+          <span class="draft-card__schedule" title={new Date(item.scheduledAt).toLocaleString()}>
+            {new Date(item.scheduledAt).toLocaleString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        {/if}
         <span class="draft-card__privacy" data-privacy={item.privacyStatus}>
           {item.privacyStatus}
         </span>
@@ -184,13 +194,23 @@
   }
 
   .draft-card__privacy {
-    margin-left: auto;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: var(--vc-text-subtle);
     border: 1px solid var(--vc-divider);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: auto;
+  }
+
+  .draft-card__schedule {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--vc-accent);
+    border: 1px solid color-mix(in srgb, var(--vc-accent) 40%, transparent);
     padding: 2px 6px;
     border-radius: 3px;
   }
