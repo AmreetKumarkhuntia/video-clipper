@@ -1,10 +1,7 @@
 import { writable } from 'svelte/store';
+import type { Toast } from '@app/web/types/web.js';
 
-export interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error';
-}
+export type { Toast };
 
 export const toasts = writable<Toast[]>([]);
 

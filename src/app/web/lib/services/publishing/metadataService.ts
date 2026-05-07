@@ -1,6 +1,5 @@
 import { generateText, tool } from 'ai';
 import pLimit from 'p-limit';
-import { z } from 'zod';
 import { getModel } from '@lib/utils/modelFactory.js';
 import { log } from '@lib/utils/logger.js';
 import {
@@ -15,12 +14,7 @@ import { readMetadataCache, writeMetadataCache } from './metadataCache.js';
 
 export type { MetadataGenerationContext } from '@app/web/types/publish.js';
 
-const PublishMetadataSchema = z.object({
-  title: z.string().min(1).max(100),
-  description: z.string().min(1).max(5000),
-  tags: z.array(z.string().min(1).max(30)).max(15),
-  categoryId: z.string().min(1).max(5),
-});
+import { PublishMetadataSchema } from '@app/web/types/publish.js';
 
 const CATEGORY_LIST = Object.entries(YOUTUBE_CATEGORIES)
   .map(([id, label]) => `${id}=${label}`)

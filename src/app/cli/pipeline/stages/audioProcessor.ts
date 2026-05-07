@@ -1,27 +1,16 @@
 import { promises as fs } from 'fs';
 import pLimit from 'p-limit';
 import { downloadAudio } from '@lib/services/audio/source/youtube.js';
-import type { AudioDownloadConfig } from '@lib/services/audio/source/youtube.js';
+import type { AudioDownloadConfig } from '@lib/types/downloader.js';
 import { createAnalyzerChain } from '@lib/services/audio/analyzer/index.js';
-import type { AnalyzerChainConfig } from '@lib/services/audio/analyzer/index.js';
+import type { AnalyzerChainConfig } from '@lib/types/audio.js';
 import { EventDetector } from '@lib/services/audio/processor/detector.js';
 import { sliceAudio } from '@lib/services/audio/processor/slicer.js';
-import type { SlicerConfig } from '@lib/services/audio/processor/slicer.js';
+import type { SlicerConfig } from '@lib/types/audio.js';
 import { buildWindows } from '@lib/utils/chunker.js';
 import { log } from '@lib/utils/logger.js';
 import type { Cache } from '@lib/utils/cache.js';
-import type { AudioEvent, AudioProcessorOpts } from '@lib/types/index.js';
-
-export interface AudioProcessorConfig {
-  audioEnabled: boolean;
-  audioProvider: string;
-  chunkLengthSec: number;
-  chunkOverlapSec: number;
-  outputDir: string;
-  audioDownloadConfig: AudioDownloadConfig;
-  slicerConfig: SlicerConfig;
-  analyzerChainConfig: AnalyzerChainConfig;
-}
+import type { AudioEvent, AudioProcessorOpts, AudioProcessorConfig } from '@lib/types/index.js';
 
 export async function processAudio(
   videoId: string,

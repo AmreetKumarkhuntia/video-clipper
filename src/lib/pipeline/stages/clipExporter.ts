@@ -1,15 +1,12 @@
 import { downloadVideo } from '@lib/services/video/source/youtube/downloader.js';
 import type { DownloaderConfig } from '@lib/types/downloader.js';
 import { generateClips, organizeClips, remuxClips } from '@lib/services/video/clipper/index.js';
-import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
+import type { ClipperConfig } from '@lib/types/video.js';
 import { log } from '@lib/utils/logger.js';
 import type { RankedSegment, ClipExporterOpts } from '@lib/types/index.js';
+import type { ClipExporterConfig } from '@lib/types/pipeline.js';
 
-export interface ClipExporterConfig {
-  downloader: DownloaderConfig;
-  clipper: ClipperConfig;
-  downloadSectionsMode: 'all' | number | undefined;
-}
+export type { ClipExporterConfig } from '@lib/types/pipeline.js';
 
 export async function exportClips(
   videoId: string,

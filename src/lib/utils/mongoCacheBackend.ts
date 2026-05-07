@@ -15,20 +15,7 @@ import type {
   AudioEvent,
   SegmentRefinement,
 } from '@lib/types/index.js';
-import type { CacheBackend } from './cacheBackend.js';
-
-// ---------------------------------------------------------------------------
-// Document shape stored in every MongoDB collection
-// ---------------------------------------------------------------------------
-
-interface CacheDocument<T> {
-  /** SHA-256 hex digest of the composite cache key. Used as the unique index. */
-  cacheKey: string;
-  /** The cached payload, stored as a plain object. */
-  data: T;
-  /** ISO date of insertion — used by the TTL index. */
-  createdAt: Date;
-}
+import type { CacheBackend, CacheDocument } from '@lib/types/cache.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers

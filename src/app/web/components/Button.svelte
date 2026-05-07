@@ -14,6 +14,7 @@
     class?: string;
     onclick?: (e: MouseEvent) => void;
     children: Snippet;
+    'aria-label'?: string;
   }
 
   let {
@@ -25,6 +26,7 @@
     class: extraClass = '',
     onclick,
     children,
+    'aria-label': ariaLabel,
   }: Props = $props();
 
   const sizeClass: Record<Size, string> = {
@@ -40,11 +42,17 @@
 </script>
 
 {#if href}
-  <a {href} class={classes} class:disabled aria-disabled={disabled || undefined}>
+  <a
+    {href}
+    class={classes}
+    class:disabled
+    aria-disabled={disabled || undefined}
+    aria-label={ariaLabel}
+  >
     {@render children()}
   </a>
 {:else}
-  <button class={classes} {type} {disabled} {onclick}>
+  <button class={classes} {type} {disabled} {onclick} aria-label={ariaLabel}>
     {@render children()}
   </button>
 {/if}

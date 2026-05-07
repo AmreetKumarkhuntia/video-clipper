@@ -1,24 +1,11 @@
 import { createParser } from 'eventsource-parser';
-import type { UploadArtifact } from '@app/web/types/publish.js';
+import type { UploadArtifact, UploadQueueStatus } from '@app/web/types/publish.js';
 
-export type UploadQueueStatus = 'queued' | 'uploading' | 'uploaded' | 'failed';
+export type { UploadQueueStatus };
 
-export interface UploadQueueItem {
-  clipArtifactId: string;
-  title: string;
-  status: UploadQueueStatus;
-  youtubeUrl?: string;
-  youtubeVideoId?: string;
-  error?: string;
-}
+import type { UploadQueueItem, UploadStreamCallbacks } from '@app/web/types/upload.js';
 
-export interface UploadStreamCallbacks {
-  onUploadStarted?: (clipArtifactId: string) => void;
-  onUploadFinished?: (upload: UploadArtifact) => void;
-  onUploadFailed?: (upload: UploadArtifact) => void;
-  onComplete?: (uploads: UploadArtifact[]) => void;
-  onError?: (message: string) => void;
-}
+export type { UploadQueueItem, UploadStreamCallbacks };
 
 export async function streamUploads(
   analysisId: string,

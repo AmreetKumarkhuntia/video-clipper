@@ -1,30 +1,17 @@
-import { CONFIG_GROUPS, CONFIG_FIELD_META, type ConfigWidget } from '@lib/types/config.js';
+import {
+  CONFIG_GROUPS,
+  CONFIG_FIELD_META,
+  type ConfigWidget,
+  type ConfigFieldDescriptor,
+  type ConfigGroupDescriptor,
+  type ConfigRegistryResponse,
+} from '@lib/types/config.js';
+export type {
+  ConfigFieldDescriptor,
+  ConfigGroupDescriptor,
+  ConfigRegistryResponse,
+} from '@lib/types/config.js';
 import { config } from '@lib/config/env.js';
-
-export interface ConfigFieldDescriptor {
-  key: string;
-  label: string;
-  description: string;
-  widget: ConfigWidget;
-  required: boolean;
-  secret: boolean;
-  defaultValue: unknown;
-  min?: number;
-  max?: number;
-  options?: string[];
-  optionLabels?: string[];
-  placeholder?: string;
-}
-
-export interface ConfigGroupDescriptor {
-  id: string;
-  label: string;
-  fields: ConfigFieldDescriptor[];
-}
-
-export interface ConfigRegistryResponse {
-  groups: ConfigGroupDescriptor[];
-}
 
 const FIELD_CONSTRAINTS: Record<
   string,

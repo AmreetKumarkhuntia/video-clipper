@@ -20,3 +20,8 @@ export interface HighlightRange {
   start: number;
   end: number;
 }
+
+export interface AnalysisActivityState {
+  items: AnalysisActivityItem[];
+  nextId: number;
+}

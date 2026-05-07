@@ -4,4 +4,4 @@ export type {
   ConfigRegistryResponse,
   ConfigGroupDescriptor,
   ConfigFieldDescriptor,
-} from './registry.js';
+} from '@lib/types/config.js';

@@ -2,15 +2,9 @@ import { createParser } from 'eventsource-parser';
 import type { ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js';
 import type { ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
 
-export interface AnalysisStreamCallbacks {
-  onChunkStarted?: (chunkIndex: number) => void;
-  onChunkProgress?: (chunkIndex: number, text: string) => void;
-  onChunkAnalyzed?: (chunkIndex: number, evaluation: ChunkEvaluation) => void;
-  onSegmentStarted?: (rank: number) => void;
-  onSegmentProgress?: (rank: number, text: string) => void;
-  onSegmentRefined?: (rank: number, segment: RankedSegment) => void;
-  onError?: (message: string) => void;
-}
+import type { AnalysisStreamCallbacks } from '@app/web/types/analysis.js';
+
+export type { AnalysisStreamCallbacks };
 
 export async function streamAnalysis(
   input: CreateAnalysisRequest,

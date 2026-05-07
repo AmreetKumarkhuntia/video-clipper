@@ -1,5 +1,12 @@
 export { ConfigSchema } from './config.js';
 export type { Config } from './config.js';
+export type {
+  ModelFactoryApiKeys,
+  SetConfigResult,
+  ConfigFieldDescriptor,
+  ConfigGroupDescriptor,
+  ConfigRegistryResponse,
+} from './config.js';
 
 export type { CliArgs } from './cli.js';
 
@@ -11,10 +18,12 @@ export type {
   SegmentAnalyzerResult,
   SegmentSelectorOpts,
   ClipExporterOpts,
+  ClipExporterConfig,
+  AudioProcessorConfig,
 } from './pipeline.js';
 
 export { SegmentRefinementSchema } from './cache.js';
-export type { SegmentRefinement } from './cache.js';
+export type { SegmentRefinement, CacheBackend, CacheDocument } from './cache.js';
 
 export type { TranscriptProviderName, AudioProviderName } from './factory.js';
 
@@ -29,18 +38,36 @@ export type {
   LLMAnalyzerOpts,
   TranscriptDetectorResult,
   StreamCallbacks,
+  AnalyzeChunksOpts,
+  RefineSegmentsOpts,
 } from './analyzer.js';
+export { RefinedBoundariesSchema } from './analyzer.js';
 
-export { AudioEventSchema, MergedCandidateSchema } from './audio.js';
-export type { AudioEvent, MergedCandidate } from './audio.js';
+export {
+  AudioEventSchema,
+  MergedCandidateSchema,
+  GeminiEventSchema,
+  WhisperSegmentSchema,
+} from './audio.js';
+export type {
+  AudioEvent,
+  MergedCandidate,
+  AudioSource,
+  GeminiAnalyzerConfig,
+  AnalyzerChainConfig,
+  SlicerConfig,
+} from './audio.js';
 
 export { VideoMetadataSchema, PipelineResultSchema } from './video.js';
-export type { VideoMetadata, PipelineResult } from './video.js';
 export type {
+  VideoMetadata,
+  PipelineResult,
   DownloadMode,
   DownloadResultAll,
   DownloadResultSegments,
   DownloadResult,
+  VideoSource,
+  ClipperConfig,
 } from './video.js';
 
 export {
@@ -56,6 +83,12 @@ export type {
   VideoSummary,
   VideoDetails,
   VideoPage,
+  YouTubeCatalogService,
+  ChannelLookup,
+  YtDlpJson,
+  OEmbedResponse,
+  YouTubeCaptionTrack,
+  YouTubePlayerResponse,
 } from './youtube.js';
 
 export type {

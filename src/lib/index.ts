@@ -83,7 +83,7 @@ export { getPythonBin } from './utils/pythonBin.js';
 export { buildWindows } from './utils/chunker.js';
 export { getModel } from './utils/modelFactory.js';
 export { Cache } from './utils/cache.js';
-export type { CacheBackend } from './utils/cacheBackend.js';
+export type { CacheBackend } from './types/cache.js';
 export { createCacheBackend } from './utils/cacheFactory.js';
 
 // ── Video Services ──
@@ -96,7 +96,7 @@ export {
   parseChannelInput,
   parseYouTubeDuration,
 } from './services/video/source/youtube/catalog.js';
-export type { YouTubeCatalogService } from './services/video/source/youtube/catalog.js';
+export type { YouTubeCatalogService } from './types/youtube.js';
 
 // ── Audio Services ──
 export { downloadAudio } from './services/audio/source/youtube.js';

@@ -1,29 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
-import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 import type { AudioEvent } from '@lib/types/audio.js';
+import type { GeminiAnalyzerConfig } from '@lib/types/audio.js';
+import { GeminiEventSchema } from '@lib/types/audio.js';
 import { AudioAnalyzer } from './base.js';
-
-export interface GeminiAnalyzerConfig {
-  apiKey: string;
-  model: string;
-  extraInstructions?: string;
-}
-
-/**
- * Gemini returns timestamps inconsistently as either:
- * - MM.SS notation: 1.03 = 1 min 3 sec = 63s
- * - True decimal seconds: 53.403 = 53.403s
- * Use normalizeGeminiTime() to resolve correct value.
- */
-const GeminiEventSchema = z.array(
-  z.object({
-    time_sec: z.number(),
-    event: z.string(),
-    confidence: z.number().min(0).max(1),
-  }),
-);
 
 const GAME_PROFILE_PROMPTS: Record<string, string> = {
   valorant:

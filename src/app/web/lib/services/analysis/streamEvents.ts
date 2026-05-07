@@ -1,14 +1,8 @@
 import { log } from '@lib/utils/logger.js';
 
-export type AnalysisStreamEventName =
-  | 'chunk_started'
-  | 'chunk_progress'
-  | 'chunk_analyzed'
-  | 'segment_started'
-  | 'segment_progress'
-  | 'segment_refined'
-  | 'analysis_complete'
-  | 'error';
+import type { AnalysisStreamEventName } from '@app/web/types/analysis.js';
+
+export type { AnalysisStreamEventName };
 
 export function serializeSSE(eventName: AnalysisStreamEventName, data: unknown): string {
   return `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;

@@ -5,74 +5,9 @@ import type {
   AudioEvent,
   SegmentRefinement,
 } from '@lib/types/index.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 
-/**
- * Common interface implemented by every cache backend (file-based, MongoDB, etc.).
- *
- * All read methods return null on a cache miss or any read error.
- * All write methods are fire-and-forget — failures are logged but never thrown.
- * `close()` releases any underlying resources (connections, file handles, etc.).
- */
-export interface CacheBackend {
-  // ---- Transcript -----------------------------------------------------------
-  readTranscript(videoId: string): Promise<TranscriptLine[] | null>;
-  writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void>;
-
-  // ---- LLM chunk results ----------------------------------------------------
-  readChunk(chunk: LLMChunk, chunkAudioEvents?: AudioEvent[]): Promise<ChunkEvaluation | null>;
-  writeChunk(
-    chunk: LLMChunk,
-    evaluation: ChunkEvaluation,
-    chunkAudioEvents?: AudioEvent[],
-  ): Promise<void>;
-
-  // ---- Segment refinement ---------------------------------------------------
-  readSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-  ): Promise<SegmentRefinement | null>;
-  writeSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-    refined: SegmentRefinement,
-  ): Promise<void>;
-
-  // ---- Audio events (whole-video) -------------------------------------------
-  readAudioEvents(
-    videoId: string,
-    gameProfile: string,
-    provider: string,
-  ): Promise<AudioEvent[] | null>;
-  writeAudioEvents(
-    videoId: string,
-    gameProfile: string,
-    provider: string,
-    events: AudioEvent[],
-  ): Promise<void>;
-
-  // ---- Audio events (per-chunk) ---------------------------------------------
-  readAudioChunk(
-    videoId: string,
-    gameProfile: string,
-    provider: string,
-    windowStart: number,
-    windowEnd: number,
-  ): Promise<AudioEvent[] | null>;
-  writeAudioChunk(
-    videoId: string,
-    gameProfile: string,
-    provider: string,
-    windowStart: number,
-    windowEnd: number,
-    events: AudioEvent[],
-  ): Promise<void>;
-
-  // ---- Lifecycle ------------------------------------------------------------
-  /** Release any underlying resources (DB connections, file handles, etc.). */
-  close(): Promise<void>;
-}
+export type { CacheBackend } from '@lib/types/cache.js';
 
 /**
  * No-op backend used when the cache is disabled (--no-cache flag).

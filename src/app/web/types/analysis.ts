@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { TranscriptLineSchema, MicroBlockSchema, LLMChunkSchema } from '@lib/types/transcript.js';
 import { ChunkEvaluationSchema } from '@lib/types/segment.js';
+import type { ChunkEvaluation, RankedSegment } from '@lib/types/index.js';
 
 export const TranscriptBundleSchema = z.object({
   videoId: z.string(),
@@ -88,3 +89,38 @@ export const ClipArtifactSchema = z.object({
   createdAt: z.string(),
 });
 export type ClipArtifact = z.infer<typeof ClipArtifactSchema>;
+
+export interface AnalysisStreamCallbacks {
+  onChunkStarted?: (chunkIndex: number) => void;
+  onChunkProgress?: (chunkIndex: number, text: string) => void;
+  onChunkAnalyzed?: (chunkIndex: number, evaluation: ChunkEvaluation) => void;
+  onSegmentStarted?: (rank: number) => void;
+  onSegmentProgress?: (rank: number, text: string) => void;
+  onSegmentRefined?: (rank: number, segment: RankedSegment) => void;
+  onError?: (message: string) => void;
+}
+
+export type AnalysisStreamEventName =
+  | 'chunk_started'
+  | 'chunk_progress'
+  | 'chunk_analyzed'
+  | 'segment_started'
+  | 'segment_progress'
+  | 'segment_refined'
+  | 'analysis_complete'
+  | 'error';
+
+export const AnalysisParamsSchema = z.object({
+  analysisId: z.string().min(1),
+});
+export type AnalysisParams = z.infer<typeof AnalysisParamsSchema>;
+
+export const ListClipsQuerySchema = z.object({
+  analysisId: z.string().optional(),
+});
+export type ListClipsQuery = z.infer<typeof ListClipsQuerySchema>;
+
+export const TranscriptParamsSchema = z.object({
+  videoId: z.string().min(1),
+});
+export type TranscriptParams = z.infer<typeof TranscriptParamsSchema>;

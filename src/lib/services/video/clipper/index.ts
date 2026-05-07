@@ -5,14 +5,9 @@ import pLimit from 'p-limit';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import type { RankedSegment } from '@lib/types/segment.js';
+import type { ClipperConfig } from '@lib/types/video.js';
 
-export interface ClipperConfig {
-  ffmpegPath?: string;
-  ffprobePath?: string;
-  timestampOffset: number;
-  ffmpegPreset: string;
-  outputDir: string;
-}
+export type { ClipperConfig } from '@lib/types/video.js';
 
 function configureFfmpeg(cfg: ClipperConfig): void {
   if (cfg.ffmpegPath) {

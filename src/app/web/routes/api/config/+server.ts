@@ -8,6 +8,7 @@ import {
   zodErrorDetail,
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
+import { ConfigUpdateSchema } from '@app/web/types/web.js';
 
 export const GET: RequestHandler = async (event) => {
   const reqDone = log.request('GET', '/api/config', event.locals.requestId);
@@ -27,8 +28,6 @@ export const GET: RequestHandler = async (event) => {
     );
   }
 };
-
-const ConfigUpdateSchema = z.record(z.string(), z.unknown());
 
 export const POST: RequestHandler = async (event) => {
   const reqDone = log.request('POST', '/api/config', event.locals.requestId);

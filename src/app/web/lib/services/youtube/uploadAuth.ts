@@ -6,6 +6,7 @@ import {
   type YouTubeAuthState,
   type YouTubeAuthStatus,
   type YouTubeChannel,
+  type OAuthCookieState,
 } from '@app/web/types/publish.js';
 import {
   clearYouTubeAuthState,
@@ -23,12 +24,6 @@ const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/youtube.upload',
   'https://www.googleapis.com/auth/youtube.readonly',
 ].join(' ');
-
-export interface OAuthCookieState {
-  state: string;
-  codeVerifier: string;
-  returnTo: string;
-}
 
 export async function getYouTubeAuthStatus(): Promise<YouTubeAuthStatus> {
   const auth = await loadYouTubeAuthState();

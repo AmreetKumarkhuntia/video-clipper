@@ -1,15 +1,11 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { z } from 'zod';
 import {
   listClipArtifacts,
   listClipArtifactsByAnalysisId,
 } from '@app/web/lib/services/artifacts/artifactStore.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
-
-const ListClipsQuerySchema = z.object({
-  analysisId: z.string().min(1).optional(),
-});
+import { ListClipsQuerySchema } from '@app/web/types/analysis.js';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
   const reqDone = log.request('GET', '/api/library/clips', locals.requestId);

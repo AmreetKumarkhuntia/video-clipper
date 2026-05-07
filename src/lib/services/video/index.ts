@@ -1,4 +1,4 @@
-export type { VideoSource } from './source/types.js';
+export type { VideoSource } from '@lib/types/video.js';
 export { parseUrl } from './source/youtube/parser.js';
 export { extractMetadata } from './source/youtube/metadata.js';
 export { downloadVideo } from './source/youtube/downloader.js';
@@ -8,7 +8,7 @@ export {
   parseChannelInput,
   parseYouTubeDuration,
 } from './source/youtube/catalog.js';
-export type { YouTubeCatalogService } from './source/youtube/catalog.js';
+export type { YouTubeCatalogService } from '@lib/types/youtube.js';
 export { generateClips, organizeClips } from './clipper/index.js';
 export { VideoMetadataSchema, PipelineResultSchema } from '@lib/types/video.js';
 export type {

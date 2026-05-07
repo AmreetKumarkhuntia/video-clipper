@@ -156,10 +156,36 @@ export const CreateUploadsRequestSchema = z.object({
 export type CreateUploadsRequest = z.infer<typeof CreateUploadsRequestSchema>;
 
 export interface MetadataGenerationContext {
-  /** Original video description — minor supporting context. */
   videoDescription?: string;
-  /** Channel that originally posted the source video (e.g. "MrBeast"). */
   sourceChannelTitle?: string;
-  /** Your connected YouTube upload channel (e.g. "MyClipsChannel"). */
   uploadChannelName?: string;
 }
+
+export interface OAuthCookieState {
+  state: string;
+  codeVerifier: string;
+  returnTo: string;
+}
+
+export const PublishMetadataSchema = z.object({
+  title: z.string().min(1).max(100),
+  description: z.string().min(1).max(5000),
+  tags: z.array(z.string().min(1).max(30)).max(15),
+  categoryId: z.string().min(1).max(5),
+});
+
+export const CachedMetadataSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  tags: z.array(z.string()),
+  categoryId: z.string(),
+});
+export type CachedMetadata = z.infer<typeof CachedMetadataSchema>;
+
+export const ListUploadsQuerySchema = z.object({
+  analysisId: z.string().min(1),
+});
+
+export const DraftParamsSchema = z.object({
+  analysisId: z.string().min(1),
+});

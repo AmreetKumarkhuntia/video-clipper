@@ -6,13 +6,7 @@ import { mistral } from '@ai-sdk/mistral';
 import { groq } from '@ai-sdk/groq';
 import type { LanguageModel } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-
-export interface ModelFactoryApiKeys {
-  ZAI_API_KEY?: string;
-  OPENROUTER_API_KEY?: string;
-  CUSTOM_OPENAI_BASE_URL?: string;
-  CUSTOM_OPENAI_API_KEY?: string;
-}
+import type { ModelFactoryApiKeys } from '@lib/types/config.js';
 
 export function getModel(
   provider: string,

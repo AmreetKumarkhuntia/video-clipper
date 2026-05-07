@@ -1,5 +1,10 @@
 import 'dotenv/config';
-import { ConfigSchema, type Config, CONFIG_FIELD_META } from '@lib/types/config.js';
+import {
+  ConfigSchema,
+  type Config,
+  CONFIG_FIELD_META,
+  type SetConfigResult,
+} from '@lib/types/config.js';
 import { loadUserConfig, saveUserConfig } from '@lib/config/fileStore.js';
 
 function loadConfig(): Config {
@@ -39,11 +44,6 @@ export const config: Config = new Proxy({} as Config, {
     return (_config as Record<string, unknown>)[prop];
   },
 });
-
-export interface SetConfigResult {
-  success: boolean;
-  warnings: string[];
-}
 
 export function setConfigValues(updates: Record<string, unknown>): SetConfigResult {
   const warnings: string[] = [];

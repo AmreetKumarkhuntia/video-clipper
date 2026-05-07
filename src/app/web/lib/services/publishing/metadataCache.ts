@@ -1,17 +1,10 @@
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
 
-const CachedMetadataSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  tags: z.array(z.string()),
-  categoryId: z.string(),
-});
-
-export type CachedMetadata = z.infer<typeof CachedMetadataSchema>;
+import { CachedMetadataSchema } from '@app/web/types/publish.js';
+import type { CachedMetadata } from '@app/web/types/publish.js';
 
 function cacheKey(systemPrompt: string, prompt: string): string {
   return createHash('sha256').update(`${systemPrompt}\n---\n${prompt}`).digest('hex');

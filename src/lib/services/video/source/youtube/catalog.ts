@@ -6,18 +6,14 @@ import {
   VideoPageSchema,
   VideoSummarySchema,
 } from '@lib/types/youtube.js';
-import type { ChannelSummary, VideoDetails, VideoPage, VideoSummary } from '@lib/types/youtube.js';
-
-export interface YouTubeCatalogService {
-  resolveChannel(input: string): Promise<ChannelSummary>;
-  listChannelVideos(channelId: string, pageToken?: string): Promise<VideoPage>;
-  getVideoDetails(videoId: string): Promise<VideoDetails>;
-}
-
-type ChannelLookup =
-  | { kind: 'id'; value: string }
-  | { kind: 'handle'; value: string }
-  | { kind: 'username'; value: string };
+import type {
+  ChannelSummary,
+  VideoDetails,
+  VideoPage,
+  VideoSummary,
+  YouTubeCatalogService,
+  ChannelLookup,
+} from '@lib/types/youtube.js';
 
 export class GoogleYouTubeCatalogService implements YouTubeCatalogService {
   private readonly client: youtube_v3.Youtube;

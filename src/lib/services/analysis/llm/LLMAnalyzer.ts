@@ -1,17 +1,17 @@
 import { analyzeChunks } from './index.js';
-import type { AnalyzeChunksOpts } from './index.js';
 import { refineSegments } from '../refiner/index.js';
-import type { RefineSegmentsOpts } from '../refiner/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { LanguageModel } from 'ai';
 import type { TranscriptDetector } from '../transcript/detector.js';
-import type { CacheBackend } from '@lib/utils/cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type {
   MicroBlock,
   RankedSegment,
   LLMAnalyzerResult,
   LLMAnalyzerOpts,
   StreamCallbacks,
+  AnalyzeChunksOpts,
+  RefineSegmentsOpts,
 } from '@lib/types/index.js';
 
 export class LLMAnalyzer {
