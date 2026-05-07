@@ -1,18 +1,16 @@
 <script lang="ts">
+  import Textarea from '@web/components/Textarea.svelte';
+
   interface Props {
+    id?: string;
     value?: string;
     placeholder?: string;
     disabled?: boolean;
     onchange?: (value: string) => void;
   }
 
-  let { value = $bindable(''), placeholder = '', disabled = false, onchange }: Props = $props();
-
-  function handleInput(event: Event): void {
-    const target = event.target as HTMLTextAreaElement;
-    value = target.value;
-    onchange?.(value);
-  }
+  let { id, value = $bindable(''), placeholder = '', disabled = false, onchange }: Props = $props();
 </script>
 
-<textarea class="vc-textarea" {placeholder} {disabled} oninput={handleInput} bind:value></textarea>
+<!-- Settings textareas hold config/token values — use monospace -->
+<Textarea {id} {placeholder} {disabled} monospace={true} bind:value {onchange} />

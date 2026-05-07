@@ -2,6 +2,11 @@
   import Icon from '@web/components/Icon.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
   import Button from '@web/components/Button.svelte';
+  import Field from '@web/components/Field.svelte';
+  import InputText from '@web/components/InputText.svelte';
+  import Textarea from '@web/components/Textarea.svelte';
+  import Select from '@web/components/Select.svelte';
+  import Checkbox from '@web/components/Checkbox.svelte';
   import { apiFetch } from '@web/lib/api.js';
   import {
     YOUTUBE_CATEGORIES,
@@ -82,15 +87,12 @@
     </div>
 
     <div class="card-head__controls">
-      <label class="include-toggle">
-        <input
-          type="checkbox"
-          checked={item.selected}
-          onchange={(event) =>
-            patchItem({ selected: (event.currentTarget as HTMLInputElement).checked })}
-        />
-        <span>Include in publish</span>
-      </label>
+      <Checkbox
+        class="include-check"
+        checked={item.selected}
+        label="Include in publish"
+        onchange={(checked) => patchItem({ selected: checked })}
+      />
       <button
         class="collapse-btn"
         class:is-open={!collapsed}
@@ -112,163 +114,109 @@
   {#if !collapsed}
     <div class="field-grid">
       <!-- Title (full width) -->
-      <div class="vc-field field--full">
-        <label class="vc-label" for="draft-title-{index}">Title</label>
-        <input
+      <Field label="Title" for="draft-title-{index}" class="field--full">
+        <InputText
           id="draft-title-{index}"
-          class="vc-input"
           value={item.title}
-          maxlength="100"
-          oninput={(event) => patchItem({ title: (event.currentTarget as HTMLInputElement).value })}
+          maxlength={100}
+          oninput={(v) => patchItem({ title: v })}
         />
-      </div>
+      </Field>
 
       <!-- Description (full width) -->
-      <div class="vc-field field--full">
-        <label class="vc-label" for="draft-desc-{index}">Description</label>
-        <textarea
+      <Field label="Description" for="draft-desc-{index}" class="field--full">
+        <Textarea
           id="draft-desc-{index}"
-          class="vc-textarea"
+          value={item.description}
           rows={5}
-          oninput={(event) =>
-            patchItem({ description: (event.currentTarget as HTMLTextAreaElement).value })}
-          >{item.description}</textarea
-        >
-      </div>
+          oninput={(v) => patchItem({ description: v })}
+        />
+      </Field>
 
       <!-- Tags -->
-      <div class="vc-field">
-        <label class="vc-label" for="draft-tags-{index}">Tags</label>
-        <input
+      <Field label="Tags" for="draft-tags-{index}">
+        <InputText
           id="draft-tags-{index}"
-          class="vc-input"
           value={item.tags.join(', ')}
           placeholder="tag1, tag2, tag3"
-          oninput={(event) => updateTags((event.currentTarget as HTMLInputElement).value)}
+          oninput={(v) => updateTags(v)}
         />
-      </div>
+      </Field>
 
       <!-- Privacy -->
-      <div class="vc-field">
-        <label class="vc-label" for="draft-privacy-{index}">Privacy</label>
-        <select
+      <Field label="Privacy" for="draft-privacy-{index}">
+        <Select
           id="draft-privacy-{index}"
-          class="vc-select"
           value={item.privacyStatus}
-          onchange={(event) =>
-            patchItem({
-              privacyStatus: (event.currentTarget as HTMLSelectElement)
-                .value as PublishPrivacyStatus,
-            })}
-        >
-          {#each privacyOptions as option}
-            <option value={option}>{option}</option>
-          {/each}
-        </select>
-      </div>
+          options={privacyOptions.map((o) => ({ value: o, label: o }))}
+          onchange={(v) => patchItem({ privacyStatus: v as PublishPrivacyStatus })}
+        />
+      </Field>
 
       <!-- Category -->
-      <div class="vc-field">
-        <label class="vc-label" for="draft-cat-{index}">Category</label>
-        <select
+      <Field label="Category" for="draft-cat-{index}">
+        <Select
           id="draft-cat-{index}"
-          class="vc-select"
           value={item.categoryId}
-          onchange={(event) =>
-            patchItem({ categoryId: (event.currentTarget as HTMLSelectElement).value })}
-        >
-          {#each Object.entries(YOUTUBE_CATEGORIES) as [id, label]}
-            <option value={id}>{label}</option>
-          {/each}
-        </select>
-      </div>
+          options={Object.entries(YOUTUBE_CATEGORIES).map(([id, label]) => ({ value: id, label }))}
+          onchange={(v) => patchItem({ categoryId: v })}
+        />
+      </Field>
 
       <!-- License -->
-      <div class="vc-field">
-        <label class="vc-label" for="draft-license-{index}">License</label>
-        <select
+      <Field label="License" for="draft-license-{index}">
+        <Select
           id="draft-license-{index}"
-          class="vc-select"
           value={item.license}
-          onchange={(event) =>
-            patchItem({
-              license: (event.currentTarget as HTMLSelectElement).value as PublishLicense,
-            })}
-        >
-          {#each licenseOptions as opt}
-            <option value={opt.value}>{opt.label}</option>
-          {/each}
-        </select>
-      </div>
+          options={licenseOptions}
+          onchange={(v) => patchItem({ license: v as PublishLicense })}
+        />
+      </Field>
 
       <!-- Boolean toggles -->
       <div class="vc-field">
         <span class="vc-label">Format</span>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            checked={item.isShort}
-            onchange={(event) =>
-              patchItem({ isShort: (event.currentTarget as HTMLInputElement).checked })}
-          />
-          <span>Upload as YouTube Short</span>
-        </label>
+        <Checkbox
+          checked={item.isShort}
+          label="Upload as YouTube Short"
+          onchange={(c) => patchItem({ isShort: c })}
+        />
       </div>
 
       <div class="vc-field">
         <span class="vc-label">Made for kids</span>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            checked={item.selfDeclaredMadeForKids}
-            onchange={(event) =>
-              patchItem({
-                selfDeclaredMadeForKids: (event.currentTarget as HTMLInputElement).checked,
-              })}
-          />
-          <span>This content is made for children</span>
-        </label>
+        <Checkbox
+          checked={item.selfDeclaredMadeForKids}
+          label="This content is made for children"
+          onchange={(c) => patchItem({ selfDeclaredMadeForKids: c })}
+        />
       </div>
 
       <div class="vc-field">
         <span class="vc-label">Embeddable</span>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            checked={item.embeddable}
-            onchange={(event) =>
-              patchItem({ embeddable: (event.currentTarget as HTMLInputElement).checked })}
-          />
-          <span>Allow embedding on other sites</span>
-        </label>
+        <Checkbox
+          checked={item.embeddable}
+          label="Allow embedding on other sites"
+          onchange={(c) => patchItem({ embeddable: c })}
+        />
       </div>
 
       <div class="vc-field">
         <span class="vc-label">Public stats</span>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            checked={item.publicStatsViewable}
-            onchange={(event) =>
-              patchItem({ publicStatsViewable: (event.currentTarget as HTMLInputElement).checked })}
-          />
-          <span>Make view count visible to others</span>
-        </label>
+        <Checkbox
+          checked={item.publicStatsViewable}
+          label="Make view count visible to others"
+          onchange={(c) => patchItem({ publicStatsViewable: c })}
+        />
       </div>
 
       <div class="vc-field">
         <span class="vc-label">AI-generated content</span>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            checked={item.containsSyntheticMedia}
-            onchange={(event) =>
-              patchItem({
-                containsSyntheticMedia: (event.currentTarget as HTMLInputElement).checked,
-              })}
-          />
-          <span>Contains AI-generated content</span>
-        </label>
+        <Checkbox
+          checked={item.containsSyntheticMedia}
+          label="Contains AI-generated content"
+          onchange={(c) => patchItem({ containsSyntheticMedia: c })}
+        />
       </div>
 
       <!-- Thumbnail (full width) -->
@@ -296,19 +244,14 @@
       </div>
 
       <!-- Playlist ID (full width) -->
-      <div class="vc-field field--full">
-        <label class="vc-label" for="draft-playlist-{index}">Add to playlist (optional)</label>
-        <input
+      <Field label="Add to playlist (optional)" for="draft-playlist-{index}" class="field--full">
+        <InputText
           id="draft-playlist-{index}"
-          class="vc-input"
           value={item.playlistId ?? ''}
           placeholder="PLxxxxxxxxxxxx..."
-          oninput={(event) => {
-            const val = (event.currentTarget as HTMLInputElement).value.trim();
-            patchItem({ playlistId: val || undefined });
-          }}
+          oninput={(v) => patchItem({ playlistId: v.trim() || undefined })}
         />
-      </div>
+      </Field>
     </div>
 
     {#if item.transcriptExcerpt}
@@ -436,45 +379,16 @@
     margin: 0;
   }
 
-  .include-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  :global(.include-check) {
     font-size: var(--vc-text-13);
     font-weight: 500;
     color: var(--vc-text-muted);
-    cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
-  .include-toggle input[type='checkbox'] {
-    width: 15px;
-    height: 15px;
-    accent-color: var(--vc-accent);
-    cursor: pointer;
-  }
-
   .field--full {
     grid-column: 1 / -1;
-  }
-
-  .check-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--vc-text-14);
-    color: var(--vc-text-muted);
-    cursor: pointer;
-    padding: 10px 0;
-  }
-
-  .check-row input[type='checkbox'] {
-    width: 15px;
-    height: 15px;
-    accent-color: var(--vc-accent);
-    cursor: pointer;
-    flex-shrink: 0;
   }
 
   .thumbnail-row {

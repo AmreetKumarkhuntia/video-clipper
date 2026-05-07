@@ -4,6 +4,7 @@
   import Icon from '@web/components/Icon.svelte';
   import ChannelCard from '@web/components/ChannelCard.svelte';
   import Button from '@web/components/Button.svelte';
+  import InputText from '@web/components/InputText.svelte';
 
   let channelInput = '';
   let isLoading = false;
@@ -42,14 +43,10 @@
       <p class="empty__lede">Find strong clip moments without leaving your transcript workflow.</p>
 
       <form class="empty__url" on:submit|preventDefault={resolveChannel}>
-        <div class="vc-input-wrap" style="flex:1">
-          <Icon name="search" />
-          <input
-            class="vc-input vc-input--with-icon vc-input--lg"
-            bind:value={channelInput}
-            placeholder="@handle, channel ID, or URL"
-            aria-label="YouTube channel"
-          />
+        <div style="flex:1">
+          <InputText size="lg" bind:value={channelInput} placeholder="@handle, channel ID, or URL">
+            {#snippet icon()}<Icon name="search" />{/snippet}
+          </InputText>
         </div>
         <Button variant="primary" size="lg" type="submit" disabled={isLoading}>
           {isLoading ? 'Resolving…' : 'Open channel'}

@@ -4,6 +4,9 @@
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
+  import Field from '@web/components/Field.svelte';
+  import InputText from '@web/components/InputText.svelte';
+  import Textarea from '@web/components/Textarea.svelte';
   import type { SaveYouTubeManualAuthRequest, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let authStatus = $state<YouTubeAuthStatus | null>(null);
@@ -171,30 +174,23 @@
 
       {#if showAdvancedAuth}
         <div class="settings-form" style="max-width:560px;margin-top:16px">
-          <div class="vc-field">
-            <label class="vc-label" for="access-token">Access token</label>
-            <textarea id="access-token" class="vc-textarea" rows={4} bind:value={accessToken}
-            ></textarea>
-          </div>
-          <div class="vc-field">
-            <label class="vc-label" for="refresh-token">Refresh token (optional)</label>
-            <textarea id="refresh-token" class="vc-textarea" rows={3} bind:value={refreshToken}
-            ></textarea>
-          </div>
+          <Field label="Access token" for="access-token">
+            <Textarea id="access-token" rows={4} bind:value={accessToken} monospace />
+          </Field>
+          <Field label="Refresh token (optional)" for="refresh-token">
+            <Textarea id="refresh-token" rows={3} bind:value={refreshToken} monospace />
+          </Field>
           <div class="settings-form--two">
-            <div class="vc-field">
-              <label class="vc-label" for="client-id">Client ID override</label>
-              <input id="client-id" class="vc-input" bind:value={clientId} />
-            </div>
-            <div class="vc-field">
-              <label class="vc-label" for="client-secret">Client secret override</label>
-              <input id="client-secret" class="vc-input" bind:value={clientSecret} />
-            </div>
+            <Field label="Client ID override" for="client-id">
+              <InputText id="client-id" bind:value={clientId} />
+            </Field>
+            <Field label="Client secret override" for="client-secret">
+              <InputText id="client-secret" bind:value={clientSecret} secret />
+            </Field>
           </div>
-          <div class="vc-field">
-            <label class="vc-label" for="expiry">Expiry timestamp in ms (optional)</label>
-            <input id="expiry" class="vc-input" inputmode="numeric" bind:value={expiryDate} />
-          </div>
+          <Field label="Expiry timestamp in ms (optional)" for="expiry">
+            <InputText id="expiry" inputmode="numeric" bind:value={expiryDate} />
+          </Field>
           <div>
             <Button
               variant="secondary"

@@ -171,6 +171,15 @@
 .vc-input--with-icon {
   padding-left: 40px;
 }
+.vc-input--sm {
+  padding: 7px 10px;
+  font-size: var(--vc-text-13);
+  border-radius: var(--vc-radius-sm);
+}
+.vc-input--lg {
+  padding: 13px 18px;
+  font-size: var(--vc-text-15);
+}
 .vc-input-wrap {
   position: relative;
 }
@@ -185,9 +194,34 @@
   pointer-events: none;
 }
 
+/* ── Input / textarea / select error state ───────────────────── */
+.vc-input--error,
+.vc-textarea--error,
+.vc-select--error {
+  border-color: var(--vc-error);
+}
+.vc-input--error:focus,
+.vc-textarea--error:focus,
+.vc-select--error:focus {
+  border-color: var(--vc-error);
+  box-shadow: 0 0 0 3px rgba(182, 90, 78, 0.25);
+}
+.vc-field--error .vc-label {
+  color: var(--vc-error);
+}
+.vc-field__error {
+  font-size: var(--vc-text-12);
+  color: var(--vc-error);
+}
+
 .vc-textarea {
   min-height: 96px;
   resize: vertical;
+  /* proportional font by default — add .vc-textarea--mono for code/token fields */
+  font-family: var(--vc-font-body);
+  font-size: var(--vc-text-14);
+}
+.vc-textarea--mono {
   font-family: var(--vc-font-mono);
   font-size: var(--vc-text-13);
 }
@@ -425,6 +459,11 @@
 }
 .vc-toggle input:checked ~ .vc-toggle__thumb {
   transform: translateX(16px);
+}
+/* Keyboard focus ring — the hidden checkbox gets :focus-visible,
+   we surface it on the track so keyboard users can see it. */
+.vc-toggle input:focus-visible ~ .vc-toggle__track {
+  box-shadow: var(--vc-shadow-focus);
 }
 
 /* ── Slider (range) ──────────────────────────────────────────── */

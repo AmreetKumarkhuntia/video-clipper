@@ -1,5 +1,8 @@
 <script lang="ts">
+  import InputText from '@web/components/InputText.svelte';
+
   interface Props {
+    id?: string;
     value?: number;
     min?: number;
     max?: number;
@@ -9,6 +12,7 @@
   }
 
   let {
+    id,
     value = $bindable(undefined),
     min,
     max,
@@ -17,21 +21,23 @@
     onchange,
   }: Props = $props();
 
-  function handleInput(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    const parsed = target.value === '' ? undefined : Number(target.value);
+  // InputText works with strings; convert on the way in and out
+  const strValue = $derived(value !== undefined ? String(value) : '');
+
+  function handleChange(raw: string): void {
+    const parsed = raw === '' ? undefined : Number(raw);
     value = parsed;
     onchange?.(parsed);
   }
 </script>
 
-<input
+<InputText
+  {id}
   type="number"
   {placeholder}
   {disabled}
   {min}
   {max}
-  class="vc-input"
-  oninput={handleInput}
-  value={value ?? ''}
+  value={strValue}
+  onchange={handleChange}
 />
