@@ -138,6 +138,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow-y: auto;
 }
 
 /* ── Shell layout (for video workflow routes) ─────────────────── */

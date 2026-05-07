@@ -1,12 +1,35 @@
 <script lang="ts">
+  import type { TranscriptLine } from '@lib/types/index.js';
+  import type { HighlightRange } from '@app/web/types/activity.js';
   import { formatTime } from '@web/lib/format.js';
-  import type { TranscriptPanelProps } from '@app/web/types/componentProps.js';
 
-  let { lines = [], chunkCount = 0, highlightRanges = [] }: TranscriptPanelProps = $props();
+  interface Props {
+    lines?: TranscriptLine[];
+    chunkCount?: number;
+    highlightRanges?: HighlightRange[];
+    activeRange?: HighlightRange;
+  }
+
+  let { lines = [], chunkCount = 0, highlightRanges = [], activeRange }: Props = $props();
+
+  let listEl: HTMLDivElement | undefined = $state();
 
   function isHighlighted(start: number): boolean {
     return highlightRanges.some((r) => start >= r.start && start <= r.end);
   }
+
+  function isActive(start: number): boolean {
+    if (!activeRange) return false;
+    return start >= activeRange.start && start <= activeRange.end;
+  }
+
+  $effect(() => {
+    if (!activeRange || !listEl) return;
+    const rows = listEl.querySelectorAll<HTMLElement>('.transcript-row--active');
+    if (rows.length > 0) {
+      rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
 </script>
 
 <article class="vc-card transcript-card">
@@ -21,9 +44,13 @@
   </div>
 
   {#if lines.length > 0}
-    <div class="transcript-list" aria-label="Transcript lines">
+    <div class="transcript-list" bind:this={listEl} aria-label="Transcript lines">
       {#each lines as line, index (line.start + '-' + index)}
-        <div class="transcript-row" class:transcript-row--highlight={isHighlighted(line.start)}>
+        <div
+          class="transcript-row"
+          class:transcript-row--highlight={isHighlighted(line.start) && !isActive(line.start)}
+          class:transcript-row--active={isActive(line.start)}
+        >
           <span class="timestamp">{formatTime(line.start)}</span>
           <p>{line.text}</p>
         </div>
@@ -98,6 +125,12 @@
 
   .transcript-row--highlight {
     background: var(--vc-clay-soft);
+  }
+
+  .transcript-row--active {
+    background: var(--vc-clay-100);
+    border-left: 3px solid var(--vc-clay-500);
+    padding-left: 7px;
   }
 
   .timestamp {

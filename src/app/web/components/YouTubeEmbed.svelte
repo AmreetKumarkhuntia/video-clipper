@@ -1,16 +1,19 @@
 <script lang="ts">
   export let videoId = '';
   export let title = '';
+  export let startSec: number | undefined = undefined;
 </script>
 
-<div class="embed">
-  <iframe
-    {title}
-    src={`https://www.youtube.com/embed/${videoId}`}
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen
-  ></iframe>
-</div>
+{#key startSec}
+  <div class="embed">
+    <iframe
+      {title}
+      src={`https://www.youtube.com/embed/${videoId}${startSec != null ? `?start=${Math.floor(startSec)}` : ''}`}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+    ></iframe>
+  </div>
+{/key}
 
 <style>
   .embed {
