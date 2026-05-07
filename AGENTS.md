@@ -140,6 +140,15 @@ src/lib/  ──imports──>  (external packages only)
 - Use `Promise.allSettled` for parallel LLM calls so one failure doesn't abort the rest
 - Handle errors explicitly — no silent catches. Log a warning with the chunk index and reason on skip.
 
+## Types location (hard rule)
+
+Every `interface` and `type` declaration lives in `src/lib/types/` (shared/server) or `src/app/web/types/` (web). This includes Svelte component `Props` interfaces — Svelte 5 conventions notwithstanding. Inline declarations break reuse: callers cannot import them across files.
+
+- Before declaring a new type → run `/new-type <Name> <purpose>` and use the decision table to pick the destination file.
+- To audit the repo for offenders → `/audit-types`.
+- To clean up an existing offender → `/extract-inline-types <path>`.
+- The `.claude/hooks/no-inline-types.sh` PreToolUse hook also blocks any Write/Edit that would re-introduce an inline declaration in `src/`.
+
 ## LLM Usage
 
 - Use `generateObject` (not `generateText`) for all LLM calls that return structured data
