@@ -51,8 +51,8 @@
     padding: 3px 6px;
     border-radius: var(--vc-radius-sm);
     background: var(--vc-overlay);
-    color: #fff;
-    font-size: 12px;
+    color: var(--vc-text-onAccent);
+    font-size: var(--vc-text-12);
     font-weight: 700;
   }
 

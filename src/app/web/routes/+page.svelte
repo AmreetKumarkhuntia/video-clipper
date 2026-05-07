@@ -3,6 +3,7 @@
   import { apiFetch } from '@web/lib/api.js';
   import Icon from '@web/components/Icon.svelte';
   import ChannelCard from '@web/components/ChannelCard.svelte';
+  import Button from '@web/components/Button.svelte';
 
   let channelInput = '';
   let isLoading = false;
@@ -50,9 +51,9 @@
             aria-label="YouTube channel"
           />
         </div>
-        <button class="vc-btn vc-btn--primary vc-btn--lg" type="submit" disabled={isLoading}>
+        <Button variant="primary" size="lg" type="submit" disabled={isLoading}>
           {isLoading ? 'Resolving…' : 'Open channel'}
-        </button>
+        </Button>
       </form>
 
       {#if errorMessage}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ChannelSummary } from '@lib/types/index.js';
+  import Button from '@web/components/Button.svelte';
 
   interface Props {
     channel: ChannelSummary;
@@ -16,7 +17,7 @@
     <p class="card-eyebrow">Channel found</p>
     <h2 class="card-title">{channel.title}</h2>
     <p class="card-desc">{channel.description}</p>
-    <a class="vc-btn vc-btn--primary" href={`/channels/${channel.id}`}>Browse videos</a>
+    <Button variant="primary" href={`/channels/${channel.id}`}>Browse videos</Button>
   </div>
 </article>
 
@@ -48,7 +49,7 @@
 
   .card-title {
     font-family: var(--vc-font-display);
-    font-size: var(--vc-text-22);
+    font-size: var(--vc-text-21);
     font-weight: 500;
     letter-spacing: -0.01em;
     margin: 0 0 8px;

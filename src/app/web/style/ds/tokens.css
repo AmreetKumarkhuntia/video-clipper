@@ -6,8 +6,12 @@
   /* ── Surfaces (light) ───────────────────────────────────────── */
   --vc-bg: #f5f1ea;
   --vc-surface: #faf7f1;
+  --vc-surface-raised: #f0ebe0; /* lifted step: thumbnail bgs, stat cells, hover states */
   --vc-surface-2: #efe9dd;
   --vc-overlay: rgba(31, 28, 22, 0.45);
+
+  /* ── Accent alias ───────────────────────────────────────────── */
+  --vc-accent: var(--vc-clay-500);
 
   /* ── Text (light) ──────────────────────────────────────────── */
   --vc-text: #1f1c16;
@@ -100,6 +104,7 @@
 [data-theme='dark'] {
   --vc-bg: #1b1812;
   --vc-surface: #24201a;
+  --vc-surface-raised: #292420; /* lifted step for dark mode */
   --vc-surface-2: #2e2922;
   --vc-overlay: rgba(0, 0, 0, 0.55);
 

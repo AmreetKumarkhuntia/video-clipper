@@ -3,6 +3,7 @@
   import { theme } from '@web/lib/stores/theme.js';
   import Toaster from '@web/components/Toaster.svelte';
   import Icon from '@web/components/Icon.svelte';
+  import Button from '@web/components/Button.svelte';
   import '../style/index.css';
 
   function toggleTheme() {
@@ -37,17 +38,13 @@
     </nav>
 
     <div class="topbar__actions">
-      <button
-        class="vc-btn vc-btn--ghost vc-btn--icon"
-        aria-label="Toggle theme"
-        onclick={toggleTheme}
-      >
+      <Button variant="ghost" size="icon" aria-label="Toggle theme" onclick={toggleTheme}>
         {#if $theme === 'dark'}
           <Icon name="sun" />
         {:else}
           <Icon name="moon" />
         {/if}
-      </button>
+      </Button>
     </div>
   </header>
 

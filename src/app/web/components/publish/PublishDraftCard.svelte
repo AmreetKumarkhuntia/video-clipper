@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '@web/components/Icon.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
   import { apiFetch } from '@web/lib/api.js';
   import {
     YOUTUBE_CATEGORIES,
@@ -318,12 +319,9 @@
     {/if}
 
     <div class="card-footer">
-      <button
-        class="vc-btn vc-btn--secondary vc-btn--sm"
-        onclick={() => ongenerate?.({ index, item })}
-      >
+      <Button variant="secondary" size="sm" onclick={() => ongenerate?.({ index, item })}>
         <Icon name="sparkles" size={13} /> AI regenerate metadata
-      </button>
+      </Button>
     </div>
   {/if}
 </article>

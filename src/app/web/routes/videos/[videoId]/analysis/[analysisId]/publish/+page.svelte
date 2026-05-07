@@ -5,6 +5,7 @@
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
   import UploadStatusCard from '@web/components/publish/UploadStatusCard.svelte';
+  import Button from '@web/components/Button.svelte';
   import type { PublishDraft, UploadArtifact, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let draft = $state<PublishDraft | null>(null);
@@ -119,14 +120,14 @@
         <p class="publish-sub">Upload your prepared clips to your connected YouTube channel.</p>
       </div>
       <div class="publish-nav">
-        <a
+        <Button
+          variant="secondary"
           href={`/videos/${draft.videoId}/analysis/${draft.analysisId}/prepare`}
-          class="vc-btn vc-btn--secondary vc-btn--sm"
         >
           ← Back to Prepare
-        </a>
-        <button
-          class="vc-btn vc-btn--primary"
+        </Button>
+        <Button
+          variant="primary"
           onclick={uploadSelected}
           disabled={isUploading || !authStatus?.connected}
         >
@@ -135,7 +136,7 @@
           {:else}
             <Icon name="upload" size={14} /> Upload selected clips
           {/if}
-        </button>
+        </Button>
       </div>
     </div>
 

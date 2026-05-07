@@ -1,201 +1,497 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Components — Video Clipper</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../fonts.css">
-<link rel="stylesheet" href="../tokens.css">
-<link rel="stylesheet" href="../components.css">
-<style>
-  body { padding: 56px 72px; max-width: 1180px; margin: 0 auto; }
-  header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-start; }
-  .eyebrow { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-clay-600); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-  .group { margin-bottom: 56px; }
-  .group h3 { margin-bottom: 8px; }
-  .group__sub { color: var(--vc-text-muted); font-size: 14px; margin-bottom: 20px; }
-  .specimen { background: var(--vc-surface); border: 1px solid var(--vc-border); border-radius: var(--vc-radius-lg); padding: 28px; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-  .row:last-child { margin-bottom: 0; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .label-cap { font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: block; }
-</style>
-</head>
-<body>
-<header>
-  <div>
-    <div class="eyebrow">Components</div>
-    <h1>The kit, in one page.</h1>
-  </div>
-  <button class="vc-theme-toggle" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-    Toggle theme
-  </button>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <title>Components — Video Clipper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../fonts.css" />
+    <link rel="stylesheet" href="../tokens.css" />
+    <link rel="stylesheet" href="../components.css" />
+    <style>
+      body {
+        padding: 56px 72px;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      header {
+        margin-bottom: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .eyebrow {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-clay-600);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .group {
+        margin-bottom: 56px;
+      }
+      .group h3 {
+        margin-bottom: 8px;
+      }
+      .group__sub {
+        color: var(--vc-text-muted);
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      .specimen {
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-lg);
+        padding: 28px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .row:last-child {
+        margin-bottom: 0;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .label-cap {
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="eyebrow">Components</div>
+        <h1>The kit, in one page.</h1>
+      </div>
+      <button
+        class="vc-theme-toggle"
+        onclick="
+          document.documentElement.dataset.theme =
+            document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
+        "
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+          />
+        </svg>
+        Toggle theme
+      </button>
+    </header>
 
-<div class="group">
-  <h3>Buttons</h3>
-  <div class="group__sub">Primary clay for the one most-important action on a screen. Everything else is secondary, ghost, or danger.</div>
-  <div class="specimen">
-    <span class="label-cap">Variants</span>
-    <div class="row">
-      <button class="vc-btn vc-btn--primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9.937 15.5 4.124 0M12 3l8 4.5L12 21 4 7.5 12 3Z"/></svg>Analyze</button>
-      <button class="vc-btn vc-btn--secondary">Cancel</button>
-      <button class="vc-btn vc-btn--ghost">Skip</button>
-      <button class="vc-btn vc-btn--danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Discard run</button>
-      <button class="vc-btn vc-btn--primary" disabled>Disabled</button>
-    </div>
-    <span class="label-cap">Sizes</span>
-    <div class="row">
-      <button class="vc-btn vc-btn--primary vc-btn--sm">Small</button>
-      <button class="vc-btn vc-btn--primary">Default</button>
-      <button class="vc-btn vc-btn--primary vc-btn--lg">Large</button>
-      <button class="vc-btn vc-btn--secondary vc-btn--icon" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></button>
-    </div>
-  </div>
-</div>
-
-<div class="group">
-  <h3>Inputs</h3>
-  <div class="specimen">
-    <div class="grid-2">
-      <div class="vc-field">
-        <label class="vc-label">YouTube URL</label>
-        <div class="vc-input-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <input class="vc-input vc-input--with-icon" placeholder="https://youtube.com/watch?v=..." value="https://youtube.com/watch?v=dQw4w9WgXcQ">
+    <div class="group">
+      <h3>Buttons</h3>
+      <div class="group__sub">
+        Primary clay for the one most-important action on a screen. Everything else is secondary,
+        ghost, or danger.
+      </div>
+      <div class="specimen">
+        <span class="label-cap">Variants</span>
+        <div class="row">
+          <button class="vc-btn vc-btn--primary">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m9.937 15.5 4.124 0M12 3l8 4.5L12 21 4 7.5 12 3Z" /></svg
+            >Analyze
+          </button>
+          <button class="vc-btn vc-btn--secondary">Cancel</button>
+          <button class="vc-btn vc-btn--ghost">Skip</button>
+          <button class="vc-btn vc-btn--danger">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              /></svg
+            >Discard run
+          </button>
+          <button class="vc-btn vc-btn--primary" disabled>Disabled</button>
         </div>
-        <div class="vc-help">Press ⏎ to analyze.</div>
-      </div>
-      <div class="vc-field">
-        <label class="vc-label">LLM provider</label>
-        <select class="vc-select">
-          <option>OpenAI · gpt-4o-mini</option>
-          <option>Anthropic · claude-haiku-4-5</option>
-          <option>Google · gemini-2.5-flash</option>
-          <option>OpenRouter · llama-3.3-70b (free)</option>
-        </select>
-        <div class="vc-help">Configured in <code class="vc-badge vc-badge--mono">.env</code></div>
-      </div>
-      <div class="vc-field">
-        <label class="vc-label">Score threshold</label>
-        <input type="range" class="vc-slider" min="1" max="10" value="7">
-        <div class="vc-help">Keep segments scored 7 or higher.</div>
-      </div>
-      <div class="vc-field">
-        <label class="vc-label">Notes</label>
-        <textarea class="vc-textarea" placeholder="Notes you want the LLM to consider…">Focus on punchlines and callbacks. Skip intros.</textarea>
+        <span class="label-cap">Sizes</span>
+        <div class="row">
+          <button class="vc-btn vc-btn--primary vc-btn--sm">Small</button>
+          <button class="vc-btn vc-btn--primary">Default</button>
+          <button class="vc-btn vc-btn--primary vc-btn--lg">Large</button>
+          <button class="vc-btn vc-btn--secondary vc-btn--icon" aria-label="Settings">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="group">
-  <h3>Cards & badges</h3>
-  <div class="specimen">
-    <div class="grid-2">
-      <div class="vc-card vc-card--interactive">
-        <div class="vc-card__header">
-          <div>
-            <div class="vc-card__title">Segment 02 · 02:14 → 02:48</div>
-            <div class="vc-card__meta">strong controversial opinion · transcript</div>
+    <div class="group">
+      <h3>Inputs</h3>
+      <div class="specimen">
+        <div class="grid-2">
+          <div class="vc-field">
+            <label class="vc-label">YouTube URL</label>
+            <div class="vc-input-wrap">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+              <input
+                class="vc-input vc-input--with-icon"
+                placeholder="https://youtube.com/watch?v=..."
+                value="https://youtube.com/watch?v=dQw4w9WgXcQ"
+              />
+            </div>
+            <div class="vc-help">Press ⏎ to analyze.</div>
           </div>
-          <div class="vc-score">9<span class="vc-score__den">/10</span></div>
-        </div>
-        <p style="color: var(--vc-text-muted); font-size: 14px;">"You can't ship great products and protect every legacy interface. Pick one."</p>
-        <div style="display: flex; gap: 8px; margin-top: 16px;">
-          <span class="vc-badge vc-badge--mono">00:34 dur</span>
-          <span class="vc-badge vc-badge--clay">top pick</span>
-          <span class="vc-badge">transcript</span>
-        </div>
-      </div>
-      <div class="vc-card">
-        <div class="vc-card__header">
-          <div>
-            <div class="vc-card__title">Run status</div>
-            <div class="vc-card__meta">Pipeline · Step 03 of 04</div>
+          <div class="vc-field">
+            <label class="vc-label">LLM provider</label>
+            <select class="vc-select">
+              <option>OpenAI · gpt-4o-mini</option>
+              <option>Anthropic · claude-haiku-4-5</option>
+              <option>Google · gemini-2.5-flash</option>
+              <option>OpenRouter · llama-3.3-70b (free)</option>
+            </select>
+            <div class="vc-help">
+              Configured in <code class="vc-badge vc-badge--mono">.env</code>
+            </div>
           </div>
-          <span class="vc-badge vc-badge--success">running</span>
+          <div class="vc-field">
+            <label class="vc-label">Score threshold</label>
+            <input type="range" class="vc-slider" min="1" max="10" value="7" />
+            <div class="vc-help">Keep segments scored 7 or higher.</div>
+          </div>
+          <div class="vc-field">
+            <label class="vc-label">Notes</label>
+            <textarea class="vc-textarea" placeholder="Notes you want the LLM to consider…">
+Focus on punchlines and callbacks. Skip intros.</textarea
+            >
+          </div>
         </div>
-        <div class="vc-progress" style="margin-top: 12px;"><div class="vc-progress__fill" style="width: 64%;"></div></div>
-        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text-subtle);"><span>Refining boundaries</span><span>14 / 22</span></div>
       </div>
     </div>
-    <div class="row" style="margin-top: 20px;">
-      <span class="vc-badge">neutral</span>
-      <span class="vc-badge vc-badge--clay">clay</span>
-      <span class="vc-badge vc-badge--success">success</span>
-      <span class="vc-badge vc-badge--warn">warning</span>
-      <span class="vc-badge vc-badge--error">error</span>
-      <span class="vc-badge vc-badge--info">info</span>
-      <span class="vc-badge vc-badge--mono">02:14→02:48</span>
-    </div>
-  </div>
-</div>
 
-<div class="group">
-  <h3>Toasts</h3>
-  <div class="specimen">
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-      <div class="vc-toast vc-toast--success">
-        <svg class="vc-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <div class="vc-toast__body"><div class="vc-toast__title">Clip 02 cut</div><div class="vc-toast__msg">Saved to <code>~/clips/abc123-02.mp4</code></div></div>
-      </div>
-      <div class="vc-toast vc-toast--info">
-        <svg class="vc-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <div class="vc-toast__body"><div class="vc-toast__title">Using cached transcript</div><div class="vc-toast__msg">Add <code>--no-cache</code> to bypass.</div></div>
-      </div>
-      <div class="vc-toast vc-toast--warn">
-        <svg class="vc-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <div class="vc-toast__body"><div class="vc-toast__title">Long video</div><div class="vc-toast__msg">42 min — analysis may take a few minutes.</div></div>
-      </div>
-      <div class="vc-toast vc-toast--error">
-        <svg class="vc-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-        <div class="vc-toast__body"><div class="vc-toast__title">yt-dlp returned 403</div><div class="vc-toast__msg">Add cookies in Settings → Auth.</div></div>
+    <div class="group">
+      <h3>Cards & badges</h3>
+      <div class="specimen">
+        <div class="grid-2">
+          <div class="vc-card vc-card--interactive">
+            <div class="vc-card__header">
+              <div>
+                <div class="vc-card__title">Segment 02 · 02:14 → 02:48</div>
+                <div class="vc-card__meta">strong controversial opinion · transcript</div>
+              </div>
+              <div class="vc-score">9<span class="vc-score__den">/10</span></div>
+            </div>
+            <p style="color: var(--vc-text-muted); font-size: 14px">
+              "You can't ship great products and protect every legacy interface. Pick one."
+            </p>
+            <div style="display: flex; gap: 8px; margin-top: 16px">
+              <span class="vc-badge vc-badge--mono">00:34 dur</span>
+              <span class="vc-badge vc-badge--clay">top pick</span>
+              <span class="vc-badge">transcript</span>
+            </div>
+          </div>
+          <div class="vc-card">
+            <div class="vc-card__header">
+              <div>
+                <div class="vc-card__title">Run status</div>
+                <div class="vc-card__meta">Pipeline · Step 03 of 04</div>
+              </div>
+              <span class="vc-badge vc-badge--success">running</span>
+            </div>
+            <div class="vc-progress" style="margin-top: 12px">
+              <div class="vc-progress__fill" style="width: 64%"></div>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                margin-top: 10px;
+                font-family: var(--vc-font-mono);
+                font-size: 12px;
+                color: var(--vc-text-subtle);
+              "
+            >
+              <span>Refining boundaries</span><span>14 / 22</span>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top: 20px">
+          <span class="vc-badge">neutral</span>
+          <span class="vc-badge vc-badge--clay">clay</span>
+          <span class="vc-badge vc-badge--success">success</span>
+          <span class="vc-badge vc-badge--warn">warning</span>
+          <span class="vc-badge vc-badge--error">error</span>
+          <span class="vc-badge vc-badge--info">info</span>
+          <span class="vc-badge vc-badge--mono">02:14→02:48</span>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="group">
-  <h3>Dropdowns, toggles, tabs</h3>
-  <div class="specimen">
-    <div class="grid-3" style="align-items: start;">
-      <div>
-        <span class="label-cap">Menu</span>
-        <div class="vc-menu">
-          <div class="vc-menu__item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play segment<span class="vc-menu__hint">⏎</span></div>
-          <div class="vc-menu__item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>Cut clip<span class="vc-menu__hint">C</span></div>
-          <div class="vc-menu__item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download mp4</div>
-          <div class="vc-menu__divider"></div>
-          <div class="vc-menu__item vc-menu__item--danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Remove segment</div>
-        </div>
-      </div>
-      <div>
-        <span class="label-cap">Toggles</span>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <label style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">Audio event detection
-            <span class="vc-toggle"><input type="checkbox" checked><span class="vc-toggle__track"></span><span class="vc-toggle__thumb"></span></span>
-          </label>
-          <label style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">Bypass cache
-            <span class="vc-toggle"><input type="checkbox"><span class="vc-toggle__track"></span><span class="vc-toggle__thumb"></span></span>
-          </label>
-          <label style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">Auto-cut clips
-            <span class="vc-toggle"><input type="checkbox" checked><span class="vc-toggle__track"></span><span class="vc-toggle__thumb"></span></span>
-          </label>
-        </div>
-      </div>
-      <div>
-        <span class="label-cap">Tabs</span>
-        <div class="vc-tabs">
-          <button class="vc-tab is-active">Segments</button>
-          <button class="vc-tab">Transcript</button>
-          <button class="vc-tab">Logs</button>
+    <div class="group">
+      <h3>Toasts</h3>
+      <div class="specimen">
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px">
+          <div class="vc-toast vc-toast--success">
+            <svg
+              class="vc-toast__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <div class="vc-toast__body">
+              <div class="vc-toast__title">Clip 02 cut</div>
+              <div class="vc-toast__msg">Saved to <code>~/clips/abc123-02.mp4</code></div>
+            </div>
+          </div>
+          <div class="vc-toast vc-toast--info">
+            <svg
+              class="vc-toast__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <div class="vc-toast__body">
+              <div class="vc-toast__title">Using cached transcript</div>
+              <div class="vc-toast__msg">Add <code>--no-cache</code> to bypass.</div>
+            </div>
+          </div>
+          <div class="vc-toast vc-toast--warn">
+            <svg
+              class="vc-toast__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <div class="vc-toast__body">
+              <div class="vc-toast__title">Long video</div>
+              <div class="vc-toast__msg">42 min — analysis may take a few minutes.</div>
+            </div>
+          </div>
+          <div class="vc-toast vc-toast--error">
+            <svg
+              class="vc-toast__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <div class="vc-toast__body">
+              <div class="vc-toast__title">yt-dlp returned 403</div>
+              <div class="vc-toast__msg">Add cookies in Settings → Auth.</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
-</body>
+
+    <div class="group">
+      <h3>Dropdowns, toggles, tabs</h3>
+      <div class="specimen">
+        <div class="grid-3" style="align-items: start">
+          <div>
+            <span class="label-cap">Menu</span>
+            <div class="vc-menu">
+              <div class="vc-menu__item">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" /></svg
+                >Play segment<span class="vc-menu__hint">⏎</span>
+              </div>
+              <div class="vc-menu__item">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="6" cy="18" r="3" />
+                  <line x1="20" y1="4" x2="8.12" y2="15.88" />
+                  <line x1="14.47" y1="14.48" x2="20" y2="20" />
+                  <line x1="8.12" y1="8.12" x2="12" y2="12" /></svg
+                >Cut clip<span class="vc-menu__hint">C</span>
+              </div>
+              <div class="vc-menu__item">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" /></svg
+                >Download mp4
+              </div>
+              <div class="vc-menu__divider"></div>
+              <div class="vc-menu__item vc-menu__item--danger">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /></svg
+                >Remove segment
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="label-cap">Toggles</span>
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <label
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  font-size: 14px;
+                "
+                >Audio event detection
+                <span class="vc-toggle"
+                  ><input type="checkbox" checked /><span class="vc-toggle__track"></span
+                  ><span class="vc-toggle__thumb"></span
+                ></span>
+              </label>
+              <label
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  font-size: 14px;
+                "
+                >Bypass cache
+                <span class="vc-toggle"
+                  ><input type="checkbox" /><span class="vc-toggle__track"></span
+                  ><span class="vc-toggle__thumb"></span
+                ></span>
+              </label>
+              <label
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  font-size: 14px;
+                "
+                >Auto-cut clips
+                <span class="vc-toggle"
+                  ><input type="checkbox" checked /><span class="vc-toggle__track"></span
+                  ><span class="vc-toggle__thumb"></span
+                ></span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <span class="label-cap">Tabs</span>
+            <div class="vc-tabs">
+              <button class="vc-tab is-active">Segments</button>
+              <button class="vc-tab">Transcript</button>
+              <button class="vc-tab">Logs</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

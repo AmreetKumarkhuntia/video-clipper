@@ -3,6 +3,7 @@
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
+  import Button from '@web/components/Button.svelte';
   import type { SaveYouTubeManualAuthRequest, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let authStatus = $state<YouTubeAuthStatus | null>(null);
@@ -96,19 +97,13 @@
       <p class="connect-sub">Connect the channel you want to publish clips to.</p>
     </div>
     <div class="connect-nav">
-      <a
-        href={`/videos/${videoId}/analysis/${analysisId}`}
-        class="vc-btn vc-btn--secondary vc-btn--sm"
-      >
+      <Button variant="secondary" href={`/videos/${videoId}/analysis/${analysisId}`}>
         ← Back to Clip
-      </a>
+      </Button>
       {#if authStatus?.connected}
-        <a
-          href={`/videos/${videoId}/analysis/${analysisId}/prepare`}
-          class="vc-btn vc-btn--primary"
-        >
+        <Button variant="primary" href={`/videos/${videoId}/analysis/${analysisId}/prepare`}>
           Continue to Prepare <Icon name="arrow-right" size={14} />
-        </a>
+        </Button>
       {/if}
     </div>
   </div>
@@ -148,11 +143,11 @@
 
     <div class="connect-actions" style="margin-top:20px">
       {#if authStatus?.connected}
-        <button class="vc-btn vc-btn--danger" onclick={disconnectAccount}>Disconnect</button>
+        <Button variant="danger" onclick={disconnectAccount}>Disconnect</Button>
       {:else if authStatus?.oauthConfigured}
-        <button class="vc-btn vc-btn--primary" onclick={startOAuth}>
+        <Button variant="primary" onclick={startOAuth}>
           <Icon name="external-link" size={14} /> Connect to YouTube
-        </button>
+        </Button>
       {:else}
         <div class="vc-card" style="max-width:480px">
           <p style="font-size:var(--vc-text-13);color:var(--vc-text-muted);margin:0">
@@ -201,13 +196,13 @@
             <input id="expiry" class="vc-input" inputmode="numeric" bind:value={expiryDate} />
           </div>
           <div>
-            <button
-              class="vc-btn vc-btn--secondary"
+            <Button
+              variant="secondary"
               onclick={connectManualToken}
               disabled={isSavingAuth || accessToken.trim() === ''}
             >
               {isSavingAuth ? 'Connecting…' : 'Connect token'}
-            </button>
+            </Button>
           </div>
         </div>
       {/if}
