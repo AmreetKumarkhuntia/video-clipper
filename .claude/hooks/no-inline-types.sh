@@ -69,9 +69,10 @@ sys.stdout.write("\n".join(parts))
 [ -z "$content" ] && exit 0
 
 # Match top-level `interface X` or `type X = …`. Indent up to 4 spaces/tabs to
-# allow Svelte <script> indentation. Excludes comments and string contexts in
-# practice well enough for a guardrail.
-if printf '%s' "$content" | grep -Eq '^[[:space:]]{0,4}(export[[:space:]]+)?(interface|type)[[:space:]]+[A-Z][A-Za-z0-9_]*'; then
+# allow Svelte <script> indentation. The trailing `[<{=]` or `extends` requirement
+# disambiguates real declarations from `type Foo,` lines inside multi-line
+# `import { type Foo, … }` blocks.
+if printf '%s' "$content" | grep -Eq '^[[:space:]]{0,4}(export[[:space:]]+)?(interface|type)[[:space:]]+[A-Z][A-Za-z0-9_]*([[:space:]]*[<{=]|[[:space:]]+extends[[:space:]])'; then
   cat >&2 <<EOF
 BLOCKED by .claude/hooks/no-inline-types.sh
 File: $file_path
