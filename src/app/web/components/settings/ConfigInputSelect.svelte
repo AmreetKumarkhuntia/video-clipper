@@ -1,14 +1,6 @@
 <script lang="ts">
   import Select from '@web/components/Select.svelte';
-
-  interface Props {
-    id?: string;
-    value?: string;
-    options?: string[];
-    optionLabels?: string[];
-    disabled?: boolean;
-    onchange?: (value: string) => void;
-  }
+  import type { ConfigInputSelectProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -17,7 +9,7 @@
     optionLabels = [],
     disabled = false,
     onchange,
-  }: Props = $props();
+  }: ConfigInputSelectProps = $props();
 
   // Map parallel string arrays to the canonical {value, label}[] format
   const mappedOptions = $derived(

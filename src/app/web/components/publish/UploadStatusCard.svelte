@@ -1,14 +1,8 @@
 <script lang="ts">
   import Icon from '@web/components/Icon.svelte';
-  import type { UploadArtifact } from '@app/web/types/publish.js';
-  import type { UploadQueueItem } from '@web/lib/uploadStream.js';
+  import type { UploadStatusCardProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    upload?: UploadArtifact | null;
-    queueItem?: UploadQueueItem | null;
-  }
-
-  let { upload = null, queueItem = null }: Props = $props();
+  let { upload = null, queueItem = null }: UploadStatusCardProps = $props();
 
   let title = $derived(upload?.title ?? queueItem?.title ?? 'Upload');
   let status = $derived(upload?.status ?? queueItem?.status ?? 'queued');

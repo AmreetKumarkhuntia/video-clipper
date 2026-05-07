@@ -1,14 +1,10 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
   import { page } from '$app/state';
   import VideoWorkflowStepper from '@web/components/video/VideoWorkflowStepper.svelte';
   import { buildVideoWorkflowSteps } from '@web/lib/videoWorkflow.js';
+  import type { VideoLayoutProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    children: Snippet;
-  }
-
-  let { children }: Props = $props();
+  let { children }: VideoLayoutProps = $props();
 
   let steps = $derived(
     buildVideoWorkflowSteps(page.params.videoId, page.params.analysisId, page.url.pathname),

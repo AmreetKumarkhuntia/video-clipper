@@ -1,14 +1,8 @@
 <script lang="ts">
   import Button from '@web/components/Button.svelte';
+  import type { PaginationProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    hasPrev?: boolean;
-    hasNext?: boolean;
-    onprev?: () => void;
-    onnext?: () => void;
-  }
-
-  let { hasPrev = false, hasNext = false, onprev, onnext }: Props = $props();
+  let { hasPrev = false, hasNext = false, onprev, onnext }: PaginationProps = $props();
 </script>
 
 <div class="pager">

@@ -1,15 +1,5 @@
 <script lang="ts">
-  interface Props {
-    id?: string;
-    value?: number;
-    min?: number;
-    max?: number;
-    step?: number;
-    disabled?: boolean;
-    /** Show the numeric value label to the right (default true) */
-    showValue?: boolean;
-    onchange?: (value: number | undefined) => void;
-  }
+  import type { SliderProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -20,7 +10,7 @@
     disabled = false,
     showValue = true,
     onchange,
-  }: Props = $props();
+  }: SliderProps = $props();
 
   const displayValue = $derived(value ?? min ?? 0);
 

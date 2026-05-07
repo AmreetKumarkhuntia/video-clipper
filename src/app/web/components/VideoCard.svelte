@@ -1,12 +1,8 @@
 <script lang="ts">
-  import type { VideoSummary } from '@lib/types/index.js';
   import { formatDuration } from '@web/lib/format.js';
+  import type { VideoCardProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    video: VideoSummary;
-  }
-
-  let { video }: Props = $props();
+  let { video }: VideoCardProps = $props();
 </script>
 
 <a class="video-card" href={`/videos/${video.id}`}>

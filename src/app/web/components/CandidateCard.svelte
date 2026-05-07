@@ -1,14 +1,9 @@
 <script lang="ts">
-  import type { ClipCandidate } from '@app/web/types/analysis.js';
   import { formatTime } from '@web/lib/format.js';
   import Checkbox from '@web/components/Checkbox.svelte';
+  import type { CandidateCardProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    candidate: ClipCandidate;
-    ontoggle?: () => void;
-  }
-
-  let { candidate, ontoggle }: Props = $props();
+  let { candidate, ontoggle }: CandidateCardProps = $props();
 </script>
 
 <article class:selected={candidate.selected}>

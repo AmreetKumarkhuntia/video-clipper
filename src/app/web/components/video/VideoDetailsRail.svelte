@@ -1,16 +1,7 @@
 <script lang="ts">
-  import type { VideoDetails } from '@lib/types/index.js';
   import { formatDuration } from '@web/lib/format.js';
   import Button from '@web/components/Button.svelte';
-
-  interface Props {
-    video: VideoDetails;
-    isLoadingTranscript?: boolean;
-    isAnalyzing?: boolean;
-    errorMessage?: string;
-    onLoadTranscript?: () => void;
-    onPlanClips?: () => void;
-  }
+  import type { VideoDetailsRailProps } from '@app/web/types/componentProps.js';
 
   let {
     video,
@@ -19,7 +10,7 @@
     errorMessage = '',
     onLoadTranscript,
     onPlanClips,
-  }: Props = $props();
+  }: VideoDetailsRailProps = $props();
 </script>
 
 <aside class="vc-card rail-card">

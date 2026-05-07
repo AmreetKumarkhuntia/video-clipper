@@ -1,12 +1,6 @@
 <script lang="ts">
   import Icon from '../Icon.svelte';
-
-  interface ProviderDef {
-    key: string;
-    name: string;
-    defaultModel: string;
-    badge?: string;
-  }
+  import type { ConfigInputProviderGridProps, ProviderDef } from '@app/web/types/componentProps.js';
 
   const PROVIDERS: ProviderDef[] = [
     { key: 'openai', name: 'OpenAI', defaultModel: 'gpt-4o-mini', badge: 'default' },
@@ -20,12 +14,7 @@
     { key: 'custom', name: 'Custom', defaultModel: 'custom endpoint' },
   ];
 
-  interface Props {
-    value: string;
-    onchange?: (value: string) => void;
-  }
-
-  let { value, onchange }: Props = $props();
+  let { value, onchange }: ConfigInputProviderGridProps = $props();
 </script>
 
 <div class="provider-grid">

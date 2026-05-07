@@ -1,12 +1,7 @@
 <script lang="ts">
-  import type { Toast } from '@web/lib/toastStore.js';
+  import type { ToastProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    toast: Toast;
-    ondismiss?: (id: string) => void;
-  }
-
-  let { toast, ondismiss }: Props = $props();
+  let { toast, ondismiss }: ToastProps = $props();
 </script>
 
 <div

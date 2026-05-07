@@ -1,17 +1,5 @@
 <script lang="ts">
-  interface Props {
-    id?: string;
-    value?: string;
-    rows?: number;
-    placeholder?: string;
-    disabled?: boolean;
-    /** Render in monospace font — use for config/token fields */
-    monospace?: boolean;
-    error?: boolean;
-    class?: string;
-    oninput?: (value: string) => void;
-    onchange?: (value: string) => void;
-  }
+  import type { TextareaProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -24,7 +12,7 @@
     class: extraClass = '',
     oninput,
     onchange,
-  }: Props = $props();
+  }: TextareaProps = $props();
 
   const classes = $derived(
     [

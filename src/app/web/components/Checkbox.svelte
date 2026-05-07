@@ -1,13 +1,5 @@
 <script lang="ts">
-  interface Props {
-    id?: string;
-    checked?: boolean;
-    disabled?: boolean;
-    /** Inline label text rendered next to the checkbox */
-    label?: string;
-    class?: string;
-    onchange?: (checked: boolean) => void;
-  }
+  import type { CheckboxProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -16,7 +8,7 @@
     label,
     class: extraClass = '',
     onchange,
-  }: Props = $props();
+  }: CheckboxProps = $props();
 
   const wrapClass = $derived(
     ['checkbox-wrap', extraClass, disabled ? 'is-disabled' : ''].filter(Boolean).join(' '),

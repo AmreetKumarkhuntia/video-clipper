@@ -1,18 +1,5 @@
 <script lang="ts">
-  interface SelectOption {
-    value: string;
-    label: string;
-  }
-
-  interface Props {
-    id?: string;
-    value?: string;
-    options?: SelectOption[];
-    disabled?: boolean;
-    error?: boolean;
-    class?: string;
-    onchange?: (value: string) => void;
-  }
+  import type { SelectProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -22,7 +9,7 @@
     error = false,
     class: extraClass = '',
     onchange,
-  }: Props = $props();
+  }: SelectProps = $props();
 
   const classes = $derived(
     ['vc-select', error ? 'vc-select--error' : '', extraClass].filter(Boolean).join(' '),

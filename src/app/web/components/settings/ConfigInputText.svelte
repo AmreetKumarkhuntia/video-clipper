@@ -1,14 +1,6 @@
 <script lang="ts">
   import InputText from '@web/components/InputText.svelte';
-
-  interface Props {
-    id?: string;
-    value?: string;
-    secret?: boolean;
-    placeholder?: string;
-    disabled?: boolean;
-    onchange?: (value: string) => void;
-  }
+  import type { ConfigInputTextProps } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -17,7 +9,7 @@
     placeholder = '',
     disabled = false,
     onchange,
-  }: Props = $props();
+  }: ConfigInputTextProps = $props();
 </script>
 
 <InputText {id} {secret} {placeholder} {disabled} bind:value {onchange} />

@@ -1,34 +1,6 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
   import Button from '@web/components/Button.svelte';
-
-  type InputType = 'text' | 'password' | 'number' | 'email' | 'url' | 'search' | 'tel';
-  type InputSize = 'sm' | 'md' | 'lg';
-
-  type InputMode = 'text' | 'numeric' | 'decimal' | 'email' | 'search' | 'tel' | 'url';
-
-  interface Props {
-    id?: string;
-    type?: InputType;
-    size?: InputSize;
-    value?: string;
-    placeholder?: string;
-    disabled?: boolean;
-    readonly?: boolean;
-    secret?: boolean;
-    error?: boolean;
-    maxlength?: number;
-    autocomplete?: HTMLInputElement['autocomplete'];
-    inputmode?: InputMode;
-    /** Snippet rendered as the leading icon inside the input */
-    icon?: Snippet;
-    min?: number | string;
-    max?: number | string;
-    step?: number | string;
-    class?: string;
-    oninput?: (value: string) => void;
-    onchange?: (value: string) => void;
-  }
+  import type { InputTextProps, InputTextSize } from '@app/web/types/componentProps.js';
 
   let {
     id,
@@ -50,12 +22,12 @@
     class: extraClass = '',
     oninput,
     onchange,
-  }: Props = $props();
+  }: InputTextProps = $props();
 
   let revealed = $state(false);
   const resolvedType = $derived(secret && !revealed ? 'password' : typeProp);
 
-  const sizeClass: Record<InputSize, string> = {
+  const sizeClass: Record<InputTextSize, string> = {
     sm: 'vc-input--sm',
     md: '',
     lg: 'vc-input--lg',

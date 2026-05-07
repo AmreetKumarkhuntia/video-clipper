@@ -1,16 +1,8 @@
 <script lang="ts">
-  import type { ConfigGroupDescriptor } from '@lib/config/registry.js';
-  import type { SectionConfig } from './groupConfig.js';
   import ConfigField from './ConfigField.svelte';
+  import type { ConfigSectionProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    group: ConfigGroupDescriptor;
-    values: Record<string, unknown>;
-    sections?: SectionConfig[];
-    onupdate?: (key: string, value: unknown) => void;
-  }
-
-  let { group, values, sections, onupdate }: Props = $props();
+  let { group, values, sections, onupdate }: ConfigSectionProps = $props();
 
   // Build a lookup from field key → descriptor for fast resolution inside sections.
   let fieldMap = $derived(Object.fromEntries(group.fields.map((f) => [f.key, f])));

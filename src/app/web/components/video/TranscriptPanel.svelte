@@ -1,15 +1,8 @@
 <script lang="ts">
-  import type { TranscriptLine } from '@lib/types/index.js';
-  import type { HighlightRange } from '@app/web/types/activity.js';
   import { formatTime } from '@web/lib/format.js';
+  import type { TranscriptPanelProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    lines?: TranscriptLine[];
-    chunkCount?: number;
-    highlightRanges?: HighlightRange[];
-  }
-
-  let { lines = [], chunkCount = 0, highlightRanges = [] }: Props = $props();
+  let { lines = [], chunkCount = 0, highlightRanges = [] }: TranscriptPanelProps = $props();
 
   function isHighlighted(start: number): boolean {
     return highlightRanges.some((r) => start >= r.start && start <= r.end);

@@ -1,15 +1,14 @@
 <script lang="ts">
   import Textarea from '@web/components/Textarea.svelte';
+  import type { ConfigInputTextareaProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    id?: string;
-    value?: string;
-    placeholder?: string;
-    disabled?: boolean;
-    onchange?: (value: string) => void;
-  }
-
-  let { id, value = $bindable(''), placeholder = '', disabled = false, onchange }: Props = $props();
+  let {
+    id,
+    value = $bindable(''),
+    placeholder = '',
+    disabled = false,
+    onchange,
+  }: ConfigInputTextareaProps = $props();
 </script>
 
 <!-- Settings textareas hold config/token values — use monospace -->

@@ -13,21 +13,13 @@
   import {
     YOUTUBE_CATEGORIES,
     type PublishDraftItem,
-    type PublishDraftItemEvent,
     type PublishLicense,
     type PublishPrivacyStatus,
-    type SelectOption,
   } from '@app/web/types/publish.js';
+  import type { SelectOption } from '@app/web/types/web.js';
+  import type { PublishDraftEditorProps } from '@app/web/types/componentProps.js';
 
-  interface Props {
-    item: PublishDraftItem;
-    index: number;
-    onupdate?: (detail: PublishDraftItemEvent) => void;
-    ongenerate?: (detail: PublishDraftItemEvent) => void;
-    onclose?: () => void;
-  }
-
-  let { item, index, onupdate, ongenerate, onclose }: Props = $props();
+  let { item, index, onupdate, ongenerate, onclose }: PublishDraftEditorProps = $props();
 
   let isUploadingThumbnail = $state(false);
   let thumbnailError = $state('');
