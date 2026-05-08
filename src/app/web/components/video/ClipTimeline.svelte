@@ -73,6 +73,14 @@
     return `left:${centeredLeft}%;width:${finalWidth}%`;
   }
 
+  function minimapTickStyle(t: number): string {
+    return `left:${(t / durationSec) * 100}%`;
+  }
+
+  function detailTickStyle(t: number): string {
+    return `left:${((t - viewStart) / viewDuration) * 100}%`;
+  }
+
   function detailVisibleCandidates(): ClipCandidate[] {
     return candidates.filter((c) => c.startSec < viewEnd && c.endSec > viewStart);
   }
@@ -110,6 +118,7 @@
   }
 
   function handleWheel(e: WheelEvent): void {
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const cursorRatio = (e.clientX - rect.left) / rect.width;
@@ -177,7 +186,7 @@
     </div>
     <div class="timeline__minimap-ticks">
       {#each minimapTicks as t}
-        <span>{formatTime(t)}</span>
+        <span style={minimapTickStyle(t)}>{formatTime(t)}</span>
       {/each}
     </div>
   </div>
@@ -211,7 +220,7 @@
     </div>
     <div class="timeline__detail-ticks">
       {#each detailTicks as t}
-        <span>{formatTime(t)}</span>
+        <span style={detailTickStyle(t)}>{formatTime(t)}</span>
       {/each}
     </div>
   </div>
@@ -332,12 +341,19 @@
   }
 
   .timeline__minimap-ticks {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    height: 12px;
     margin-top: 3px;
     font-family: var(--vc-font-mono);
     font-size: 9px;
     color: var(--vc-text-subtle);
+  }
+
+  .timeline__minimap-ticks span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
   }
 
   /* Detail track */
@@ -404,11 +420,18 @@
   }
 
   .timeline__detail-ticks {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    height: 14px;
     margin-top: 4px;
     font-family: var(--vc-font-mono);
     font-size: 10px;
     color: var(--vc-text-subtle);
+  }
+
+  .timeline__detail-ticks span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
   }
 </style>
