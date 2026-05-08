@@ -23,18 +23,18 @@
   let statusTone = $derived(phase === 'complete' ? 'done' : phase === 'idle' ? 'idle' : 'running');
 </script>
 
-<div class="progress">
-  <div class="hero">
-    <div class="hero-copy">
-      <div class="status-row">
+<div class="ap-progress">
+  <div class="ap-hero">
+    <div class="ap-hero-copy">
+      <div class="ap-status-row">
         <span
-          class="status-dot"
-          class:status-dot--done={statusTone === 'done'}
-          class:status-dot--idle={statusTone === 'idle'}
+          class="ap-status-dot"
+          class:ap-status-dot--done={statusTone === 'done'}
+          class:ap-status-dot--idle={statusTone === 'idle'}
         ></span>
-        <span class="label">{phaseLabel}</span>
+        <span class="ap-label">{phaseLabel}</span>
       </div>
-      <p class="subhead">
+      <p class="ap-subhead">
         {#if phase === 'idle'}
           Run clip planning to start a live thread of chunk analysis and refinement events.
         {:else if phase === 'analyzing'}
@@ -48,52 +48,56 @@
     </div>
 
     {#if totalChunks > 0}
-      <div class="counter-block">
-        <span class="counter">{analyzedChunks}/{totalChunks}</span>
-        <span class="counter-label">chunks resolved</span>
+      <div class="ap-counter-block">
+        <span class="ap-counter">{analyzedChunks}/{totalChunks}</span>
+        <span class="ap-counter-label">chunks resolved</span>
       </div>
     {/if}
   </div>
 
   {#if totalChunks > 0}
-    <div class="bar-track" aria-hidden="true">
-      <div class="bar-fill" style={`width: ${pct}%`}></div>
+    <div class="ap-bar-track" aria-hidden="true">
+      <div class="ap-bar-fill" style={`width: ${pct}%`}></div>
     </div>
   {/if}
 
-  <div class="thread" aria-label="Analysis activity thread">
+  <div class="ap-thread" aria-label="Analysis activity thread">
     {#if items.length === 0}
-      <p class="empty">
+      <p class="ap-empty">
         {phase === 'idle'
           ? 'No analysis events yet.'
           : 'Analysis events will appear here once the stream starts.'}
       </p>
     {:else}
-      {#each items as item (item.id)}
-        <article class="entry" data-status={item.status}>
-          <div class="rail">
+      {#each items as item, i (item.id)}
+        <article
+          class="ap-entry"
+          data-status={item.status}
+          class:ap-entry--first={i === 0}
+          class:ap-entry--last={i === items.length - 1}
+        >
+          <div class="ap-segment">
             <span
-              class="bullet"
-              class:bullet--done={item.status === 'done'}
-              class:bullet--error={item.status === 'error'}
+              class="ap-bullet"
+              class:ap-bullet--done={item.status === 'done'}
+              class:ap-bullet--error={item.status === 'error'}
             ></span>
-            <span class="line"></span>
           </div>
 
-          <div class="content">
-            <div class="entry-head">
+          <div class="ap-content">
+            <div class="ap-entry-head">
               <h3>{item.title}</h3>
-              <span class="badge" data-status={item.status}>{item.status}</span>
+              <span class="ap-badge" data-status={item.status}>{item.status}</span>
             </div>
 
             {#if item.detail}
-              <p class="detail">{item.detail}</p>
+              <p class="ap-detail">{item.detail}</p>
             {/if}
 
             {#if item.rawText}
               <details>
                 <summary>Show live model text</summary>
-                <pre class="reasoning">{item.rawText}</pre>
+                <pre class="ap-reasoning">{item.rawText}</pre>
               </details>
             {/if}
           </div>
@@ -104,43 +108,43 @@
 </div>
 
 <style>
-  .progress {
+  .ap-progress {
     display: grid;
     gap: var(--vc-space-5);
   }
 
-  .hero {
+  .ap-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--vc-space-4);
     align-items: start;
   }
 
-  .hero-copy {
+  .ap-hero-copy {
     display: grid;
     gap: var(--vc-space-2);
   }
 
-  .status-row {
+  .ap-status-row {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 10px;
     align-items: center;
   }
 
-  .label {
+  .ap-label {
     font-weight: 600;
     font-size: 18px;
   }
 
-  .subhead {
+  .ap-subhead {
     max-width: 46ch;
     margin: 0;
     color: var(--vc-text-muted);
     line-height: 1.5;
   }
 
-  .status-dot {
+  .ap-status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -149,45 +153,45 @@
     animation: pulse 1.4s ease-in-out infinite;
   }
 
-  .status-dot--done {
+  .ap-status-dot--done {
     background: var(--vc-success);
     box-shadow: 0 0 0 8px var(--vc-success-soft);
     animation: none;
   }
 
-  .status-dot--idle {
+  .ap-status-dot--idle {
     background: var(--vc-border-strong);
     box-shadow: 0 0 0 8px color-mix(in srgb, var(--vc-surface-2) 80%, white 20%);
     animation: none;
   }
 
-  .counter-block {
+  .ap-counter-block {
     display: grid;
     justify-items: end;
     gap: 2px;
     text-align: right;
   }
 
-  .counter {
+  .ap-counter {
     font-size: 26px;
     font-weight: 700;
   }
 
-  .counter-label {
+  .ap-counter-label {
     font-size: 12px;
     color: var(--vc-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
 
-  .bar-track {
+  .ap-bar-track {
     height: 8px;
     border-radius: 999px;
     background: var(--vc-surface-2);
     overflow: hidden;
   }
 
-  .bar-fill {
+  .ap-bar-fill {
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(
@@ -198,77 +202,76 @@
     transition: width 0.2s ease;
   }
 
-  .thread {
-    display: grid;
-    gap: var(--vc-space-3);
-  }
-
-  .empty {
-    margin: 0;
-    color: var(--vc-text-muted);
-  }
-
-  .entry {
+  .ap-thread {
     display: grid;
     grid-template-columns: 20px minmax(0, 1fr);
-    gap: 12px;
+    column-gap: 12px;
+    row-gap: 0;
   }
 
-  .rail {
-    display: grid;
-    justify-items: center;
-    grid-template-rows: auto 1fr;
-    gap: 4px;
+  .ap-empty {
+    margin: 0;
+    color: var(--vc-text-muted);
+    grid-column: 1 / -1;
   }
 
-  .bullet {
+  .ap-entry {
+    display: contents;
+  }
+
+  .ap-segment {
+    position: relative;
+    width: 1px;
+    justify-self: center;
+    background: var(--vc-border);
+  }
+
+  .ap-bullet {
+    position: absolute;
+    top: calc((15px * 1.35) / 2);
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 10px;
     height: 10px;
     border-radius: 50%;
     background: var(--vc-clay-500);
-    box-shadow: 0 0 0 5px var(--vc-clay-soft);
+    box-shadow: 0 0 0 4px var(--vc-clay-soft);
   }
 
-  .bullet--done {
+  .ap-bullet--done {
     background: var(--vc-success);
-    box-shadow: 0 0 0 5px var(--vc-success-soft);
+    box-shadow: 0 0 0 4px var(--vc-success-soft);
   }
 
-  .bullet--error {
+  .ap-bullet--error {
     background: var(--vc-error);
-    box-shadow: 0 0 0 5px rgba(173, 49, 49, 0.12);
+    box-shadow: 0 0 0 4px rgba(173, 49, 49, 0.12);
   }
 
-  .line {
-    width: 1px;
-    height: 100%;
-    background: var(--vc-border);
-  }
-
-  .entry:last-child .line {
-    opacity: 0;
-  }
-
-  .content {
+  .ap-content {
     display: grid;
     gap: var(--vc-space-2);
-    padding-bottom: var(--vc-space-3);
+    padding-bottom: var(--vc-space-4);
   }
 
-  .entry-head {
+  .ap-entry--last .ap-content {
+    padding-bottom: 0;
+  }
+
+  .ap-entry-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--vc-space-3);
     align-items: center;
   }
 
-  h3 {
+  .ap-entry-head h3 {
     margin: 0;
     font-size: 15px;
     line-height: 1.35;
   }
 
-  .badge {
+  .ap-badge {
     padding: 4px 8px;
     border-radius: 999px;
     background: var(--vc-surface-2);
@@ -279,17 +282,17 @@
     letter-spacing: 0.06em;
   }
 
-  .badge[data-status='done'] {
+  .ap-badge[data-status='done'] {
     background: var(--vc-success-soft);
     color: var(--vc-success);
   }
 
-  .badge[data-status='error'] {
+  .ap-badge[data-status='error'] {
     background: rgba(173, 49, 49, 0.12);
     color: var(--vc-error);
   }
 
-  .detail {
+  .ap-detail {
     margin: 0;
     color: var(--vc-text-muted);
     line-height: 1.45;
@@ -306,7 +309,7 @@
     user-select: none;
   }
 
-  .reasoning {
+  .ap-reasoning {
     margin: var(--vc-space-2) 0 0;
     padding: var(--vc-space-3);
     max-height: 180px;
@@ -333,11 +336,11 @@
   }
 
   @media (max-width: 700px) {
-    .hero,
-    .entry-head {
+    .ap-hero,
+    .ap-entry-head {
       grid-template-columns: 1fr;
     }
-    .counter-block {
+    .ap-counter-block {
       justify-items: start;
       text-align: left;
     }

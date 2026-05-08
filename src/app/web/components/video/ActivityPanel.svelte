@@ -58,7 +58,7 @@
     color: var(--vc-text);
   }
 
-  .activity-card :global(.thread) {
+  .activity-card :global(.ap-thread) {
     max-height: 720px;
     overflow-y: auto;
     padding-right: 6px;
@@ -87,7 +87,7 @@
     .panel-head {
       grid-template-columns: 1fr;
     }
-    .activity-card :global(.thread) {
+    .activity-card :global(.ap-thread) {
       max-height: none;
     }
   }
