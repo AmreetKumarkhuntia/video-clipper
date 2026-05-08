@@ -6,6 +6,7 @@
   import Icon from '@web/components/Icon.svelte';
   import UploadStatusCard from '@web/components/publish/UploadStatusCard.svelte';
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { PublishDraft, UploadArtifact, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let draft = $state<PublishDraft | null>(null);
@@ -180,7 +181,7 @@
       </main>
 
       <aside class="publish-side">
-        <div class="vc-card">
+        <Card as="div">
           <p class="sect-eyebrow">Connected channel</p>
           <p class="sect-title">{authStatus?.channel?.title ?? 'No connected channel'}</p>
           <p class="sect-body">
@@ -193,9 +194,9 @@
               > step.
             {/if}
           </p>
-        </div>
+        </Card>
 
-        <div class="vc-card">
+        <Card as="div">
           <p class="sect-eyebrow">Draft summary</p>
           <p class="sect-title">{draft.title}</p>
           <p class="sect-body">
@@ -209,7 +210,7 @@
               </li>
             {/each}
           </ul>
-        </div>
+        </Card>
       </aside>
     </div>
   </div>

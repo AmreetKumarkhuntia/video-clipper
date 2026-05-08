@@ -5,6 +5,7 @@
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Card from '@web/components/Card.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -89,13 +90,13 @@
   <div class="clip-loading">
     <div class="clipgrid">
       {#each Array(6) as _}
-        <div class="clipcard">
+        <Card class="clipcard">
           <div class="clipcard__thumb"><div class="clipcard__thumb-bg"></div></div>
           <div class="clipcard__body">
             <div class="sk sk--line" style="width:90%;margin-bottom:8px"></div>
             <div class="sk sk--line sk--short"></div>
           </div>
-        </div>
+        </Card>
       {/each}
     </div>
   </div>
@@ -156,55 +157,57 @@
     {#if activeTab === 'candidates'}
       <div class="clipgrid" style="margin-top:20px">
         {#each plan.candidates as candidate, i}
-          <button
-            class="clipcard"
-            class:clipcard--selected={candidate.selected}
-            onclick={() => toggleCandidate(candidate)}
-            type="button"
+          <Card
+            interactive
+            class={['clipcard', candidate.selected ? 'clipcard--selected' : '']
+              .filter(Boolean)
+              .join(' ')}
           >
-            <div class="clipcard__thumb">
-              <div class="clipcard__thumb-bg"></div>
-              <div class="clipcard__thumb-time">
-                {candidate.startSec != null
-                  ? Math.floor(candidate.startSec / 60) +
-                    ':' +
-                    String(Math.floor(candidate.startSec % 60)).padStart(2, '0')
-                  : '—'}
-              </div>
-              <div class="clipcard__thumb-aspect">16:9</div>
-              <div class="clipcard__thumb-play">
-                {#if candidate.selected}
-                  <Icon name="check" size={18} />
-                {:else}
-                  <Icon name="play" size={18} />
-                {/if}
-              </div>
-            </div>
-            <div class="clipcard__body">
-              <div class="clipcard__row">
-                <span class="clipcard__rank">#{i + 1}</span>
-                {#if candidate.score != null}
-                  <span class="vc-score"
-                    >{candidate.score}<span class="vc-score__den">/10</span></span
-                  >
-                {/if}
-                <span class="clipcard__dur">
-                  {#if candidate.endSec != null && candidate.startSec != null}
-                    {Math.round(candidate.endSec - candidate.startSec)}s
+            <button type="button" class="clipcard__btn" onclick={() => toggleCandidate(candidate)}>
+              <div class="clipcard__thumb">
+                <div class="clipcard__thumb-bg"></div>
+                <div class="clipcard__thumb-time">
+                  {candidate.startSec != null
+                    ? Math.floor(candidate.startSec / 60) +
+                      ':' +
+                      String(Math.floor(candidate.startSec % 60)).padStart(2, '0')
+                    : '—'}
+                </div>
+                <div class="clipcard__thumb-aspect">16:9</div>
+                <div class="clipcard__thumb-play">
+                  {#if candidate.selected}
+                    <Icon name="check" size={18} />
+                  {:else}
+                    <Icon name="play" size={18} />
                   {/if}
-                </span>
+                </div>
               </div>
-              <p class="clipcard__title">
-                {candidate.reason ?? 'Clip candidate'}
-              </p>
-            </div>
-          </button>
+              <div class="clipcard__body">
+                <div class="clipcard__row">
+                  <span class="clipcard__rank">#{i + 1}</span>
+                  {#if candidate.score != null}
+                    <span class="vc-score"
+                      >{candidate.score}<span class="vc-score__den">/10</span></span
+                    >
+                  {/if}
+                  <span class="clipcard__dur">
+                    {#if candidate.endSec != null && candidate.startSec != null}
+                      {Math.round(candidate.endSec - candidate.startSec)}s
+                    {/if}
+                  </span>
+                </div>
+                <p class="clipcard__title">
+                  {candidate.reason ?? 'Clip candidate'}
+                </p>
+              </div>
+            </button>
+          </Card>
         {/each}
       </div>
     {:else}
       <div class="clipgrid" style="margin-top:20px">
         {#each clips as clip, i}
-          <div class="clipcard">
+          <Card class="clipcard">
             <div class="clipcard__thumb">
               <div class="clipcard__thumb-bg"></div>
               <div class="clipcard__thumb-play"><Icon name="video" size={18} /></div>
@@ -218,7 +221,7 @@
                 <Badge variant="success"><Icon name="check" size={10} /> Ready</Badge>
               </div>
             </div>
-          </div>
+          </Card>
         {/each}
       </div>
     {/if}
@@ -275,15 +278,9 @@
     flex-wrap: wrap;
   }
 
-  .clipcard--selected {
+  :global(.clipcard--selected) {
     border-color: var(--vc-clay-500);
     box-shadow: 0 0 0 1px var(--vc-clay-500);
     background: var(--vc-clay-50);
-  }
-
-  button.clipcard {
-    text-align: left;
-    font: inherit;
-    background: var(--vc-surface);
   }
 </style>

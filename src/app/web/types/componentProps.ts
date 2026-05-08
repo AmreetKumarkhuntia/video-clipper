@@ -37,6 +37,15 @@ export interface BadgeProps {
   children: Snippet;
 }
 
+export type CardElement = 'article' | 'aside' | 'section' | 'div';
+
+export interface CardProps {
+  as?: CardElement;
+  interactive?: boolean;
+  class?: string;
+  children: Snippet;
+}
+
 export interface CheckboxProps {
   id?: string;
   checked?: boolean;

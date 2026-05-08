@@ -1,11 +1,12 @@
 <script lang="ts">
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { ChannelCardProps } from '@app/web/types/componentProps.js';
 
   let { channel }: ChannelCardProps = $props();
 </script>
 
-<article class="channel-card">
+<Card class="channel-card">
   {#if channel.thumbnail}
     <img src={channel.thumbnail.url} alt="" />
   {/if}
@@ -15,19 +16,17 @@
     <p class="card-desc">{channel.description}</p>
     <Button variant="primary" href={`/channels/${channel.id}`}>Browse videos</Button>
   </div>
-</article>
+</Card>
 
 <style>
-  .channel-card {
+  :global(.channel-card) {
     display: grid;
     grid-template-columns: 96px 1fr;
     gap: 18px;
     align-items: start;
-    padding: 18px 0;
-    border-top: 1px solid var(--vc-divider);
   }
 
-  .channel-card img {
+  :global(.channel-card img) {
     width: 96px;
     height: 96px;
     border-radius: 50%;
@@ -66,10 +65,10 @@
   }
 
   @media (max-width: 620px) {
-    .channel-card {
+    :global(.channel-card) {
       grid-template-columns: 1fr;
     }
-    .channel-card img {
+    :global(.channel-card img) {
       width: 72px;
       height: 72px;
     }

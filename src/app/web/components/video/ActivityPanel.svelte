@@ -1,6 +1,7 @@
 <script lang="ts">
   import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { ActivityPanelProps } from '@app/web/types/componentProps.js';
 
   let {
@@ -12,7 +13,7 @@
   }: ActivityPanelProps = $props();
 </script>
 
-<aside class="vc-card activity-card">
+<Card as="aside" class="activity-card">
   <div class="panel-head">
     <div>
       <p class="panel-eyebrow">Activity</p>
@@ -24,10 +25,10 @@
   </div>
 
   <AnalysisProgress {analyzedChunks} {totalChunks} {phase} {items} />
-</aside>
+</Card>
 
 <style>
-  .activity-card {
+  :global(.activity-card) {
     display: flex;
     flex-direction: column;
   }
@@ -59,7 +60,7 @@
     color: var(--vc-text);
   }
 
-  .activity-card :global(.ap-thread) {
+  :global(.activity-card .ap-thread) {
     max-height: 720px;
     overflow-y: auto;
     padding-right: 6px;
@@ -69,7 +70,7 @@
     .panel-head {
       grid-template-columns: 1fr;
     }
-    .activity-card :global(.ap-thread) {
+    :global(.activity-card .ap-thread) {
       max-height: none;
     }
   }

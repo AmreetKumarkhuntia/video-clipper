@@ -5,6 +5,7 @@
   import VideoCard from '@web/components/VideoCard.svelte';
   import Pagination from '@web/components/Pagination.svelte';
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
 
   let channelId = $derived(page.params.channelId);
 
@@ -47,13 +48,13 @@
   {#if isLoading}
     <div class="clipgrid">
       {#each Array(8) as _}
-        <div class="clipcard">
+        <Card class="clipcard">
           <div class="clipcard__thumb"><div class="clipcard__thumb-bg"></div></div>
           <div class="clipcard__body">
             <div class="sk sk--line" style="width:90%;margin-bottom:8px"></div>
             <div class="sk sk--line sk--short"></div>
           </div>
-        </div>
+        </Card>
       {/each}
     </div>
   {:else if errorMessage}

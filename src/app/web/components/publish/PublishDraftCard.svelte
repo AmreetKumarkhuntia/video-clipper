@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Card from '@web/components/Card.svelte';
   import Icon from '@web/components/Icon.svelte';
   import Toggle from '@web/components/Toggle.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
@@ -16,7 +17,10 @@
   }
 </script>
 
-<article class="draft-card" class:draft-card--selected={item.selected}>
+<Card
+  interactive
+  class={['draft-card', item.selected ? 'draft-card--selected' : ''].filter(Boolean).join(' ')}
+>
   <button
     type="button"
     class="draft-card__open"
@@ -68,29 +72,21 @@
     />
     <span class="draft-card__include-label">Include in publish</span>
   </label>
-</article>
+</Card>
 
 <style>
-  .draft-card {
-    background: var(--vc-surface);
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-lg);
+  :global(.draft-card) {
+    padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition:
-      border-color var(--vc-dur-fast) var(--vc-ease),
-      box-shadow var(--vc-dur-fast) var(--vc-ease),
-      transform var(--vc-dur-fast) var(--vc-ease);
   }
 
-  .draft-card:hover {
-    border-color: var(--vc-border-strong);
-    box-shadow: var(--vc-shadow-1);
+  :global(.draft-card:hover) {
     transform: translateY(-1px);
   }
 
-  .draft-card--selected {
+  :global(.draft-card--selected) {
     border-color: var(--vc-clay-500);
     box-shadow: 0 0 0 1px var(--vc-clay-500);
     background: var(--vc-clay-50);

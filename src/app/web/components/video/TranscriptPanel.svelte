@@ -2,6 +2,7 @@
   import type { TranscriptLine } from '@lib/types/index.js';
   import type { HighlightRange } from '@app/web/types/activity.js';
   import { formatTime } from '@web/lib/format.js';
+  import Card from '@web/components/Card.svelte';
 
   interface Props {
     lines?: TranscriptLine[];
@@ -32,7 +33,7 @@
   });
 </script>
 
-<article class="vc-card transcript-card">
+<Card class="transcript-card">
   <div class="panel-head">
     <div>
       <p class="panel-eyebrow">Transcript</p>
@@ -61,10 +62,10 @@
       <p class="transcript-muted">Fetch transcript to inspect time-stamped lines.</p>
     </div>
   {/if}
-</article>
+</Card>
 
 <style>
-  .transcript-card {
+  :global(.transcript-card) {
     display: flex;
     flex-direction: column;
   }

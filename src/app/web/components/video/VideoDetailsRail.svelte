@@ -1,6 +1,7 @@
 <script lang="ts">
   import { formatDuration } from '@web/lib/format.js';
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { VideoDetailsRailProps } from '@app/web/types/componentProps.js';
 
   let {
@@ -13,7 +14,7 @@
   }: VideoDetailsRailProps = $props();
 </script>
 
-<aside class="vc-card rail-card">
+<Card as="aside" class="rail-card">
   <div class="title-block">
     <p class="rail-eyebrow">Video workspace</p>
     <h1 class="rail-title">{video.title}</h1>
@@ -53,10 +54,10 @@
   {#if errorMessage}
     <p class="rail-error">{errorMessage}</p>
   {/if}
-</aside>
+</Card>
 
 <style>
-  .rail-card {
+  :global(.rail-card) {
     display: grid;
     gap: 20px;
     align-self: stretch;

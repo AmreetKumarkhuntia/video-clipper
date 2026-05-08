@@ -4,6 +4,7 @@
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
   import Textarea from '@web/components/Textarea.svelte';
@@ -152,13 +153,13 @@
           <Icon name="external-link" size={14} /> Connect to YouTube
         </Button>
       {:else}
-        <div class="vc-card" style="max-width:480px">
+        <Card as="div" class="connect-config-hint">
           <p style="font-size:var(--vc-text-13);color:var(--vc-text-muted);margin:0">
             Configure <code>YOUTUBE_OAUTH_CLIENT_ID</code>,
             <code>YOUTUBE_OAUTH_CLIENT_SECRET</code>, and <code>YOUTUBE_OAUTH_REDIRECT_URI</code> in
             <code>.env</code> or Settings before connecting.
           </p>
-        </div>
+        </Card>
       {/if}
     </div>
 
@@ -207,6 +208,10 @@
 </div>
 
 <style>
+  :global(.connect-config-hint) {
+    max-width: 480px;
+  }
+
   .connect-page {
     display: flex;
     flex-direction: column;
