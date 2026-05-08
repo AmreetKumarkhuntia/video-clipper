@@ -19,6 +19,7 @@
   } from '@web/lib/activity/analysisActivity.js';
   import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
   import Icon from '@web/components/Icon.svelte';
+  import Badge from '@web/components/Badge.svelte';
   import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
   import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
   import ClipTimeline from '@web/components/video/ClipTimeline.svelte';
@@ -261,10 +262,10 @@
         <div class="sect__h">
           <h3>Activity</h3>
           {#if isAnalyzing}
-            <span class="vc-badge vc-badge--clay">
+            <Badge variant="clay">
               <span class="status-line__dot dot--run"></span>
               Analyzing {analyzedChunks}/{totalChunks}
-            </span>
+            </Badge>
           {/if}
         </div>
         <ActivityPanel

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from '@web/components/Icon.svelte';
+  import Badge from '@web/components/Badge.svelte';
   import type { UploadStatusCardProps } from '@app/web/types/componentProps.js';
 
   let { upload = null, queueItem = null }: UploadStatusCardProps = $props();
@@ -18,19 +19,19 @@
     </div>
 
     {#if status === 'uploading'}
-      <span class="status status--uploading">
+      <Badge variant="info">
         <span class="spinner" aria-hidden="true"></span>
         Uploading
-      </span>
+      </Badge>
     {:else if status === 'uploaded'}
-      <span class="status status--ok">
+      <Badge variant="success">
         <Icon name="check" size={11} />
         Uploaded
-      </span>
+      </Badge>
     {:else if status === 'failed'}
-      <span class="status status--err">Failed</span>
+      <Badge variant="error">Failed</Badge>
     {:else}
-      <span class="status status--queued">{status}</span>
+      <Badge>{status}</Badge>
     {/if}
   </div>
 
@@ -76,39 +77,6 @@
     color: var(--vc-text);
     margin: 0;
     overflow-wrap: anywhere;
-  }
-
-  .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-
-  .status--queued {
-    background: var(--vc-surface-raised);
-    color: var(--vc-text-muted);
-  }
-
-  .status--uploading {
-    background: color-mix(in srgb, var(--vc-accent) 12%, var(--vc-surface));
-    color: var(--vc-accent);
-  }
-
-  .status--ok {
-    background: color-mix(in srgb, var(--vc-success, #16a34a) 12%, var(--vc-surface));
-    color: var(--vc-success, #16a34a);
-  }
-
-  .status--err {
-    background: color-mix(in srgb, var(--vc-error) 12%, var(--vc-surface));
-    color: var(--vc-error);
   }
 
   .spinner {

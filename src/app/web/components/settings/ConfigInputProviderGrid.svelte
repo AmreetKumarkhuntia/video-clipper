@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from '../Icon.svelte';
+  import Badge from '../Badge.svelte';
   import type { ConfigInputProviderGridProps, ProviderDef } from '@app/web/types/componentProps.js';
 
   const PROVIDERS: ProviderDef[] = [
@@ -28,7 +29,7 @@
       <div class="provider__head">
         <span class="provider__name">{p.name}</span>
         {#if p.badge}
-          <span class="vc-badge vc-badge--clay">{p.badge}</span>
+          <Badge variant="clay">{p.badge}</Badge>
         {/if}
       </div>
       <div class="provider__model">{p.defaultModel}</div>

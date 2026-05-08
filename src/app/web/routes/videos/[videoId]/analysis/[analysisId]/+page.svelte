@@ -4,6 +4,7 @@
   import { apiFetch } from '@web/lib/api.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
+  import Badge from '@web/components/Badge.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -214,8 +215,7 @@
               </div>
               <p class="clipcard__title">{clip.filename}</p>
               <div class="clipcard__actions">
-                <span class="vc-badge vc-badge--success"><Icon name="check" size={10} /> Ready</span
-                >
+                <Badge variant="success"><Icon name="check" size={10} /> Ready</Badge>
               </div>
             </div>
           </div>

@@ -27,6 +27,16 @@ export interface ButtonProps {
   'aria-label'?: string;
 }
 
+export type BadgeVariant = 'neutral' | 'clay' | 'success' | 'warn' | 'error' | 'info' | 'mono';
+
+export interface BadgeProps {
+  variant?: BadgeVariant;
+  class?: string;
+  title?: string;
+  'aria-label'?: string;
+  children: Snippet;
+}
+
 export interface CheckboxProps {
   id?: string;
   checked?: boolean;
