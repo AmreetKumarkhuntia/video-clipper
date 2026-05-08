@@ -859,20 +859,28 @@ body {
   gap: 16px;
 }
 .clipcard {
-  background: var(--vc-surface);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-lg);
+  padding: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition:
-    border-color var(--vc-dur-fast) var(--vc-ease),
-    box-shadow var(--vc-dur-fast) var(--vc-ease);
-  cursor: pointer;
 }
-.clipcard:hover {
-  border-color: var(--vc-border-strong);
-  box-shadow: var(--vc-shadow-1);
+.clipcard__btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.clipcard__btn:focus-visible {
+  outline: 2px solid var(--vc-clay-500);
+  outline-offset: -2px;
 }
 .clipcard__thumb {
   position: relative;

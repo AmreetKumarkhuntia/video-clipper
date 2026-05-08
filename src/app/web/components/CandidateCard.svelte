@@ -1,12 +1,18 @@
 <script lang="ts">
   import { formatTime } from '@web/lib/format.js';
+  import Card from '@web/components/Card.svelte';
   import Checkbox from '@web/components/Checkbox.svelte';
   import type { CandidateCardProps } from '@app/web/types/componentProps.js';
 
   let { candidate, ontoggle }: CandidateCardProps = $props();
 </script>
 
-<article class:selected={candidate.selected}>
+<Card
+  interactive
+  class={['candidate-card', candidate.selected ? 'candidate-card--selected' : '']
+    .filter(Boolean)
+    .join(' ')}
+>
   <Checkbox
     class="cand-chk"
     checked={candidate.selected}
@@ -21,21 +27,21 @@
     {/if}
   </div>
   <span class="vc-score score-pill">{candidate.score}<span class="vc-score__den">/10</span></span>
-</article>
+</Card>
 
 <style>
-  article {
+  :global(.candidate-card) {
     display: grid;
     grid-template-columns: 120px 1fr 64px;
     gap: 18px;
     align-items: start;
-    padding: 16px 0;
-    border-top: 1px solid var(--vc-divider);
     opacity: 0.7;
   }
 
-  article.selected {
+  :global(.candidate-card--selected) {
     opacity: 1;
+    border-color: var(--vc-clay-500);
+    box-shadow: 0 0 0 1px var(--vc-clay-500);
   }
 
   :global(.cand-chk) {
@@ -70,7 +76,7 @@
   }
 
   @media (max-width: 760px) {
-    article {
+    :global(.candidate-card) {
       grid-template-columns: 1fr;
     }
     .score-pill {

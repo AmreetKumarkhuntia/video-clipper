@@ -1,11 +1,12 @@
 <script lang="ts">
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { ClipPlanSummaryProps } from '@app/web/types/componentProps.js';
 
   let { plan = null, videoId }: ClipPlanSummaryProps = $props();
 </script>
 
-<section class="vc-card plan-card">
+<Card as="section" class="plan-card">
   <div class="panel-head">
     <p class="panel-eyebrow">Clip plan</p>
     <h2 class="panel-title">Review the candidate moments generated from this run.</h2>
@@ -23,7 +24,7 @@
   {:else}
     <p class="plan-muted">No clip plan generated yet.</p>
   {/if}
-</section>
+</Card>
 
 <style>
   .panel-head {

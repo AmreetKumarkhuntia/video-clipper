@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '@web/components/Icon.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Card from '@web/components/Card.svelte';
   import type { UploadStatusCardProps } from '@app/web/types/componentProps.js';
 
   let { upload = null, queueItem = null }: UploadStatusCardProps = $props();
@@ -11,7 +12,7 @@
   let error = $derived(upload?.error ?? queueItem?.error);
 </script>
 
-<article class="vc-card upload-card">
+<Card class="upload-card">
   <div class="card-head">
     <div class="card-info">
       <p class="card-eyebrow">Upload</p>
@@ -46,10 +47,10 @@
   {#if error}
     <p class="card-error">{error}</p>
   {/if}
-</article>
+</Card>
 
 <style>
-  .upload-card {
+  :global(.upload-card) {
     display: flex;
     flex-direction: column;
     gap: 0;

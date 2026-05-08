@@ -9,6 +9,7 @@
   import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
   import PublishDraftEditor from '@web/components/publish/PublishDraftEditor.svelte';
   import Button from '@web/components/Button.svelte';
+  import Card from '@web/components/Card.svelte';
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
   import Toggle from '@web/components/Toggle.svelte';
@@ -268,7 +269,7 @@
     </div>
 
     <!-- Workflow title -->
-    <div class="vc-card" style="margin-bottom:20px">
+    <Card as="div" class="prepare-card-spaced">
       <div class="prepare-draft-header">
         <div style="flex:1">
           <Field label="Workflow title" for="draft-title">
@@ -279,10 +280,10 @@
           {draft.items.filter((i) => i.selected).length} of {draft.items.length} clips selected
         </p>
       </div>
-    </div>
+    </Card>
 
     <!-- Schedule section -->
-    <div class="vc-card" style="margin-bottom:20px">
+    <Card as="div" class="prepare-card-spaced">
       <div class="schedule-header">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <label class="toggle-row" style="margin:0">
@@ -363,7 +364,7 @@
           </div>
         {/if}
       {/if}
-    </div>
+    </Card>
 
     <div class="draft-grid">
       {#each draft.items as item, index (item.clipArtifactId)}
@@ -436,6 +437,10 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  :global(.prepare-card-spaced) {
+    margin-bottom: 20px;
   }
 
   .prepare-draft-header {
