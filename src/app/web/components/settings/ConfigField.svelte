@@ -6,6 +6,7 @@
   import ConfigInputSelect from './ConfigInputSelect.svelte';
   import ConfigInputSlider from './ConfigInputSlider.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
+  import Badge from '../Badge.svelte';
   import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
   import type { ConfigFieldProps } from '@app/web/types/componentProps.js';
 
@@ -36,7 +37,7 @@
       <span class="toggle-row__t">
         {field.label}
         {#if field.secret}
-          <span class="field-badge" title="Secret">Secret</span>
+          <Badge variant="clay" title="Secret">Secret</Badge>
         {/if}
       </span>
       {#if field.description}
@@ -51,7 +52,7 @@
     <label class="vc-label" for={inputId}>
       {field.label}
       {#if field.secret}
-        <span class="field-badge" title="Secret">Secret</span>
+        <Badge variant="clay" title="Secret">Secret</Badge>
       {/if}
     </label>
 
@@ -122,18 +123,5 @@
   .toggle-row__text {
     display: flex;
     flex-direction: column;
-  }
-
-  .field-badge {
-    font-size: var(--vc-text-12);
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: var(--vc-radius-sm);
-    background: var(--vc-clay-soft);
-    color: var(--vc-clay-500);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    vertical-align: middle;
-    margin-left: var(--vc-space-2);
   }
 </style>

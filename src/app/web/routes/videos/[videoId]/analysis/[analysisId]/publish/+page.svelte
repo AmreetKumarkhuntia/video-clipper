@@ -55,17 +55,10 @@
           updateQueue(clipArtifactId, { status: 'uploading' });
         },
         onUploadFinished: (upload) => {
-          updateQueue(upload.clipArtifactId, {
-            status: 'uploaded',
-            youtubeUrl: upload.youtubeUrl,
-            youtubeVideoId: upload.youtubeVideoId,
-          });
+          moveToHistory(upload);
         },
         onUploadFailed: (upload) => {
-          updateQueue(upload.clipArtifactId, {
-            status: 'failed',
-            error: upload.error,
-          });
+          moveToHistory(upload);
         },
         onComplete: (allUploads) => {
           uploads = allUploads;
@@ -99,6 +92,13 @@
     uploadQueue = uploadQueue.map((item) =>
       item.clipArtifactId === clipArtifactId ? { ...item, ...patch } : item,
     );
+  }
+
+  function moveToHistory(upload: UploadArtifact): void {
+    uploadQueue = uploadQueue.filter((item) => item.clipArtifactId !== upload.clipArtifactId);
+    if (!uploads.some((u) => u.id === upload.id)) {
+      uploads = [upload, ...uploads];
+    }
   }
 </script>
 

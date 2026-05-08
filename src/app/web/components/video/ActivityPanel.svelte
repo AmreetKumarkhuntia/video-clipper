@@ -1,5 +1,6 @@
 <script lang="ts">
   import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
+  import Badge from '@web/components/Badge.svelte';
   import type { ActivityPanelProps } from '@app/web/types/componentProps.js';
 
   let {
@@ -18,7 +19,7 @@
       <h2 class="panel-title">Watch the analysis thread as each chunk resolves.</h2>
     </div>
     {#if isAnalyzing}
-      <span class="live-pill">Live</span>
+      <Badge variant="clay">Live</Badge>
     {/if}
   </div>
 
@@ -62,25 +63,6 @@
     max-height: 720px;
     overflow-y: auto;
     padding-right: 6px;
-  }
-
-  .live-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 26px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: var(--vc-clay-soft);
-    color: var(--vc-clay-500);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  [data-theme='dark'] .live-pill {
-    color: var(--vc-clay-400);
   }
 
   @media (max-width: 700px) {

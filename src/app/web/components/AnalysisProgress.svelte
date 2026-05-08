@@ -1,5 +1,7 @@
 <script lang="ts">
+  import Badge from '@web/components/Badge.svelte';
   import type { AnalysisProgressProps } from '@app/web/types/componentProps.js';
+  import type { BadgeVariant } from '@app/web/types/componentProps.js';
 
   let {
     analyzedChunks = 0,
@@ -7,6 +9,12 @@
     phase = 'idle',
     items = [],
   }: AnalysisProgressProps = $props();
+
+  function statusVariant(status: string): BadgeVariant {
+    if (status === 'done') return 'success';
+    if (status === 'error') return 'error';
+    return 'neutral';
+  }
 
   let pct = $derived(totalChunks > 0 ? Math.round((analyzedChunks / totalChunks) * 100) : 0);
 
@@ -87,7 +95,7 @@
           <div class="ap-content">
             <div class="ap-entry-head">
               <h3>{item.title}</h3>
-              <span class="ap-badge" data-status={item.status}>{item.status}</span>
+              <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
             </div>
 
             {#if item.detail}
@@ -269,27 +277,6 @@
     margin: 0;
     font-size: 15px;
     line-height: 1.35;
-  }
-
-  .ap-badge {
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: var(--vc-surface-2);
-    color: var(--vc-text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .ap-badge[data-status='done'] {
-    background: var(--vc-success-soft);
-    color: var(--vc-success);
-  }
-
-  .ap-badge[data-status='error'] {
-    background: rgba(173, 49, 49, 0.12);
-    color: var(--vc-error);
   }
 
   .ap-detail {

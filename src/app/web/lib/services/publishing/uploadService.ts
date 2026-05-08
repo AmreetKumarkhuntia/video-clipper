@@ -187,6 +187,32 @@ async function uploadToYouTube(
     item.isShort && !item.description.includes('#Shorts')
       ? `${item.description}\n\n#Shorts`.trim()
       : item.description;
+  const scheduleMs = item.scheduledAt ? Date.parse(item.scheduledAt) : NaN;
+  const hasFutureSchedule = Number.isFinite(scheduleMs) && scheduleMs > Date.now() + 60_000;
+
+  if (item.scheduledAt && !hasFutureSchedule) {
+    log.warn(
+      `${requestId ?? 'no-request-id'} [publish-upload] [schedule-stale] | clipArtifactId=${item.clipArtifactId} scheduledAt=${item.scheduledAt}`,
+    );
+  }
+  if (hasFutureSchedule && item.privacyStatus !== 'private') {
+    log.info(
+      `${requestId ?? 'no-request-id'} [publish-upload] [schedule-coerce] | clipArtifactId=${item.clipArtifactId} from=${item.privacyStatus} publishAt=${item.scheduledAt}`,
+    );
+  }
+
+  const status: Record<string, unknown> = {
+    privacyStatus: hasFutureSchedule ? 'private' : item.privacyStatus,
+    selfDeclaredMadeForKids: item.selfDeclaredMadeForKids,
+    embeddable: item.embeddable,
+    license: item.license,
+    publicStatsViewable: item.publicStatsViewable,
+    containsSyntheticMedia: item.containsSyntheticMedia,
+  };
+  if (hasFutureSchedule) {
+    status.publishAt = item.scheduledAt;
+  }
+
   const metadata = {
     snippet: {
       title: item.title,
@@ -194,17 +220,7 @@ async function uploadToYouTube(
       tags: item.tags,
       categoryId: item.categoryId,
     },
-    status: {
-      privacyStatus: item.privacyStatus,
-      selfDeclaredMadeForKids: item.selfDeclaredMadeForKids,
-      embeddable: item.embeddable,
-      license: item.license,
-      publicStatsViewable: item.publicStatsViewable,
-      containsSyntheticMedia: item.containsSyntheticMedia,
-      ...(item.scheduledAt && (item.privacyStatus === 'public' || item.privacyStatus === 'unlisted')
-        ? { publishAt: item.scheduledAt }
-        : {}),
-    },
+    status,
   };
 
   const metadataPart = Buffer.from(JSON.stringify(metadata), 'utf-8');
@@ -244,15 +260,20 @@ async function uploadToYouTube(
   const rawText = await res.text();
   const raw = tryParseJson(rawText) as { id?: string; error?: { message?: string } } | null;
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [youtube-response] | clipArtifactId=${item.clipArtifactId} status=${res.status} ok=${res.ok}`,
-  );
-
   if (!res.ok || !raw?.id) {
+    log.warn(
+      `${requestId ?? 'no-request-id'} [publish-upload] [youtube-failed] | clipArtifactId=${item.clipArtifactId} status=${res.status} error=${sanitizeLogValue(
+        raw?.error?.message || rawText,
+      )}`,
+    );
     throw new Error(
       raw?.error?.message || summarizeResponseText(rawText) || 'YouTube upload failed.',
     );
   }
+
+  log.info(
+    `${requestId ?? 'no-request-id'} [publish-upload] [youtube-response] | clipArtifactId=${item.clipArtifactId} status=${res.status} ok=${res.ok}`,
+  );
 
   return {
     videoId: raw.id,
