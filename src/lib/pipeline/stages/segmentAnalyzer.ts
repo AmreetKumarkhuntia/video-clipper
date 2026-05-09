@@ -47,6 +47,7 @@ export async function analyzeSegments(
     maxParallel: opts.maxParallel,
     noCache: opts.noCache,
     requestId: opts.requestId,
+    signal: opts.signal,
   });
 
   done({});
@@ -59,7 +60,14 @@ export async function refineRankedSegments(
   cache: Cache,
   opts: Pick<
     SegmentAnalyzerOpts,
-    'maxParallel' | 'noCache' | 'maxRetries' | 'model' | 'callbacks' | 'requestId' | 'videoTitle'
+    | 'maxParallel'
+    | 'noCache'
+    | 'maxRetries'
+    | 'model'
+    | 'callbacks'
+    | 'requestId'
+    | 'videoTitle'
+    | 'signal'
   >,
 ): Promise<RankedSegment[]> {
   const done = log.fnCalled(
@@ -78,6 +86,7 @@ export async function refineRankedSegments(
       model: opts.model,
       requestId: opts.requestId,
       videoTitle: opts.videoTitle,
+      signal: opts.signal,
       callbacks: opts.callbacks
         ? {
             onSegmentTextDelta: opts.callbacks.onSegmentTextDelta,

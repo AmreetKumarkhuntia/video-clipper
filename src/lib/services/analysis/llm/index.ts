@@ -181,6 +181,7 @@ async function analyzeChunk(
         system: opts.systemPrompt,
         prompt: prompt,
         maxRetries: 0,
+        abortSignal: opts.signal,
       });
 
       for await (const part of result.fullStream) {

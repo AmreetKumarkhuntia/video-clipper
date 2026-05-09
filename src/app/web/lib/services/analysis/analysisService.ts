@@ -60,9 +60,10 @@ export async function analyzeTranscriptForWeb(
   cfg: Config,
   callbacks?: StreamCallbacks,
   requestId?: string,
+  signal?: AbortSignal,
 ): Promise<ClipPlan> {
   const backend = await createCacheBackend(cfg, input.options.noCache);
-  const cache = new Cache(backend);
+  const cache = new Cache(backend, videoIdFrom(input));
 
   const cookies: YtDlpCookies = {
     cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
@@ -110,6 +111,7 @@ export async function analyzeTranscriptForWeb(
         llmModel: cfg.LLM_MODEL,
         videoTitle: input.title,
         callbacks,
+        signal,
       },
     );
 
@@ -132,6 +134,7 @@ export async function analyzeTranscriptForWeb(
             requestId,
             videoTitle: input.title,
             callbacks,
+            signal,
           })
         : rankedSegments;
 

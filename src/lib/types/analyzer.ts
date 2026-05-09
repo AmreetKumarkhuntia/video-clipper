@@ -18,6 +18,7 @@ export interface LLMAnalyzerOpts {
   maxParallel: number;
   noCache: boolean;
   requestId?: string;
+  signal?: AbortSignal;
 }
 
 export interface TranscriptDetectorResult {
@@ -41,6 +42,7 @@ export interface AnalyzeChunksOpts {
   model: LanguageModel;
   callbacks?: Pick<StreamCallbacks, 'onChunkStarted' | 'onChunkTextDelta' | 'onChunkAnalyzed'>;
   requestId?: string;
+  signal?: AbortSignal;
 }
 
 export interface RefineSegmentsOpts {
@@ -49,6 +51,7 @@ export interface RefineSegmentsOpts {
   callbacks?: Pick<StreamCallbacks, 'onSegmentStarted' | 'onSegmentTextDelta' | 'onSegmentRefined'>;
   requestId?: string;
   videoTitle?: string;
+  signal?: AbortSignal;
 }
 
 import { z } from 'zod';

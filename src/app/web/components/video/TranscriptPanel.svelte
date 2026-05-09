@@ -1,17 +1,16 @@
 <script lang="ts">
-  import type { TranscriptLine } from '@lib/types/index.js';
-  import type { HighlightRange } from '@app/web/types/activity.js';
+  import type { TranscriptPanelProps } from '@app/web/types/componentProps.js';
   import { formatTime } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
 
-  interface Props {
-    lines?: TranscriptLine[];
-    chunkCount?: number;
-    highlightRanges?: HighlightRange[];
-    activeRange?: HighlightRange;
-  }
-
-  let { lines = [], chunkCount = 0, highlightRanges = [], activeRange }: Props = $props();
+  let {
+    lines = [],
+    chunkCount = 0,
+    highlightRanges = [],
+    activeRange,
+    onClear,
+  }: TranscriptPanelProps = $props();
 
   let listEl: HTMLDivElement | undefined = $state();
 
@@ -35,12 +34,15 @@
 
 <Card class="transcript-card">
   <div class="panel-head">
-    <div>
+    <div class="panel-head__title">
       <p class="panel-eyebrow">Transcript</p>
       <h2 class="panel-title">Read the source material line by line.</h2>
+      {#if lines.length > 0}
+        <p class="panel-meta">{lines.length} lines · {chunkCount} chunks</p>
+      {/if}
     </div>
-    {#if lines.length > 0}
-      <p class="panel-meta">{lines.length} lines · {chunkCount} chunks</p>
+    {#if onClear}
+      <Button variant="ghost" size="sm" onclick={onClear}>Clear transcript</Button>
     {/if}
   </div>
 
@@ -72,9 +74,18 @@
 
   .panel-head {
     display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .panel-head__title {
+    display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-bottom: 20px;
+    min-width: 0;
+    flex: 1;
   }
 
   .panel-eyebrow {

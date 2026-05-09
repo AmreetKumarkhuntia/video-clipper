@@ -1,15 +1,15 @@
 <script lang="ts">
   import type { ClipCandidate } from '@app/web/types/analysis.js';
+  import type { ClipTimelineProps } from '@app/web/types/componentProps.js';
   import { formatTime } from '@web/lib/format.js';
 
-  interface Props {
-    durationSec: number;
-    candidates: ClipCandidate[];
-    activeCandidateId?: string;
-    onSelect?: (id: string) => void;
-  }
-
-  let { durationSec, candidates, activeCandidateId, onSelect }: Props = $props();
+  let {
+    durationSec,
+    candidates,
+    activeCandidateId,
+    isStreaming = false,
+    onSelect,
+  }: ClipTimelineProps = $props();
 
   const ZOOM_MIN = 30;
   const PADDING_FACTOR = 1.5;
@@ -151,10 +151,14 @@
             >{formatTime(active.startSec)} → {formatTime(active.endSec)}</span
           >
         {:else}
-          <span class="timeline__count">{candidates.length} segments</span>
+          <span class="timeline__count">
+            {candidates.length} segments{isStreaming ? ' · streaming' : ''}
+          </span>
         {/if}
       {:else}
-        <span class="timeline__count">{candidates.length} segments</span>
+        <span class="timeline__count">
+          {candidates.length} segments{isStreaming ? ' · streaming' : ''}
+        </span>
       {/if}
     </div>
     <div class="timeline__head-right">
@@ -203,6 +207,9 @@
       role="group"
       aria-label="Zoomed timeline"
     >
+      {#if isStreaming}
+        <div class="timeline__skeleton" style="left:0;right:0"></div>
+      {/if}
       {#each detailVisibleCandidates() as candidate (candidate.id)}
         <button
           class="timeline__seg"

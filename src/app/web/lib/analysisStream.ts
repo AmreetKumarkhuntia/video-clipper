@@ -9,11 +9,13 @@ export type { AnalysisStreamCallbacks };
 export async function streamAnalysis(
   input: CreateAnalysisRequest,
   callbacks: AnalysisStreamCallbacks,
+  signal?: AbortSignal,
 ): Promise<ClipPlan> {
   const res = await fetch('/api/analysis/transcript', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
+    signal,
   });
 
   if (!res.ok) {
@@ -32,6 +34,24 @@ export async function streamAnalysis(
   const decoder = new TextDecoder();
 
   return new Promise<ClipPlan>((resolve, reject) => {
+    let aborted = false;
+    const onAbort = (): void => {
+      aborted = true;
+      try {
+        reader.cancel().catch(() => {});
+      } catch {
+        // already cancelled
+      }
+      reject(new DOMException('Analysis aborted', 'AbortError'));
+    };
+    if (signal) {
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+
     const parser = createParser({
       onEvent(event) {
         if (event.event === 'chunk_started') {
@@ -65,13 +85,16 @@ export async function streamAnalysis(
 
     function pump(): Promise<void> {
       return reader.read().then(({ done, value }) => {
-        if (done) return;
+        if (done || aborted) return;
         parser.feed(decoder.decode(value, { stream: true }));
         return pump();
       });
     }
 
-    pump().catch(reject);
+    pump().catch((err) => {
+      if (aborted) return;
+      reject(err);
+    });
   });
 }
 
