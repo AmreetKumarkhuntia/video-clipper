@@ -6,6 +6,12 @@ import type {
   AudioEvent,
   SegmentRefinement,
 } from '@lib/types/index.js';
+import {
+  FileCacheBackend,
+  computeChunkCacheKey,
+  computeSegmentRefinementCacheKey,
+} from './fileCacheBackend.js';
+import { appendChunkHash, appendSegmentHash } from './analysisCacheManifest.js';
 
 export type { CacheBackend };
 
@@ -21,7 +27,16 @@ export type { CacheBackend };
  * (important for the MongoDB backend which holds an open connection).
  */
 export class Cache implements CacheBackend {
-  constructor(readonly backend: CacheBackend) {}
+  constructor(
+    readonly backend: CacheBackend,
+    private readonly videoId?: string,
+  ) {}
+
+  private get manifestCacheDir(): string | null {
+    if (!this.videoId) return null;
+    if (this.backend instanceof FileCacheBackend) return this.backend.cacheDir;
+    return null;
+  }
 
   // ---- Transcript -----------------------------------------------------------
 
@@ -47,7 +62,12 @@ export class Cache implements CacheBackend {
     evaluation: ChunkEvaluation,
     chunkAudioEvents?: AudioEvent[],
   ): Promise<void> {
-    return this.backend.writeChunk(chunk, evaluation, chunkAudioEvents);
+    await this.backend.writeChunk(chunk, evaluation, chunkAudioEvents);
+    const cacheDir = this.manifestCacheDir;
+    if (cacheDir && this.videoId && evaluation.status === 'success') {
+      const hash = computeChunkCacheKey(chunk, chunkAudioEvents ?? []);
+      await appendChunkHash(cacheDir, this.videoId, hash);
+    }
   }
 
   // ---- Segment refinement ---------------------------------------------------
@@ -66,7 +86,12 @@ export class Cache implements CacheBackend {
     reason: string,
     refined: SegmentRefinement,
   ): Promise<void> {
-    return this.backend.writeSegmentRefinement(start, end, reason, refined);
+    await this.backend.writeSegmentRefinement(start, end, reason, refined);
+    const cacheDir = this.manifestCacheDir;
+    if (cacheDir && this.videoId) {
+      const hash = computeSegmentRefinementCacheKey(start, end, reason);
+      await appendSegmentHash(cacheDir, this.videoId, hash);
+    }
   }
 
   // ---- Audio events (whole-video) -------------------------------------------

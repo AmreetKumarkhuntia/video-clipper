@@ -98,6 +98,7 @@ async function refineSegment(
     toolChoice: 'required',
     prompt: buildPrompt(segment, text, windowStart, windowEnd, opts.videoTitle),
     maxRetries: opts.maxRetries,
+    abortSignal: opts.signal,
   });
 
   for await (const part of result.fullStream) {

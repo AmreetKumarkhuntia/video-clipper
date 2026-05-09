@@ -11,6 +11,7 @@
     errorMessage = '',
     onLoadTranscript,
     onPlanClips,
+    onStop,
   }: VideoDetailsRailProps = $props();
 </script>
 
@@ -49,6 +50,9 @@
     <Button variant="primary" onclick={onPlanClips} disabled={isAnalyzing}>
       {isAnalyzing ? 'Planning clips...' : 'Plan clip candidates'}
     </Button>
+    {#if isAnalyzing && onStop}
+      <Button variant="danger" onclick={onStop}>Stop</Button>
+    {/if}
   </div>
 
   {#if errorMessage}

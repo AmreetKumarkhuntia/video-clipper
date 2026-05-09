@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import type { VideoDetails } from '@lib/types/index.js';
-  import type { ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
+  import type { ClipCandidate, ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
   import type { ActivityPhase } from '@app/web/types/activity.js';
   import { apiFetch } from '@web/lib/api.js';
   import { streamAnalysis } from '@web/lib/analysisStream.js';
@@ -20,6 +20,7 @@
   import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
   import Icon from '@web/components/Icon.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Button from '@web/components/Button.svelte';
   import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
   import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
   import ClipTimeline from '@web/components/video/ClipTimeline.svelte';
@@ -31,10 +32,12 @@
   let video = $state<VideoDetails | null>(null);
   let transcript = $state<TranscriptBundle | null>(null);
   let plan = $state<ClipPlan | null>(null);
+  let streamingCandidates = $state<ClipCandidate[]>([]);
   let isLoadingVideo = $state(false);
   let isLoadingTranscript = $state(false);
   let isAnalyzing = $state(false);
   let errorMessage = $state('');
+  let abortController: AbortController | null = $state(null);
 
   let analyzedChunks = $state(0);
   let totalChunks = $state(0);
@@ -48,13 +51,15 @@
   let videoId = $derived($page.params.videoId);
 
   let transcriptRows = $derived(transcript?.lines ?? []);
+  let displayCandidates = $derived(plan?.candidates ?? streamingCandidates);
   let candidateRanges = $derived(
-    plan?.candidates.map((candidate) => ({ start: candidate.startSec, end: candidate.endSec })) ??
-      [],
+    displayCandidates.map((candidate) => ({ start: candidate.startSec, end: candidate.endSec })),
   );
 
   let selectedCandidate = $derived(
-    selectedCandidateId ? plan?.candidates.find((c) => c.id === selectedCandidateId) : null,
+    selectedCandidateId
+      ? (displayCandidates.find((c) => c.id === selectedCandidateId) ?? null)
+      : null,
   );
 
   let activeRange = $derived(
@@ -99,6 +104,9 @@
     analysisPhase = 'analyzing';
     activityState = createStartedActivityState();
     completedChunkIndexes = new Set();
+    streamingCandidates = [];
+    plan = null;
+    abortController = new AbortController();
 
     try {
       plan = await streamAnalysis(
@@ -155,6 +163,28 @@
             });
             analysisPhase = 'refining';
             activityState = upsertSegmentCompletion(activityState, rank, segment, formatTime);
+            const candidate: ClipCandidate = {
+              id: `streaming-${rank}`,
+              rank,
+              startSec: segment.start,
+              endSec: segment.end,
+              score: segment.score,
+              reason: segment.reason,
+              source: segment.source,
+              audioEvent: segment.audio_event,
+              transcriptExcerpt: '',
+              selected: false,
+            };
+            const existingIdx = streamingCandidates.findIndex((c) => c.rank === rank);
+            if (existingIdx >= 0) {
+              const next = [...streamingCandidates];
+              next[existingIdx] = candidate;
+              streamingCandidates = next;
+            } else {
+              streamingCandidates = [...streamingCandidates, candidate].sort(
+                (a, b) => a.rank - b.rank,
+              );
+            }
           },
           onError: (message) => {
             logAnalysisEvent('error', { message }, 'error');
@@ -166,6 +196,7 @@
             });
           },
         },
+        abortController.signal,
       );
 
       logAnalysisEvent('analysis_complete', { candidateCount: plan.candidates.length });
@@ -176,9 +207,55 @@
         detail: `${plan.candidates.length} candidate moments are ready for review.`,
       });
     } catch (error) {
-      if (!errorMessage) errorMessage = error instanceof Error ? error.message : String(error);
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
+      if (isAbort) {
+        analysisPhase = 'idle';
+        activityState = appendSystemActivity(activityState, {
+          title: 'Analysis stopped',
+          status: 'done',
+          detail: 'Stopped by user. Partial results kept.',
+        });
+      } else if (!errorMessage) {
+        errorMessage = error instanceof Error ? error.message : String(error);
+      }
     } finally {
       isAnalyzing = false;
+      abortController = null;
+    }
+  }
+
+  function stopAnalysis(): void {
+    abortController?.abort();
+  }
+
+  async function clearTranscript(): Promise<void> {
+    if (!confirm('Clear cached transcript for this video?')) return;
+    try {
+      await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/transcript`, {
+        method: 'DELETE',
+      });
+      transcript = null;
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  async function clearAnalysis(): Promise<void> {
+    if (!confirm('Clear cached LLM analysis for this video?')) return;
+    try {
+      await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/analysis`, {
+        method: 'DELETE',
+      });
+      plan = null;
+      streamingCandidates = [];
+      selectedCandidateId = null;
+      analysisPhase = 'idle';
+      activityState = createInitialActivityState();
+      analyzedChunks = 0;
+      totalChunks = 0;
+      completedChunkIndexes = new Set();
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : String(error);
     }
   }
 
@@ -189,7 +266,7 @@
       return;
     }
     selectedCandidateId = id;
-    const c = plan?.candidates.find((c) => c.id === id);
+    const c = displayCandidates.find((c) => c.id === id);
     if (c) {
       seekToSec = c.startSec;
     }
@@ -223,22 +300,31 @@
       </div>
 
       <!-- Timeline -->
-      {#if plan && video.durationSec}
+      {#if video.durationSec && (plan || isAnalyzing)}
         <div class="sect">
           <div class="sect__h">
             <h3>Segments</h3>
-            <span class="sect__h-meta">{plan.candidates.length} found</span>
+            <div class="sect__h-actions">
+              <span class="sect__h-meta">
+                {displayCandidates.length}
+                {plan ? 'found' : 'streaming'}
+              </span>
+              <Button variant="ghost" size="sm" onclick={clearAnalysis} disabled={isAnalyzing}>
+                Clear analysis
+              </Button>
+            </div>
           </div>
           <ClipTimeline
             durationSec={video.durationSec}
-            candidates={plan.candidates}
+            candidates={displayCandidates}
             activeCandidateId={selectedCandidateId ?? undefined}
+            isStreaming={isAnalyzing && !plan}
             onSelect={selectCandidate}
           />
         </div>
       {/if}
 
-      <!-- Segment preview -->
+      <!-- Segment preview / streaming list / plan summary -->
       {#if selectedCandidate && transcript}
         <div class="sect">
           <SegmentPreview
@@ -286,6 +372,7 @@
         errorMessage={errorMessage && video ? errorMessage : ''}
         onLoadTranscript={loadTranscript}
         onPlanClips={planClips}
+        onStop={stopAnalysis}
       />
 
       {#if transcriptRows.length > 0}
@@ -295,6 +382,7 @@
             chunkCount={transcript?.chunks.length ?? 0}
             highlightRanges={candidateRanges}
             {activeRange}
+            onClear={clearTranscript}
           />
         </div>
       {/if}
@@ -338,6 +426,12 @@
     font-family: var(--vc-font-mono);
     font-size: var(--vc-text-12);
     color: var(--vc-text-subtle);
+  }
+
+  .sect__h-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   @media (max-width: 900px) {

@@ -65,3 +65,18 @@ export interface CacheDocument<T> {
   data: T;
   createdAt: Date;
 }
+
+export interface VideoCacheManifest {
+  chunkHashes: string[];
+  segmentHashes: string[];
+}
+
+export interface ClearVideoAnalysisResult {
+  manifestExisted: boolean;
+  chunksDeleted: number;
+  segmentsDeleted: number;
+}
+
+export interface ClearVideoTranscriptResult {
+  deleted: boolean;
+}

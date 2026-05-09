@@ -301,10 +301,20 @@ export interface ClipPlanSummaryProps {
   videoId: string;
 }
 
+export interface ClipTimelineProps {
+  durationSec: number;
+  candidates: ClipCandidate[];
+  activeCandidateId?: string;
+  isStreaming?: boolean;
+  onSelect?: (id: string) => void;
+}
+
 export interface TranscriptPanelProps {
   lines?: TranscriptLine[];
   chunkCount?: number;
   highlightRanges?: HighlightRange[];
+  activeRange?: HighlightRange;
+  onClear?: () => void;
 }
 
 export interface VideoDetailsRailProps {
@@ -314,6 +324,7 @@ export interface VideoDetailsRailProps {
   errorMessage?: string;
   onLoadTranscript?: () => void;
   onPlanClips?: () => void;
+  onStop?: () => void;
 }
 
 export interface VideoPlayerPanelProps {

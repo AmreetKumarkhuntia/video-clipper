@@ -36,6 +36,23 @@ function hashContent(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
+export function computeChunkCacheKey(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
+  const audioKey = audioEventsKey(chunkAudioEvents);
+  return hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`);
+}
+
+export function computeSegmentRefinementCacheKey(
+  start: number,
+  end: number,
+  reason: string,
+): string {
+  return hashContent(`${start}|${end}|${reason}`);
+}
+
+export function computeVideoCacheKey(videoId: string): string {
+  return hashContent(videoId);
+}
+
 async function readCacheFile<T>(filePath: string, schema: z.ZodType<T>): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, 'utf-8');
@@ -77,12 +94,12 @@ async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
  *   <cacheDir>/audio/<hash>.json
  */
 export class FileCacheBackend implements CacheBackend {
-  constructor(private readonly cacheDir: string) {}
+  constructor(public readonly cacheDir: string) {}
 
   // ---- Transcript -----------------------------------------------------------
 
   private transcriptPath(videoId: string): string {
-    return path.join(this.cacheDir, 'transcript', `${hashContent(videoId)}.json`);
+    return path.join(this.cacheDir, 'transcript', `${computeVideoCacheKey(videoId)}.json`);
   }
 
   async readTranscript(videoId: string): Promise<TranscriptLine[] | null> {
@@ -96,11 +113,10 @@ export class FileCacheBackend implements CacheBackend {
   // ---- LLM chunk results ----------------------------------------------------
 
   private chunkPath(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
-    const audioKey = audioEventsKey(chunkAudioEvents);
     return path.join(
       this.cacheDir,
       'chunks',
-      `${hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`)}.json`,
+      `${computeChunkCacheKey(chunk, chunkAudioEvents)}.json`,
     );
   }
 
@@ -123,7 +139,11 @@ export class FileCacheBackend implements CacheBackend {
   // ---- Segment refinement ---------------------------------------------------
 
   private segmentRefinementPath(start: number, end: number, reason: string): string {
-    return path.join(this.cacheDir, 'segments', `${hashContent(`${start}|${end}|${reason}`)}.json`);
+    return path.join(
+      this.cacheDir,
+      'segments',
+      `${computeSegmentRefinementCacheKey(start, end, reason)}.json`,
+    );
   }
 
   async readSegmentRefinement(

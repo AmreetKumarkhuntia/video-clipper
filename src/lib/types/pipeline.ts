@@ -45,6 +45,8 @@ export interface SegmentAnalyzerOpts {
   callbacks?: StreamCallbacks;
   /** Optional video title, threaded to the refiner prompt for boundary context. */
   videoTitle?: string;
+  /** Optional AbortSignal threaded down to the underlying LLM streamText calls. */
+  signal?: AbortSignal;
 }
 
 export type SegmentAnalyzerResult = LLMAnalyzerResult;

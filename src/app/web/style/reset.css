@@ -32,3 +32,34 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*:hover,
+*:focus-within {
+  scrollbar-color: var(--vc-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background-color 160ms ease;
+}
+*:hover::-webkit-scrollbar-thumb,
+*:focus-within::-webkit-scrollbar-thumb {
+  background: var(--vc-border-strong);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--vc-text-subtle);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

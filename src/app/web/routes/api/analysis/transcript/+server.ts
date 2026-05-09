@@ -29,14 +29,34 @@ export const POST: RequestHandler = async (event) => {
     );
   }
 
+  const abortSignal = event.request.signal;
+
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
+      let closed = false;
 
       function send(eventName: AnalysisStreamEventName, data: unknown): void {
+        if (closed) return;
         logEmittedAnalysisEvent(event.locals.requestId, eventName, data);
-        controller.enqueue(encoder.encode(serializeSSE(eventName, data)));
+        try {
+          controller.enqueue(encoder.encode(serializeSSE(eventName, data)));
+        } catch {
+          // controller was closed — ignore
+        }
       }
+
+      function closeOnce(): void {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      }
+
+      abortSignal.addEventListener('abort', closeOnce);
 
       const callbacks: StreamCallbacks = {
         onChunkStarted: (chunkIndex) => {
@@ -65,14 +85,19 @@ export const POST: RequestHandler = async (event) => {
           event.locals.config,
           callbacks,
           event.locals.requestId,
+          abortSignal,
         );
         send('analysis_complete', { plan });
       } catch (error) {
-        send('error', {
-          message: error instanceof Error ? error.message : String(error),
-        });
+        if (abortSignal.aborted) {
+          // Client aborted — do not emit an error event, just close.
+        } else {
+          send('error', {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
       } finally {
-        controller.close();
+        closeOnce();
       }
     },
   });
