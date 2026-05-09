@@ -18,6 +18,7 @@
   --vc-text-muted: #6b6358;
   --vc-text-subtle: #9a9387;
   --vc-text-onAccent: #ffffff;
+  --vc-text-onOverlay: #ffffff;
 
   /* ── Border (light) ────────────────────────────────────────── */
   --vc-border: #e1d8c7;

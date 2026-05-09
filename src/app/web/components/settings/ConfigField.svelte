@@ -32,7 +32,7 @@
 
 {#if field.widget === 'toggle'}
   <!-- Toggle fields render as a toggle-row (used inside .settings-toggles) -->
-  <label class="toggle-row" for={inputId}>
+  <label class="toggle-row">
     <div class="toggle-row__text">
       <span class="toggle-row__t">
         {field.label}
