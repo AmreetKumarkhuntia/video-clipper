@@ -47,7 +47,7 @@
     padding: 3px 6px;
     border-radius: var(--vc-radius-sm);
     background: var(--vc-overlay);
-    color: var(--vc-text-onAccent);
+    color: var(--vc-text-onOverlay);
     font-size: var(--vc-text-12);
     font-weight: 700;
   }
