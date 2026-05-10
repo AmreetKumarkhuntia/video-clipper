@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
-import { clearVideoAnalysisManifest } from '@lib/utils/analysisCacheManifest.js';
+import { clearVideoAnalysisManifest } from '@lib/services/cache/manifest.js';
 import { log } from '@lib/utils/logger.js';
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {

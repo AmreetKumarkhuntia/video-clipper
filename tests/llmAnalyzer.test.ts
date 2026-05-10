@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LLMAnalyzer } from '../src/lib/services/analysis/llm/LLMAnalyzer.js';
 import type { TranscriptDetector } from '../src/lib/services/analysis/transcript/detector.js';
-import type { Cache } from '../src/lib/utils/cache.js';
+import type { Cache } from '../src/lib/services/cache/cache.js';
 import type {
   TranscriptLine,
   MicroBlock,

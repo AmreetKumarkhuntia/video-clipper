@@ -1,4 +1,4 @@
-import type { CacheBackend } from './cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type {
   TranscriptLine,
   LLMChunk,
@@ -10,10 +10,8 @@ import {
   FileCacheBackend,
   computeChunkCacheKey,
   computeSegmentRefinementCacheKey,
-} from './fileCacheBackend.js';
-import { appendChunkHash, appendSegmentHash } from './analysisCacheManifest.js';
-
-export type { CacheBackend };
+} from './backends/file.js';
+import { appendChunkHash, appendSegmentHash } from './manifest.js';
 
 /**
  * Facade that wraps a CacheBackend and implements the CacheBackend interface.
@@ -21,7 +19,7 @@ export type { CacheBackend };
  * This means `Cache` can be passed anywhere a `CacheBackend` is expected, so
  * all pipeline consumers work whether they type their parameter as `Cache` or
  * `CacheBackend`. The concrete backend is injected by the factory in
- * cacheFactory.ts.
+ * factory.ts.
  *
  * Call `close()` at the end of the pipeline to release backend resources
  * (important for the MongoDB backend which holds an open connection).

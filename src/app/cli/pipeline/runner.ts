@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs';
 import { config } from '@lib/config/index.js';
-import { Cache } from '@lib/utils/cache.js';
-import { createCacheBackend } from '@lib/utils/cacheFactory.js';
+import { Cache, createCacheBackend } from '@lib/services/cache/index.js';
 import { log } from '@lib/utils/logger.js';
 import { getModel } from '@lib/utils/modelFactory.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';

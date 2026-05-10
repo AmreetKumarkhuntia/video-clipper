@@ -9,7 +9,7 @@ import { sliceAudio } from '@lib/services/audio/processor/slicer.js';
 import type { SlicerConfig } from '@lib/types/audio.js';
 import { buildWindows } from '@lib/utils/chunker.js';
 import { log } from '@lib/utils/logger.js';
-import type { Cache } from '@lib/utils/cache.js';
+import type { Cache } from '@lib/services/cache/index.js';
 import type { AudioEvent, AudioProcessorOpts, AudioProcessorConfig } from '@lib/types/index.js';
 
 export async function processAudio(
