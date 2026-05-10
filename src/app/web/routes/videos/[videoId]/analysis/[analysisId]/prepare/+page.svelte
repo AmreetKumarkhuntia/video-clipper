@@ -6,8 +6,8 @@
   import { configValues, configLoaded, initConfig } from '@web/lib/configStore.js';
   import { get } from 'svelte/store';
   import Icon from '@web/components/Icon.svelte';
-  import PublishDraftCard from '@web/components/publish/PublishDraftCard.svelte';
-  import PublishDraftEditor from '@web/components/publish/PublishDraftEditor.svelte';
+  import PublishDraftCard from '@web/widgets/publish/PublishDraftCard.svelte';
+  import PublishDraftEditor from '@web/widgets/publish/PublishDraftEditor.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
   import Field from '@web/components/Field.svelte';

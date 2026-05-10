@@ -22,13 +22,13 @@
   import Badge from '@web/components/Badge.svelte';
   import Card from '@web/components/Card.svelte';
   import Button from '@web/components/Button.svelte';
-  import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
+  import AnalysisProgress from '@web/widgets/AnalysisProgress.svelte';
   import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
-  import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
-  import ClipTimeline from '@web/components/video/ClipTimeline.svelte';
-  import SegmentPreview from '@web/components/video/SegmentPreview.svelte';
-  import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
-  import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
+  import ClipPlanSummary from '@web/widgets/video/ClipPlanSummary.svelte';
+  import ClipTimeline from '@web/widgets/video/ClipTimeline.svelte';
+  import SegmentPreview from '@web/widgets/video/SegmentPreview.svelte';
+  import TranscriptPanel from '@web/widgets/video/TranscriptPanel.svelte';
+  import VideoDetailsRail from '@web/widgets/video/VideoDetailsRail.svelte';
 
   let video = $state<VideoDetails | null>(null);
   let transcript = $state<TranscriptBundle | null>(null);

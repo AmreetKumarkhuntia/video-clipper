@@ -286,7 +286,7 @@
     cursor: pointer;
   }
 
-  [data-theme='dark'] .advanced-toggle {
+  :global([data-theme='dark']) .advanced-toggle {
     color: var(--vc-clay-400);
   }
 </style>

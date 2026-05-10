@@ -2,7 +2,7 @@
   import type { ChannelSummary } from '@lib/types/index.js';
   import { apiFetch } from '@web/lib/api.js';
   import Icon from '@web/components/Icon.svelte';
-  import ChannelCard from '@web/components/ChannelCard.svelte';
+  import ChannelCard from '@web/widgets/ChannelCard.svelte';
   import Button from '@web/components/Button.svelte';
   import InputText from '@web/components/InputText.svelte';
 

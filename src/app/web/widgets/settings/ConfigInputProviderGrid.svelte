@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from '../Icon.svelte';
-  import Badge from '../Badge.svelte';
+  import Icon from '@web/components/Icon.svelte';
+  import Badge from '@web/components/Badge.svelte';
   import type { ConfigInputProviderGridProps, ProviderDef } from '@app/web/types/componentProps.js';
 
   const PROVIDERS: ProviderDef[] = [

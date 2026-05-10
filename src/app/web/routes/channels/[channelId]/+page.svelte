@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import type { VideoPage } from '@lib/types/index.js';
   import { apiFetch } from '@web/lib/api.js';
-  import VideoCard from '@web/components/VideoCard.svelte';
+  import VideoCard from '@web/widgets/VideoCard.svelte';
   import Pagination from '@web/components/Pagination.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
