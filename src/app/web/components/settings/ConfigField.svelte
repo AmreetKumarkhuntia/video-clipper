@@ -1,10 +1,9 @@
 <script lang="ts">
-  import ConfigInputText from './ConfigInputText.svelte';
-  import ConfigInputTextarea from './ConfigInputTextarea.svelte';
-  import ConfigInputNumber from './ConfigInputNumber.svelte';
-  import ConfigInputToggle from './ConfigInputToggle.svelte';
-  import ConfigInputSelect from './ConfigInputSelect.svelte';
-  import ConfigInputSlider from './ConfigInputSlider.svelte';
+  import InputText from '@web/components/InputText.svelte';
+  import Textarea from '@web/components/Textarea.svelte';
+  import Toggle from '@web/components/Toggle.svelte';
+  import Slider from '@web/components/Slider.svelte';
+  import Select from '@web/components/Select.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
   import Badge from '../Badge.svelte';
   import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
@@ -28,6 +27,15 @@
   function emit(newValue: unknown): void {
     onupdate?.(field.key, newValue);
   }
+
+  const strNumberValue = $derived(typeof resolvedValue === 'number' ? String(resolvedValue) : '');
+
+  const mappedSelectOptions = $derived(
+    (field.options ?? []).map((opt, i) => ({
+      value: opt,
+      label: (field.optionLabels ?? [])[i] ?? opt,
+    })),
+  );
 </script>
 
 {#if field.widget === 'toggle'}
@@ -44,7 +52,7 @@
         <span class="toggle-row__d">{field.description}</span>
       {/if}
     </div>
-    <ConfigInputToggle value={Boolean(resolvedValue)} onchange={(v) => emit(v)} />
+    <Toggle checked={Boolean(resolvedValue)} onchange={(v) => emit(v)} />
   </label>
 {:else}
   <!-- All other fields render as a vc-field -->
@@ -64,15 +72,14 @@
       {#if field.key === 'LLM_PROVIDER'}
         <ConfigInputProviderGrid value={String(resolvedValue ?? '')} onchange={(v) => emit(v)} />
       {:else if field.widget === 'select' && field.options}
-        <ConfigInputSelect
+        <Select
           id={inputId}
           value={String(resolvedValue)}
-          options={field.options}
-          optionLabels={field.optionLabels ?? []}
+          options={mappedSelectOptions}
           onchange={(v) => emit(v)}
         />
       {:else if field.widget === 'slider'}
-        <ConfigInputSlider
+        <Slider
           id={inputId}
           value={typeof resolvedValue === 'number' ? resolvedValue : undefined}
           min={field.min}
@@ -80,23 +87,28 @@
           onchange={(v) => emit(v)}
         />
       {:else if field.widget === 'number'}
-        <ConfigInputNumber
+        <InputText
           id={inputId}
-          value={typeof resolvedValue === 'number' ? resolvedValue : undefined}
+          type="number"
+          value={strNumberValue}
           min={field.min}
           max={field.max}
           placeholder={field.placeholder ?? String(field.defaultValue ?? '')}
-          onchange={(v) => emit(v)}
+          onchange={(raw) => {
+            const n = raw === '' ? undefined : Number(raw);
+            emit(n);
+          }}
         />
       {:else if field.widget === 'textarea'}
-        <ConfigInputTextarea
+        <Textarea
           id={inputId}
           value={String(resolvedValue ?? '')}
           placeholder={field.placeholder ?? ''}
+          monospace={true}
           onchange={(v) => emit(v)}
         />
       {:else}
-        <ConfigInputText
+        <InputText
           id={inputId}
           value={String(resolvedValue ?? '')}
           secret={field.secret}

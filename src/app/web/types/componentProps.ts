@@ -216,16 +216,6 @@ export interface ConfigFieldProps {
   onupdate?: (key: string, value: unknown) => void;
 }
 
-export interface ConfigInputNumberProps {
-  id?: string;
-  value?: number;
-  min?: number;
-  max?: number;
-  placeholder?: string;
-  disabled?: boolean;
-  onchange?: (value: number | undefined) => void;
-}
-
 export interface ProviderDef {
   key: string;
   name: string;
@@ -238,47 +228,6 @@ export interface ConfigInputProviderGridProps {
   onchange?: (value: string) => void;
 }
 
-export interface ConfigInputSelectProps {
-  id?: string;
-  value?: string;
-  options?: string[];
-  optionLabels?: string[];
-  disabled?: boolean;
-  onchange?: (value: string) => void;
-}
-
-export interface ConfigInputSliderProps {
-  id?: string;
-  value?: number;
-  min?: number;
-  max?: number;
-  disabled?: boolean;
-  onchange?: (value: number | undefined) => void;
-}
-
-export interface ConfigInputTextProps {
-  id?: string;
-  value?: string;
-  secret?: boolean;
-  placeholder?: string;
-  disabled?: boolean;
-  onchange?: (value: string) => void;
-}
-
-export interface ConfigInputTextareaProps {
-  id?: string;
-  value?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  onchange?: (value: string) => void;
-}
-
-export interface ConfigInputToggleProps {
-  value?: boolean;
-  disabled?: boolean;
-  onchange?: (value: boolean) => void;
-}
-
 export interface ConfigSectionProps {
   group: ConfigGroupDescriptor;
   values: Record<string, unknown>;
@@ -287,14 +236,6 @@ export interface ConfigSectionProps {
 }
 
 // ---------- Video feature ----------
-
-export interface ActivityPanelProps {
-  analyzedChunks?: number;
-  totalChunks?: number;
-  phase?: ActivityPhase;
-  items?: AnalysisActivityItem[];
-  isAnalyzing?: boolean;
-}
 
 export interface ClipPlanSummaryProps {
   plan?: ClipPlan | null;
@@ -325,11 +266,6 @@ export interface VideoDetailsRailProps {
   onLoadTranscript?: () => void;
   onPlanClips?: () => void;
   onStop?: () => void;
-}
-
-export interface VideoPlayerPanelProps {
-  videoId: string;
-  title: string;
 }
 
 export interface VideoWorkflowStepperProps {
