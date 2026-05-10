@@ -20,14 +20,15 @@
   import { logAnalysisEvent, previewStreamText } from '@web/lib/activity/analysisLogging.js';
   import Icon from '@web/components/Icon.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Card from '@web/components/Card.svelte';
   import Button from '@web/components/Button.svelte';
-  import ActivityPanel from '@web/components/video/ActivityPanel.svelte';
+  import AnalysisProgress from '@web/components/AnalysisProgress.svelte';
+  import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
   import ClipPlanSummary from '@web/components/video/ClipPlanSummary.svelte';
   import ClipTimeline from '@web/components/video/ClipTimeline.svelte';
   import SegmentPreview from '@web/components/video/SegmentPreview.svelte';
   import TranscriptPanel from '@web/components/video/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/components/video/VideoDetailsRail.svelte';
-  import VideoPlayerPanel from '@web/components/video/VideoPlayerPanel.svelte';
 
   let video = $state<VideoDetails | null>(null);
   let transcript = $state<TranscriptBundle | null>(null);
@@ -296,7 +297,9 @@
           <Icon name="video" size={13} />
           {video.title}
         </div>
-        <VideoPlayerPanel {videoId} title={video.title} startSec={seekToSec} />
+        <div class="player-embed">
+          <YouTubeEmbed {videoId} title={video.title} startSec={seekToSec} />
+        </div>
       </div>
 
       <!-- Timeline -->
@@ -354,13 +357,23 @@
             </Badge>
           {/if}
         </div>
-        <ActivityPanel
-          {analyzedChunks}
-          {totalChunks}
-          phase={analysisPhase}
-          items={activityState.items}
-          {isAnalyzing}
-        />
+        <Card as="aside" class="activity-card">
+          <div class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Activity</p>
+              <h2 class="panel-title">Watch the analysis thread as each chunk resolves.</h2>
+            </div>
+            {#if isAnalyzing}
+              <Badge variant="clay">Live</Badge>
+            {/if}
+          </div>
+          <AnalysisProgress
+            {analyzedChunks}
+            {totalChunks}
+            phase={analysisPhase}
+            items={activityState.items}
+          />
+        </Card>
       </div>
     </div>
 
@@ -437,6 +450,65 @@
   @media (max-width: 900px) {
     .analyze-layout {
       grid-template-columns: 1fr;
+    }
+  }
+
+  .player-embed {
+    position: absolute;
+    inset: 0;
+  }
+
+  .player-embed :global(.embed) {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  :global(.activity-card) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 20px;
+  }
+
+  .panel-eyebrow {
+    font-family: var(--vc-font-mono);
+    font-size: 11px;
+    color: var(--vc-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .panel-title {
+    margin: 0;
+    font-family: var(--vc-font-display);
+    font-size: clamp(20px, 2.8vw, 26px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--vc-text);
+  }
+
+  :global(.activity-card .ap-thread) {
+    max-height: 720px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  @media (max-width: 700px) {
+    .panel-head {
+      grid-template-columns: 1fr;
+    }
+
+    :global(.activity-card .ap-thread) {
+      max-height: none;
     }
   }
 </style>
