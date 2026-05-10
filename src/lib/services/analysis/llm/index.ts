@@ -13,7 +13,6 @@ import type {
   StreamCallbacks,
 } from '@lib/types/index.js';
 import type { CacheBackend } from '@lib/types/cache.js';
-import type { LanguageModel } from 'ai';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
 const BACKOFF_BASE_MS = 1000;

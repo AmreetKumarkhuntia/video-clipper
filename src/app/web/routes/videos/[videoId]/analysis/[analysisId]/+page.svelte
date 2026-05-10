@@ -2,10 +2,14 @@
   import { page } from '$app/state';
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
   import { apiFetch } from '@web/lib/api.js';
+  import { get } from 'svelte/store';
+  import { untrack } from 'svelte';
+  import { configValues } from '@web/lib/configStore.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
   import Badge from '@web/components/Badge.svelte';
   import Card from '@web/components/Card.svelte';
+  import Slider from '@web/components/Slider.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -13,6 +17,7 @@
   let isClipping = $state(false);
   let errorMessage = $state('');
   let activeTab = $state<'candidates' | 'clips'>('candidates');
+  let threshold = $state<number>((get(configValues)['SCORE_THRESHOLD'] as number) ?? 7);
 
   let videoId = $derived(page.params.videoId);
   let analysisId = $derived(page.params.analysisId);
@@ -21,6 +26,11 @@
     if (analysisId) {
       void loadArtifacts();
     }
+  });
+
+  $effect(() => {
+    const t = ($configValues['SCORE_THRESHOLD'] as number) ?? 7;
+    untrack(() => applyThreshold(t));
   });
 
   async function loadArtifacts(): Promise<void> {
@@ -35,7 +45,10 @@
         ),
       ]);
 
-      plan = loadedPlan;
+      plan = {
+        ...loadedPlan,
+        candidates: loadedPlan.candidates.map((c) => ({ ...c, selected: c.score >= threshold })),
+      };
       clips = loadedClips.clips;
       if (clips.length > 0) activeTab = 'clips';
     } catch (error) {
@@ -71,6 +84,15 @@
     } finally {
       isClipping = false;
     }
+  }
+
+  function applyThreshold(t: number | undefined): void {
+    if (!plan || t == null) return;
+    threshold = t;
+    plan = {
+      ...plan,
+      candidates: plan.candidates.map((c) => ({ ...c, selected: c.score >= t })),
+    };
   }
 
   function toggleCandidate(candidate: ClipCandidate): void {
@@ -117,17 +139,19 @@
             >Continue to Connect <Icon name="arrow-right" size={14} /></Button
           >
         {/if}
-        <Button
-          variant="primary"
-          onclick={clipSelected}
-          disabled={isClipping || selectedCount === 0}
-        >
-          {#if isClipping}
-            <Icon name="loader" size={14} /> Generating…
-          {:else}
-            <Icon name="scissors" size={14} /> Clip selected ({selectedCount})
-          {/if}
-        </Button>
+        {#if activeTab === 'candidates'}
+          <Button
+            variant="primary"
+            onclick={clipSelected}
+            disabled={isClipping || selectedCount === 0}
+          >
+            {#if isClipping}
+              <Icon name="loader" size={14} /> Generating…
+            {:else}
+              <Icon name="scissors" size={14} /> Clip selected ({selectedCount})
+            {/if}
+          </Button>
+        {/if}
       </div>
     </div>
 
@@ -155,6 +179,17 @@
     </div>
 
     {#if activeTab === 'candidates'}
+      <div class="vc-field" style="margin-top:20px">
+        <label class="vc-label" for="threshold-slider">Min score</label>
+        <Slider
+          id="threshold-slider"
+          bind:value={threshold}
+          min={1}
+          max={10}
+          step={1}
+          onchange={applyThreshold}
+        />
+      </div>
       <div class="clipgrid" style="margin-top:20px">
         {#each plan.candidates as candidate, i}
           <Card
