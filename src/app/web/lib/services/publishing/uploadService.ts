@@ -31,20 +31,23 @@ export async function uploadDraftClips(
   requestId?: string,
   callbacks?: UploadDraftClipsCallbacks,
 ): Promise<UploadArtifact[]> {
-  const done = log.fnCalled('uploadDraftClips', { analysisId: input.analysisId }, requestId);
+  const done = log.fnCalled('uploadDraftClips', requestId, { analysisId: input.analysisId });
 
   const draft = await getPublishDraft(cfg.OUTPUT_DIR, input.analysisId);
 
   if (!draft) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [publish-upload] [draft] | analysisId=${input.analysisId} status=missing`,
-    );
+    log.warn('uploadDraftClips', '[draft] draft missing', requestId, {
+      analysisId: input.analysisId,
+      status: 'missing',
+    });
     throw new Error('Save a publish draft before uploading clips.');
   }
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [draft] | analysisId=${draft.analysisId} totalItems=${draft.items.length} titleLength=${draft.title.length}`,
-  );
+  log.info('uploadDraftClips', '[draft]', requestId, {
+    analysisId: draft.analysisId,
+    totalItems: draft.items.length,
+    titleLength: draft.title.length,
+  });
 
   const auth = await getAuthorizedYouTubeAuthState(requestId);
   const selectedItems = draft.items.filter((item) => {
@@ -56,15 +59,20 @@ export async function uploadDraftClips(
   });
 
   if (selectedItems.length === 0) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [publish-upload] [selection] | analysisId=${input.analysisId} selected=0 requestedClips=${input.clipArtifactIds?.length ?? 0}`,
-    );
+    log.warn('uploadDraftClips', '[selection] no clips selected', requestId, {
+      analysisId: input.analysisId,
+      selected: 0,
+      requestedClips: input.clipArtifactIds?.length ?? 0,
+    });
     throw new Error('Select at least one prepared clip before uploading.');
   }
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [selection] | analysisId=${input.analysisId} selected=${selectedItems.length} authMode=${auth.authMode} channelId=${auth.channel.channelId}`,
-  );
+  log.info('uploadDraftClips', '[selection]', requestId, {
+    analysisId: input.analysisId,
+    selected: selectedItems.length,
+    authMode: auth.authMode,
+    channelId: auth.channel.channelId,
+  });
 
   const uploads: UploadArtifact[] = [];
 
@@ -83,9 +91,12 @@ export async function uploadDraftClips(
   const saved = await saveUploadArtifacts(uploads, cfg.OUTPUT_DIR);
   const uploaded = uploads.filter((u) => u.status === 'uploaded').length;
   const failed = uploads.length - uploaded;
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [persisted] | analysisId=${input.analysisId} uploaded=${uploaded} failed=${failed} savedArtifacts=${saved.length}`,
-  );
+  log.info('uploadDraftClips', '[persisted]', requestId, {
+    analysisId: input.analysisId,
+    uploaded,
+    failed,
+    savedArtifacts: saved.length,
+  });
   done({ uploaded, total: uploads.length });
   return saved;
 }
@@ -97,13 +108,16 @@ async function uploadSingleClip(
   auth: YouTubeAuthState,
   requestId?: string,
 ): Promise<UploadArtifact> {
-  const done = log.fnCalled('uploadSingleClip', { clip: item.filename }, requestId);
+  const done = log.fnCalled('uploadSingleClip', requestId, { clip: item.filename });
   const createdAt = new Date().toISOString();
   const startedAt = Date.now();
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [clip-start] | clipArtifactId=${item.clipArtifactId} file=${item.filename} privacy=${item.privacyStatus} titleLength=${item.title.length}`,
-  );
+  log.info('uploadSingleClip', '[clip-start]', requestId, {
+    clipArtifactId: item.clipArtifactId,
+    file: item.filename,
+    privacy: item.privacyStatus,
+    titleLength: item.title.length,
+  });
 
   try {
     const uploaded = await uploadToYouTube(item, auth.accessToken, requestId);
@@ -117,9 +131,10 @@ async function uploadSingleClip(
         requestId,
       ).catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        log.warn(
-          `${requestId ?? 'no-request-id'} [publish-upload] [thumbnail-failed] | clipArtifactId=${item.clipArtifactId} error=${msg}`,
-        );
+        log.warn('uploadSingleClip', '[thumbnail-failed]', requestId, {
+          clipArtifactId: item.clipArtifactId,
+          error: msg,
+        });
       });
     }
 
@@ -131,9 +146,11 @@ async function uploadSingleClip(
         requestId,
       ).catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        log.warn(
-          `${requestId ?? 'no-request-id'} [publish-upload] [playlist-insert-failed] | clipArtifactId=${item.clipArtifactId} playlistId=${item.playlistId} error=${msg}`,
-        );
+        log.warn('uploadSingleClip', '[playlist-insert-failed]', requestId, {
+          clipArtifactId: item.clipArtifactId,
+          playlistId: item.playlistId,
+          error: msg,
+        });
       });
     }
     const artifact = UploadArtifactSchema.parse({
@@ -149,16 +166,21 @@ async function uploadSingleClip(
       createdAt,
       updatedAt: new Date().toISOString(),
     });
-    log.info(
-      `${requestId ?? 'no-request-id'} [publish-upload] [clip-success] | clipArtifactId=${item.clipArtifactId} youtubeVideoId=${uploaded.videoId} elapsedMs=${Date.now() - startedAt}`,
-    );
+    log.info('uploadSingleClip', '[clip-success]', requestId, {
+      clipArtifactId: item.clipArtifactId,
+      youtubeVideoId: uploaded.videoId,
+      elapsedMs: Date.now() - startedAt,
+    });
     done({ status: 'uploaded' });
     return artifact;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    log.warn(
-      `${requestId ?? 'no-request-id'} [publish-upload] [clip-failed] | clipArtifactId=${item.clipArtifactId} file=${item.filename} elapsedMs=${Date.now() - startedAt} error=${sanitizeLogValue(message)}`,
-    );
+    log.warn('uploadSingleClip', '[clip-failed]', requestId, {
+      clipArtifactId: item.clipArtifactId,
+      file: item.filename,
+      elapsedMs: Date.now() - startedAt,
+      error: sanitizeLogValue(message),
+    });
     const artifact = UploadArtifactSchema.parse({
       id: createArtifactId(`upload-${videoId}`),
       analysisId,
@@ -191,14 +213,17 @@ async function uploadToYouTube(
   const hasFutureSchedule = Number.isFinite(scheduleMs) && scheduleMs > Date.now() + 60_000;
 
   if (item.scheduledAt && !hasFutureSchedule) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [publish-upload] [schedule-stale] | clipArtifactId=${item.clipArtifactId} scheduledAt=${item.scheduledAt}`,
-    );
+    log.warn('uploadToYouTube', '[schedule-stale]', requestId, {
+      clipArtifactId: item.clipArtifactId,
+      scheduledAt: item.scheduledAt,
+    });
   }
   if (hasFutureSchedule && item.privacyStatus !== 'private') {
-    log.info(
-      `${requestId ?? 'no-request-id'} [publish-upload] [schedule-coerce] | clipArtifactId=${item.clipArtifactId} from=${item.privacyStatus} publishAt=${item.scheduledAt}`,
-    );
+    log.info('uploadToYouTube', '[schedule-coerce]', requestId, {
+      clipArtifactId: item.clipArtifactId,
+      from: item.privacyStatus,
+      publishAt: item.scheduledAt,
+    });
   }
 
   const status: Record<string, unknown> = {
@@ -243,9 +268,12 @@ async function uploadToYouTube(
     closeDelimiter,
   ]);
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [youtube-request] | clipArtifactId=${item.clipArtifactId} fileBytes=${file.length} bodyBytes=${body.length} privacy=${item.privacyStatus}`,
-  );
+  log.info('uploadToYouTube', '[youtube-request]', requestId, {
+    clipArtifactId: item.clipArtifactId,
+    fileBytes: file.length,
+    bodyBytes: body.length,
+    privacy: item.privacyStatus,
+  });
 
   const res = await fetch(YOUTUBE_UPLOAD_URL, {
     method: 'POST',
@@ -261,19 +289,21 @@ async function uploadToYouTube(
   const raw = tryParseJson(rawText) as { id?: string; error?: { message?: string } } | null;
 
   if (!res.ok || !raw?.id) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [publish-upload] [youtube-failed] | clipArtifactId=${item.clipArtifactId} status=${res.status} error=${sanitizeLogValue(
-        raw?.error?.message || rawText,
-      )}`,
-    );
+    log.warn('uploadToYouTube', '[youtube-failed]', requestId, {
+      clipArtifactId: item.clipArtifactId,
+      status: res.status,
+      error: sanitizeLogValue(raw?.error?.message || rawText),
+    });
     throw new Error(
       raw?.error?.message || summarizeResponseText(rawText) || 'YouTube upload failed.',
     );
   }
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [youtube-response] | clipArtifactId=${item.clipArtifactId} status=${res.status} ok=${res.ok}`,
-  );
+  log.info('uploadToYouTube', '[youtube-response]', requestId, {
+    clipArtifactId: item.clipArtifactId,
+    status: res.status,
+    ok: res.ok,
+  });
 
   return {
     videoId: raw.id,
@@ -291,9 +321,11 @@ async function uploadThumbnail(
   const ext = thumbnailPath.split('.').pop()?.toLowerCase() ?? 'jpeg';
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [thumbnail-upload] | youtubeVideoId=${youtubeVideoId} bytes=${file.length} mime=${mimeType}`,
-  );
+  log.info('uploadThumbnail', '[thumbnail-upload]', requestId, {
+    youtubeVideoId,
+    bytes: file.length,
+    mime: mimeType,
+  });
 
   const res = await fetch(
     `${YOUTUBE_THUMBNAILS_URL}?videoId=${encodeURIComponent(youtubeVideoId)}&uploadType=media`,
@@ -323,9 +355,7 @@ async function insertIntoPlaylist(
   accessToken: string,
   requestId?: string,
 ): Promise<void> {
-  log.info(
-    `${requestId ?? 'no-request-id'} [publish-upload] [playlist-insert] | youtubeVideoId=${youtubeVideoId} playlistId=${playlistId}`,
-  );
+  log.info('insertIntoPlaylist', '[playlist-insert]', requestId, { youtubeVideoId, playlistId });
 
   const body = JSON.stringify({
     snippet: {

@@ -25,11 +25,12 @@ import type { CliArgs, PipelineResult } from '@lib/types/index.js';
 async function outputResult(
   result: PipelineResult,
   outputJsonPath: string | undefined,
+  requestId: string,
 ): Promise<void> {
   const json = JSON.stringify(result, null, 2);
   if (outputJsonPath) {
     await fs.writeFile(outputJsonPath, json, 'utf-8');
-    log.info(`Output written to ${outputJsonPath}`);
+    log.info('runPipeline', `Output written to ${outputJsonPath}`, requestId);
   } else {
     console.log('\n' + json);
   }
@@ -55,7 +56,7 @@ async function outputResult(
  * detection, individual clip failures) are logged as warnings and the pipeline
  * continues.
  */
-export async function runPipeline(args: CliArgs): Promise<void> {
+export async function runPipeline(args: CliArgs, requestId: string): Promise<void> {
   const threshold = args.threshold ?? config.SCORE_THRESHOLD;
   const topN = args.topN ?? config.TOP_N_SEGMENTS;
   const gameProfile = args.gameProfile ?? config.GAME_PROFILE;
@@ -133,7 +134,11 @@ export async function runPipeline(args: CliArgs): Promise<void> {
         audioPath = await downloadAudio(videoId, `${config.OUTPUT_DIR}/audio`, audioDownloadConfig);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        log.warn(`Audio download failed — continuing without audio: ${message}`);
+        log.warn(
+          'runPipeline',
+          `Audio download failed — continuing without audio: ${message}`,
+          requestId,
+        );
       }
     }
 
@@ -168,7 +173,9 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       onChunkAnalyzed: (chunkIndex, evaluation) => {
         if (evaluation.status === 'success') {
           log.info(
+            'runPipeline',
             `  ✓ chunk ${chunkIndex}: interesting=${evaluation.interesting}, score=${evaluation.score}`,
+            requestId,
           );
         }
       },
@@ -177,7 +184,9 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       },
       onSegmentRefined: (rank, segment) => {
         log.info(
+          'runPipeline',
           `  ✓ segment rank=${rank}: ${segment.start.toFixed(1)}s–${segment.end.toFixed(1)}s`,
+          requestId,
         );
       },
     };
@@ -200,6 +209,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
         maxRetries: config.LLM_MAX_RETRIES,
         systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
         llmModel: config.LLM_MODEL,
+        requestId,
         callbacks,
       },
     );
@@ -226,7 +236,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     };
 
     if (rankedSegments.length === 0) {
-      await outputResult(partialResult, args.outputJson);
+      await outputResult(partialResult, args.outputJson, requestId);
       if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, partialResult);
       return;
     }
@@ -236,6 +246,7 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       noCache: args.noCache,
       maxRetries: config.LLM_MAX_RETRIES,
       model,
+      requestId,
       callbacks,
     });
 
@@ -247,13 +258,17 @@ export async function runPipeline(args: CliArgs): Promise<void> {
       segments: refinedSegments,
     };
 
-    await outputResult(result, args.outputJson);
+    await outputResult(result, args.outputJson, requestId);
     if (config.DUMP_OUTPUTS) await dumpAnalysis(videoId, result);
 
-    log.info('Done.');
+    log.info('runPipeline', 'Done.', requestId);
 
     if (!args.clip) {
-      log.info('Tip: run with --clip to download the video and generate mp4 clips.');
+      log.info(
+        'runPipeline',
+        'Tip: run with --clip to download the video and generate mp4 clips.',
+        requestId,
+      );
       return;
     }
 
@@ -276,11 +291,15 @@ export async function runPipeline(args: CliArgs): Promise<void> {
     );
 
     if (clipPaths.length === 0) {
-      log.warn('No clips were generated successfully.');
+      log.warn('runPipeline', 'No clips were generated successfully.', requestId);
     } else {
-      log.info(`Done — ${clipPaths.length} clip${clipPaths.length !== 1 ? 's' : ''} saved:`);
+      log.info(
+        'runPipeline',
+        `Done — ${clipPaths.length} clip${clipPaths.length !== 1 ? 's' : ''} saved:`,
+        requestId,
+      );
       for (const p of clipPaths) {
-        log.info(`  ${p}`);
+        log.info('runPipeline', `  ${p}`, requestId);
       }
     }
   } finally {

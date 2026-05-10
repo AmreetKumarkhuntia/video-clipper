@@ -145,6 +145,9 @@ export const ConfigSchema = z
     YT_DEFAULT_IS_SHORT: z.coerce.boolean().default(false),
     YT_SCHEDULE_ENABLED: z.coerce.boolean().default(true),
     YT_SCHEDULE_INTERVAL_MIN: z.coerce.number().min(1).default(45),
+
+    // ---- Logging -------------------------------------------------------------
+    LOG_COLOR: z.coerce.boolean().default(true),
   })
   .superRefine((data, ctx) => {
     const provider = data.LLM_PROVIDER;
@@ -288,7 +291,14 @@ export const CONFIG_GROUPS = [
   {
     id: 'output',
     label: 'Output',
-    fields: ['DOWNLOAD_DIR', 'OUTPUT_DIR', 'CACHE_DIR', 'DUMP_OUTPUTS', 'CLIP_CONCURRENCY'],
+    fields: [
+      'DOWNLOAD_DIR',
+      'OUTPUT_DIR',
+      'CACHE_DIR',
+      'DUMP_OUTPUTS',
+      'CLIP_CONCURRENCY',
+      'LOG_COLOR',
+    ],
   },
   {
     id: 'cache',
@@ -504,6 +514,10 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     widget: 'toggle',
   },
   CLIP_CONCURRENCY: { description: 'Max parallel clip generation operations', widget: 'number' },
+  LOG_COLOR: {
+    description: 'Enable ANSI color in log output (set LOG_COLOR=false to disable)',
+    widget: 'toggle',
+  },
   CACHE_BACKEND: { description: 'Cache storage backend', widget: 'select' },
   MONGODB_URI: {
     description: 'MongoDB connection URI (required if backend=mongodb)',

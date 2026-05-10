@@ -37,10 +37,11 @@ function cutClip(
   const duration = adjustedEnd - adjustedStart;
 
   log.info(
+    'cutClip',
     `Cutting clip: start=${adjustedStart.toFixed(2)}s, end=${adjustedEnd.toFixed(2)}s, duration=${duration.toFixed(2)}s`,
   );
   if (cfg.timestampOffset !== 0) {
-    log.info(`  Timestamp offset applied: ${cfg.timestampOffset}s`);
+    log.info('cutClip', `  Timestamp offset applied: ${cfg.timestampOffset}s`);
   }
 
   return new Promise((resolve, reject) => {
@@ -119,12 +120,13 @@ export async function generateClips(
   await fs.mkdir(outputDir, { recursive: true });
 
   if (segments.length === 0) {
-    log.warn('No segments provided to generateClips — nothing to cut.');
+    log.warn('generateClips', 'No segments provided to generateClips — nothing to cut.');
     return [];
   }
 
   const limit = pLimit(concurrency);
   log.info(
+    'generateClips',
     `Generating ${segments.length} clip${segments.length !== 1 ? 's' : ''} from local video (max ${concurrency} parallel)...`,
   );
 
@@ -136,11 +138,12 @@ export async function generateClips(
 
       try {
         await fs.access(outputPath);
-        log.info(`Clip already exists, skipping: ${outputPath}`);
+        log.info('generateClips', `Clip already exists, skipping: ${outputPath}`);
         return outputPath;
       } catch {}
 
       log.info(
+        'generateClips',
         `Cutting clip: ${outputPath} (${formatSeconds(startInt)} – ${formatSeconds(endInt)})`,
       );
       return cutClip(videoPath, segment.start, segment.end, outputPath, cfg);
@@ -154,11 +157,12 @@ export async function generateClips(
     const result = results[i];
     const segment = segments[i];
     if (result.status === 'fulfilled') {
-      log.info(`Clip ready: ${result.value}`);
+      log.info('generateClips', `Clip ready: ${result.value}`);
       paths.push(result.value);
     } else {
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log.warn(
+        'generateClips',
         `Failed to cut clip for segment [${formatSeconds(segment.start)} – ${formatSeconds(segment.end)}] (rank ${segment.rank}): ${reason}`,
       );
     }
@@ -185,7 +189,7 @@ export async function organizeClips(
   concurrency: number = 1,
 ): Promise<string[]> {
   if (sourcePaths.length === 0) {
-    log.warn('No pre-downloaded segments to organize.');
+    log.warn('organizeClips', 'No pre-downloaded segments to organize.');
     return [];
   }
 
@@ -195,6 +199,7 @@ export async function organizeClips(
 
   const limit = pLimit(concurrency);
   log.info(
+    'organizeClips',
     `Organizing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (max ${concurrency} parallel)...`,
   );
 
@@ -203,7 +208,7 @@ export async function organizeClips(
       const filename = sourcePath.split('/').pop() || '';
       const outputPath = join(outputDir, filename);
 
-      log.info(`Organizing clip: ${outputPath}`);
+      log.info('organizeClips', `Organizing clip: ${outputPath}`);
       return copySegment(sourcePath, outputPath, cfg);
     }),
   );
@@ -214,12 +219,12 @@ export async function organizeClips(
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === 'fulfilled') {
-      log.info(`Clip ready: ${result.value}`);
+      log.info('organizeClips', `Clip ready: ${result.value}`);
       paths.push(result.value);
     } else {
       const sourcePath = sourcePaths[i];
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      log.warn(`Failed to organize clip ${sourcePath}: ${reason}`);
+      log.warn('organizeClips', `Failed to organize clip ${sourcePath}: ${reason}`);
     }
   }
 
@@ -244,7 +249,7 @@ export async function remuxClips(
   concurrency: number = 1,
 ): Promise<string[]> {
   if (sourcePaths.length === 0) {
-    log.warn('No pre-downloaded segments to remux.');
+    log.warn('remuxClips', 'No pre-downloaded segments to remux.');
     return [];
   }
 
@@ -254,6 +259,7 @@ export async function remuxClips(
 
   const limit = pLimit(concurrency);
   log.info(
+    'remuxClips',
     `Remuxing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (lossless, max ${concurrency} parallel)...`,
   );
 
@@ -264,11 +270,11 @@ export async function remuxClips(
 
       try {
         await fs.access(outputPath);
-        log.info(`Clip already exists, skipping: ${outputPath}`);
+        log.info('remuxClips', `Clip already exists, skipping: ${outputPath}`);
         return outputPath;
       } catch {}
 
-      log.info(`Remuxing clip: ${sourcePath} → ${outputPath}`);
+      log.info('remuxClips', `Remuxing clip: ${sourcePath} → ${outputPath}`);
       return remuxSegment(sourcePath, outputPath, cfg);
     }),
   );
@@ -279,12 +285,12 @@ export async function remuxClips(
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === 'fulfilled') {
-      log.info(`Clip ready: ${result.value}`);
+      log.info('remuxClips', `Clip ready: ${result.value}`);
       paths.push(result.value);
     } else {
       const sourcePath = sourcePaths[i];
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      log.warn(`Failed to remux clip ${sourcePath}: ${reason}`);
+      log.warn('remuxClips', `Failed to remux clip ${sourcePath}: ${reason}`);
     }
   }
 

@@ -19,7 +19,7 @@ export async function analyzeSegments(
   cache: Cache,
   opts: SegmentAnalyzerOpts,
 ): Promise<SegmentAnalyzerResult> {
-  const done = log.fnCalled('analyzeSegments', { videoId }, opts.requestId);
+  const done = log.fnCalled('analyzeSegments', opts.requestId, { videoId });
 
   const chain = createTranscriptChain(opts.transcriptProvider, opts.transcriptChainConfig);
   const transcriptDetector = new TranscriptDetector(
@@ -70,11 +70,9 @@ export async function refineRankedSegments(
     | 'signal'
   >,
 ): Promise<RankedSegment[]> {
-  const done = log.fnCalled(
-    'refineRankedSegments',
-    { segments: rankedSegments.length },
-    opts.requestId,
-  );
+  const done = log.fnCalled('refineRankedSegments', opts.requestId, {
+    segments: rankedSegments.length,
+  });
   const result = await refineSegments(
     rankedSegments,
     microBlocks,

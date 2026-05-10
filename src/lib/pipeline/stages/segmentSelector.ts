@@ -32,9 +32,13 @@ export function selectSegments(
   const ranked = rankSegments(merged, opts.threshold, opts.topN);
 
   if (ranked.length === 0) {
-    log.warn(`No segments scored above threshold ${opts.threshold}. Try lowering --threshold.`);
+    log.warn(
+      'selectSegments',
+      `No segments scored above threshold ${opts.threshold}. Try lowering --threshold.`,
+    );
   } else {
     log.info(
+      'selectSegments',
       `Analysis complete: ${ranked.length} segment${ranked.length !== 1 ? 's' : ''} above threshold ${opts.threshold}`,
     );
   }

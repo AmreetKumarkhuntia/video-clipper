@@ -24,7 +24,10 @@ export async function readMetadataCache(
     const raw = await fs.readFile(filePath, 'utf-8');
     const parsed = CachedMetadataSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      log.warn(`[publish-metadata-cache] corrupt entry at ${filePath} — ignoring`);
+      log.warn(
+        'readMetadataCache',
+        `[publish-metadata-cache] corrupt entry at ${filePath} — ignoring`,
+      );
       return null;
     }
     return parsed.data;
@@ -46,6 +49,7 @@ export async function writeMetadataCache(
     await fs.writeFile(filePath, JSON.stringify(metadata, null, 2), 'utf-8');
   } catch (err) {
     log.warn(
+      'writeMetadataCache',
       `[publish-metadata-cache] failed to write ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }

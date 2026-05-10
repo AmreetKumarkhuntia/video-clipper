@@ -91,6 +91,7 @@ export class MongoCacheBackend implements CacheBackend {
     } catch (err) {
       // Non-fatal — pipeline should not crash if indexes can't be created
       log.warn(
+        'MongoCacheBackend.ensureIndexes',
         `[mongo-cache] Failed to ensure indexes on "${collectionName}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
@@ -113,12 +114,16 @@ export class MongoCacheBackend implements CacheBackend {
 
       const parsed = schema.safeParse(doc.data);
       if (!parsed.success) {
-        log.warn(`[mongo-cache] Corrupt entry in "${collectionName}" (key=${cacheKey}) — ignoring`);
+        log.warn(
+          'MongoCacheBackend.readDoc',
+          `[mongo-cache] Corrupt entry in "${collectionName}" (key=${cacheKey}) — ignoring`,
+        );
         return null;
       }
       return parsed.data;
     } catch (err) {
       log.warn(
+        'MongoCacheBackend.readDoc',
         `[mongo-cache] Read failed in "${collectionName}": ${err instanceof Error ? err.message : String(err)}`,
       );
       return null;
@@ -136,6 +141,7 @@ export class MongoCacheBackend implements CacheBackend {
       );
     } catch (err) {
       log.warn(
+        'MongoCacheBackend.writeDoc',
         `[mongo-cache] Write failed in "${collectionName}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
@@ -301,6 +307,7 @@ export class MongoCacheBackend implements CacheBackend {
       await this.client.close();
     } catch (err) {
       log.warn(
+        'MongoCacheBackend.close',
         `[mongo-cache] Failed to close MongoDB connection: ${err instanceof Error ? err.message : String(err)}`,
       );
     }

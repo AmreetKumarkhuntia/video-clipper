@@ -14,7 +14,11 @@ export function logEmittedUploadEvent(
   data: unknown,
 ): void {
   const meta = summarizeUploadEvent(eventName, data);
-  log.info(`${requestId} [upload-stream] [emit] | ${eventName}${formatEventMeta(meta)}`);
+  log.info(
+    'logEmittedUploadEvent',
+    `[upload-stream] [emit] | ${eventName}${formatEventMeta(meta)}`,
+    requestId,
+  );
 }
 
 function summarizeUploadEvent(

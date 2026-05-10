@@ -38,12 +38,16 @@ export class LLMAnalyzer {
 
     if (chunkLimit !== undefined) {
       log.info(
+        'LLMAnalyzer.analyze',
         `Limiting evaluation to ${chunksToAnalyze.length} of ${chunks.length} chunks (--max-chunks ${chunkLimit})`,
+        opts.requestId,
       );
     }
 
     log.info(
+      'LLMAnalyzer.analyze',
       `Analyzing chunks with ${this.llmModel} (${chunksToAnalyze.length} chunks, max ${opts.maxParallel} parallel)...`,
+      opts.requestId,
     );
 
     const analyzeOpts: AnalyzeChunksOpts = {
@@ -83,7 +87,7 @@ export class LLMAnalyzer {
     microBlocks: MicroBlock[],
     opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache' | 'requestId' | 'signal'>,
   ): Promise<RankedSegment[]> {
-    log.info('Refining clip boundaries...');
+    log.info('LLMAnalyzer.refine', 'Refining clip boundaries...', opts.requestId);
     const refineOpts: RefineSegmentsOpts = {
       maxRetries: this.maxRetries,
       model: this.model,

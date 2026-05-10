@@ -83,7 +83,7 @@ async function refineSegment(
   if (!noCache) {
     const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
     if (cached) {
-      log.info(`[segment] cache hit (rank=${segment.rank})`);
+      log.info('refineSegment', `[segment] cache hit (rank=${segment.rank})`, opts.requestId);
       const refined = { ...segment, start: cached.refined_start, end: cached.refined_end };
       opts.callbacks?.onSegmentRefined?.(segment.rank, refined);
       return refined;
@@ -142,11 +142,10 @@ export async function refineSegments(
   noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment[]> {
-  const done = log.fnCalled(
-    'refineSegments',
-    { segments: segments.length, concurrency },
-    opts.requestId,
-  );
+  const done = log.fnCalled('refineSegments', opts.requestId, {
+    segments: segments.length,
+    concurrency,
+  });
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
@@ -158,11 +157,15 @@ export async function refineSegments(
       return result.value;
     }
     const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-    log.warn(`[segment rank=${segments[i].rank}] refinement skipped: ${reason}`);
+    log.warn(
+      'refineSegments',
+      `[segment rank=${segments[i].rank}] refinement skipped: ${reason}`,
+      opts.requestId,
+    );
     return segments[i];
   });
 
-  log.info(`Refinement complete`);
+  log.info('refineSegments', 'Refinement complete', opts.requestId);
   done({ refined: refined.length });
   return refined;
 }

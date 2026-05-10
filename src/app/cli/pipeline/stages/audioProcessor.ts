@@ -24,7 +24,10 @@ export async function processAudio(
 
   const cached = await cache.readAudioEvents(videoId, opts.gameProfile, procConfig.audioProvider);
   if (cached) {
-    log.info(`[cache hit] Audio events loaded from cache (${cached.length} events)`);
+    log.info(
+      'processAudio',
+      `[cache hit] Audio events loaded from cache (${cached.length} events)`,
+    );
     return cached;
   }
 
@@ -42,6 +45,7 @@ export async function processAudio(
 
     const providerNames = chain.map((a) => a.source).join(' → ');
     log.info(
+      'processAudio',
       `Detecting audio events (chain: ${providerNames}, profile: ${opts.gameProfile}, max ${opts.maxParallel} parallel)...`,
     );
 
@@ -51,7 +55,7 @@ export async function processAudio(
     const results = await Promise.allSettled(
       windows.map((window) =>
         limit(async () => {
-          log.info(`  Processing audio chunk ${window.start}s - ${window.end}s...`);
+          log.info('processAudio', `  Processing audio chunk ${window.start}s - ${window.end}s...`);
 
           const cachedChunk = await cache.readAudioChunk(
             videoId,
@@ -62,6 +66,7 @@ export async function processAudio(
           );
           if (cachedChunk) {
             log.info(
+              'processAudio',
               `  [cache hit] Audio chunk ${window.start}s - ${window.end}s (${cachedChunk.length} events)`,
             );
             return cachedChunk;
@@ -101,19 +106,20 @@ export async function processAudio(
         if (r.status === 'fulfilled') return r.value;
         const w = windows[i]!;
         log.warn(
+          'processAudio',
           `  Audio event detection failed for chunk ${w.start}s - ${w.end}s: ${String(r.reason)}`,
         );
         return [];
       })
       .sort((a, b) => a.time - b.time);
 
-    log.info(`Audio event detection complete: ${audioEvents.length} events found`);
+    log.info('processAudio', `Audio event detection complete: ${audioEvents.length} events found`);
 
     await cache.writeAudioEvents(videoId, opts.gameProfile, procConfig.audioProvider, audioEvents);
     return audioEvents;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.warn(`Audio event detection disabled due to error: ${message}`);
+    log.warn('processAudio', `Audio event detection disabled due to error: ${message}`);
     return [];
   }
 }

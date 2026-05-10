@@ -364,7 +364,7 @@ async function fetchTranscriptViaYtDlp(
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      log.error(`yt-dlp subtitle download failed: ${message}`);
+      log.error('fetchTranscriptViaYtDlp', `yt-dlp subtitle download failed: ${message}`);
       if (
         message.includes('Sign in to confirm') ||
         message.includes('confirm you’re not a bot') ||
@@ -387,7 +387,10 @@ async function fetchTranscriptViaYtDlp(
 
     const { file, lines } = await readBestSubtitleFile(videoId, tmpDir);
 
-    log.info(`Parsed ${lines.length} cues from subtitle file "${file}".`);
+    log.info(
+      'fetchTranscriptViaYtDlp',
+      `Parsed ${lines.length} cues from subtitle file "${file}".`,
+    );
     return lines;
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
@@ -412,12 +415,16 @@ async function fetchTranscript(videoId: string, cookies: YtDlpCookies): Promise<
     const directLines = await fetchTranscriptFromYouTube(videoId);
 
     if (directLines) {
-      log.info(`Fetched ${directLines.length} cues directly from YouTube for "${videoId}".`);
+      log.info(
+        'fetchTranscript',
+        `Fetched ${directLines.length} cues directly from YouTube for "${videoId}".`,
+      );
       return directLines;
     }
   } catch (err) {
     directFetchError = err instanceof Error ? err : new Error(String(err));
     log.warn(
+      'fetchTranscript',
       `[transcript:youtube] direct caption fetch failed for "${videoId}", falling back to yt-dlp: ${directFetchError.message}`,
     );
   }

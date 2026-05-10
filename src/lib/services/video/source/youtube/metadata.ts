@@ -36,7 +36,7 @@ async function extractViaYtDlp(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.warn(`yt-dlp failed for "${videoId}": ${message}`);
+    log.warn('extractViaYtDlp', `yt-dlp failed for "${videoId}": ${message}`);
     return null;
   }
 }
@@ -53,6 +53,7 @@ async function extractViaOEmbed(videoId: string): Promise<VideoMetadata> {
   }
   const data = (await res.json()) as OEmbedResponse;
   log.warn(
+    'extractViaOEmbed',
     `yt-dlp unavailable — duration unknown for "${videoId}". Install yt-dlp for full metadata.`,
   );
   return {
@@ -80,6 +81,6 @@ export async function extractMetadata(
     return ytDlpResult;
   }
 
-  log.warn(`yt-dlp failed for "${videoId}", falling back to oEmbed...`);
+  log.warn('extractMetadata', `yt-dlp failed for "${videoId}", falling back to oEmbed...`);
   return extractViaOEmbed(videoId);
 }

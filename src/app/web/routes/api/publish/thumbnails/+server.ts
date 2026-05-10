@@ -46,9 +46,11 @@ export const POST: RequestHandler = async (event) => {
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(outputPath, buffer);
 
-    log.info(
-      `${event.locals.requestId ?? 'no-request-id'} [publish-thumbnails] [saved] | clipArtifactId=${clipArtifactId} path=${outputPath} bytes=${buffer.length}`,
-    );
+    log.info('POST /api/publish/thumbnails', 'thumbnail saved', event.locals.requestId, {
+      clipArtifactId,
+      path: outputPath,
+      bytes: buffer.length,
+    });
 
     reqDone(200);
     return jsonOk({ path: outputPath });

@@ -45,7 +45,7 @@ export async function generatePublishMetadata(
   context?: MetadataGenerationContext,
   requestId?: string,
 ): Promise<GeneratedPublishMetadata[]> {
-  const done = log.fnCalled('generatePublishMetadata', { items: items.length }, requestId);
+  const done = log.fnCalled('generatePublishMetadata', requestId, { items: items.length });
 
   const concurrency = Math.max(1, Math.min(cfg.LLM_CONCURRENCY, 2));
   const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
@@ -55,7 +55,9 @@ export async function generatePublishMetadata(
     CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
   });
   log.info(
+    'generatePublishMetadata',
     `[publish-metadata] model=${cfg.LLM_PROVIDER}/${cfg.LLM_MODEL} concurrency=${concurrency}`,
+    requestId,
   );
   const limit = pLimit(concurrency);
   const effectiveSystemPrompt =
@@ -66,20 +68,26 @@ export async function generatePublishMetadata(
       const label = `clip ${itemIndex + 1}/${items.length} ${item.filename}`;
       const t0 = Date.now();
       log.info(
+        'generatePublishMetadata',
         `[publish-metadata] → ${label} (${item.startSec.toFixed(1)}s–${item.endSec.toFixed(1)}s)`,
+        requestId,
       );
 
       const prompt = buildMetadataPrompt(workflowTitle, item, context);
 
       const cached = await readMetadataCache(cfg.CACHE_DIR, effectiveSystemPrompt, prompt);
       if (cached) {
-        log.info(`[publish-metadata] cache hit for ${label}`);
+        log.info('generatePublishMetadata', `[publish-metadata] cache hit for ${label}`, requestId);
         return GeneratedPublishMetadataSchema.parse({
           clipArtifactId: item.clipArtifactId,
           ...cached,
         });
       }
-      log.info(`[publish-metadata] cache miss for ${label} — calling LLM`);
+      log.info(
+        'generatePublishMetadata',
+        `[publish-metadata] cache miss for ${label} — calling LLM`,
+        requestId,
+      );
 
       const result = await generateText({
         model,
@@ -96,14 +104,18 @@ export async function generatePublishMetadata(
       });
 
       log.info(
+        'generatePublishMetadata',
         `[publish-metadata] ← ${label} toolCalls=${result.toolCalls.length} finishReason=${result.finishReason} (${Date.now() - t0}ms)`,
+        requestId,
       );
 
       const toolCall = result.toolCalls.find((tc) => tc.toolName === 'register_metadata');
       if (!toolCall) {
         const names = result.toolCalls.map((tc) => tc.toolName).join(', ') || 'none';
         log.error(
+          'generatePublishMetadata',
           `[publish-metadata] no register_metadata call for ${label} — toolCalls=[${names}] finishReason=${result.finishReason}`,
+          requestId,
         );
         throw new Error('No metadata registered: model did not call register_metadata');
       }
@@ -113,7 +125,9 @@ export async function generatePublishMetadata(
         ...(toolCall.input as Record<string, unknown>),
       });
       log.info(
+        'generatePublishMetadata',
         `[publish-metadata] ✓ ${label} title="${metadata.title}" category=${metadata.categoryId} tags=${metadata.tags.length}`,
+        requestId,
       );
 
       await writeMetadataCache(cfg.CACHE_DIR, effectiveSystemPrompt, prompt, {
@@ -140,7 +154,11 @@ export async function generatePublishMetadata(
     }
 
     const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
-    log.error(`[publish-metadata] ✗ clip ${index + 1}/${items.length} ${item.filename}: ${reason}`);
+    log.error(
+      'generatePublishMetadata',
+      `[publish-metadata] ✗ clip ${index + 1}/${items.length} ${item.filename}: ${reason}`,
+      requestId,
+    );
   }
 
   done({ generated: generated.length });

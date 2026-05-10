@@ -15,7 +15,9 @@ export async function generateWebClips(
 ): Promise<ClipArtifact[]> {
   const downloadMode = cfg.PARTIAL_DOWNLOAD_ENABLED ? input.segments.length : 'all';
   log.info(
-    `${requestId ?? 'no-request-id'} [clips] [request] | analysisId=${input.analysisId} videoId=${input.videoId} segments=${input.segments.length} downloadSections=${downloadMode} concurrency=${cfg.CLIP_CONCURRENCY}`,
+    'generateWebClips',
+    `[clips] [request] | analysisId=${input.analysisId} videoId=${input.videoId} segments=${input.segments.length} downloadSections=${downloadMode} concurrency=${cfg.CLIP_CONCURRENCY}`,
+    requestId,
   );
 
   const cookies: YtDlpCookies = {
@@ -80,7 +82,9 @@ export async function generateWebClips(
   });
 
   log.info(
-    `${requestId ?? 'no-request-id'} [clips] [generated] | analysisId=${input.analysisId} requested=${input.segments.length} created=${artifacts.length}`,
+    'generateWebClips',
+    `[clips] [generated] | analysisId=${input.analysisId} requested=${input.segments.length} created=${artifacts.length}`,
+    requestId,
   );
 
   return saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);

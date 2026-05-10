@@ -20,7 +20,7 @@ export async function buildPublishDraft(
   cfg: Config,
   requestId?: string,
 ): Promise<PublishDraft | null> {
-  const done = log.fnCalled('buildPublishDraft', { analysisId }, requestId);
+  const done = log.fnCalled('buildPublishDraft', requestId, { analysisId });
 
   const [analysis, clips] = await Promise.all([
     getAnalysis(cfg.OUTPUT_DIR, analysisId),
@@ -51,7 +51,7 @@ export async function savePublishDraftFromRequest(
   cfg: Config,
   requestId?: string,
 ): Promise<PublishDraft> {
-  const done = log.fnCalled('savePublishDraft', { analysisId: input.analysisId }, requestId);
+  const done = log.fnCalled('savePublishDraft', requestId, { analysisId: input.analysisId });
 
   const existing = await getPublishDraft(cfg.OUTPUT_DIR, input.analysisId);
   const fallback = existing ?? (await buildPublishDraft(input.analysisId, cfg, requestId));

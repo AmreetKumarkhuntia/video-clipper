@@ -48,7 +48,10 @@ export class EventDetector {
           chunkOffsetSec,
           chunkDurationSec,
         );
-        log.info(`[audio:${analyzer.source}] detected ${events.length} events`);
+        log.info('AudioAnalyzerChain.detect', 'events detected', undefined, {
+          source: analyzer.source,
+          events: events.length,
+        });
         return events;
       } catch (err) {
         lastError = err;
@@ -56,9 +59,16 @@ export class EventDetector {
 
         if (!isLast) {
           const nextSource = this.chain[i + 1].source;
-          log.warn(`[audio:${analyzer.source}] failed, falling back to ${nextSource}: ${message}`);
+          log.warn('AudioAnalyzerChain.detect', 'analyzer failed, falling back', undefined, {
+            source: analyzer.source,
+            nextSource,
+            error: message,
+          });
         } else {
-          log.error(`[audio:${analyzer.source}] failed (no more fallbacks): ${message}`);
+          log.error('AudioAnalyzerChain.detect', 'analyzer failed, no more fallbacks', undefined, {
+            source: analyzer.source,
+            error: message,
+          });
         }
       }
     }

@@ -14,9 +14,10 @@ export async function dumpTranscript(videoId: string, lines: TranscriptLine[]): 
     await fs.mkdir(dir, { recursive: true });
     const filePath = path.join(dir, `${videoId}.json`);
     await fs.writeFile(filePath, JSON.stringify(lines, null, 2), 'utf-8');
-    log.info(`Transcript dumped to ${filePath}`);
+    log.info('dumpTranscript', `Transcript dumped to ${filePath}`);
   } catch (err) {
     log.warn(
+      'dumpTranscript',
       `Failed to dump transcript for ${videoId}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
@@ -32,9 +33,10 @@ export async function dumpAnalysis(videoId: string, result: PipelineResult): Pro
     await fs.mkdir(dir, { recursive: true });
     const filePath = path.join(dir, `${videoId}.json`);
     await fs.writeFile(filePath, JSON.stringify(result, null, 2), 'utf-8');
-    log.info(`Analysis dumped to ${filePath}`);
+    log.info('dumpAnalysis', `Analysis dumped to ${filePath}`);
   } catch (err) {
     log.warn(
+      'dumpAnalysis',
       `Failed to dump analysis for ${videoId}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }

@@ -37,7 +37,10 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === '--download-sections') {
       const val = args[++i];
       if (!val) {
-        log.error(`--download-sections requires a value: 'all' or a number (1, 2, 3, ...)`);
+        log.error(
+          'parseArgs',
+          `--download-sections requires a value: 'all' or a number (1, 2, 3, ...)`,
+        );
         process.exit(1);
       }
 
@@ -45,13 +48,17 @@ export function parseArgs(argv: string[]): CliArgs {
         result.downloadSections = 'all';
       } else if (val === 'segments') {
         log.warn(
+          'parseArgs',
           `--download-sections segments is deprecated. Use a number like --download-sections 5 to download top 5 segments, or --download-sections all for full video.`,
         );
         result.downloadSections = 'all';
       } else {
         const num = Number(val);
         if (isNaN(num) || !Number.isInteger(num) || num < 1) {
-          log.error(`--download-sections requires 'all' or a positive integer (1, 2, 3, ...)`);
+          log.error(
+            'parseArgs',
+            `--download-sections requires 'all' or a positive integer (1, 2, 3, ...)`,
+          );
           process.exit(1);
         }
         result.downloadSections = num;
@@ -61,14 +68,14 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === '--video-path') {
       const val = args[++i];
       if (!val) {
-        log.error(`--video-path requires a directory path`);
+        log.error('parseArgs', `--video-path requires a directory path`);
         process.exit(1);
       }
       result.videoPath = val;
     } else if (arg === '--local-video') {
       const val = args[++i];
       if (!val) {
-        log.error(`--local-video requires a file path`);
+        log.error('parseArgs', `--local-video requires a file path`);
         process.exit(1);
       }
       result.localVideo = val;
@@ -78,35 +85,35 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === '--threshold') {
       const val = Number(args[++i]);
       if (isNaN(val)) {
-        log.error(`--threshold requires a numeric value`);
+        log.error('parseArgs', `--threshold requires a numeric value`);
         process.exit(1);
       }
       result.threshold = val;
     } else if (arg === '--top-n') {
       const val = Number(args[++i]);
       if (isNaN(val)) {
-        log.error(`--top-n requires a numeric value`);
+        log.error('parseArgs', `--top-n requires a numeric value`);
         process.exit(1);
       }
       result.topN = val;
     } else if (arg === '--max-duration') {
       const val = Number(args[++i]);
       if (isNaN(val)) {
-        log.error(`--max-duration requires a numeric value`);
+        log.error('parseArgs', `--max-duration requires a numeric value`);
         process.exit(1);
       }
       result.maxDuration = val;
     } else if (arg === '--max-chunks') {
       const val = Number(args[++i]);
       if (isNaN(val) || !Number.isInteger(val) || val < 1) {
-        log.error(`--max-chunks requires a positive integer`);
+        log.error('parseArgs', `--max-chunks requires a positive integer`);
         process.exit(1);
       }
       result.maxChunks = val;
     } else if (arg === '--max-parallel') {
       const val = Number(args[++i]);
       if (isNaN(val) || !Number.isInteger(val) || val < 1) {
-        log.error(`--max-parallel requires a positive integer`);
+        log.error('parseArgs', `--max-parallel requires a positive integer`);
         process.exit(1);
       }
       result.maxParallel = val;
@@ -115,20 +122,23 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === '--game-profile') {
       const val = args[++i];
       if (!val) {
-        log.error(`--game-profile requires a value (valorant, fps, boss_fight, general)`);
+        log.error(
+          'parseArgs',
+          `--game-profile requires a value (valorant, fps, boss_fight, general)`,
+        );
         process.exit(1);
       }
       result.gameProfile = val;
     } else if (arg === '--output-json') {
       result.outputJson = args[++i];
       if (!result.outputJson) {
-        log.error(`--output-json requires a file path`);
+        log.error('parseArgs', `--output-json requires a file path`);
         process.exit(1);
       }
     } else if (!arg.startsWith('--')) {
       result.url = arg;
     } else {
-      log.error(`Unknown flag: ${arg}`);
+      log.error('parseArgs', `Unknown flag: ${arg}`);
       printUsage();
       process.exit(1);
     }

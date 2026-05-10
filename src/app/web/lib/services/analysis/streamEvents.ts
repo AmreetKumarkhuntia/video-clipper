@@ -14,7 +14,11 @@ export function logEmittedAnalysisEvent(
   data: unknown,
 ): void {
   const meta = summarizeEventData(eventName, data);
-  log.info(`${requestId} [analysis-stream] [emit] | ${eventName}${formatEventMeta(meta)}`);
+  log.info(
+    'logEmittedAnalysisEvent',
+    `[analysis-stream] [emit] | ${eventName}${formatEventMeta(meta)}`,
+    requestId,
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

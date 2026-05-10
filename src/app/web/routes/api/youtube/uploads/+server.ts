@@ -45,15 +45,20 @@ export const POST: RequestHandler = async (event) => {
 
   try {
     const input = await parseJsonBody(event, CreateUploadsRequestSchema);
-    log.info(
-      `${event.locals.requestId} [publish-upload] [request] | analysisId=${input.analysisId} requestedClips=${input.clipArtifactIds?.length ?? 0} selectedOnly=${input.clipArtifactIds?.length ? 'false' : 'true'}`,
-    );
+    log.info('POST /api/youtube/uploads', 'upload request', event.locals.requestId, {
+      analysisId: input.analysisId,
+      requestedClips: input.clipArtifactIds?.length ?? 0,
+      selectedOnly: !input.clipArtifactIds?.length,
+    });
     const uploads = await uploadDraftClips(input, event.locals.config, event.locals.requestId);
     const uploaded = uploads.filter((upload) => upload.status === 'uploaded').length;
     const failed = uploads.length - uploaded;
-    log.info(
-      `${event.locals.requestId} [publish-upload] [response] | analysisId=${input.analysisId} uploaded=${uploaded} failed=${failed} total=${uploads.length}`,
-    );
+    log.info('POST /api/youtube/uploads', 'upload complete', event.locals.requestId, {
+      analysisId: input.analysisId,
+      uploaded,
+      failed,
+      total: uploads.length,
+    });
     reqDone(200);
     return jsonOk({ uploads });
   } catch (error) {

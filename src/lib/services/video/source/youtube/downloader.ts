@@ -80,11 +80,11 @@ export async function downloadFullVideo(
 
   try {
     await fs.access(outputPath);
-    log.info(`Video already downloaded: ${outputPath}`);
+    log.info('downloadFullVideo', `Video already downloaded: ${outputPath}`);
     return outputPath;
   } catch {}
 
-  log.info(`Downloading full video ${videoId} via yt-dlp...`);
+  log.info('downloadFullVideo', `Downloading full video ${videoId} via yt-dlp...`);
 
   const args = [
     '-f',
@@ -110,8 +110,8 @@ export async function downloadFullVideo(
       async () => {
         const subprocess = execa('yt-dlp', args);
         if (!dlConfig.quiet) {
-          subprocess.stdout?.on('data', log.progress);
-          subprocess.stderr?.on('data', log.progress);
+          subprocess.stdout?.on('data', (chunk) => log.progress('downloadFullVideo', chunk));
+          subprocess.stderr?.on('data', (chunk) => log.progress('downloadFullVideo', chunk));
         }
         await subprocess;
       },
@@ -119,10 +119,9 @@ export async function downloadFullVideo(
       2000,
       `yt-dlp:${videoId}`,
     );
-    process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.error(`Video download failed: ${String(err)}`);
+    log.error('downloadFullVideo', `Video download failed: ${String(err)}`);
 
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
@@ -139,7 +138,7 @@ export async function downloadFullVideo(
     throw new Error(`Download failed: ${message}`);
   }
 
-  log.info(`Download complete: ${outputPath}`);
+  log.info('downloadFullVideo', `Download complete: ${outputPath}`);
   return outputPath;
 }
 
@@ -164,17 +163,24 @@ async function downloadSegment(
 
   try {
     await fs.access(outputPath);
-    log.info(`Segment ${index + 1}/${index} already downloaded: ${outputPath}`);
+    log.info('downloadSegment', `Segment ${index + 1}/${index} already downloaded: ${outputPath}`);
     return outputPath;
   } catch {}
 
   const startTs = formatTimestamp(adjustedStart);
   const endTs = formatTimestamp(adjustedEnd);
 
-  log.info(`Downloading segment ${index + 1}: ${startTs} - ${endTs} (${segment.reason})`);
-  log.info(`  Requested: ${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s`);
+  log.info(
+    'downloadSegment',
+    `Downloading segment ${index + 1}: ${startTs} - ${endTs} (${segment.reason})`,
+  );
+  log.info(
+    'downloadSegment',
+    `  Requested: ${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s`,
+  );
   if (dlConfig.timestampOffset !== 0) {
     log.info(
+      'downloadSegment',
       `  Adjusted: ${adjustedStart.toFixed(2)}s - ${adjustedEnd.toFixed(2)}s (offset: ${dlConfig.timestampOffset}s)`,
     );
   }
@@ -225,8 +231,8 @@ async function downloadSegment(
       async () => {
         const subprocess = execa('yt-dlp', args);
         if (!dlConfig.quiet) {
-          subprocess.stdout?.on('data', log.progress);
-          subprocess.stderr?.on('data', log.progress);
+          subprocess.stdout?.on('data', (chunk) => log.progress('downloadSegment', chunk));
+          subprocess.stderr?.on('data', (chunk) => log.progress('downloadSegment', chunk));
         }
         await subprocess;
       },
@@ -234,10 +240,9 @@ async function downloadSegment(
       2000,
       `yt-dlp:${videoId}:seg${index + 1}`,
     );
-    process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.error(`Segment ${index + 1} download failed: ${String(err)}`);
+    log.error('downloadSegment', `Segment ${index + 1} download failed: ${String(err)}`);
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
     }
@@ -253,7 +258,7 @@ async function downloadSegment(
     throw new Error(`Segment download failed: ${message}`);
   }
 
-  log.info(`Segment complete: ${outputPath}`);
+  log.info('downloadSegment', `Segment complete: ${outputPath}`);
   return outputPath;
 }
 
@@ -283,6 +288,7 @@ async function downloadSegments(
     } else {
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log.warn(
+        'downloadSegments',
         `Failed to download segment [${formatTimestamp(segment.start)} – ${formatTimestamp(segment.end)}] (rank ${segment.rank}): ${reason}`,
       );
     }
@@ -314,11 +320,14 @@ export async function downloadVideo(
 
   if (mode === 'segments') {
     if (segments.length === 0) {
-      log.warn('No segments provided for download-segments mode. Skipping download.');
+      log.warn(
+        'downloadVideo',
+        'No segments provided for download-segments mode. Skipping download.',
+      );
       return { mode: 'segments', paths: [] };
     }
 
-    log.info(`Downloading ${segments.length} segments in parallel...`);
+    log.info('downloadVideo', `Downloading ${segments.length} segments in parallel...`);
     const paths = await downloadSegments(videoId, segments, dlConfig, customPath);
     return { mode: 'segments', paths };
   }

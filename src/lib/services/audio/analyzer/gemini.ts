@@ -104,7 +104,7 @@ Return ONLY a JSON array, no explanation. Format:
     ]);
 
     const text = result.response.text();
-    log.info(`[audio:gemini] response: ${text}`);
+    log.info('GeminiAudioAnalyzer.detect', 'response received', undefined, { text });
 
     const cleaned = text
       .replace(/^```(?:json)?\s*/i, '')
