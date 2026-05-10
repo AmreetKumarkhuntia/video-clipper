@@ -7,7 +7,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.config = getConfig();
 
   if (event.url.pathname.startsWith('/api/')) {
-    log.info(`${event.locals.requestId} [config] ${JSON.stringify(getMaskedConfig())}`);
+    log.info('hooks.server', 'request config', event.locals.requestId, getMaskedConfig());
   }
 
   return resolve(event);

@@ -17,7 +17,7 @@ export async function getPythonBin(): Promise<string> {
       _pythonBin = bin;
       return bin;
     } catch {
-      log.warn(`${bin} not found, trying next binary...`);
+      log.warn('getPythonBin', `${bin} not found, trying next binary...`);
     }
   }
 

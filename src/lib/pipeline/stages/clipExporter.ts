@@ -17,7 +17,7 @@ export async function exportClips(
   const clipConcurrency = opts.clipConcurrency;
 
   if (opts.localVideo) {
-    log.info(`Using local video: ${opts.localVideo}`);
+    log.info('exportClips', `Using local video: ${opts.localVideo}`);
     return generateClips(
       opts.localVideo,
       segments,
@@ -35,11 +35,15 @@ export async function exportClips(
 
     if (segmentsToDownload.length < downloadSections) {
       log.warn(
+        'exportClips',
         `Requested ${downloadSections} segments, but only ${segmentsToDownload.length} are available above threshold.`,
       );
     }
 
-    log.info(`Downloading ${segmentsToDownload.length} segments via yt-dlp --download-sections...`);
+    log.info(
+      'exportClips',
+      `Downloading ${segmentsToDownload.length} segments via yt-dlp --download-sections...`,
+    );
     const downloadResult = await downloadVideo(
       videoId,
       'segments',
@@ -61,7 +65,7 @@ export async function exportClips(
     );
   }
 
-  log.info('Downloading full video via yt-dlp...');
+  log.info('exportClips', 'Downloading full video via yt-dlp...');
   const downloadResult = await downloadVideo(
     videoId,
     'all',

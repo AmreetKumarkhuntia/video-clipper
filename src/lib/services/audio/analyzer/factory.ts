@@ -19,6 +19,7 @@ const KNOWN_PROVIDERS = new Set<AudioProviderName>(['gemini', 'whisper', 'yamnet
 export function parseProviderChain(providerString: string): AudioProviderName[] {
   if (providerString.trim() === 'both') {
     log.warn(
+      'parseProviderChain',
       '[audio] AUDIO_PROVIDER=both is deprecated. Use AUDIO_PROVIDER=gemini,whisper instead.',
     );
     return ['gemini', 'whisper'];

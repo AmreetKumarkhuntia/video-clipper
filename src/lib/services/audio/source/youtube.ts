@@ -19,11 +19,11 @@ export async function downloadAudio(
   const outputPath = path.join(outputDir, `${videoId}_audio.wav`);
 
   if (fs.existsSync(outputPath)) {
-    console.log(`[audio] Using cached audio: ${outputPath}`);
+    log.info('downloadAudio', `[audio] Using cached audio: ${outputPath}`);
     return outputPath;
   }
 
-  console.log(`[audio] Downloading audio for ${videoId}...`);
+  log.info('downloadAudio', `[audio] Downloading audio for ${videoId}...`);
 
   const args = [
     '-x',
@@ -54,8 +54,8 @@ export async function downloadAudio(
       async () => {
         const subprocess = execa('yt-dlp', args);
         if (!audioConfig.quiet) {
-          subprocess.stdout?.on('data', log.progress);
-          subprocess.stderr?.on('data', log.progress);
+          subprocess.stdout?.on('data', (chunk) => log.progress('downloadAudio', chunk));
+          subprocess.stderr?.on('data', (chunk) => log.progress('downloadAudio', chunk));
         }
         await subprocess;
       },
@@ -63,11 +63,10 @@ export async function downloadAudio(
       2000,
       `yt-dlp:audio:${videoId}`,
     );
-    process.stdout.write('\n');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 
-    log.error(`[audio] Download failed: ${message}`);
+    log.error('downloadAudio', `[audio] Download failed: ${message}`);
 
     if (message.includes('command not found') || message.includes('ENOENT')) {
       throw new Error('yt-dlp is required. Install it: https://github.com/yt-dlp/yt-dlp');
@@ -100,6 +99,6 @@ export async function downloadAudio(
     throw new Error(`Audio download failed: ${message}`);
   }
 
-  console.log(`[audio] Audio saved to ${outputPath}`);
+  log.info('downloadAudio', `[audio] Audio saved to ${outputPath}`);
   return outputPath;
 }

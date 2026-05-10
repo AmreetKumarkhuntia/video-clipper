@@ -17,9 +17,10 @@ export async function resolveVideo(
     throw new Error(`Invalid YouTube URL: ${rawUrl}`);
   }
 
-  log.info(`Fetching metadata for ${videoId}...`);
+  log.info('resolveVideo', `Fetching metadata for ${videoId}...`);
   const metadata = await extractMetadata(videoId, cookies);
   log.info(
+    'resolveVideo',
     `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
   );
 

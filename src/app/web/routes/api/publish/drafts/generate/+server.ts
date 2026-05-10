@@ -19,7 +19,14 @@ export const POST: RequestHandler = async (event) => {
   try {
     const input = await parseJsonBody(event, GeneratePublishMetadataRequestSchema);
     log.info(
-      `[publish-metadata] request workflow="${input.workflowTitle}" items=${input.items.length}${input.sourceChannelTitle ? ` source="${input.sourceChannelTitle}"` : ''}`,
+      'POST /api/publish/drafts/generate',
+      'metadata generation request',
+      event.locals.requestId,
+      {
+        workflow: input.workflowTitle,
+        items: input.items.length,
+        ...(input.sourceChannelTitle ? { source: input.sourceChannelTitle } : {}),
+      },
     );
 
     // Best-effort: read upload channel name. Non-throwing — if not connected, omit.
@@ -47,7 +54,12 @@ export const POST: RequestHandler = async (event) => {
     }
 
     reqDone(500);
-    log.error(`[publish-metadata] request error: ${errorMessage(error)}`);
+    log.error(
+      'POST /api/publish/drafts/generate',
+      'metadata generation failed',
+      event.locals.requestId,
+      { error: errorMessage(error) },
+    );
     return jsonError(500, 'Failed to generate publish metadata.', errorMessage(error));
   }
 };

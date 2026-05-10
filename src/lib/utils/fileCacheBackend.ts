@@ -58,7 +58,7 @@ async function readCacheFile<T>(filePath: string, schema: z.ZodType<T>): Promise
     const raw = await fs.readFile(filePath, 'utf-8');
     const parsed = schema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      log.warn(`[cache] Corrupt entry at ${filePath} — ignoring`);
+      log.warn('FileCacheBackend', `[cache] Corrupt entry at ${filePath} — ignoring`);
       return null;
     }
     return parsed.data;
@@ -74,6 +74,7 @@ async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     log.warn(
+      'FileCacheBackend',
       `[cache] Failed to write ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }

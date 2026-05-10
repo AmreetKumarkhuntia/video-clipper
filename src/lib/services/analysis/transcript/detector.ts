@@ -61,7 +61,10 @@ export class TranscriptDetector {
 
     const cached = await cache.readTranscript(videoId);
     if (cached) {
-      log.info(`[cache hit] Transcript loaded from cache (${cached.length} lines)`);
+      log.info(
+        'TranscriptDetector.detect',
+        `[cache hit] Transcript loaded from cache (${cached.length} lines)`,
+      );
       lines = cached;
     } else {
       lines = await this.fetchFromChain(videoId, audioPath);
@@ -90,7 +93,10 @@ export class TranscriptDetector {
 
       try {
         const lines = await analyzer.detect(videoId, audioPath);
-        log.info(`[transcript:${analyzer.source}] fetched ${lines.length} lines`);
+        log.info(
+          'TranscriptDetector.fetchFromChain',
+          `[transcript:${analyzer.source}] fetched ${lines.length} lines`,
+        );
         return lines;
       } catch (err) {
         lastError = err;
@@ -99,10 +105,14 @@ export class TranscriptDetector {
         if (!isLast) {
           const nextSource = this.chain[i + 1].source;
           log.warn(
+            'TranscriptDetector.fetchFromChain',
             `[transcript:${analyzer.source}] failed, falling back to ${nextSource}: ${message}`,
           );
         } else {
-          log.error(`[transcript:${analyzer.source}] failed (no more fallbacks): ${message}`);
+          log.error(
+            'TranscriptDetector.fetchFromChain',
+            `[transcript:${analyzer.source}] failed (no more fallbacks): ${message}`,
+          );
         }
       }
     }

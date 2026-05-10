@@ -63,8 +63,8 @@ export function createTranscriptChain(
         return new WhisperTranscriptAnalyzer(chainConfig.whisperModel);
       case 'gemini':
         log.warn(
-          '[transcript] GeminiTranscriptAnalyzer is not yet implemented — ' +
-            'it will throw if reached in the chain.',
+          'createTranscriptAnalyzers',
+          'GeminiTranscriptAnalyzer is not yet implemented — it will throw if reached in the chain',
         );
         return new GeminiTranscriptAnalyzer();
     }

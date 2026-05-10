@@ -151,7 +151,11 @@ async function analyzeChunk(
   if (!noCache) {
     const cached = await cache.readChunk(chunk, chunkAudioEvents);
     if (cached && cached.status === 'success') {
-      log.info(`[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`);
+      log.info(
+        'analyzeChunk',
+        `[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`,
+        opts.requestId,
+      );
       const result: AnalyzedSegment = {
         interesting: cached.interesting,
         score: cached.score,
@@ -199,7 +203,9 @@ async function analyzeChunk(
       const object = AnalyzedSegmentSchema.parse(toolCalls[0].input);
 
       log.info(
+        'analyzeChunk',
         `Chunk ${chunkIndex} analysis complete: interesting=${object.interesting}, score=${object.score}, reason=${object.reason}`,
+        opts.requestId,
       );
       if (!noCache) {
         const evaluation: ChunkEvaluation = {
@@ -222,13 +228,19 @@ async function analyzeChunk(
       if (isRateLimitError(err) && attempt < opts.maxRetries) {
         const delay = BACKOFF_BASE_MS * Math.pow(2, attempt) + Math.random() * BACKOFF_JITTER_MS;
         log.warn(
+          'analyzeChunk',
           `[chunk] Rate limit hit (attempt ${attempt + 1}/${opts.maxRetries + 1}). ` +
             `Retrying in ${Math.round(delay)}ms...`,
+          opts.requestId,
         );
         await sleep(delay);
         continue;
       } else {
-        log.error(`[chunk] Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
+        log.error(
+          'analyzeChunk',
+          `[chunk] Analysis failed: ${err instanceof Error ? err.message : String(err)}`,
+          opts.requestId,
+        );
       }
 
       throw err;
@@ -247,11 +259,10 @@ export async function analyzeChunks(
   noCache: boolean,
   opts: AnalyzeChunksOpts,
 ): Promise<ChunkEvaluation[]> {
-  const done = log.fnCalled(
-    'analyzeChunks',
-    { chunks: chunks.length, concurrency },
-    opts.requestId,
-  );
+  const done = log.fnCalled('analyzeChunks', opts.requestId, {
+    chunks: chunks.length,
+    concurrency,
+  });
 
   const limit = pLimit(concurrency);
   const evaluations = await Promise.all(
@@ -278,7 +289,11 @@ export async function analyzeChunks(
           return evaluation;
         } catch (error) {
           const failedEvaluation = toFailedEvaluation(chunk, i, error);
-          log.warn(`[chunk ${i}] LLM analysis skipped: ${failedEvaluation.error}`);
+          log.warn(
+            'analyzeChunks',
+            `[chunk ${i}] LLM analysis skipped: ${failedEvaluation.error}`,
+            opts.requestId,
+          );
           opts.callbacks?.onChunkAnalyzed?.(i, failedEvaluation);
           return failedEvaluation;
         }
@@ -288,7 +303,11 @@ export async function analyzeChunks(
 
   const succeeded = evaluations.filter((evaluation) => evaluation.status === 'success').length;
 
-  log.info(`Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`);
+  log.info(
+    'analyzeChunks',
+    `Analysis complete: ${succeeded}/${chunks.length} chunks succeeded`,
+    opts.requestId,
+  );
   done({ succeeded, total: chunks.length });
   return evaluations;
 }

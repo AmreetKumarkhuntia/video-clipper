@@ -149,13 +149,18 @@ export async function getAuthorizedYouTubeAuthState(requestId?: string): Promise
   const auth = await loadYouTubeAuthState();
 
   if (!auth) {
-    log.warn(`${requestId ?? 'no-request-id'} [youtube-auth] [state] | status=missing`);
+    log.warn('getAuthorizedYouTubeAuthState', 'no auth state found', requestId, {
+      status: 'missing',
+    });
     throw new Error('Connect a YouTube account before publishing clips.');
   }
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [youtube-auth] [state] | status=loaded authMode=${auth.authMode} channelId=${auth.channel.channelId} hasRefreshToken=${Boolean(auth.refreshToken)}`,
-  );
+  log.info('getAuthorizedYouTubeAuthState', 'auth state loaded', requestId, {
+    status: 'loaded',
+    authMode: auth.authMode,
+    channelId: auth.channel.channelId,
+    hasRefreshToken: Boolean(auth.refreshToken),
+  });
 
   return ensureFreshAccessToken(auth, requestId);
 }
@@ -173,30 +178,38 @@ async function ensureFreshAccessToken(
   requestId?: string,
 ): Promise<YouTubeAuthState> {
   if (!isExpiredOrMissing(auth.expiryDate)) {
-    log.info(
-      `${requestId ?? 'no-request-id'} [youtube-auth] [token] | action=reuse authMode=${auth.authMode} expiresAt=${auth.expiryDate ?? 'none'}`,
-    );
+    log.info('ensureFreshAccessToken', 'reusing token', requestId, {
+      action: 'reuse',
+      authMode: auth.authMode,
+      expiresAt: auth.expiryDate ?? 'none',
+    });
     return auth;
   }
 
   const credentials = resolveOAuthClientCredentials(auth);
 
   if (!auth.refreshToken || !credentials) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [youtube-auth] [token] | action=refresh-skipped hasRefreshToken=${Boolean(auth.refreshToken)} hasCredentials=${Boolean(credentials)}`,
-    );
+    log.warn('ensureFreshAccessToken', 'refresh skipped', requestId, {
+      action: 'refresh-skipped',
+      hasRefreshToken: Boolean(auth.refreshToken),
+      hasCredentials: Boolean(credentials),
+    });
     return auth;
   }
 
-  log.info(
-    `${requestId ?? 'no-request-id'} [youtube-auth] [token] | action=refresh-start authMode=${auth.authMode} channelId=${auth.channel.channelId}`,
-  );
+  log.info('ensureFreshAccessToken', 'refreshing token', requestId, {
+    action: 'refresh-start',
+    authMode: auth.authMode,
+    channelId: auth.channel.channelId,
+  });
 
   const refreshed = await refreshAccessToken(auth, credentials, requestId);
   await saveYouTubeAuthState(refreshed);
-  log.info(
-    `${requestId ?? 'no-request-id'} [youtube-auth] [token] | action=refresh-success authMode=${refreshed.authMode} expiresAt=${refreshed.expiryDate ?? 'none'}`,
-  );
+  log.info('ensureFreshAccessToken', 'token refreshed', requestId, {
+    action: 'refresh-success',
+    authMode: refreshed.authMode,
+    expiresAt: refreshed.expiryDate ?? 'none',
+  });
   return refreshed;
 }
 
@@ -227,9 +240,11 @@ async function refreshAccessToken(
   };
 
   if (!res.ok || !raw.access_token) {
-    log.warn(
-      `${requestId ?? 'no-request-id'} [youtube-auth] [token] | action=refresh-failed status=${res.status} error=${sanitizeLogValue(raw.error_description || raw.error || 'unknown')}`,
-    );
+    log.warn('refreshAccessToken', 'token refresh failed', requestId, {
+      action: 'refresh-failed',
+      status: res.status,
+      error: sanitizeLogValue(raw.error_description || raw.error || 'unknown'),
+    });
     throw new Error(
       raw.error_description || raw.error || 'Failed to refresh YouTube access token.',
     );

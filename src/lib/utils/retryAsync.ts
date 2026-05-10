@@ -23,7 +23,6 @@ export async function retryAsync<T>(
   baseDelayMs: number,
   label?: string,
 ): Promise<T> {
-  const tag = label ? `[${label}] ` : '';
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -35,7 +34,10 @@ export async function retryAsync<T>(
         const delayMs = baseDelayMs * Math.pow(2, attempt);
         const message = err instanceof Error ? err.message : String(err);
         log.warn(
-          `${tag}attempt ${attempt + 1}/${retries + 1} failed: ${message} — retrying in ${delayMs / 1000}s`,
+          'retryAsync',
+          `attempt ${attempt + 1}/${retries + 1} failed: ${message} — retrying in ${delayMs / 1000}s`,
+          undefined,
+          label ? { label } : undefined,
         );
         await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
       }

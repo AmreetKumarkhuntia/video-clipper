@@ -30,7 +30,7 @@ export async function createCacheBackend(
   if (config.CACHE_BACKEND === 'mongodb') {
     // MONGODB_URI is guaranteed to be set by the superRefine in ConfigSchema
     const uri = config.MONGODB_URI as string;
-    log.info(`[cache] Using MongoDB backend (${config.MONGODB_DATABASE})`);
+    log.info('createCacheBackend', `[cache] Using MongoDB backend (${config.MONGODB_DATABASE})`);
     const client = new MongoClient(uri);
     await client.connect();
     return new MongoCacheBackend(client, config.MONGODB_DATABASE, config.CACHE_TTL_SECONDS);
