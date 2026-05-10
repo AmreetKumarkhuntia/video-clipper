@@ -15,7 +15,7 @@
   const PADDING_FACTOR = 1.5;
 
   let viewStart = $state(0);
-  let viewEnd = $state(durationSec);
+  let viewEnd = $state(0);
   let detailTrackEl: HTMLDivElement | undefined = $state();
 
   $effect(() => {

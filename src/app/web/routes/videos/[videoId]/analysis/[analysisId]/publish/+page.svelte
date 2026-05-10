@@ -4,7 +4,7 @@
   import { streamUploads, type UploadQueueItem } from '@web/lib/uploadStream.js';
   import { showToast } from '@web/lib/toastStore.js';
   import Icon from '@web/components/Icon.svelte';
-  import UploadStatusCard from '@web/components/publish/UploadStatusCard.svelte';
+  import UploadStatusCard from '@web/widgets/publish/UploadStatusCard.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
   import type { PublishDraft, UploadArtifact, YouTubeAuthStatus } from '@app/web/types/publish.js';

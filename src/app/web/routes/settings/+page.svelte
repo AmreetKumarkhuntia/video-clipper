@@ -7,9 +7,9 @@
     updateField,
     resetToDefaults,
   } from '@web/lib/configStore.js';
-  import ConfigSection from '@web/components/settings/ConfigSection.svelte';
+  import ConfigSection from '@web/widgets/settings/ConfigSection.svelte';
   import Icon from '@web/components/Icon.svelte';
-  import { GROUP_CONFIG } from '@web/components/settings/groupConfig.js';
+  import { GROUP_CONFIG } from '@web/widgets/settings/groupConfig.js';
   import Button from '@web/components/Button.svelte';
 
   $effect(() => {

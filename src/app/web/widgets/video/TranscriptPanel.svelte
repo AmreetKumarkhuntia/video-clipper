@@ -34,15 +34,17 @@
 
 <Card class="transcript-card">
   <div class="panel-head">
-    <div class="panel-head__title">
-      <p class="panel-eyebrow">Transcript</p>
-      <h2 class="panel-title">Read the source material line by line.</h2>
-      {#if lines.length > 0}
-        <p class="panel-meta">{lines.length} lines · {chunkCount} chunks</p>
-      {/if}
-    </div>
-    {#if onClear}
-      <Button variant="ghost" size="sm" onclick={onClear}>Clear transcript</Button>
+    <p class="panel-eyebrow">Transcript</p>
+    <h2 class="panel-title">Read the source material line by line.</h2>
+    {#if lines.length > 0 || onClear}
+      <div class="panel-meta-row">
+        {#if lines.length > 0}
+          <p class="panel-meta">{lines.length} lines · {chunkCount} chunks</p>
+        {/if}
+        {#if onClear}
+          <Button variant="ghost" size="sm" onclick={onClear}>Clear transcript</Button>
+        {/if}
+      </div>
     {/if}
   </div>
 
@@ -74,18 +76,17 @@
 
   .panel-head {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
+    flex-direction: column;
+    gap: 4px;
     margin-bottom: 20px;
   }
 
-  .panel-head__title {
+  .panel-meta-row {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
   }
 
   .panel-eyebrow {

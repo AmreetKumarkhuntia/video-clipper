@@ -44,7 +44,8 @@ export async function appendChunkHash(
     }
   } catch (err) {
     log.warn(
-      `[manifest] Failed to append chunk hash: ${err instanceof Error ? err.message : String(err)}`,
+      'appendChunkHash',
+      `Failed to append chunk hash: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }
@@ -63,7 +64,8 @@ export async function appendSegmentHash(
     }
   } catch (err) {
     log.warn(
-      `[manifest] Failed to append segment hash: ${err instanceof Error ? err.message : String(err)}`,
+      'appendSegmentHash',
+      `Failed to append segment hash: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }

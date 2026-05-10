@@ -85,16 +85,19 @@ src/
         reset.css             # Global resets (box-sizing, body, button/input inherit)
         typography.css        # .eyebrow, .muted, .error-text utility classes
         index.css             # @import barrel
-      components/             # Reusable UI components (each with scoped <style>)
+      components/             # Generic/atomic UI primitives (reusable anywhere, no domain knowledge)
         Button.svelte         # primary/outline variants, disabled state
-        ErrorText.svelte      # error message display
-        MutedText.svelte      # muted/disabled text
-        PageHead.svelte       # eyebrow + heading + action slot
         Pagination.svelte     # prev/next pager
+        YouTubeEmbed.svelte   # responsive 16:9 iframe
+        # … other generic primitives (Badge, Card, Field, Icon, Input, Select, etc.)
+      widgets/                # Domain/feature-specific components (not generically reusable)
         ChannelCard.svelte    # channel thumbnail + title + link
         VideoCard.svelte      # video thumbnail + duration + title
         CandidateCard.svelte  # clip candidate with checkbox + score
-        YouTubeEmbed.svelte   # responsive 16:9 iframe
+        AnalysisProgress.svelte
+        publish/              # Publish-flow widgets
+        settings/             # Settings-page widgets
+        video/                # Video-analysis-page widgets
       lib/                    # SvelteKit $lib
         index.ts              # app name etc.
         api.ts                # readApiError(), apiFetch<T>()

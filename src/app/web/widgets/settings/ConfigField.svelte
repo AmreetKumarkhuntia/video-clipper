@@ -5,7 +5,7 @@
   import Slider from '@web/components/Slider.svelte';
   import Select from '@web/components/Select.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
-  import Badge from '../Badge.svelte';
+  import Badge from '@web/components/Badge.svelte';
   import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
   import type { ConfigFieldProps } from '@app/web/types/componentProps.js';
 
