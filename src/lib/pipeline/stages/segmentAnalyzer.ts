@@ -3,7 +3,7 @@ import { TranscriptDetector } from '@lib/services/analysis/transcript/detector.j
 import { createTranscriptChain } from '@lib/services/audio/transcriber/index.js';
 import { refineSegments } from '@lib/services/analysis/refiner/index.js';
 import { log } from '@lib/utils/logger.js';
-import type { Cache } from '@lib/utils/cache.js';
+import type { Cache } from '@lib/services/cache/index.js';
 import type {
   AudioEvent,
   MicroBlock,

@@ -7,8 +7,6 @@ import type {
 } from '@lib/types/index.js';
 import type { CacheBackend } from '@lib/types/cache.js';
 
-export type { CacheBackend } from '@lib/types/cache.js';
-
 /**
  * No-op backend used when the cache is disabled (--no-cache flag).
  * All reads return null; all writes are silent no-ops.

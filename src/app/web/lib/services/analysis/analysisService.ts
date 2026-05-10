@@ -1,5 +1,4 @@
-import { Cache } from '@lib/utils/cache.js';
-import { createCacheBackend } from '@lib/utils/cacheFactory.js';
+import { Cache, createCacheBackend } from '@lib/services/cache/index.js';
 import { getModel } from '@lib/utils/modelFactory.js';
 import { analyzeSegments, refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';

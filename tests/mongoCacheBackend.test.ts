@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MongoCacheBackend } from '../src/lib/utils/mongoCacheBackend.js';
+import { MongoCacheBackend } from '../src/lib/services/cache/backends/mongo.js';
 import type { MongoClient, Db, Collection } from 'mongodb';
 import type {
   TranscriptLine,

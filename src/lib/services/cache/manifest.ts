@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { log } from './logger.js';
-import { computeVideoCacheKey } from './fileCacheBackend.js';
+import { log } from '@lib/utils/logger.js';
+import { computeVideoCacheKey } from './backends/file.js';
 import type {
   VideoCacheManifest,
   ClearVideoAnalysisResult,

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { MongoClient } from 'mongodb';
 import { z } from 'zod';
-import { log } from './logger.js';
+import { log } from '@lib/utils/logger.js';
 import {
   TranscriptLineSchema,
   ChunkEvaluationSchema,

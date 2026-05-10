@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
-import { log } from './logger.js';
+import { log } from '@lib/utils/logger.js';
 import {
   TranscriptLineSchema,
   ChunkEvaluationSchema,
@@ -16,7 +16,7 @@ import type {
   AudioEvent,
   SegmentRefinement,
 } from '@lib/types/index.js';
-import type { CacheBackend } from './cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers

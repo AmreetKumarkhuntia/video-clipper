@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
-import { Cache } from '../src/lib/utils/cache.js';
-import { FileCacheBackend } from '../src/lib/utils/fileCacheBackend.js';
-import { DisabledCacheBackend } from '../src/lib/utils/cacheBackend.js';
+import { Cache } from '../src/lib/services/cache/cache.js';
+import { FileCacheBackend } from '../src/lib/services/cache/backends/file.js';
+import { DisabledCacheBackend } from '../src/lib/services/cache/backends/disabled.js';
 import type {
   TranscriptLine,
   LLMChunk,

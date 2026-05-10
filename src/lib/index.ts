@@ -82,9 +82,8 @@ export { scriptPath, PACKAGE_ROOT } from './utils/paths.js';
 export { getPythonBin } from './utils/pythonBin.js';
 export { buildWindows } from './utils/chunker.js';
 export { getModel } from './utils/modelFactory.js';
-export { Cache } from './utils/cache.js';
+export { Cache, createCacheBackend } from './services/cache/index.js';
 export type { CacheBackend } from './types/cache.js';
-export { createCacheBackend } from './utils/cacheFactory.js';
 
 // ── Video Services ──
 export { parseUrl } from './services/video/source/youtube/parser.js';

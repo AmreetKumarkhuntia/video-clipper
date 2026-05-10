@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TranscriptDetector } from '../src/lib/services/analysis/transcript/detector.js';
 import type { TranscriptAnalyzer } from '../src/lib/services/audio/transcriber/index.js';
 import type { TranscriptLine } from '../src/lib/types/index.js';
-import type { Cache } from '../src/lib/utils/cache.js';
+import type { Cache } from '../src/lib/services/cache/cache.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

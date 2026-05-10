@@ -1,7 +1,7 @@
 import { buildMicroBlocks, buildLLMChunks } from './chunker/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { TranscriptAnalyzer } from '../../audio/transcriber/base.js';
-import type { CacheBackend } from '@lib/utils/cacheBackend.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type { TranscriptLine, MicroBlock, LLMChunk } from '@lib/types/transcript.js';
 import type { TranscriptDetectorResult } from '@lib/types/analyzer.js';
 

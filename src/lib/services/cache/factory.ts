@@ -1,9 +1,9 @@
 import { MongoClient } from 'mongodb';
-import { log } from './logger.js';
-import { FileCacheBackend } from './fileCacheBackend.js';
-import { MongoCacheBackend } from './mongoCacheBackend.js';
-import { DisabledCacheBackend } from './cacheBackend.js';
-import type { CacheBackend } from './cacheBackend.js';
+import { log } from '@lib/utils/logger.js';
+import { FileCacheBackend } from './backends/file.js';
+import { MongoCacheBackend } from './backends/mongo.js';
+import { DisabledCacheBackend } from './backends/disabled.js';
+import type { CacheBackend } from '@lib/types/cache.js';
 import type { Config } from '@lib/types/index.js';
 
 /**

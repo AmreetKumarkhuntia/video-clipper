@@ -1,5 +1,4 @@
-import { Cache } from '@lib/utils/cache.js';
-import { createCacheBackend } from '@lib/utils/cacheFactory.js';
+import { Cache, createCacheBackend } from '@lib/services/cache/index.js';
 import { TranscriptDetector } from '@lib/services/analysis/transcript/detector.js';
 import { createTranscriptChain } from '@lib/services/audio/transcriber/index.js';
 import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
