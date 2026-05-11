@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { apiFetch } from '@web/lib/api.js';
-  import { showToast } from '@web/lib/toastStore.js';
+  import { showToast } from '@web/lib/stores/toast.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';

@@ -9,7 +9,7 @@ import type { ClipperConfig } from '@lib/types/video.js';
 
 export type { ClipperConfig } from '@lib/types/video.js';
 
-function configureFfmpeg(cfg: ClipperConfig): void {
+export function configureFfmpeg(cfg: ClipperConfig): void {
   if (cfg.ffmpegPath) {
     ffmpeg.setFfmpegPath(cfg.ffmpegPath);
   }

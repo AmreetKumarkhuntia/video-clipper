@@ -87,6 +87,8 @@ export const ClipArtifactSchema = z.object({
   endSec: z.number().positive(),
   durationSec: z.number().positive(),
   createdAt: z.string(),
+  editsPath: z.string().optional(),
+  editedPath: z.string().optional(),
 });
 export type ClipArtifact = z.infer<typeof ClipArtifactSchema>;
 
@@ -114,6 +116,11 @@ export const AnalysisParamsSchema = z.object({
   analysisId: z.string().min(1),
 });
 export type AnalysisParams = z.infer<typeof AnalysisParamsSchema>;
+
+export const ClipParamsSchema = z.object({
+  clipId: z.string().min(1),
+});
+export type ClipParams = z.infer<typeof ClipParamsSchema>;
 
 export const ListClipsQuerySchema = z.object({
   analysisId: z.string().optional(),

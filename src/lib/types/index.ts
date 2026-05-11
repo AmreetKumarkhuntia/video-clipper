@@ -97,3 +97,29 @@ export type {
   AudioDownloadConfig,
   TranscriptChainConfig,
 } from './downloader.js';
+
+export {
+  ViewportPresetSchema,
+  CropFocusSchema,
+  ViewportSchema,
+  TrimSchema,
+  TextStyleSchema,
+  PositionSchema,
+  WordTokenSchema,
+  SubtitleLineSchema,
+  TextOverlaySchema,
+  ClipEditsSchema,
+} from './clipEdit.js';
+export type {
+  ViewportPreset,
+  CropFocus,
+  Viewport,
+  Trim,
+  TextStyle,
+  Position,
+  WordToken,
+  SubtitleLine,
+  TextOverlay,
+  ClipEdits,
+  FilterGraphResult,
+} from './clipEdit.js';

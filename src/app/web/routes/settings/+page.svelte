@@ -6,7 +6,7 @@
     initConfig,
     updateField,
     resetToDefaults,
-  } from '@web/lib/configStore.js';
+  } from '@web/lib/stores/config.js';
   import ConfigSection from '@web/widgets/settings/ConfigSection.svelte';
   import Icon from '@web/components/Icon.svelte';
   import { GROUP_CONFIG } from '@web/widgets/settings/groupConfig.js';
