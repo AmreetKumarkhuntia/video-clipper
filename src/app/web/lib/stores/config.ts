@@ -1,6 +1,6 @@
 import { writable, get } from 'svelte/store';
 import { apiFetch, readApiError } from '@web/lib/api.js';
-import { showToast } from '@web/lib/toastStore.js';
+import { showToast } from './toast.js';
 import type { ConfigRegistryResponse } from '@lib/types/config.js';
 import type { ConfigApiResponse, ConfigUpdateResponse } from '@app/web/types/web.js';
 

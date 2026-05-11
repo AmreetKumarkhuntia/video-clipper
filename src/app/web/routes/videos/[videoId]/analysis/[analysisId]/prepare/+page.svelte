@@ -2,8 +2,8 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { apiFetch } from '@web/lib/api.js';
-  import { showToast } from '@web/lib/toastStore.js';
-  import { configValues, configLoaded, initConfig } from '@web/lib/configStore.js';
+  import { showToast } from '@web/lib/stores/toast.js';
+  import { configValues, configLoaded, initConfig } from '@web/lib/stores/config.js';
   import { get } from 'svelte/store';
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/widgets/publish/PublishDraftCard.svelte';

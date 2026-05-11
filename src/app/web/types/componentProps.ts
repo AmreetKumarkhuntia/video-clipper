@@ -3,7 +3,8 @@ import type { ChannelSummary, VideoDetails, VideoSummary } from '@lib/types/yout
 import type { ConfigFieldDescriptor, ConfigGroupDescriptor } from '@lib/types/config.js';
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import type { ActivityPhase, AnalysisActivityItem, HighlightRange } from './activity.js';
-import type { ClipCandidate, ClipPlan } from './analysis.js';
+import type { ClipArtifact, ClipCandidate, ClipPlan } from './analysis.js';
+import type { ClipEdits, TextStyle, Position } from '@lib/types/clipEdit.js';
 import type { PublishDraftItem, PublishDraftItemEvent, UploadArtifact } from './publish.js';
 import type { UploadQueueItem } from './upload.js';
 import type { SectionConfig, SelectOption, Toast } from './web.js';
@@ -276,4 +277,38 @@ export interface VideoWorkflowStepperProps {
 
 export interface VideoLayoutProps {
   children: Snippet;
+}
+
+// ---------- Clip editor ----------
+
+export interface CaptionTemplate {
+  id: string;
+  name: string;
+  style: TextStyle;
+  position: Position;
+}
+
+export interface ClipEditorProps {
+  clip: ClipArtifact;
+  candidate: ClipCandidate | null;
+  videoId: string;
+  onclose: () => void;
+}
+
+export interface ClipEditorCanvasProps {
+  clip: ClipArtifact;
+  edits: ClipEdits;
+  currentTime?: number;
+  videoEl?: HTMLVideoElement | null;
+}
+
+export interface ClipEditorPropertiesPanelProps {
+  edits: ClipEdits;
+  selectedItemId: string | null;
+  onupdate: (edits: ClipEdits) => void;
+}
+
+export interface ClipEditorTemplatesProps {
+  edits: ClipEdits;
+  onupdate: (edits: ClipEdits) => void;
 }

@@ -4,12 +4,13 @@
   import { apiFetch } from '@web/lib/api.js';
   import { get } from 'svelte/store';
   import { untrack } from 'svelte';
-  import { configValues } from '@web/lib/configStore.js';
+  import { configValues } from '@web/lib/stores/config.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
   import Badge from '@web/components/Badge.svelte';
   import Card from '@web/components/Card.svelte';
   import Slider from '@web/components/Slider.svelte';
+  import ClipEditor from '@web/widgets/video/ClipEditor.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -106,6 +107,7 @@
   }
 
   let selectedCount = $derived(plan?.candidates.filter((c) => c.selected).length ?? 0);
+  let editorClip = $state<ClipArtifact | null>(null);
 </script>
 
 {#if isLoading}
@@ -253,7 +255,17 @@
               </div>
               <p class="clipcard__title">{clip.filename}</p>
               <div class="clipcard__actions">
-                <Badge variant="success"><Icon name="check" size={10} /> Ready</Badge>
+                {#if clip.editedPath}
+                  <Badge variant="success"><Icon name="check" size={10} /> Edited</Badge>
+                {:else}
+                  <Badge variant="neutral"><Icon name="check" size={10} /> Ready</Badge>
+                {/if}
+                <Button
+                  size="sm"
+                  onclick={() => {
+                    editorClip = clip;
+                  }}>Edit</Button
+                >
               </div>
             </div>
           </Card>
@@ -261,6 +273,18 @@
       </div>
     {/if}
   </div>
+{/if}
+
+{#if editorClip}
+  <ClipEditor
+    clip={editorClip}
+    candidate={plan?.candidates.find((c) => c.id === editorClip?.segmentId) ?? null}
+    {videoId}
+    onclose={() => {
+      editorClip = null;
+      void loadArtifacts();
+    }}
+  />
 {/if}
 
 <style>
@@ -317,5 +341,13 @@
     border-color: var(--vc-clay-500);
     box-shadow: 0 0 0 1px var(--vc-clay-500);
     background: var(--vc-clay-50);
+  }
+
+  :global(.clipcard__actions) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
   }
 </style>
