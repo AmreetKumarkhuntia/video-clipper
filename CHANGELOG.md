@@ -1,3 +1,28 @@
+# [1.9.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.8.0...v1.9.0) (2026-05-11)
+
+
+### Bug Fixes
+
+* **analyze:** rebuild activity rail and align timeline ticks to time ([2cb6cfb](https://github.com/AmreetKumarkhuntia/video-clipper/commit/2cb6cfb2915d27d8f0ef69eb14ed3ddec03a4f10))
+* **claude:** tighten no-inline-types hook regex ([03f55e1](https://github.com/AmreetKumarkhuntia/video-clipper/commit/03f55e1a022b104c2db0e3547c5f4f04227258b4))
+* **ui:** unblock /settings toggle clicks and add onOverlay text token ([9a765e3](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9a765e339b51eea38105a7678f2bfe648317ea53))
+
+
+### Features
+
+* **analysis-page:** add score threshold slider wired to config store ([caed4e9](https://github.com/AmreetKumarkhuntia/video-clipper/commit/caed4e9ec8493234624e8d845cdff1bc871aeddf))
+* **analyze:** add clip timeline with zoom and segment preview ([bf3ec6c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/bf3ec6c0b70d066be0181faa66f47f4ac5b80805))
+* **analyze:** add Stop / per-video cache controls + streaming timeline ([bb520f9](https://github.com/AmreetKumarkhuntia/video-clipper/commit/bb520f9b5ce9a526a53a654b3494dbb788e859ad))
+* **prepare:** add collapsible cards and bulk select/deselect ([2116164](https://github.com/AmreetKumarkhuntia/video-clipper/commit/21161648b3aad0f6fe8d6fabf617dd7bd3dbb1b4))
+* **publish:** add date/scheduling option for clip publishing ([b920604](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b9206041c669e7cf09a09ce7052a4ee4582753a7))
+* **publish:** split clip editor into modal, restructure publish page, share draft-item types ([604326f](https://github.com/AmreetKumarkhuntia/video-clipper/commit/604326f62f5c44f764e4d722d0b492e6bb3a67c4))
+* **settings:** add sectioned layout, provider grid, and scroll containment ([2e4b489](https://github.com/AmreetKumarkhuntia/video-clipper/commit/2e4b4894990b78195b8974b6811f7c52de2345de))
+* **ui:** add design-system form components and migrate all raw inputs ([ae93ae8](https://github.com/AmreetKumarkhuntia/video-clipper/commit/ae93ae82fe421f2e721f4bb3b0b9794c684af683))
+* **ui:** add shared Badge component and migrate ad-hoc pills ([cb70902](https://github.com/AmreetKumarkhuntia/video-clipper/commit/cb70902c61c38ad964ff919940d85bdbb4561f44))
+* **ui:** add shared Card component and migrate ad-hoc card wrappers ([24b61c3](https://github.com/AmreetKumarkhuntia/video-clipper/commit/24b61c35213a6f63f6e9b87093e326ea0d0375c5))
+* **ui:** add unified Button component and replace all raw button callsites ([939d70c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/939d70c1820e5398a3ceeb59205a3a2d5b196213))
+* **web-ui:** migrate to Svelte 5 runes and --vc-* design system ([b06c1f6](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b06c1f6cd258c75779ee06950f6f7c5cc0ec2c94))
+
 # [1.8.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.7.0...v1.8.0) (2026-05-06)
 
 
