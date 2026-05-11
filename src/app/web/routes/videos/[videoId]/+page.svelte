@@ -1,10 +1,19 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { get } from 'svelte/store';
   import type { VideoDetails } from '@lib/types/index.js';
   import type { ClipCandidate, ClipPlan, TranscriptBundle } from '@app/web/types/analysis.js';
   import type { ActivityPhase } from '@app/web/types/activity.js';
   import { apiFetch } from '@web/lib/api.js';
   import { streamAnalysis } from '@web/lib/analysisStream.js';
+  import {
+    videoStore,
+    setVideo,
+    setTranscript,
+    clearTranscript as storeClearTranscript,
+    setAnalysisPlan,
+    clearAnalysis as storeClearAnalysis,
+  } from '@web/lib/stores/video.js';
   import { formatTime } from '@web/lib/format.js';
   import {
     appendSystemActivity,
@@ -30,8 +39,6 @@
   import TranscriptPanel from '@web/widgets/video/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/widgets/video/VideoDetailsRail.svelte';
 
-  let video = $state<VideoDetails | null>(null);
-  let transcript = $state<TranscriptBundle | null>(null);
   let plan = $state<ClipPlan | null>(null);
   let streamingCandidates = $state<ClipCandidate[]>([]);
   let isLoadingVideo = $state(false);
@@ -50,6 +57,9 @@
   let seekToSec = $state<number | undefined>(undefined);
 
   let videoId = $derived($page.params.videoId);
+
+  let video = $state<VideoDetails | null>(null);
+  let transcript = $state<TranscriptBundle | null>(null);
 
   let transcriptRows = $derived(transcript?.lines ?? []);
   let displayCandidates = $derived(plan?.candidates ?? streamingCandidates);
@@ -70,10 +80,18 @@
   );
 
   async function loadVideo(): Promise<void> {
+    const cached = get(videoStore)[videoId]?.video;
+    if (cached) {
+      video = cached;
+      return;
+    }
+
     isLoadingVideo = true;
     errorMessage = '';
     try {
-      video = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
+      const result = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
+      setVideo(videoId, result);
+      video = result;
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
     } finally {
@@ -86,10 +104,18 @@
   });
 
   async function loadTranscript(): Promise<void> {
+    const cached = get(videoStore)[videoId]?.transcript;
+    if (cached) {
+      transcript = cached;
+      return;
+    }
+
     isLoadingTranscript = true;
     errorMessage = '';
     try {
-      transcript = await apiFetch<TranscriptBundle>(`/api/youtube/videos/${videoId}/transcript`);
+      const result = await apiFetch<TranscriptBundle>(`/api/youtube/videos/${videoId}/transcript`);
+      setTranscript(videoId, result);
+      transcript = result;
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
     } finally {
@@ -201,6 +227,7 @@
       );
 
       logAnalysisEvent('analysis_complete', { candidateCount: plan.candidates.length });
+      setAnalysisPlan(videoId, plan.id, plan);
       analysisPhase = 'complete';
       activityState = appendSystemActivity(activityState, {
         title: 'Clip plan ready',
@@ -235,6 +262,7 @@
       await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/transcript`, {
         method: 'DELETE',
       });
+      storeClearTranscript(videoId);
       transcript = null;
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
@@ -247,6 +275,7 @@
       await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/analysis`, {
         method: 'DELETE',
       });
+      storeClearAnalysis(videoId);
       plan = null;
       streamingCandidates = [];
       selectedCandidateId = null;

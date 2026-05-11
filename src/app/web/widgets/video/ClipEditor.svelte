@@ -112,6 +112,7 @@
         ...edits.overlays,
         {
           id: crypto.randomUUID(),
+          kind: 'banner' as const,
           startSec: 0,
           endSec: clip.durationSec,
           text: 'Banner text',
