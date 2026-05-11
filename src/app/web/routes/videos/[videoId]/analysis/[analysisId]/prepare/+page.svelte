@@ -1,10 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import { get } from 'svelte/store';
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/stores/toast.js';
   import { configValues, configLoaded, initConfig } from '@web/lib/stores/config.js';
-  import { get } from 'svelte/store';
+  import { videoStore } from '@web/lib/stores/video.js';
   import Icon from '@web/components/Icon.svelte';
   import PublishDraftCard from '@web/widgets/publish/PublishDraftCard.svelte';
   import PublishDraftEditor from '@web/widgets/publish/PublishDraftEditor.svelte';
@@ -149,10 +150,12 @@
     isGenerating = true;
     errorMessage = '';
     try {
-      let videoDetails: VideoDetails | null = null;
-      try {
-        videoDetails = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
-      } catch {}
+      let videoDetails = get(videoStore)[videoId]?.video ?? null;
+      if (!videoDetails) {
+        try {
+          videoDetails = await apiFetch<VideoDetails>(`/api/youtube/videos/${videoId}`);
+        } catch {}
+      }
 
       const data = await apiFetch<{ items: GeneratedPublishMetadata[] }>(
         '/api/publish/drafts/generate',

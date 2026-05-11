@@ -1,10 +1,11 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { get } from 'svelte/store';
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
   import { apiFetch } from '@web/lib/api.js';
-  import { get } from 'svelte/store';
   import { untrack } from 'svelte';
   import { configValues } from '@web/lib/stores/config.js';
+  import { videoStore, setAnalysisPlan, setClips } from '@web/lib/stores/video.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
   import Badge from '@web/components/Badge.svelte';
@@ -24,6 +25,20 @@
   let analysisId = $derived(page.params.analysisId);
 
   $effect(() => {
+    const entry = get(videoStore)[videoId]?.analyses[analysisId];
+    if (entry?.plan && !plan) {
+      plan = {
+        ...entry.plan,
+        candidates: entry.plan.candidates.map((c) => ({ ...c, selected: c.score >= threshold })),
+      };
+    }
+    if (entry?.clips.length && !clips.length) {
+      clips = entry.clips;
+      activeTab = 'clips';
+    }
+  });
+
+  $effect(() => {
     if (analysisId) {
       void loadArtifacts();
     }
@@ -35,22 +50,35 @@
   });
 
   async function loadArtifacts(): Promise<void> {
+    const cached = get(videoStore)[videoId]?.analyses[analysisId];
+    const needsPlan = !cached?.plan;
+    const needsClips = !cached?.clips.length;
+
+    if (!needsPlan && !needsClips) return;
+
     isLoading = true;
     errorMessage = '';
 
     try {
       const [loadedPlan, loadedClips] = await Promise.all([
-        apiFetch<ClipPlan>(`/api/library/analyses/${analysisId}`),
-        apiFetch<{ clips: ClipArtifact[] }>(
-          `/api/library/clips?analysisId=${encodeURIComponent(analysisId)}`,
-        ),
+        needsPlan
+          ? apiFetch<ClipPlan>(`/api/library/analyses/${analysisId}`)
+          : Promise.resolve(cached!.plan!),
+        needsClips
+          ? apiFetch<{ clips: ClipArtifact[] }>(
+              `/api/library/clips?analysisId=${encodeURIComponent(analysisId)}`,
+            ).then((r) => r.clips)
+          : Promise.resolve(cached!.clips),
       ]);
+
+      if (needsPlan) setAnalysisPlan(videoId, analysisId, loadedPlan);
+      if (needsClips) setClips(videoId, analysisId, loadedClips);
 
       plan = {
         ...loadedPlan,
         candidates: loadedPlan.candidates.map((c) => ({ ...c, selected: c.score >= threshold })),
       };
-      clips = loadedClips.clips;
+      clips = loadedClips;
       if (clips.length > 0) activeTab = 'clips';
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
@@ -78,6 +106,7 @@
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ videoId, analysisId, segments: selected }),
       });
+      setClips(videoId, analysisId, data.clips);
       clips = data.clips;
       activeTab = 'clips';
     } catch (error) {

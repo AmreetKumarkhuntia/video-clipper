@@ -11,6 +11,7 @@ const config = {
       '@app/web': path.resolve('./src/app/web'),
       '@web/lib': path.resolve('./src/app/web/lib'),
       '@web/components': path.resolve('./src/app/web/components'),
+      '@web/widgets': path.resolve('./src/app/web/widgets'),
     },
     files: {
       appTemplate: 'src/app/web/app.html',

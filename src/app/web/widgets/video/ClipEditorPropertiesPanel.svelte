@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ClipEditorPropertiesPanelProps } from '@app/web/types/componentProps.js';
-  import type { ClipEdits } from '@lib/types/clipEdit.js';
+  import type { ClipEdits, SubtitleLine } from '@lib/types/clipEdit.js';
   import InputText from '@web/components/InputText.svelte';
   import Field from '@web/components/Field.svelte';
   import Select from '@web/components/Select.svelte';
@@ -233,11 +233,11 @@
         </Field>
       </div>
 
-      {#if selectedItem.words.length > 0}
+      {#if (selectedItem as SubtitleLine).words.length > 0}
         <div class="props-words">
           <p class="props-words-label">Words — tap to highlight</p>
           <div class="props-word-chips">
-            {#each selectedItem.words as word, wi}
+            {#each (selectedItem as SubtitleLine).words as word, wi}
               <button
                 type="button"
                 class="word-chip"
