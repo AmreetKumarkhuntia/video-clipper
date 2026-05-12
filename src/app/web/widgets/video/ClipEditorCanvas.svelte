@@ -8,9 +8,14 @@
     edits,
     currentTime = $bindable(0),
     videoEl = $bindable<HTMLVideoElement | null>(null),
+    selectedItemId,
+    onSelectItem,
+    onupdate,
   }: ClipEditorCanvasProps = $props();
 
   let isPlaying = $state(false);
+  let viewportEl = $state<HTMLDivElement | null>(null);
+  let currentlyDragging = false;
 
   const ASPECT_RATIOS: Record<string, string> = {
     '9:16': '9 / 16',
@@ -55,10 +60,77 @@
     const target = e.currentTarget as HTMLInputElement;
     if (videoEl) videoEl.currentTime = Number(target.value);
   }
+
+  function startOverlayDrag(
+    e: PointerEvent,
+    overlayId: string,
+    origX: number,
+    origY: number,
+  ): void {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    currentlyDragging = false;
+
+    function onMove(ev: PointerEvent): void {
+      if (!viewportEl || !onupdate) return;
+      if (Math.abs(ev.clientX - startX) > 3 || Math.abs(ev.clientY - startY) > 3) {
+        currentlyDragging = true;
+      }
+      if (!currentlyDragging) return;
+      const rect = viewportEl.getBoundingClientRect();
+      const xCenter = Math.max(0, Math.min(1, origX + (ev.clientX - startX) / rect.width));
+      const yCenter = Math.max(0, Math.min(1, origY + (ev.clientY - startY) / rect.height));
+      onupdate({
+        ...edits,
+        overlays: edits.overlays.map((o) =>
+          o.id === overlayId ? { ...o, position: { xCenter, yCenter } } : o,
+        ),
+      });
+    }
+
+    function onUp(): void {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      setTimeout(() => {
+        currentlyDragging = false;
+      }, 0);
+    }
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  function startFocusDrag(e: PointerEvent): void {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const origX = edits.viewport.focus.xCenter;
+    const origY = edits.viewport.focus.yCenter;
+
+    function onMove(ev: PointerEvent): void {
+      if (!viewportEl || !onupdate) return;
+      const rect = viewportEl.getBoundingClientRect();
+      const xCenter = Math.max(0, Math.min(1, origX + (ev.clientX - startX) / rect.width));
+      const yCenter = Math.max(0, Math.min(1, origY + (ev.clientY - startY) / rect.height));
+      onupdate({
+        ...edits,
+        viewport: { ...edits.viewport, focus: { xCenter, yCenter } },
+      });
+    }
+
+    function onUp(): void {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    }
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
 </script>
 
 <div class="canvas-wrap">
-  <div class="canvas-viewport" style="aspect-ratio: {aspectRatio}">
+  <div class="canvas-viewport" style="aspect-ratio: {aspectRatio}" bind:this={viewportEl}>
     <!-- svelte-ignore a11y_media_has_caption -->
     <video
       bind:this={videoEl}
@@ -95,13 +167,37 @@
     {#each visibleOverlays as overlay}
       <div
         class="canvas-overlay"
+        class:canvas-overlay--selected={overlay.id === selectedItemId}
         style="left: {overlay.position.xCenter * 100}%; top: {overlay.position.yCenter *
           100}%; font-size: {overlay.style.fontSize * 0.045}cqw; color: {overlay.style
           .color}; font-weight: {overlay.style.weight};"
+        role="button"
+        tabindex="0"
+        onpointerdown={(e) =>
+          startOverlayDrag(e, overlay.id, overlay.position.xCenter, overlay.position.yCenter)}
+        onclick={() => {
+          if (!currentlyDragging) onSelectItem?.(overlay.id);
+        }}
+        onkeydown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelectItem?.(overlay.id);
+          }
+        }}
       >
         {overlay.text}
       </div>
     {/each}
+
+    {#if edits.viewport.fillMode === 'crop'}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="canvas-focus-handle"
+        style="left: {edits.viewport.focus.xCenter * 100}%; top: {edits.viewport.focus.yCenter *
+          100}%;"
+        onpointerdown={startFocusDrag}
+      ></div>
+    {/if}
   </div>
 
   <div class="canvas-controls">
@@ -175,8 +271,36 @@
     transform: translate(-50%, -50%);
     text-align: center;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-    pointer-events: none;
     white-space: pre-wrap;
+    cursor: grab;
+  }
+
+  .canvas-overlay:active {
+    cursor: grabbing;
+  }
+
+  .canvas-overlay--selected {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  .canvas-focus-handle {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      0 0 8px rgba(0, 0, 0, 0.4);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    z-index: 5;
+  }
+
+  .canvas-focus-handle:active {
+    cursor: grabbing;
   }
 
   .canvas-controls {
