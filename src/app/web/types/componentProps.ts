@@ -300,6 +300,9 @@ export interface ClipEditorCanvasProps {
   edits: ClipEdits;
   currentTime?: number;
   videoEl?: HTMLVideoElement | null;
+  selectedItemId?: string | null;
+  onSelectItem?: (id: string) => void;
+  onupdate?: (edits: ClipEdits) => void;
 }
 
 export interface ClipEditorPropertiesPanelProps {
@@ -310,5 +313,14 @@ export interface ClipEditorPropertiesPanelProps {
 
 export interface ClipEditorTemplatesProps {
   edits: ClipEdits;
+  onupdate: (edits: ClipEdits) => void;
+}
+
+export interface ClipEditorTimelineProps {
+  edits: ClipEdits;
+  durationSec: number;
+  currentTime: number;
+  selectedItemId: string | null;
+  onSelectItem: (id: string | null) => void;
   onupdate: (edits: ClipEdits) => void;
 }
