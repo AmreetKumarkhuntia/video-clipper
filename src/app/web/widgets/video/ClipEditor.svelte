@@ -13,6 +13,7 @@
   import ClipEditorCanvas from './ClipEditorCanvas.svelte';
   import ClipEditorTemplates from './ClipEditorTemplates.svelte';
   import ClipEditorPropertiesPanel from './ClipEditorPropertiesPanel.svelte';
+  import ClipEditorTimeline from './ClipEditorTimeline.svelte';
 
   let { clip, candidate, videoId, onclose }: ClipEditorProps = $props();
 
@@ -29,6 +30,15 @@
   let originalEditsJson = '';
 
   let isDirty = $derived(edits !== null && JSON.stringify(edits) !== originalEditsJson);
+  let showDirtyWarning = $state(false);
+
+  function requestClose(): void {
+    if (isDirty) {
+      showDirtyWarning = true;
+    } else {
+      onclose();
+    }
+  }
 
   $effect(() => {
     void load();
@@ -174,12 +184,12 @@
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
-      onclose();
+      requestClose();
     }
   }
 
   function handleBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) onclose();
+    if (event.target === event.currentTarget) requestClose();
   }
 
   onMount(() => {
@@ -228,7 +238,7 @@
         >
           {isRendering ? 'Rendering…' : 'Render & Save'}
         </Button>
-        <button class="editor-close" type="button" aria-label="Close" onclick={onclose}>
+        <button class="editor-close" type="button" aria-label="Close" onclick={requestClose}>
           <Icon name="x" size={16} />
         </button>
       </div>
@@ -251,7 +261,19 @@
           />
         </div>
         <div class="editor-center">
-          <ClipEditorCanvas {clip} {edits} bind:currentTime bind:videoEl />
+          <ClipEditorCanvas
+            {clip}
+            {edits}
+            bind:currentTime
+            bind:videoEl
+            {selectedItemId}
+            onSelectItem={(id) => {
+              selectedItemId = id;
+            }}
+            onupdate={(e) => {
+              edits = e;
+            }}
+          />
           <div class="editor-track-toolbar">
             <Button size="sm" onclick={addSubtitle}>+ Subtitle</Button>
             <Button size="sm" onclick={addBanner}>+ Banner</Button>
@@ -268,6 +290,37 @@
               edits = e;
             }}
           />
+        </div>
+        <div class="editor-timeline">
+          <ClipEditorTimeline
+            {edits}
+            durationSec={clip.durationSec}
+            {currentTime}
+            {selectedItemId}
+            onSelectItem={(id) => {
+              selectedItemId = id;
+            }}
+            onupdate={(e) => {
+              edits = e;
+            }}
+          />
+        </div>
+      </div>
+    {/if}
+
+    {#if showDirtyWarning}
+      <div class="editor-confirm-overlay" transition:fade={{ duration: 100 }}>
+        <div class="editor-confirm-dialog">
+          <p class="editor-confirm-title">Unsaved changes</p>
+          <p class="editor-confirm-body">You have unsaved edits. Discard them and close?</p>
+          <div class="editor-confirm-actions">
+            <Button
+              onclick={() => {
+                showDirtyWarning = false;
+              }}>Keep editing</Button
+            >
+            <Button variant="danger" onclick={onclose}>Discard &amp; close</Button>
+          </div>
         </div>
       </div>
     {/if}
@@ -288,6 +341,7 @@
   }
 
   .editor-panel {
+    position: relative;
     width: min(1280px, 100%);
     height: calc(100vh - 48px);
     background: var(--vc-surface);
@@ -382,7 +436,16 @@
     flex: 1;
     display: grid;
     grid-template-columns: 220px 1fr 280px;
+    grid-template-rows: 1fr auto;
     overflow: hidden;
+  }
+
+  .editor-timeline {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--vc-divider);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
   }
 
   .editor-left {
@@ -409,5 +472,47 @@
     gap: 8px;
     padding-top: 12px;
     flex-shrink: 0;
+  }
+
+  .editor-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    border-radius: var(--vc-radius-lg);
+  }
+
+  .editor-confirm-dialog {
+    background: var(--vc-surface);
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius);
+    padding: 24px;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--vc-shadow-2, 0 24px 60px rgba(0, 0, 0, 0.4));
+  }
+
+  .editor-confirm-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--vc-text);
+  }
+
+  .editor-confirm-body {
+    margin: 0;
+    font-size: 13px;
+    color: var(--vc-text-subtle);
+  }
+
+  .editor-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
 </style>
