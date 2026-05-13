@@ -1,18 +1,12 @@
 // Shared topbar — used by main app screens.
 const { Icons } = window;
 
-const TopBar = ({
-  url = 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-  model = 'OpenAI · gpt-4o-mini',
-  state = 'idle',
-  onTheme,
-  theme = 'light',
-}) => {
+const TopBar = ({ url = "https://youtube.com/watch?v=dQw4w9WgXcQ", model = "OpenAI · gpt-4o-mini", state = "idle", onTheme, theme = "light" }) => {
   const stateChip = {
-    idle: { dotColor: 'var(--vc-text-subtle)', text: model, anim: false },
-    running: { dotColor: 'var(--vc-clay-500)', text: model, anim: true },
-    done: { dotColor: 'var(--vc-success)', text: model, anim: false },
-    error: { dotColor: 'var(--vc-error)', text: model, anim: false },
+    idle:      { dotColor: "var(--vc-text-subtle)", text: model, anim: false },
+    running:   { dotColor: "var(--vc-clay-500)",    text: model, anim: true  },
+    done:      { dotColor: "var(--vc-success)",     text: model, anim: false },
+    error:     { dotColor: "var(--vc-error)",       text: model, anim: false },
   }[state];
 
   return (
@@ -30,27 +24,18 @@ const TopBar = ({
       </div>
       <div className="topbar__actions">
         <span className="topbar__chip">
-          <span
-            className="dot"
-            style={{
-              background: stateChip.dotColor,
-              animation: stateChip.anim ? 'vc-pulse 1.6s ease-in-out infinite' : 'none',
-            }}
-          ></span>
+          <span className="dot" style={{ background: stateChip.dotColor, animation: stateChip.anim ? "vc-pulse 1.6s ease-in-out infinite" : "none" }}></span>
           {stateChip.text}
         </span>
-        {state === 'running' ? (
+        {state === "running" ? (
           <button className="vc-btn vc-btn--secondary vc-btn--sm">Cancel run</button>
         ) : null}
-        <button
-          className={`vc-btn ${state === 'running' ? 'vc-btn--secondary' : 'vc-btn--primary'}`}
-          disabled={state === 'running'}
-        >
+        <button className={`vc-btn ${state === "running" ? "vc-btn--secondary" : "vc-btn--primary"}`} disabled={state === "running"}>
           <Icons.Sparkles />
-          {state === 'running' ? 'Analyzing…' : state === 'done' ? 'Re-analyze' : 'Analyze'}
+          {state === "running" ? "Analyzing…" : state === "done" ? "Re-analyze" : "Analyze"}
         </button>
         <button className="vc-btn vc-btn--ghost vc-btn--icon" aria-label="Theme" onClick={onTheme}>
-          {theme === 'dark' ? <Icons.Sun /> : <Icons.Moon />}
+          {theme === "dark" ? <Icons.Sun /> : <Icons.Moon />}
         </button>
       </div>
     </div>
