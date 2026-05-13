@@ -302,3 +302,69 @@ _[tool: github_read_file]_
 _[tool: snip]_
 
 _[tool: snip]_
+
+## Assistant
+
+## User
+
+Using current design system enhance this
+
+## Assistant
+
+_[tool: github_read_file]_
+
+_[tool: view_image]_
+
+Got it. I can see this is a **caption/subtitle editor** screen — refining clips before publishing. Let me read the prepare step from the repo for exact feature fidelity, then build the enhanced version.
+
+_[tool: update_todos]_
+
+Now I have everything I need. This is the **caption editor** — a clip editing tool in the workflow. Let me rebuild it with the VC design system applied properly, dark-themed (appropriate for video editing), clay accent throughout.
+
+_[tool: write_file]_
+
+_[tool: done]_
+
+_[tool: fork_verifier_agent]_
+
+Here's what was built — **Caption Editor** screen enhanced with the Video Clipper design system:
+
+**What's applied from the DS:**
+
+- **Dark theme** (`--vc-bg: #1B1812`, warm charcoals) — appropriate for a video editor
+- **Clay-500 accent** on all interactive states: active caption preset ring, sliders, word token highlights, the Render & Save CTA
+- **JetBrains Mono** for timestamps (`3.9663509`, `10.1499999`), timecode, track labels, file name
+- **Source Serif 4 / Inter** for the wordmark and UI chrome
+- `--vc-success` green for the TRIM track and completed pipeline steps
+- `--vc-info` blue-gray for the OVLYS track
+- `--vc-clay-soft` fill + `--vc-clay-500` border for SUBS segments
+- Proper 1px hairline borders throughout (`--vc-border`)
+
+**Interactive elements that work:**
+
+- Click any **word token** to toggle highlight (clay)
+- Click any **caption preset** to select it (clay ring)
+- Click **Reframe / Fill** radio buttons to switch
+- Sliders update their numeric values live
+- **Theme toggle** (moon icon, top-right) switches to light cream mode
+
+**Also added:** The **5-step workflow stepper** (Analyze → Clip → Connect → **Prepare** → Publish) in the topbar, showing current position — binding this screen to the actual repo flow.
+
+## User
+
+Verifier agent check completed
+
+## Assistant
+
+_[tool: update_todos]_
+
+All checks pass! The Caption Editor is clean.
+
+You now have two deliverables in this project:
+
+| File                           | What it is                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| **Caption Editor.html**        | The enhanced caption/subtitle editor screen, dark-themed, DS-aligned                 |
+| **Video Clipper Screens.html** | 6-screen design canvas (start → analyzing → main → results → clip detail → settings) |
+
+Let me know if you'd like to work on any other screens, tweak anything, or start building the repo-accurate flow (channel search → video list → 5-step workflow) as a full interactive prototype.
