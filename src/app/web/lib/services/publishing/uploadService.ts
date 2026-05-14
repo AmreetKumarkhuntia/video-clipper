@@ -1,9 +1,9 @@
 import { promises as fs } from 'fs';
 import {
   createArtifactId,
-  getPublishDraft,
   saveUploadArtifacts,
 } from '@app/web/lib/services/artifacts/artifactStore.js';
+import { loadAndRefreshPublishDraft } from '@app/web/lib/services/publishing/draftService.js';
 import { getAuthorizedYouTubeAuthState } from '@app/web/lib/services/youtube/uploadAuth.js';
 import {
   UploadArtifactSchema,
@@ -33,7 +33,7 @@ export async function uploadDraftClips(
 ): Promise<UploadArtifact[]> {
   const done = log.fnCalled('uploadDraftClips', requestId, { analysisId: input.analysisId });
 
-  const draft = await getPublishDraft(cfg.OUTPUT_DIR, input.analysisId);
+  const draft = await loadAndRefreshPublishDraft(input.analysisId, cfg, requestId);
 
   if (!draft) {
     log.warn('uploadDraftClips', '[draft] draft missing', requestId, {

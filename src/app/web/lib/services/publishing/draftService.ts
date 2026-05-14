@@ -83,23 +83,37 @@ export async function savePublishDraftFromRequest(
 ): Promise<PublishDraft> {
   const done = log.fnCalled('savePublishDraft', requestId, { analysisId: input.analysisId });
 
-  const existing = await getPublishDraft(cfg.OUTPUT_DIR, input.analysisId);
-  const fallback = existing ?? (await buildPublishDraft(input.analysisId, cfg, requestId));
-  const createdAt = fallback?.createdAt ?? new Date().toISOString();
+  const [existing, fresh] = await Promise.all([
+    getPublishDraft(cfg.OUTPUT_DIR, input.analysisId),
+    buildPublishDraft(input.analysisId, cfg, requestId),
+  ]);
+  const createdAt = existing?.createdAt ?? fresh?.createdAt ?? new Date().toISOString();
+  const freshById = new Map((fresh?.items ?? []).map((i) => [i.clipArtifactId, i]));
+
+  const items = input.items.map((item) => {
+    const f = freshById.get(item.clipArtifactId);
+    if (!f) return item;
+    return {
+      ...item,
+      path: f.path,
+      editedPath: f.editedPath,
+      isRenderRequired: f.isRenderRequired,
+    };
+  });
 
   const saved = await savePublishDraft(
     PublishDraftSchema.parse({
-      id: fallback?.id ?? createArtifactId(`publish-${input.videoId}`),
+      id: existing?.id ?? fresh?.id ?? createArtifactId(`publish-${input.videoId}`),
       analysisId: input.analysisId,
       videoId: input.videoId,
       title: input.title,
       createdAt,
       updatedAt: new Date().toISOString(),
-      items: input.items,
+      items,
     }),
     cfg.OUTPUT_DIR,
   );
-  done({ items: input.items.length });
+  done({ items: items.length });
   return saved;
 }
 
