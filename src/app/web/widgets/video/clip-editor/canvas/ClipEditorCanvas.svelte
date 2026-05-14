@@ -27,6 +27,17 @@
 
   let aspectRatio = $derived(ASPECT_RATIOS[edits.viewport.preset] ?? '9 / 16');
 
+  // For crop mode the canvas must show the video cropped to the output aspect ratio — matching
+  // what FFmpeg will produce — so that subtitle/overlay positions reference visible content, not
+  // letterbox bars. object-position mirrors the user-controlled focus point.
+  // For pad modes (pad-blur, pad-black) the video IS letterboxed in the output too, so
+  // object-fit:contain is correct and position math already matches.
+  let videoStyle = $derived(
+    edits.viewport.fillMode === 'crop'
+      ? `object-fit:cover;object-position:${edits.viewport.focus.xCenter * 100}% ${edits.viewport.focus.yCenter * 100}%`
+      : 'object-fit:contain',
+  );
+
   let activeSubtitleLine = $derived(
     edits.subtitles.find((s) => s.startSec <= currentTime && s.endSec > currentTime) ?? null,
   );
@@ -88,6 +99,7 @@
         src="/api/clips/{clip.id}/file?variant=original"
         preload="metadata"
         class="canvas-video"
+        style={videoStyle}
         onplay={handlePlay}
         onpause={handlePause}
         onended={handleEnded}
@@ -152,7 +164,6 @@
   .canvas-video {
     width: 100%;
     height: 100%;
-    object-fit: contain;
     display: block;
   }
 </style>

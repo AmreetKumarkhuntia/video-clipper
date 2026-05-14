@@ -104,7 +104,7 @@ describe('buildAss', () => {
       expect(dialogue).not.toContain('\\k');
     });
 
-    it('emits \\k karaoke tags for each word', () => {
+    it('emits one Dialogue event per word window (multi-event approach)', () => {
       const sub = makeSubtitle({
         words: [
           { text: 'Hi', startSec: 0.3, endSec: 0.8, highlight: false },
@@ -112,9 +112,14 @@ describe('buildAss', () => {
         ],
       });
       const result = buildAss([sub], OUTPUT);
-      const dialogue = result.split('\n').find((l) => l.startsWith('Dialogue:'))!;
-      expect(dialogue).toContain('{\\k50}Hi');
-      expect(dialogue).toContain('{\\k60}there');
+      const dialogues = result.split('\n').filter((l) => l.startsWith('Dialogue:'));
+      // One event per word + a trailing gap event (1.4 → 2.4)
+      expect(dialogues.length).toBeGreaterThanOrEqual(2);
+      // First event: Hi is active — must carry \1c highlight; there is plain
+      expect(dialogues[0]).toContain('\\1c');
+      expect(dialogues[0]).toContain('Hi');
+      // No \k karaoke tags in any event
+      expect(result).not.toContain('\\k');
     });
 
     it('applies highlight color tag to highlighted words', () => {
@@ -161,7 +166,12 @@ describe('buildAss', () => {
         words: [{ text: 'Hi', startSec: 0.3, endSec: 0.8, highlight: false }],
       });
       const result = buildAss([sub], OUTPUT);
-      expect(result).toContain('{\\k50}Hi');
+      const dialogues = result.split('\n').filter((l) => l.startsWith('Dialogue:'));
+      // Active event for the word window + gap event for remainder
+      expect(dialogues.length).toBeGreaterThanOrEqual(1);
+      expect(dialogues[0]).toContain('\\1c');
+      expect(dialogues[0]).toContain('Hi');
+      expect(result).not.toContain('\\k');
     });
   });
 });

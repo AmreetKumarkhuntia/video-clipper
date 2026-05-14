@@ -54,7 +54,7 @@ export async function renderClipWithEdits(
     const tmpDir = join(cfg.outputDir, 'web', 'clip-edits', 'tmp');
     await fs.mkdir(tmpDir, { recursive: true });
     assPath = join(tmpDir, `${edits.clipId}.ass`);
-    const assContent = buildAss(edits.subtitles, { width: oW, height: oH });
+    const assContent = buildAss(edits.subtitles, { width: oW, height: oH }, edits.trim.startSec);
     await fs.writeFile(assPath, assContent, 'utf-8');
   }
 

@@ -23,7 +23,9 @@ export function buildFilterGraph(
   for (const overlay of edits.overlays) {
     const inLabel = `[v${labelN - 1}]`;
     const outLabel = `[v${labelN}]`;
-    segments.push(`${inLabel}${buildDrawtext(overlay, { width: oW, height: oH })}${outLabel}`);
+    segments.push(
+      `${inLabel}${buildDrawtext(overlay, { width: oW, height: oH }, edits.trim.startSec)}${outLabel}`,
+    );
     labelN++;
   }
 
