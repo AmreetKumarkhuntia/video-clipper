@@ -302,8 +302,7 @@
                 <Button
                   size="sm"
                   variant="secondary"
-                  disabled={!clip.editedPath}
-                  title={clip.editedPath ? 'Preview rendered clip' : 'Render first'}
+                  title={clip.editedPath ? 'Preview rendered clip' : 'Preview original clip'}
                   onclick={() => {
                     previewClip = clip;
                   }}>Preview</Button

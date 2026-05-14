@@ -22,11 +22,7 @@
 
   <div class="preview-modal__body">
     <!-- svelte-ignore a11y_media_has_caption -->
-    <video
-      class="preview-modal__video"
-      src="/api/clips/{clipId}/file?variant=edited&v={ts}"
-      controls
-      autoplay
+    <video class="preview-modal__video" src="/api/clips/{clipId}/file?v={ts}" controls autoplay
     ></video>
   </div>
 </div>
