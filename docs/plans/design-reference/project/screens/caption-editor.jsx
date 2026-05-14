@@ -10,7 +10,7 @@ const { Icons } = window;
    pollute the global scope or other screens.
    ──────────────────────────────────────────────────────────────── */
 
-const CapField = ({ label, children, className = "" }) => (
+const CapField = ({ label, children, className = '' }) => (
   <div className={`ce-field ${className}`}>
     <label className="ce-field__label">{label}</label>
     {children}
@@ -27,9 +27,12 @@ const SliderField = ({ label, min, max, step = 1, value, suffix, onChange }) => 
         max={max}
         step={step}
         value={value}
-        onChange={e => onChange?.(Number(e.target.value))}
+        onChange={(e) => onChange?.(Number(e.target.value))}
       />
-      <span className="ce-slider-row__v">{value}{suffix ?? ""}</span>
+      <span className="ce-slider-row__v">
+        {value}
+        {suffix ?? ''}
+      </span>
     </div>
   </CapField>
 );
@@ -53,20 +56,20 @@ const PanelH = ({ children, hint }) => (
    ──────────────────────────────────────────────────────────────── */
 
 const PRESETS = [
-  { id: "bold-white",  label: "Bold White" },
-  { id: "yellow-pop",  label: "Yellow Pop" },
-  { id: "subtle",      label: "Subtle" },
-  { id: "hooked",      label: "Hooked" },
-  { id: "karaoke",     label: "Karaoke" },
+  { id: 'bold-white', label: 'Bold White' },
+  { id: 'yellow-pop', label: 'Yellow Pop' },
+  { id: 'subtle', label: 'Subtle' },
+  { id: 'hooked', label: 'Hooked' },
+  { id: 'karaoke', label: 'Karaoke' },
 ];
 
 const CaptionPreset = ({ preset, active, onClick }) => (
   <button
-    className={`ce-preset ce-preset--${preset.id} ${active ? "is-active" : ""}`}
+    className={`ce-preset ce-preset--${preset.id} ${active ? 'is-active' : ''}`}
     onClick={onClick}
     type="button"
   >
-    {preset.id === "karaoke" && <span className="ce-preset__karaoke-fill"></span>}
+    {preset.id === 'karaoke' && <span className="ce-preset__karaoke-fill"></span>}
     <span className="ce-preset__text">{preset.label}</span>
     {active && <span className="ce-preset__dot" aria-hidden></span>}
   </button>
@@ -77,11 +80,11 @@ const CaptionPreset = ({ preset, active, onClick }) => (
    ──────────────────────────────────────────────────────────────── */
 
 const STEPS = [
-  { id: "analyze",  label: "Analyze",  state: "done" },
-  { id: "clip",     label: "Clip",     state: "done" },
-  { id: "connect",  label: "Connect",  state: "done" },
-  { id: "prepare",  label: "Prepare",  state: "current" },
-  { id: "publish",  label: "Publish",  state: "locked" },
+  { id: 'analyze', label: 'Analyze', state: 'done' },
+  { id: 'clip', label: 'Clip', state: 'done' },
+  { id: 'connect', label: 'Connect', state: 'done' },
+  { id: 'prepare', label: 'Prepare', state: 'current' },
+  { id: 'publish', label: 'Publish', state: 'locked' },
 ];
 
 const Stepper = () => (
@@ -91,7 +94,7 @@ const Stepper = () => (
       {STEPS.map((s, i) => (
         <li key={s.id} className={`ce-stepper__item is-${s.state}`}>
           <span className="ce-stepper__bullet">
-            {s.state === "done" ? <Icons.Check size={11} /> : i + 1}
+            {s.state === 'done' ? <Icons.Check size={11} /> : i + 1}
           </span>
           <span className="ce-stepper__label">{s.label}</span>
         </li>
@@ -113,7 +116,9 @@ const CETopBar = ({ theme, onTheme }) => (
     <div className="ce-topbar__file">
       <span className="ce-topbar__file__name">ttXHdaDTjnk_356_420.mp4</span>
       <span className="ce-topbar__file__meta">5:56 → 7:00 · 1:04</span>
-      <span className="vc-badge vc-badge--mono" style={{ padding: "2px 8px" }}>9:16</span>
+      <span className="vc-badge vc-badge--mono" style={{ padding: '2px 8px' }}>
+        9:16
+      </span>
     </div>
 
     <Stepper />
@@ -123,10 +128,15 @@ const CETopBar = ({ theme, onTheme }) => (
     <div className="ce-topbar__actions">
       <button className="vc-btn vc-btn--secondary vc-btn--sm">Save draft</button>
       <button className="vc-btn vc-btn--primary vc-btn--sm">
-        <Icons.Scissors size={14} />Render &amp; Save
+        <Icons.Scissors size={14} />
+        Render &amp; Save
       </button>
-      <button className="vc-btn vc-btn--ghost vc-btn--icon vc-btn--sm" aria-label="Theme" onClick={onTheme}>
-        {theme === "dark" ? <Icons.Sun size={14} /> : <Icons.Moon size={14} />}
+      <button
+        className="vc-btn vc-btn--ghost vc-btn--icon vc-btn--sm"
+        aria-label="Theme"
+        onClick={onTheme}
+      >
+        {theme === 'dark' ? <Icons.Sun size={14} /> : <Icons.Moon size={14} />}
       </button>
       <button className="vc-btn vc-btn--ghost vc-btn--icon vc-btn--sm" aria-label="Close">
         <Icons.X size={14} />
@@ -146,8 +156,18 @@ const VideoStage = () => (
       <div className="ce-frame ce-frame--face">
         <div className="ce-frame__ph">
           <div className="ce-frame__avatar">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
           </div>
           <span className="ce-frame__phlabel">face cam</span>
@@ -162,8 +182,18 @@ const VideoStage = () => (
       {/* Game footage */}
       <div className="ce-frame ce-frame--game">
         <div className="ce-frame__ph ce-frame__ph--dim">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/>
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <polygon points="10 9 15 12 10 15 10 9" />
           </svg>
         </div>
         <div className="ce-game-subs">
@@ -179,9 +209,11 @@ const Playback = () => (
     <button className="ce-play-btn" aria-label="Play">
       <Icons.Play size={11} />
     </button>
-    <span className="ce-pb-time"><span className="now">0:12</span> / 1:04</span>
+    <span className="ce-pb-time">
+      <span className="now">0:12</span> / 1:04
+    </span>
     <div className="ce-pb-track">
-      <div className="ce-pb-fill" style={{ width: "18%" }}>
+      <div className="ce-pb-fill" style={{ width: '18%' }}>
         <span className="ce-pb-thumb"></span>
       </div>
     </div>
@@ -192,13 +224,16 @@ const Playback = () => (
 const SubActions = () => (
   <div className="ce-sub-actions">
     <button className="vc-btn vc-btn--secondary vc-btn--sm">
-      <Icons.Plus size={13} />Subtitle
+      <Icons.Plus size={13} />
+      Subtitle
     </button>
     <button className="vc-btn vc-btn--secondary vc-btn--sm">
-      <Icons.Plus size={13} />Banner
+      <Icons.Plus size={13} />
+      Banner
     </button>
     <button className="vc-btn vc-btn--ghost vc-btn--sm">
-      <Icons.FileText size={13} />Auto-import transcript
+      <Icons.FileText size={13} />
+      Auto-import transcript
     </button>
     <span className="ce-sub-actions__hint">
       <Icons.Sparkles size={12} />3 banners suggested from transcript
@@ -211,8 +246,21 @@ const SubActions = () => (
    ──────────────────────────────────────────────────────────────── */
 
 const WORDS = [
-  ">>", "She's", "a", "coward.", "No,", "she's", "mocking", "me.",
-  "She", "knows", "the", "last", "student", "I", "trained"
+  '>>',
+  "She's",
+  'a',
+  'coward.',
+  'No,',
+  "she's",
+  'mocking',
+  'me.',
+  'She',
+  'knows',
+  'the',
+  'last',
+  'student',
+  'I',
+  'trained',
 ];
 
 const RightPanel = () => {
@@ -223,8 +271,8 @@ const RightPanel = () => {
   const [outlineW, setOutlineW] = React.useState(3);
   const [pos, setPos] = React.useState(0.85);
 
-  const toggleWord = i => {
-    setHl(prev => {
+  const toggleWord = (i) => {
+    setHl((prev) => {
       const next = new Set(prev);
       next.has(i) ? next.delete(i) : next.add(i);
       return next;
@@ -237,14 +285,16 @@ const RightPanel = () => {
       <div className="ce-right__sel">
         <span className="ce-right__sel__k">Editing</span>
         <span className="ce-right__sel__v">Subtitle · 02</span>
-        <span className="vc-badge vc-badge--clay vc-badge--mono" style={{ marginLeft: "auto" }}>karaoke</span>
+        <span className="vc-badge vc-badge--clay vc-badge--mono" style={{ marginLeft: 'auto' }}>
+          karaoke
+        </span>
       </div>
 
       <div className="ce-rg">
         <PanelH>Text</PanelH>
         <textarea
           className="vc-textarea"
-          style={{ minHeight: 60, fontFamily: "var(--vc-font-body)", fontSize: 13 }}
+          style={{ minHeight: 60, fontFamily: 'var(--vc-font-body)', fontSize: 13 }}
           defaultValue=">> She's a coward. No, she's mocking me. She knows the last student I trained"
         />
         <div className="ce-time-row">
@@ -264,7 +314,7 @@ const RightPanel = () => {
             <button
               key={i}
               type="button"
-              className={`ce-word ${hl.has(i) ? "is-hl" : ""}`}
+              className={`ce-word ${hl.has(i) ? 'is-hl' : ''}`}
               onClick={() => toggleWord(i)}
             >
               {w}
@@ -276,8 +326,22 @@ const RightPanel = () => {
       <div className="ce-rg">
         <PanelH>Style</PanelH>
         <div className="ce-grid-2">
-          <SliderField label="Font size" min={12} max={120} value={size} onChange={setSize} suffix="px" />
-          <SliderField label="Weight" min={100} max={900} step={100} value={weight} onChange={setWeight} />
+          <SliderField
+            label="Font size"
+            min={12}
+            max={120}
+            value={size}
+            onChange={setSize}
+            suffix="px"
+          />
+          <SliderField
+            label="Weight"
+            min={100}
+            max={900}
+            step={100}
+            value={weight}
+            onChange={setWeight}
+          />
         </div>
         <CapField label="Align">
           <div className="seg-control">
@@ -298,7 +362,11 @@ const RightPanel = () => {
         <label className="ce-toggle-row">
           <span>Outline</span>
           <span className="vc-toggle">
-            <input type="checkbox" checked={outline} onChange={e => setOutline(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={outline}
+              onChange={(e) => setOutline(e.target.checked)}
+            />
             <span className="vc-toggle__track"></span>
             <span className="vc-toggle__thumb"></span>
           </span>
@@ -307,7 +375,14 @@ const RightPanel = () => {
         {outline && (
           <div className="ce-grid-2">
             <Swatch kind="black" label="Outline" />
-            <SliderField label="Width" min={0} max={10} value={outlineW} onChange={setOutlineW} suffix="px" />
+            <SliderField
+              label="Width"
+              min={0}
+              max={10}
+              value={outlineW}
+              onChange={setOutlineW}
+              suffix="px"
+            />
           </div>
         )}
 
@@ -327,8 +402,8 @@ const RightPanel = () => {
           max={1}
           step={0.01}
           value={pos}
-          onChange={e => setPos(Number(e.target.value))}
-          style={{ width: "100%", marginTop: 8 }}
+          onChange={(e) => setPos(Number(e.target.value))}
+          style={{ width: '100%', marginTop: 8 }}
         />
         <div className="ce-pos-sub">
           <span>top</span>
@@ -344,26 +419,28 @@ const RightPanel = () => {
    ──────────────────────────────────────────────────────────────── */
 
 const SUBS = [
-  { left: 0,  w: 14, t: ">> She's a co…", hl: true },
-  { left: 15, w: 9,  t: "in who…" },
-  { left: 25, w: 14, t: "there her was mi Naged…" },
-  { left: 40, w: 7,  t: "i was t…" },
-  { left: 48, w: 5,  t: "defin…" },
-  { left: 54, w: 4,  t: "Import…" },
-  { left: 59, w: 4,  t: "to in…" },
-  { left: 64, w: 5,  t: "full, but st…" },
-  { left: 71, w: 5,  t: "Export…" },
-  { left: 77, w: 3,  t: "the…" },
-  { left: 81, w: 3,  t: "film…" },
-  { left: 85, w: 4,  t: "main…" },
-  { left: 90, w: 3,  t: "fill…" },
-  { left: 94, w: 3,  t: "still…" },
+  { left: 0, w: 14, t: ">> She's a co…", hl: true },
+  { left: 15, w: 9, t: 'in who…' },
+  { left: 25, w: 14, t: 'there her was mi Naged…' },
+  { left: 40, w: 7, t: 'i was t…' },
+  { left: 48, w: 5, t: 'defin…' },
+  { left: 54, w: 4, t: 'Import…' },
+  { left: 59, w: 4, t: 'to in…' },
+  { left: 64, w: 5, t: 'full, but st…' },
+  { left: 71, w: 5, t: 'Export…' },
+  { left: 77, w: 3, t: 'the…' },
+  { left: 81, w: 3, t: 'film…' },
+  { left: 85, w: 4, t: 'main…' },
+  { left: 90, w: 3, t: 'fill…' },
+  { left: 94, w: 3, t: 'still…' },
 ];
 
 const Timeline = () => (
   <div className="ce-timeline">
     <div className="ce-tl-top">
-      <button className="vc-btn vc-btn--secondary vc-btn--sm" style={{ padding: "3px 10px" }}>Fit all</button>
+      <button className="vc-btn vc-btn--secondary vc-btn--sm" style={{ padding: '3px 10px' }}>
+        Fit all
+      </button>
       <span className="ce-tl-range">0:00 – 1:04</span>
       <span className="ce-tl-cursor">cursor 00:12.413</span>
       <span style={{ flex: 1 }} />
@@ -378,9 +455,11 @@ const Timeline = () => (
           {SUBS.map((s, i) => (
             <div
               key={i}
-              className={`ce-tl-seg ${s.hl ? "is-hl" : ""}`}
+              className={`ce-tl-seg ${s.hl ? 'is-hl' : ''}`}
               style={{ left: `${s.left}%`, width: `${s.w}%` }}
-            >{s.t}</div>
+            >
+              {s.t}
+            </div>
           ))}
         </div>
       </div>
@@ -388,7 +467,7 @@ const Timeline = () => (
       <div className="ce-tl-track">
         <span className="ce-tl-lbl">Ovlys</span>
         <div className="ce-tl-body">
-          <div className="ce-tl-seg ce-tl-seg--ovly" style={{ left: "0%", width: "62%" }}>
+          <div className="ce-tl-seg ce-tl-seg--ovly" style={{ left: '0%', width: '62%' }}>
             Hook banner
           </div>
         </div>
@@ -403,10 +482,17 @@ const Timeline = () => (
     </div>
 
     <div className="ce-tl-ticks">
-      <span>0:00</span><span>0:15</span><span>0:30</span><span>0:45</span><span>1:00</span>
+      <span>0:00</span>
+      <span>0:15</span>
+      <span>0:30</span>
+      <span>0:45</span>
+      <span>1:00</span>
     </div>
 
-    <div className="ce-tl-cursor-line" style={{ left: "calc(60px + 18% * (100% - 60px - 16px))" }}></div>
+    <div
+      className="ce-tl-cursor-line"
+      style={{ left: 'calc(60px + 18% * (100% - 60px - 16px))' }}
+    ></div>
   </div>
 );
 
@@ -415,9 +501,9 @@ const Timeline = () => (
    ──────────────────────────────────────────────────────────────── */
 
 const CaptionEditorScreen = ({ theme, onTheme }) => {
-  const [preset, setPreset] = React.useState("karaoke");
-  const [aspect, setAspect] = React.useState("9:16");
-  const [fill, setFill] = React.useState("crop");
+  const [preset, setPreset] = React.useState('karaoke');
+  const [aspect, setAspect] = React.useState('9:16');
+  const [fill, setFill] = React.useState('crop');
 
   return (
     <div className="screen-root ce-root" data-theme={theme}>
@@ -429,8 +515,13 @@ const CaptionEditorScreen = ({ theme, onTheme }) => {
           <div className="ce-rg">
             <PanelH>Captions</PanelH>
             <div className="ce-presets">
-              {PRESETS.map(p => (
-                <CaptionPreset key={p.id} preset={p} active={preset === p.id} onClick={() => setPreset(p.id)} />
+              {PRESETS.map((p) => (
+                <CaptionPreset
+                  key={p.id}
+                  preset={p}
+                  active={preset === p.id}
+                  onClick={() => setPreset(p.id)}
+                />
               ))}
             </div>
           </div>
@@ -438,12 +529,14 @@ const CaptionEditorScreen = ({ theme, onTheme }) => {
           <div className="ce-rg">
             <PanelH>Reframe</PanelH>
             <div className="seg-control seg-control--col">
-              {["9:16", "1:1", "16:9"].map(a => (
+              {['9:16', '1:1', '16:9'].map((a) => (
                 <button
                   key={a}
-                  className={`seg-control__btn ${aspect === a ? "is-active" : ""}`}
+                  className={`seg-control__btn ${aspect === a ? 'is-active' : ''}`}
                   onClick={() => setAspect(a)}
-                >{a}</button>
+                >
+                  {a}
+                </button>
               ))}
             </div>
           </div>
@@ -451,12 +544,18 @@ const CaptionEditorScreen = ({ theme, onTheme }) => {
           <div className="ce-rg">
             <PanelH>Fill</PanelH>
             <div className="seg-control seg-control--col">
-              {[["crop","Crop"], ["blur","Blur"], ["black","Black"]].map(([id, label]) => (
+              {[
+                ['crop', 'Crop'],
+                ['blur', 'Blur'],
+                ['black', 'Black'],
+              ].map(([id, label]) => (
                 <button
                   key={id}
-                  className={`seg-control__btn ${fill === id ? "is-active" : ""}`}
+                  className={`seg-control__btn ${fill === id ? 'is-active' : ''}`}
                   onClick={() => setFill(id)}
-                >{label}</button>
+                >
+                  {label}
+                </button>
               ))}
             </div>
           </div>

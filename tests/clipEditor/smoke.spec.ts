@@ -43,8 +43,8 @@ test('clip editor opens and dirty warning appears on close attempt', async ({ pa
   await expect(dialog).toBeVisible();
   await page.screenshot({ path: 'temp/smoke-editor-open.png' });
 
-  // Trigger a dirty state by clicking "+ Subtitle".
-  const addSubtitleBtn = page.getByRole('button', { name: /\+ subtitle/i });
+  // Trigger a dirty state by clicking the "Subtitle" add button in the sub-actions row.
+  const addSubtitleBtn = dialog.getByRole('button', { name: /^subtitle$/i });
   if (await addSubtitleBtn.isVisible()) {
     await addSubtitleBtn.click();
   }

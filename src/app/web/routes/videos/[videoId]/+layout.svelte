@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import VideoWorkflowStepper from '@web/widgets/video/VideoWorkflowStepper.svelte';
+  import VideoWorkflowStepper from '@web/widgets/video/analysis/VideoWorkflowStepper.svelte';
   import { buildVideoWorkflowSteps } from '@web/lib/videoWorkflow.js';
   import type { VideoLayoutProps } from '@app/web/types/componentProps.js';
 
