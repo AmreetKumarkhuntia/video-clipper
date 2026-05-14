@@ -46,6 +46,36 @@ export async function buildPublishDraft(
   return draft;
 }
 
+export async function loadAndRefreshPublishDraft(
+  analysisId: string,
+  cfg: Config,
+  requestId?: string,
+): Promise<PublishDraft | null> {
+  const [existingDraft, freshDraft] = await Promise.all([
+    getPublishDraft(cfg.OUTPUT_DIR, analysisId),
+    buildPublishDraft(analysisId, cfg, requestId),
+  ]);
+
+  if (!freshDraft) return existingDraft;
+  if (!existingDraft) return freshDraft;
+
+  const existingById = new Map(existingDraft.items.map((item) => [item.clipArtifactId, item]));
+  return PublishDraftSchema.parse({
+    ...existingDraft,
+    items: freshDraft.items.map((freshItem) => {
+      const saved = existingById.get(freshItem.clipArtifactId);
+      if (!saved) return freshItem;
+      return {
+        ...saved,
+        path: freshItem.path,
+        editedPath: freshItem.editedPath,
+        isRenderRequired: freshItem.isRenderRequired,
+      };
+    }),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
 export async function savePublishDraftFromRequest(
   input: SavePublishDraftRequest,
   cfg: Config,

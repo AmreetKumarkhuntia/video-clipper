@@ -44,7 +44,7 @@ export function buildDrawtext(
   if (overlay.style.bgColor !== null) {
     parts.push(`box=1`);
     parts.push(`boxcolor=${overlay.style.bgColor}`);
-    parts.push(`boxborderw=4`);
+    parts.push(`boxborderw=${overlay.style.bgPaddingX}`);
   }
 
   return `drawtext=${parts.join(':')}`;

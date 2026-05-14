@@ -55,12 +55,17 @@ export function buildAss(
     const sc = sub.style;
     const pc = cssToAssColor(sc.color);
     const oc = sc.outlineColor ? cssToAssColor(sc.outlineColor) : '&H00000000';
+    const bc = sc.bgColor ? cssToAssColor(sc.bgColor) : '&H00000000';
     const b = sc.weight >= 600 ? -1 : 0;
     const marginV = Math.round((1 - sub.position.yCenter) * output.height);
     const renderedSize = resolveRenderedFontSize(sc.fontSize, output);
     const alignment = alignToAssCode(sc.align);
     const { marginL, marginR } = alignMargins(sc.align, output.width);
-    return `Style: ${sub.id},${sc.fontFamily},${renderedSize},${pc},&H00FFFFFF,${oc},&H00000000,${b},0,0,0,100,100,0,0,1,${sc.outlineWidth},0,${alignment},${marginL},${marginR},${marginV},1`;
+    // BorderStyle=3 renders an opaque background box; Outline field becomes box padding.
+    // BorderStyle=1 renders text outline (normal mode).
+    const borderStyle = sc.bgColor ? 3 : 1;
+    const outlineField = sc.bgColor ? sc.bgPaddingX : sc.outlineWidth;
+    return `Style: ${sub.id},${sc.fontFamily},${renderedSize},${pc},&H00FFFFFF,${oc},${bc},${b},0,0,0,100,100,0,0,${borderStyle},${outlineField},0,${alignment},${marginL},${marginR},${marginV},1`;
   });
 
   // Each subtitle may produce multiple dialogue events (one per word window + gaps)
