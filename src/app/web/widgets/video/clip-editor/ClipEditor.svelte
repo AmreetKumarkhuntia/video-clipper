@@ -4,6 +4,7 @@
   import type { ClipEditorProps } from '@app/web/types/componentProps.js';
   import type { ClipEdits } from '@lib/types/clipEdit.js';
   import type { TranscriptBundle } from '@app/web/types/analysis.js';
+  import type { PlannedSubtitleLine } from '@app/web/types/subtitlePlan.js';
   import { apiFetch } from '@web/lib/api.js';
   import { showToast } from '@web/lib/stores/toast.js';
   import { formatTime } from '@web/lib/format.js';
@@ -23,6 +24,7 @@
   let isLoading = $state(true);
   let isSaving = $state(false);
   let isRendering = $state(false);
+  let isPlanning = $state(false);
   let errorMessage = $state('');
   let selectedItemId = $state<string | null>(null);
   let currentTime = $state(0);
@@ -93,6 +95,52 @@
         };
       });
     edits = { ...edits, subtitles: lines };
+  }
+
+  async function planSubtitles(): Promise<void> {
+    if (!edits || edits.subtitles.length === 0) return;
+    isPlanning = true;
+    errorMessage = '';
+    try {
+      const res = await apiFetch<{ lines: PlannedSubtitleLine[] }>(
+        `/api/clips/${clip.id}/subtitles/plan`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            durationSec: clip.durationSec,
+            subtitles: edits.subtitles.map((s) => ({
+              startSec: s.startSec,
+              endSec: s.endSec,
+              text: s.text,
+              words: s.words.map((w) => ({ text: w.text, startSec: w.startSec, endSec: w.endSec })),
+            })),
+          }),
+        },
+      );
+      const ref = edits.subtitles[0];
+      edits = {
+        ...edits,
+        subtitles: res.lines.map((l) => ({
+          id: crypto.randomUUID(),
+          startSec: l.startSec,
+          endSec: l.endSec,
+          text: l.text,
+          words: l.words.map((w) => ({ ...w, highlight: false })),
+          position: { ...ref.position },
+          style: { ...ref.style },
+          ...(ref.templateId ? { templateId: ref.templateId } : {}),
+        })),
+      };
+      showToast(
+        'success',
+        `Planned ${res.lines.length} subtitle line${res.lines.length === 1 ? '' : 's'}.`,
+      );
+    } catch (e) {
+      errorMessage = e instanceof Error ? e.message : String(e);
+    } finally {
+      isPlanning = false;
+    }
   }
 
   function addSubtitle(): void {
@@ -293,6 +341,15 @@
               <Icon name="file-text" size={13} />
               Auto-import transcript
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onclick={planSubtitles}
+              disabled={isPlanning || edits.subtitles.length === 0}
+            >
+              <Icon name="sparkles" size={13} />
+              {isPlanning ? 'Planning…' : 'Plan subtitles'}
+            </Button>
             {#if transcript && edits.subtitles.length === 0}
               <span class="ce-sub-actions__hint">
                 <Icon name="sparkles" size={12} />
@@ -318,6 +375,10 @@
             {selectedItemId}
             onSelectItem={(id) => {
               selectedItemId = id;
+            }}
+            onSeek={(sec) => {
+              if (videoEl) videoEl.currentTime = sec;
+              else currentTime = sec;
             }}
             onupdate={(e) => {
               edits = e;

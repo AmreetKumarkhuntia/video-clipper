@@ -86,5 +86,5 @@ function buildKaraokeText(sub: SubtitleLine): string {
       }
       return `{\\k${cs}}${escaped}`;
     })
-    .join('');
+    .join(' ');
 }

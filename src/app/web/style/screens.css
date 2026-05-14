@@ -1839,6 +1839,7 @@ code {
   border-radius: var(--vc-radius-sm);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 .ce-tl-trim {
   height: 100%;
@@ -1878,10 +1879,11 @@ code {
 .ce-tl-ticks {
   display: flex;
   justify-content: space-between;
-  padding: 6px 18px 6px 66px;
+  padding: 6px 18px 6px 72px;
   font-family: var(--vc-font-mono);
   font-size: 10px;
   color: var(--vc-text-subtle);
+  cursor: pointer;
 }
 .ce-tl-cursor-line {
   position: absolute;

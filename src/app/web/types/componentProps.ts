@@ -395,6 +395,7 @@ export interface ClipEditorTimelineProps {
   currentTime: number;
   selectedItemId: string | null;
   onSelectItem: (id: string | null) => void;
+  onSeek: (sec: number) => void;
   onupdate: (edits: ClipEdits) => void;
 }
 

@@ -61,6 +61,7 @@ export const ConfigSchema = z
     CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
     LLM_SYSTEM_PROMPT: z.string().optional(),
     PUBLISH_METADATA_SYSTEM_PROMPT: z.string().optional(),
+    SUBTITLE_PLAN_SYSTEM_PROMPT: z.string().optional(),
     AUDIO_GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
     AUDIO_EXTRA_INSTRUCTIONS: z.string().optional(),
     DOWNLOAD_SECTIONS_MODE: z.union([z.literal('all'), z.number().int().positive()]).default('all'),
@@ -204,6 +205,7 @@ export const CONFIG_GROUPS = [
       'LLM_CONCURRENCY',
       'LLM_SYSTEM_PROMPT',
       'PUBLISH_METADATA_SYSTEM_PROMPT',
+      'SUBTITLE_PLAN_SYSTEM_PROMPT',
     ],
   },
   {
@@ -369,6 +371,11 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   PUBLISH_METADATA_SYSTEM_PROMPT: {
     description:
       'Override the YouTube title/description/tags generation prompt (leave blank to use the default)',
+    widget: 'textarea',
+  },
+  SUBTITLE_PLAN_SYSTEM_PROMPT: {
+    description:
+      'Override the subtitle planning/correction prompt (leave blank to use the default)',
     widget: 'textarea',
   },
   OPENAI_API_KEY: { description: 'OpenAI API key', widget: 'text', secret: true },
