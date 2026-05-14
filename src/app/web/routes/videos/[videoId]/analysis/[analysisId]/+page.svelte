@@ -11,7 +11,7 @@
   import Badge from '@web/components/Badge.svelte';
   import Card from '@web/components/Card.svelte';
   import Slider from '@web/components/Slider.svelte';
-  import ClipEditor from '@web/widgets/video/ClipEditor.svelte';
+  import ClipEditor from '@web/widgets/video/clip-editor/ClipEditor.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);

@@ -33,11 +33,11 @@
   import Button from '@web/components/Button.svelte';
   import AnalysisProgress from '@web/widgets/AnalysisProgress.svelte';
   import YouTubeEmbed from '@web/components/YouTubeEmbed.svelte';
-  import ClipPlanSummary from '@web/widgets/video/ClipPlanSummary.svelte';
-  import ClipTimeline from '@web/widgets/video/ClipTimeline.svelte';
-  import SegmentPreview from '@web/widgets/video/SegmentPreview.svelte';
-  import TranscriptPanel from '@web/widgets/video/TranscriptPanel.svelte';
-  import VideoDetailsRail from '@web/widgets/video/VideoDetailsRail.svelte';
+  import ClipPlanSummary from '@web/widgets/video/analysis/ClipPlanSummary.svelte';
+  import ClipTimeline from '@web/widgets/video/analysis/ClipTimeline.svelte';
+  import SegmentPreview from '@web/widgets/video/analysis/SegmentPreview.svelte';
+  import TranscriptPanel from '@web/widgets/video/analysis/TranscriptPanel.svelte';
+  import VideoDetailsRail from '@web/widgets/video/analysis/VideoDetailsRail.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let streamingCandidates = $state<ClipCandidate[]>([]);

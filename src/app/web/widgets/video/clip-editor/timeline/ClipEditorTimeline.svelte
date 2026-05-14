@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { ClipEditorTimelineProps } from '@app/web/types/componentProps.js';
   import { formatTime } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
+  import TimelineSegment from './TimelineSegment.svelte';
 
   let {
     edits,
@@ -53,11 +55,6 @@
     return Math.max(rawW, minW);
   }
 
-  function tickLeft(t: number): number {
-    if (viewDuration <= 0) return 0;
-    return ((t - viewStart) / viewDuration) * 100;
-  }
-
   let playheadPct = $derived(
     currentTime >= viewStart && currentTime <= viewEnd
       ? ((currentTime - viewStart) / viewDuration) * 100
@@ -83,6 +80,14 @@
   function handleZoomOut(): void {
     viewStart = 0;
     viewEnd = durationSec;
+  }
+
+  function handleZoomStep(factor: number): void {
+    const center = (viewStart + viewEnd) / 2;
+    const newDur = Math.max(ZOOM_MIN, Math.min(durationSec, viewDuration * factor));
+    const newStart = Math.max(0, center - newDur / 2);
+    viewStart = Math.max(0, Math.min(durationSec - newDur, newStart));
+    viewEnd = viewStart + newDur;
   }
 
   function startDrag(
@@ -159,33 +164,34 @@
   }
 </script>
 
-<div class="tl" onwheel={handleWheel}>
-  <div class="tl-head">
-    <button class="tl-fit-btn" type="button" onclick={handleZoomOut}>Fit all</button>
-    <span class="tl-range">{formatTime(viewStart)} – {formatTime(viewEnd)}</span>
+<div class="ce-timeline" onwheel={handleWheel}>
+  <div class="ce-tl-top">
+    <Button size="sm" onclick={handleZoomOut}>Fit all</Button>
+    <span class="ce-tl-range">{formatTime(viewStart)} – {formatTime(viewEnd)}</span>
+    <span class="ce-tl-cursor">cursor {formatTime(currentTime)}</span>
+    <span class="spacer"></span>
+    <Button size="sm" variant="ghost" onclick={() => handleZoomStep(1.25)} aria-label="Zoom out">
+      −
+    </Button>
+    <Button size="sm" variant="ghost" onclick={() => handleZoomStep(0.8)} aria-label="Zoom in">
+      +
+    </Button>
   </div>
 
-  <div class="tl-lanes">
-    <!-- Subtitles lane -->
-    <div class="tl-lane">
-      <span class="tl-lane-label">Subs</span>
-      <div class="tl-track" bind:this={subtitleTrackEl}>
-        {#if playheadPct >= 0}
-          <div class="tl-playhead" style="left:{playheadPct}%"></div>
-        {/if}
+  <div class="ce-tl-tracks">
+    <div class="ce-tl-track">
+      <span class="ce-tl-lbl">Subs</span>
+      <div class="ce-tl-body" bind:this={subtitleTrackEl}>
         {#each edits.subtitles as sub (sub.id)}
           {#if sub.startSec < viewEnd && sub.endSec > viewStart}
-            <div
-              class="tl-item"
-              class:tl-item--selected={sub.id === selectedItemId}
-              style="left:{itemLeft(sub.startSec)}%;width:{itemWidth(
-                sub.startSec,
-                sub.endSec,
-                subtitleTrackEl,
-              )}%"
+            <TimelineSegment
+              kind="sub"
+              leftPct={itemLeft(sub.startSec)}
+              widthPct={itemWidth(sub.startSec, sub.endSec, subtitleTrackEl)}
+              selected={sub.id === selectedItemId}
             >
               <div
-                class="tl-handle tl-handle--l"
+                class="seg-handle seg-handle--l"
                 role="presentation"
                 onpointerdown={(e) =>
                   startDrag(
@@ -199,7 +205,7 @@
                   )}
               ></div>
               <div
-                class="tl-item-body"
+                class="seg-body"
                 role="button"
                 tabindex="0"
                 onpointerdown={(e) =>
@@ -213,10 +219,10 @@
                     subtitleTrackEl,
                   )}
               >
-                <span class="tl-item-label">{sub.text}</span>
+                {sub.text}
               </div>
               <div
-                class="tl-handle tl-handle--r"
+                class="seg-handle seg-handle--r"
                 role="presentation"
                 onpointerdown={(e) =>
                   startDrag(
@@ -229,32 +235,25 @@
                     subtitleTrackEl,
                   )}
               ></div>
-            </div>
+            </TimelineSegment>
           {/if}
         {/each}
       </div>
     </div>
 
-    <!-- Overlays lane -->
-    <div class="tl-lane">
-      <span class="tl-lane-label">Ovlys</span>
-      <div class="tl-track" bind:this={overlayTrackEl}>
-        {#if playheadPct >= 0}
-          <div class="tl-playhead" style="left:{playheadPct}%"></div>
-        {/if}
+    <div class="ce-tl-track">
+      <span class="ce-tl-lbl">Ovlys</span>
+      <div class="ce-tl-body" bind:this={overlayTrackEl}>
         {#each edits.overlays as ov (ov.id)}
           {#if ov.startSec < viewEnd && ov.endSec > viewStart}
-            <div
-              class="tl-item tl-item--overlay"
-              class:tl-item--selected={ov.id === selectedItemId}
-              style="left:{itemLeft(ov.startSec)}%;width:{itemWidth(
-                ov.startSec,
-                ov.endSec,
-                overlayTrackEl,
-              )}%"
+            <TimelineSegment
+              kind="overlay"
+              leftPct={itemLeft(ov.startSec)}
+              widthPct={itemWidth(ov.startSec, ov.endSec, overlayTrackEl)}
+              selected={ov.id === selectedItemId}
             >
               <div
-                class="tl-handle tl-handle--l"
+                class="seg-handle seg-handle--l"
                 role="presentation"
                 onpointerdown={(e) =>
                   startDrag(
@@ -268,16 +267,16 @@
                   )}
               ></div>
               <div
-                class="tl-item-body"
+                class="seg-body"
                 role="button"
                 tabindex="0"
                 onpointerdown={(e) =>
                   startDrag(e, 'overlay', ov.id, ov.startSec, ov.endSec, 'shift', overlayTrackEl)}
               >
-                <span class="tl-item-label">{ov.text}</span>
+                {ov.text}
               </div>
               <div
-                class="tl-handle tl-handle--r"
+                class="seg-handle seg-handle--r"
                 role="presentation"
                 onpointerdown={(e) =>
                   startDrag(
@@ -290,29 +289,22 @@
                     overlayTrackEl,
                   )}
               ></div>
-            </div>
+            </TimelineSegment>
           {/if}
         {/each}
       </div>
     </div>
 
-    <!-- Trim lane -->
-    <div class="tl-lane">
-      <span class="tl-lane-label">Trim</span>
-      <div class="tl-track" bind:this={trimTrackEl}>
-        {#if playheadPct >= 0}
-          <div class="tl-playhead" style="left:{playheadPct}%"></div>
-        {/if}
-        <div
-          class="tl-item tl-item--trim"
-          style="left:{itemLeft(edits.trim.startSec)}%;width:{itemWidth(
-            edits.trim.startSec,
-            edits.trim.endSec,
-            trimTrackEl,
-          )}%"
+    <div class="ce-tl-track">
+      <span class="ce-tl-lbl">Trim</span>
+      <div class="ce-tl-body" bind:this={trimTrackEl}>
+        <TimelineSegment
+          kind="trim"
+          leftPct={itemLeft(edits.trim.startSec)}
+          widthPct={itemWidth(edits.trim.startSec, edits.trim.endSec, trimTrackEl)}
         >
           <div
-            class="tl-handle tl-handle--l"
+            class="trim-handle trim-handle--l"
             role="presentation"
             onpointerdown={(e) =>
               startDrag(
@@ -326,7 +318,7 @@
               )}
           ></div>
           <div
-            class="tl-item-body"
+            class="trim-body"
             role="presentation"
             onpointerdown={(e) =>
               startDrag(
@@ -340,7 +332,7 @@
               )}
           ></div>
           <div
-            class="tl-handle tl-handle--r"
+            class="trim-handle trim-handle--r"
             role="presentation"
             onpointerdown={(e) =>
               startDrag(
@@ -353,191 +345,99 @@
                 trimTrackEl,
               )}
           ></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tick ruler aligned to tracks via same grid -->
-    <div class="tl-lane tl-lane--ticks">
-      <span></span>
-      <div class="tl-ticks">
-        {#each ticks as t}
-          <span class="tl-tick" style="left:{tickLeft(t)}%">{formatTime(t)}</span>
-        {/each}
+        </TimelineSegment>
       </div>
     </div>
   </div>
+
+  <div class="ce-tl-ticks">
+    {#each ticks as t (t)}
+      <span>{formatTime(t)}</span>
+    {/each}
+  </div>
+
+  {#if playheadPct >= 0}
+    <div
+      class="ce-tl-cursor-line"
+      style="left: calc(66px + {playheadPct}% * (100% - 84px) / 100)"
+    ></div>
+  {/if}
 </div>
 
 <style>
-  .tl {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
+  .ce-timeline {
     user-select: none;
   }
 
-  .tl-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: var(--vc-font-mono);
-    font-size: 11px;
-    color: var(--vc-text-subtle);
+  .spacer {
+    flex: 1;
   }
 
-  .tl-fit-btn {
-    font-family: var(--vc-font-mono);
-    font-size: 10px;
-    color: var(--vc-text-muted);
-    background: var(--vc-surface-raised, #1a1a1a);
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-sm, 4px);
-    padding: 2px 8px;
-    cursor: pointer;
-    transition: all 0.1s;
-  }
-
-  .tl-fit-btn:hover {
-    background: var(--vc-surface-hover, #252525);
-    color: var(--vc-text);
-  }
-
-  .tl-range {
-    color: var(--vc-text-muted);
-  }
-
-  .tl-lanes {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .tl-lane {
-    display: grid;
-    grid-template-columns: 40px 1fr;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .tl-lane--ticks {
-    margin-top: 2px;
-  }
-
-  .tl-lane-label {
-    font-family: var(--vc-font-mono);
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--vc-text-subtle);
-    text-align: right;
-    padding-right: 2px;
-  }
-
-  .tl-track {
-    position: relative;
-    height: 28px;
-    background: var(--vc-surface-2, rgba(255, 255, 255, 0.04));
-    border-radius: var(--vc-radius-sm, 4px);
-    overflow: hidden;
-  }
-
-  .tl-playhead {
+  .seg-handle {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 2px;
-    background: var(--vc-clay-500, #c8553d);
-    pointer-events: none;
-    z-index: 10;
-    transform: translateX(-50%);
-  }
-
-  .tl-item {
-    position: absolute;
-    top: 3px;
-    bottom: 3px;
-    display: flex;
-    border-radius: 3px;
-    background: var(--vc-clay-soft, rgba(200, 85, 61, 0.18));
-    border: 1px solid var(--vc-clay-500, #c8553d);
-  }
-
-  .tl-item--overlay {
-    background: rgba(100, 120, 200, 0.18);
-    border-color: #6478c8;
-  }
-
-  .tl-item--trim {
-    background: rgba(60, 160, 100, 0.18);
-    border-color: #3ca064;
-    top: 5px;
-    bottom: 5px;
-  }
-
-  .tl-item--selected {
-    box-shadow: 0 0 0 1px var(--vc-clay-500, #c8553d);
-    z-index: 5;
-  }
-
-  .tl-item--overlay.tl-item--selected {
-    box-shadow: 0 0 0 1px #6478c8;
-  }
-
-  .tl-handle {
     width: 6px;
-    flex-shrink: 0;
     cursor: col-resize;
     background: rgba(255, 255, 255, 0.12);
     z-index: 2;
   }
-
-  .tl-handle:hover {
+  .seg-handle:hover {
     background: rgba(255, 255, 255, 0.28);
   }
+  .seg-handle--l {
+    left: 0;
+  }
+  .seg-handle--r {
+    right: 0;
+  }
 
-  .tl-item-body {
-    flex: 1;
-    min-width: 0;
-    cursor: grab;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 2px;
+  .seg-body {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 0;
+    bottom: 0;
     border: none;
     background: none;
     color: inherit;
     font: inherit;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-
-  .tl-item-body:active {
+  .seg-body:active {
     cursor: grabbing;
   }
 
-  .tl-item-label {
-    font-family: var(--vc-font-mono);
-    font-size: 9px;
-    color: var(--vc-text-subtle);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-  }
-
-  .tl-ticks {
-    position: relative;
-    height: 14px;
-  }
-
-  .tl-tick {
+  .trim-handle {
     position: absolute;
     top: 0;
-    font-family: var(--vc-font-mono);
-    font-size: 9px;
-    color: var(--vc-text-subtle);
-    transform: translateX(-50%);
-    white-space: nowrap;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: rgba(255, 255, 255, 0.18);
+    z-index: 2;
+  }
+  .trim-handle--l {
+    left: 0;
+  }
+  .trim-handle--r {
+    right: 0;
+  }
+  .trim-body {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 0;
+    bottom: 0;
+    cursor: grab;
+  }
+  .trim-body:active {
+    cursor: grabbing;
   }
 </style>

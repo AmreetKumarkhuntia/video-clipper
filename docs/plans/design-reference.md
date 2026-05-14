@@ -40,7 +40,7 @@ Handoff from Claude Design (`video-clipper` project, 2 chat sessions).
 - `src/app/web/style/ds/fonts.css` — Google Fonts import
 - `src/app/web/style/screens.css` — all screen-level layout CSS
 
-## Gaps implemented in this session
+## Gaps implemented
 
 ### 1. Home page wordmark hero
 
@@ -55,26 +55,39 @@ Handoff from Claude Design (`video-clipper` project, 2 chat sessions).
 - Wrapped the plain `<a>` link in `vc-card vc-card--interactive` styling
 - Added proper border, surface bg, border-radius, and hover box-shadow to match `clipcard` design
 
-### 3. ClipEditorTemplates → DS component alignment
+### 3. Clip editor modal — design-system rebuild
 
-**File**: `src/app/web/widgets/video/ClipEditorTemplates.svelte`
+**Doc**: see `docs/plans/clip-editor-redesign.md` for the full design + companion checklist.
 
-- Caption buttons → `ce-preset` DS style (shows actual caption style preview)
-- Reframe/Fill radio groups → `seg-control seg-control--col` segmented controls
+**CSS port**: `src/app/web/style/screens.css` now carries the `ce-*` block from the design bundle (presets, swatches, words, slider rows, mono inputs, playback bar, sub-actions, position helpers, timeline tracks/segments/cursor). Screen-prototype-only classes (`ce-root`, `ce-topbar*`, `ce-stepper*`, `ce-stage`, `ce-output`, `ce-frame*`, `ce-caption-over`, `ce-game-subs`, `ce-body`/`ce-left`/`ce-center`/`ce-right`) were intentionally omitted because the real modal supplies its own framing.
 
-### 4. ClipEditorPropertiesPanel → DS component alignment
+**New generic primitives** (`src/app/web/components/`):
 
-**File**: `src/app/web/widgets/video/ClipEditorPropertiesPanel.svelte`
+- `PanelHeader.svelte` (`.ce-panel-h` + hint)
+- `SegmentedControl.svelte` (`.seg-control` / `.seg-control--col`)
+- `SliderField.svelte` (composes `<Field>` + `<Slider>` + mono value readout)
+- `ColorSwatch.svelte` (`.ce-swatch` chip-cards; `custom` kind opens native color picker)
+- `TimecodeInput.svelte` (`.vc-input.ce-mono-input`, parses/formats `MM:SS.mmm` via new `formatTimecode` / `parseTimecode` helpers in `src/app/web/lib/format.ts`)
+- `Scrubber.svelte` (`.ce-pb-track` / `.ce-pb-fill` / `.ce-pb-thumb` with pointer capture)
 
-- Word chips → `ce-word`/`ce-word.is-hl` DS classes
-- Color swatches → `ce-swatch` chip-cards (chip + name label)
-- Selection header added at panel top
-- Section labels → `ce-panel-h` DS style
+**New domain primitives** (`src/app/web/widgets/video/`):
 
-### 5. ClipEditorTimeline → DS token alignment
+- `CaptionPreset.svelte` (`.ce-preset` button with active dot + karaoke fill variant)
+- `PlaybackBar.svelte` (composes `<Scrubber>` + play/pause + mono time)
+- `FocusPicker.svelte` (extracted reframe drag handle, was inline in `ClipEditorCanvas`)
+- `TimelineSegment.svelte` (`.ce-tl-seg` wrapper that accepts `children` for resize handles + drag body)
+- `SelectionHeader.svelte` (`.ce-right__sel` "Editing · Subtitle 02" header with preset badge)
+- `CanvasSubtitle.svelte` (active subtitle overlay on video; extracted from Canvas)
+- `CanvasOverlay.svelte` (banner overlays on video with pointer-drag; extracted from Canvas)
 
-**File**: `src/app/web/widgets/video/ClipEditorTimeline.svelte`
+**Refactored widgets** (`src/app/web/widgets/video/`):
 
-- Hard-coded fallback colors replaced with proper DS tokens
-- Fit/zoom buttons aligned with `vc-btn vc-btn--secondary vc-btn--sm` style
-- Cursor pill added in `ce-tl-cursor` DS style
+- `ClipEditor.svelte` — header has filename + mono time-range + aspect `<Badge variant="mono">` + Save draft / Render & Save (with scissors icon) / X. Track toolbar restyled as `.ce-sub-actions` with Plus + FileText + Sparkles-hint when transcript is loaded and no subtitles exist.
+- `ClipEditorTemplates.svelte` — `<CaptionPreset>` per template (active when all subtitles share `templateId`); Reframe + Fill as vertical `<SegmentedControl>`; section labels via `<PanelHeader>`; each section wrapped in `.ce-rg`.
+- `ClipEditorPropertiesPanel.svelte` — `<SelectionHeader>` on top; sections in `.ce-rg`; word chips as `.ce-word`/`.is-hl`; `<SliderField>` for font size/weight/outline width; `<TimecodeInput>` for Start/End; `<ColorSwatch kind="custom">` for color/highlight/outline/background; `<Toggle>` for Outline + Background collapse; single vertical position slider with `.ce-pos-head` / `.ce-pos-sub`.
+- `ClipEditorCanvas.svelte` — thin orchestrator composing `<video>` + `<CanvasSubtitle>` + `<CanvasOverlay>` + `<FocusPicker>` + `<PlaybackBar>`.
+- `ClipEditorTimeline.svelte` — uses `.ce-timeline` / `.ce-tl-track` / `.ce-tl-body` markup; segments rendered via `<TimelineSegment>` (with handle + drag children); toolbar uses `<Button>`; cursor pill + hairline cursor line.
+
+**Icons added** to `src/app/web/components/Icon.svelte`: `pause`, `plus`, `file-text` (lucide-style paths, 1.5px stroke).
+
+**Tests**: `tests/clipEditor/smoke.spec.ts` selector updated from `/\+ subtitle/i` to `/^subtitle$/i` to match the new sub-actions row label.

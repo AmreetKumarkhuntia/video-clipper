@@ -4,7 +4,13 @@ import type { ConfigFieldDescriptor, ConfigGroupDescriptor } from '@lib/types/co
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import type { ActivityPhase, AnalysisActivityItem, HighlightRange } from './activity.js';
 import type { ClipArtifact, ClipCandidate, ClipPlan } from './analysis.js';
-import type { ClipEdits, TextStyle, Position } from '@lib/types/clipEdit.js';
+import type {
+  ClipEdits,
+  TextStyle,
+  Position,
+  SubtitleLine,
+  TextOverlay,
+} from '@lib/types/clipEdit.js';
 import type { PublishDraftItem, PublishDraftItemEvent, UploadArtifact } from './publish.js';
 import type { UploadQueueItem } from './upload.js';
 import type { SectionConfig, SelectOption, Toast } from './web.js';
@@ -161,6 +167,73 @@ export interface ToggleProps {
   /** Accessible label for the toggle — shown to screen readers */
   ariaLabel?: string;
   onchange?: (checked: boolean) => void;
+}
+
+export interface PanelHeaderProps {
+  /** Inline section label (mono, uppercase) */
+  text: string;
+  /** Optional muted hint shown on the right */
+  hint?: string;
+  class?: string;
+}
+
+export interface SegmentedControlOption<T extends string = string> {
+  value: T;
+  label: string;
+}
+
+export interface SegmentedControlProps<T extends string = string> {
+  options: SegmentedControlOption<T>[];
+  value: T;
+  orientation?: 'row' | 'col';
+  disabled?: boolean;
+  ariaLabel?: string;
+  onchange: (value: T) => void;
+}
+
+export interface SliderFieldProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  /** Suffix appended to the mono value readout, e.g. "px" */
+  suffix?: string;
+  disabled?: boolean;
+  onchange: (value: number) => void;
+}
+
+export type ColorSwatchKind = 'white' | 'yellow' | 'black' | 'transparent' | 'custom';
+
+export interface ColorSwatchProps {
+  /** Visual preset for the chip. `custom` uses the `value` color directly. */
+  kind: ColorSwatchKind;
+  label: string;
+  /** Hex color shown when kind is `custom`. Also the value emitted when the user picks a new color. */
+  value?: string | null;
+  disabled?: boolean;
+  /** Called with the new hex when the user picks via the native color input. */
+  onchange?: (value: string) => void;
+  /** Called on click when no onchange is wired (e.g., for preset kinds that just select). */
+  onclick?: () => void;
+}
+
+export interface TimecodeInputProps {
+  id?: string;
+  /** Time value in seconds. */
+  valueSec: number;
+  disabled?: boolean;
+  /** Called with a new seconds value when the input parses to a valid timecode. */
+  onchange: (valueSec: number) => void;
+}
+
+export interface ScrubberProps {
+  value: number;
+  max: number;
+  step?: number;
+  disabled?: boolean;
+  ariaLabel?: string;
+  onchange: (value: number) => void;
 }
 
 // ---------- Cards ----------
@@ -323,4 +396,58 @@ export interface ClipEditorTimelineProps {
   selectedItemId: string | null;
   onSelectItem: (id: string | null) => void;
   onupdate: (edits: ClipEdits) => void;
+}
+
+export interface CaptionPresetProps {
+  /** Stable id used for the visual variant class, e.g. "bold-white" / "karaoke". */
+  id: string;
+  label: string;
+  active: boolean;
+  onclick: () => void;
+}
+
+export interface PlaybackBarProps {
+  videoEl: HTMLVideoElement | null;
+  currentTime: number;
+  durationSec: number;
+  isPlaying: boolean;
+}
+
+export interface FocusPickerProps {
+  focus: { xCenter: number; yCenter: number };
+  containerEl: HTMLElement | null;
+  onchange: (focus: { xCenter: number; yCenter: number }) => void;
+}
+
+export type TimelineSegmentKind = 'sub' | 'overlay' | 'trim';
+
+export interface TimelineSegmentProps {
+  kind: TimelineSegmentKind;
+  leftPct: number;
+  widthPct: number;
+  label?: string;
+  selected?: boolean;
+  onclick?: () => void;
+  /** Optional inner content (e.g. resize handles + draggable body). When provided, `label` is ignored. */
+  children?: Snippet;
+}
+
+export interface SelectionHeaderProps {
+  kindLabel: string;
+  valueLabel: string;
+  badgeText?: string;
+  badgeVariant?: BadgeVariant;
+}
+
+export interface CanvasSubtitleProps {
+  line: SubtitleLine;
+  currentTime: number;
+}
+
+export interface CanvasOverlayProps {
+  overlay: TextOverlay;
+  selected: boolean;
+  containerEl: HTMLElement | null;
+  onSelect: () => void;
+  onUpdate: (overlay: TextOverlay) => void;
 }

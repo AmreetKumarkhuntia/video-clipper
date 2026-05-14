@@ -10,10 +10,11 @@
   import { CAPTION_TEMPLATES } from '@web/lib/captionTemplates.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
-  import ClipEditorCanvas from './ClipEditorCanvas.svelte';
-  import ClipEditorTemplates from './ClipEditorTemplates.svelte';
-  import ClipEditorPropertiesPanel from './ClipEditorPropertiesPanel.svelte';
-  import ClipEditorTimeline from './ClipEditorTimeline.svelte';
+  import Badge from '@web/components/Badge.svelte';
+  import ClipEditorCanvas from './canvas/ClipEditorCanvas.svelte';
+  import ClipEditorTemplates from './templates/ClipEditorTemplates.svelte';
+  import ClipEditorPropertiesPanel from './properties/ClipEditorPropertiesPanel.svelte';
+  import ClipEditorTimeline from './timeline/ClipEditorTimeline.svelte';
 
   let { clip, candidate, videoId, onclose }: ClipEditorProps = $props();
 
@@ -223,12 +224,16 @@
       <div class="editor-header__info">
         <span class="editor-header__name">{clip.filename}</span>
         <span class="editor-header__meta">
-          {formatTime(clip.startSec)} → {formatTime(clip.endSec)} · {edits?.viewport.preset ?? '…'}
+          {formatTime(clip.startSec)} → {formatTime(clip.endSec)} · {formatTime(clip.durationSec)}
         </span>
       </div>
+      {#if edits}
+        <Badge variant="mono">{edits.viewport.preset}</Badge>
+      {/if}
+      <div class="editor-header__spacer"></div>
       <div class="editor-header__actions">
         <Button size="sm" disabled={!isDirty || isSaving || isRendering} onclick={save}>
-          {isSaving ? 'Saving…' : 'Save'}
+          {isSaving ? 'Saving…' : 'Save draft'}
         </Button>
         <Button
           variant="primary"
@@ -236,6 +241,7 @@
           disabled={isSaving || isRendering}
           onclick={renderAndSave}
         >
+          <Icon name="scissors" size={14} />
           {isRendering ? 'Rendering…' : 'Render & Save'}
         </Button>
         <button class="editor-close" type="button" aria-label="Close" onclick={requestClose}>
@@ -274,12 +280,25 @@
               edits = e;
             }}
           />
-          <div class="editor-track-toolbar">
-            <Button size="sm" onclick={addSubtitle}>+ Subtitle</Button>
-            <Button size="sm" onclick={addBanner}>+ Banner</Button>
-            <Button size="sm" onclick={importTranscript} disabled={!transcript}>
-              Auto-import Transcript
+          <div class="ce-sub-actions">
+            <Button size="sm" onclick={addSubtitle}>
+              <Icon name="plus" size={13} />
+              Subtitle
             </Button>
+            <Button size="sm" onclick={addBanner}>
+              <Icon name="plus" size={13} />
+              Banner
+            </Button>
+            <Button size="sm" variant="ghost" onclick={importTranscript} disabled={!transcript}>
+              <Icon name="file-text" size={13} />
+              Auto-import transcript
+            </Button>
+            {#if transcript && edits.subtitles.length === 0}
+              <span class="ce-sub-actions__hint">
+                <Icon name="sparkles" size={12} />
+                {transcript.lines.length} captions available from transcript
+              </span>
+            {/if}
           </div>
         </div>
         <div class="editor-right">
@@ -386,6 +405,10 @@
     color: var(--vc-text-subtle);
   }
 
+  .editor-header__spacer {
+    flex: 1;
+  }
+
   .editor-header__actions {
     display: flex;
     align-items: center;
@@ -435,21 +458,21 @@
   .editor-body {
     flex: 1;
     display: grid;
-    grid-template-columns: 220px 1fr 280px;
+    grid-template-columns: 232px 1fr 320px;
     grid-template-rows: 1fr auto;
     overflow: hidden;
   }
 
   .editor-timeline {
     grid-column: 1 / -1;
-    border-top: 1px solid var(--vc-divider);
     overflow-x: auto;
     overflow-y: hidden;
     flex-shrink: 0;
   }
 
   .editor-left {
-    border-right: 1px solid var(--vc-divider);
+    background: var(--vc-surface);
+    border-right: 1px solid var(--vc-border);
     overflow-y: auto;
   }
 
@@ -458,20 +481,14 @@
     flex-direction: column;
     gap: 0;
     overflow: hidden;
-    padding: 16px;
+    background: var(--vc-bg);
+    min-height: 0;
   }
 
   .editor-right {
-    border-left: 1px solid var(--vc-divider);
+    background: var(--vc-surface-2);
+    border-left: 1px solid var(--vc-border);
     overflow-y: auto;
-  }
-
-  .editor-track-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 12px;
-    flex-shrink: 0;
   }
 
   .editor-confirm-overlay {

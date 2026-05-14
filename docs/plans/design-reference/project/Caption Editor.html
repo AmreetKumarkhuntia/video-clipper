@@ -1,924 +1,1402 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-<head>
-<meta charset="utf-8">
-<title>Video Clipper — Caption Editor</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="ds/fonts.css">
-<link rel="stylesheet" href="ds/tokens.css">
-<link rel="stylesheet" href="ds/components.css">
-<style>
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--vc-bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  <head>
+    <meta charset="utf-8" />
+    <title>Video Clipper — Caption Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="ds/fonts.css" />
+    <link rel="stylesheet" href="ds/tokens.css" />
+    <link rel="stylesheet" href="ds/components.css" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--vc-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
 
-/* ── Root ───────────────────────────────────────────────────── */
-.editor {
-  width: 1440px;
-  height: 900px;
-  display: flex;
-  flex-direction: column;
-  background: var(--vc-bg);
-  color: var(--vc-text);
-  font-family: var(--vc-font-body);
-  font-size: 14px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px var(--vc-border);
-}
+      /* ── Root ───────────────────────────────────────────────────── */
+      .editor {
+        width: 1440px;
+        height: 900px;
+        display: flex;
+        flex-direction: column;
+        background: var(--vc-bg);
+        color: var(--vc-text);
+        font-family: var(--vc-font-body);
+        font-size: 14px;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px var(--vc-border);
+      }
 
-/* ── Topbar ─────────────────────────────────────────────────── */
-.topbar {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px;
-  background: var(--vc-surface);
-  border-bottom: 1px solid var(--vc-border);
-  flex-shrink: 0;
-}
-.topbar__file {
-  font-family: var(--vc-font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--vc-text);
-}
-.topbar__meta {
-  font-family: var(--vc-font-mono);
-  font-size: 12px;
-  color: var(--vc-text-subtle);
-}
-.topbar__sep { color: var(--vc-divider); margin: 0 2px; }
-.topbar__chip {
-  padding: 2px 9px;
-  border-radius: var(--vc-radius-pill);
-  background: var(--vc-surface-2);
-  border: 1px solid var(--vc-border);
-  font-family: var(--vc-font-mono);
-  font-size: 11px;
-  color: var(--vc-text-subtle);
-}
-.topbar__spacer { flex: 1; }
-.topbar__actions { display: flex; align-items: center; gap: 8px; }
+      /* ── Topbar ─────────────────────────────────────────────────── */
+      .topbar {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 20px;
+        background: var(--vc-surface);
+        border-bottom: 1px solid var(--vc-border);
+        flex-shrink: 0;
+      }
+      .topbar__file {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--vc-text);
+      }
+      .topbar__meta {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-subtle);
+      }
+      .topbar__sep {
+        color: var(--vc-divider);
+        margin: 0 2px;
+      }
+      .topbar__chip {
+        padding: 2px 9px;
+        border-radius: var(--vc-radius-pill);
+        background: var(--vc-surface-2);
+        border: 1px solid var(--vc-border);
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+      }
+      .topbar__spacer {
+        flex: 1;
+      }
+      .topbar__actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-/* ── Body grid ──────────────────────────────────────────────── */
-.editor-body {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 218px 1fr 296px;
-  min-height: 0;
-  overflow: hidden;
-}
+      /* ── Body grid ──────────────────────────────────────────────── */
+      .editor-body {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 218px 1fr 296px;
+        min-height: 0;
+        overflow: hidden;
+      }
 
-/* ── LEFT PANEL ─────────────────────────────────────────────── */
-.left-panel {
-  background: var(--vc-surface);
-  border-right: 1px solid var(--vc-border);
-  padding: 18px 14px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  scrollbar-width: none;
-}
-.left-panel::-webkit-scrollbar { display: none; }
+      /* ── LEFT PANEL ─────────────────────────────────────────────── */
+      .left-panel {
+        background: var(--vc-surface);
+        border-right: 1px solid var(--vc-border);
+        padding: 18px 14px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        scrollbar-width: none;
+      }
+      .left-panel::-webkit-scrollbar {
+        display: none;
+      }
 
-.panel-h {
-  font-family: var(--vc-font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--vc-text-subtle);
-  margin: 0 0 9px;
-}
+      .panel-h {
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--vc-text-subtle);
+        margin: 0 0 9px;
+      }
 
-/* Caption preset cards */
-.caption-presets { display: flex; flex-direction: column; gap: 5px; }
-.caption-preset {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--vc-radius-md);
-  border: 1px solid var(--vc-border);
-  cursor: pointer;
-  transition: border-color var(--vc-dur-fast) var(--vc-ease), box-shadow var(--vc-dur-fast) var(--vc-ease);
-  user-select: none;
-  position: relative;
-  overflow: hidden;
-}
-.caption-preset:hover { border-color: var(--vc-border-strong); }
-.caption-preset.is-active {
-  border-color: var(--vc-clay-500);
-  box-shadow: 0 0 0 1px var(--vc-clay-500);
-}
+      /* Caption preset cards */
+      .caption-presets {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .caption-preset {
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--vc-radius-md);
+        border: 1px solid var(--vc-border);
+        cursor: pointer;
+        transition:
+          border-color var(--vc-dur-fast) var(--vc-ease),
+          box-shadow var(--vc-dur-fast) var(--vc-ease);
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+      }
+      .caption-preset:hover {
+        border-color: var(--vc-border-strong);
+      }
+      .caption-preset.is-active {
+        border-color: var(--vc-clay-500);
+        box-shadow: 0 0 0 1px var(--vc-clay-500);
+      }
 
-/* Preset visual treatments */
-.caption-preset--bold-white {
-  background: #0e0c08;
-  font-weight: 800; font-size: 16px; letter-spacing: -0.01em;
-  color: #ffffff;
-}
-.caption-preset--yellow-pop {
-  background: #0e0c08;
-  font-weight: 800; font-size: 16px; letter-spacing: -0.01em;
-  color: #facc15;
-  text-shadow: 0 0 16px rgba(250,204,21,0.35);
-}
-.caption-preset--subtle {
-  background: var(--vc-surface-2);
-  color: var(--vc-text-muted);
-  font-size: 13px; font-weight: 400;
-}
-.caption-preset--hooked {
-  background: var(--vc-surface-2);
-  color: var(--vc-clay-400);
-  font-size: 14px; font-weight: 700; font-style: italic;
-}
-.caption-preset--karaoke {
-  background: var(--vc-surface-2);
-  color: var(--vc-text);
-  font-weight: 700; font-size: 14px;
-}
-.caption-preset--karaoke .karaoke-fill {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 42%;
-  background: var(--vc-clay-500);
-  opacity: 0.18;
-  border-radius: var(--vc-radius-md) 0 0 var(--vc-radius-md);
-}
-.caption-preset--karaoke span { position: relative; }
+      /* Preset visual treatments */
+      .caption-preset--bold-white {
+        background: #0e0c08;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+        color: #ffffff;
+      }
+      .caption-preset--yellow-pop {
+        background: #0e0c08;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+        color: #facc15;
+        text-shadow: 0 0 16px rgba(250, 204, 21, 0.35);
+      }
+      .caption-preset--subtle {
+        background: var(--vc-surface-2);
+        color: var(--vc-text-muted);
+        font-size: 13px;
+        font-weight: 400;
+      }
+      .caption-preset--hooked {
+        background: var(--vc-surface-2);
+        color: var(--vc-clay-400);
+        font-size: 14px;
+        font-weight: 700;
+        font-style: italic;
+      }
+      .caption-preset--karaoke {
+        background: var(--vc-surface-2);
+        color: var(--vc-text);
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .caption-preset--karaoke .karaoke-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 42%;
+        background: var(--vc-clay-500);
+        opacity: 0.18;
+        border-radius: var(--vc-radius-md) 0 0 var(--vc-radius-md);
+      }
+      .caption-preset--karaoke span {
+        position: relative;
+      }
 
-/* Radio groups */
-.radio-group { display: flex; flex-direction: column; gap: 6px; }
-.radio-item {
-  display: flex; align-items: center; gap: 9px;
-  cursor: pointer; font-size: 13px; color: var(--vc-text);
-  padding: 3px 0; user-select: none;
-}
-.rd {
-  width: 16px; height: 16px; border-radius: 999px;
-  border: 2px solid var(--vc-border-strong);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: border-color var(--vc-dur-fast) var(--vc-ease);
-}
-.rd.is-on { border-color: var(--vc-clay-500); }
-.rd.is-on::after {
-  content: ''; width: 7px; height: 7px;
-  border-radius: 999px; background: var(--vc-clay-500);
-}
+      /* Radio groups */
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--vc-text);
+        padding: 3px 0;
+        user-select: none;
+      }
+      .rd {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        border: 2px solid var(--vc-border-strong);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: border-color var(--vc-dur-fast) var(--vc-ease);
+      }
+      .rd.is-on {
+        border-color: var(--vc-clay-500);
+      }
+      .rd.is-on::after {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--vc-clay-500);
+      }
 
-/* ── CENTER ─────────────────────────────────────────────────── */
-.center {
-  display: flex;
-  flex-direction: column;
-  background: var(--vc-bg);
-  min-height: 0;
-  overflow: hidden;
-}
+      /* ── CENTER ─────────────────────────────────────────────────── */
+      .center {
+        display: flex;
+        flex-direction: column;
+        background: var(--vc-bg);
+        min-height: 0;
+        overflow: hidden;
+      }
 
-.video-canvas {
-  flex: 1;
-  background: #0e0b07;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 16px;
-  min-height: 0;
-  position: relative;
-}
+      .video-canvas {
+        flex: 1;
+        background: #0e0b07;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 16px;
+        min-height: 0;
+        position: relative;
+      }
 
-/* 9:16 output composite */
-.video-output {
-  height: 100%;
-  max-height: 566px;
-  aspect-ratio: 9 / 16;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.7);
-}
+      /* 9:16 output composite */
+      .video-output {
+        height: 100%;
+        max-height: 566px;
+        aspect-ratio: 9 / 16;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 32px rgba(0, 0, 0, 0.7);
+      }
 
-.video-frame {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-}
-.video-frame + .video-frame { border-top: 3px solid #0e0b07; }
+      .video-frame {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .video-frame + .video-frame {
+        border-top: 3px solid #0e0b07;
+      }
 
-.video-frame--face {
-  background:
-    radial-gradient(circle at 40% 35%, rgba(80,55,35,0.6), transparent 60%),
-    radial-gradient(circle at 70% 70%, rgba(50,30,15,0.4), transparent 50%),
-    #1a1410;
-}
-.video-frame--game {
-  background:
-    radial-gradient(circle at 30% 60%, rgba(90,70,10,0.4), transparent 55%),
-    radial-gradient(circle at 70% 30%, rgba(20,40,15,0.5), transparent 50%),
-    #0d0c07;
-}
+      .video-frame--face {
+        background:
+          radial-gradient(circle at 40% 35%, rgba(80, 55, 35, 0.6), transparent 60%),
+          radial-gradient(circle at 70% 70%, rgba(50, 30, 15, 0.4), transparent 50%), #1a1410;
+      }
+      .video-frame--game {
+        background:
+          radial-gradient(circle at 30% 60%, rgba(90, 70, 10, 0.4), transparent 55%),
+          radial-gradient(circle at 70% 30%, rgba(20, 40, 15, 0.5), transparent 50%), #0d0c07;
+      }
 
-/* Face placeholder */
-.face-ph {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  opacity: 0.22; color: rgba(255,255,255,0.8);
-}
-.face-ph__avatar {
-  width: 52px; height: 52px; border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  display: flex; align-items: center; justify-content: center;
-}
-.face-ph__label { font-size: 10px; font-family: var(--vc-font-mono); }
+      /* Face placeholder */
+      .face-ph {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.22;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .face-ph__avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .face-ph__label {
+        font-size: 10px;
+        font-family: var(--vc-font-mono);
+      }
 
-/* Game placeholder */
-.game-ph { opacity: 0.12; }
+      /* Game placeholder */
+      .game-ph {
+        opacity: 0.12;
+      }
 
-/* Caption overlay */
-.caption-over {
-  position: absolute;
-  bottom: 13%;
-  left: 0; right: 0;
-  text-align: center;
-  padding: 0 10px;
-}
-.caption-over__text {
-  font-weight: 800;
-  font-size: 19px;
-  line-height: 1.2;
-  color: #fff;
-  letter-spacing: -0.02em;
-  text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
-}
-.caption-over__text .hl { color: #facc15; }
+      /* Caption overlay */
+      .caption-over {
+        position: absolute;
+        bottom: 13%;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 0 10px;
+      }
+      .caption-over__text {
+        font-weight: 800;
+        font-size: 19px;
+        line-height: 1.2;
+        color: #fff;
+        letter-spacing: -0.02em;
+        text-shadow:
+          2px 2px 0 #000,
+          -2px 2px 0 #000,
+          2px -2px 0 #000,
+          -2px -2px 0 #000;
+      }
+      .caption-over__text .hl {
+        color: #facc15;
+      }
 
-.game-subs {
-  position: absolute;
-  bottom: 8px;
-  left: 0; right: 0;
-  text-align: center;
-  font-size: 9px;
-  color: rgba(255,255,255,0.45);
-  font-family: var(--vc-font-mono);
-}
+      .game-subs {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.45);
+        font-family: var(--vc-font-mono);
+      }
 
-/* Playback bar */
-.playback {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px;
-  background: var(--vc-surface);
-  border-top: 1px solid var(--vc-border);
-  flex-shrink: 0;
-}
-.play-btn {
-  width: 28px; height: 28px;
-  border-radius: var(--vc-radius-sm);
-  background: transparent;
-  border: 1px solid var(--vc-border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--vc-text);
-  transition: all var(--vc-dur-fast) var(--vc-ease);
-  flex-shrink: 0;
-}
-.play-btn:hover { background: var(--vc-surface-2); border-color: var(--vc-border-strong); }
-.pb-time {
-  font-family: var(--vc-font-mono);
-  font-size: 12px;
-  color: var(--vc-text-subtle);
-  white-space: nowrap;
-}
-.pb-time .now { color: var(--vc-text); }
-.pb-track {
-  flex: 1; height: 4px;
-  background: var(--vc-divider);
-  border-radius: 999px;
-  cursor: pointer; position: relative;
-}
-.pb-fill {
-  height: 100%; width: 5%;
-  background: var(--vc-clay-500);
-  border-radius: 999px; position: relative;
-}
-.pb-fill::after {
-  content: '';
-  position: absolute; right: -5px; top: -4px;
-  width: 12px; height: 12px;
-  background: var(--vc-clay-500);
-  border-radius: 999px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
-}
+      /* Playback bar */
+      .playback {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 16px;
+        background: var(--vc-surface);
+        border-top: 1px solid var(--vc-border);
+        flex-shrink: 0;
+      }
+      .play-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--vc-radius-sm);
+        background: transparent;
+        border: 1px solid var(--vc-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--vc-text);
+        transition: all var(--vc-dur-fast) var(--vc-ease);
+        flex-shrink: 0;
+      }
+      .play-btn:hover {
+        background: var(--vc-surface-2);
+        border-color: var(--vc-border-strong);
+      }
+      .pb-time {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text-subtle);
+        white-space: nowrap;
+      }
+      .pb-time .now {
+        color: var(--vc-text);
+      }
+      .pb-track {
+        flex: 1;
+        height: 4px;
+        background: var(--vc-divider);
+        border-radius: 999px;
+        cursor: pointer;
+        position: relative;
+      }
+      .pb-fill {
+        height: 100%;
+        width: 5%;
+        background: var(--vc-clay-500);
+        border-radius: 999px;
+        position: relative;
+      }
+      .pb-fill::after {
+        content: '';
+        position: absolute;
+        right: -5px;
+        top: -4px;
+        width: 12px;
+        height: 12px;
+        background: var(--vc-clay-500);
+        border-radius: 999px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+      }
 
-.sub-actions {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 16px;
-  background: var(--vc-surface);
-  border-top: 1px solid var(--vc-divider);
-  flex-shrink: 0;
-}
+      .sub-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        background: var(--vc-surface);
+        border-top: 1px solid var(--vc-divider);
+        flex-shrink: 0;
+      }
 
-/* ── RIGHT PANEL ────────────────────────────────────────────── */
-.right-panel {
-  border-left: 1px solid var(--vc-border);
-  background: var(--vc-surface-2);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  scrollbar-width: none;
-}
-.right-panel::-webkit-scrollbar { display: none; }
+      /* ── RIGHT PANEL ────────────────────────────────────────────── */
+      .right-panel {
+        border-left: 1px solid var(--vc-border);
+        background: var(--vc-surface-2);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        scrollbar-width: none;
+      }
+      .right-panel::-webkit-scrollbar {
+        display: none;
+      }
 
-.rg {
-  padding: 14px 14px 16px;
-  border-bottom: 1px solid var(--vc-border);
-  display: flex; flex-direction: column; gap: 10px;
-}
-.rg:last-child { border-bottom: none; }
+      .rg {
+        padding: 14px 14px 16px;
+        border-bottom: 1px solid var(--vc-border);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .rg:last-child {
+        border-bottom: none;
+      }
 
-.rh {
-  font-family: var(--vc-font-mono);
-  font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--vc-text-subtle);
-  margin: 0;
-}
+      .rh {
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--vc-text-subtle);
+        margin: 0;
+      }
 
-.vc-textarea-cap {
-  width: 100%;
-  background: var(--vc-surface);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-sm);
-  padding: 8px 10px;
-  font-family: var(--vc-font-body);
-  font-size: 13px; color: var(--vc-text);
-  line-height: 1.5; resize: none; min-height: 52px;
-  transition: border-color var(--vc-dur-fast) var(--vc-ease);
-}
-.vc-textarea-cap:focus { outline: none; border-color: var(--vc-clay-500); box-shadow: var(--vc-shadow-focus); }
+      .vc-textarea-cap {
+        width: 100%;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-sm);
+        padding: 8px 10px;
+        font-family: var(--vc-font-body);
+        font-size: 13px;
+        color: var(--vc-text);
+        line-height: 1.5;
+        resize: none;
+        min-height: 52px;
+        transition: border-color var(--vc-dur-fast) var(--vc-ease);
+      }
+      .vc-textarea-cap:focus {
+        outline: none;
+        border-color: var(--vc-clay-500);
+        box-shadow: var(--vc-shadow-focus);
+      }
 
-.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.tf { display: flex; flex-direction: column; gap: 4px; }
-.fl {
-  font-family: var(--vc-font-mono);
-  font-size: 10px; color: var(--vc-text-subtle);
-  text-transform: uppercase; letter-spacing: 0.08em;
-}
-.ti {
-  font-family: var(--vc-font-mono);
-  font-size: 13px;
-  background: var(--vc-surface);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-sm);
-  padding: 7px 10px; color: var(--vc-text);
-  width: 100%;
-}
-.ti:focus { outline: none; border-color: var(--vc-clay-500); box-shadow: var(--vc-shadow-focus); }
+      .time-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .tf {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .fl {
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        color: var(--vc-text-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .ti {
+        font-family: var(--vc-font-mono);
+        font-size: 13px;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-sm);
+        padding: 7px 10px;
+        color: var(--vc-text);
+        width: 100%;
+      }
+      .ti:focus {
+        outline: none;
+        border-color: var(--vc-clay-500);
+        box-shadow: var(--vc-shadow-focus);
+      }
 
-/* Word tokens */
-.words { display: flex; flex-wrap: wrap; gap: 4px; }
-.word {
-  padding: 4px 8px;
-  background: var(--vc-surface);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-sm);
-  font-size: 13px; color: var(--vc-text);
-  cursor: pointer; user-select: none;
-  transition: all var(--vc-dur-fast) var(--vc-ease);
-}
-.word:hover { border-color: var(--vc-border-strong); }
-.word.hl {
-  background: var(--vc-clay-soft);
-  border-color: var(--vc-clay-500);
-  color: var(--vc-clay-400);
-  font-weight: 600;
-}
+      /* Word tokens */
+      .words {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .word {
+        padding: 4px 8px;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-sm);
+        font-size: 13px;
+        color: var(--vc-text);
+        cursor: pointer;
+        user-select: none;
+        transition: all var(--vc-dur-fast) var(--vc-ease);
+      }
+      .word:hover {
+        border-color: var(--vc-border-strong);
+      }
+      .word.hl {
+        background: var(--vc-clay-soft);
+        border-color: var(--vc-clay-500);
+        color: var(--vc-clay-400);
+        font-weight: 600;
+      }
 
-/* Style section */
-.style-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.sfield { display: flex; flex-direction: column; gap: 5px; }
-.sfield > label { font-size: 12px; color: var(--vc-text-muted); font-weight: 500; }
-.slider-row { display: flex; align-items: center; gap: 6px; }
-.slider-row .vc-slider { flex: 1; }
-.sv { font-family: var(--vc-font-mono); font-size: 12px; color: var(--vc-text); min-width: 28px; text-align: right; }
+      /* Style section */
+      .style-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .sfield {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .sfield > label {
+        font-size: 12px;
+        color: var(--vc-text-muted);
+        font-weight: 500;
+      }
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .slider-row .vc-slider {
+        flex: 1;
+      }
+      .sv {
+        font-family: var(--vc-font-mono);
+        font-size: 12px;
+        color: var(--vc-text);
+        min-width: 28px;
+        text-align: right;
+      }
 
-.align-select {
-  width: 100%;
-  background: var(--vc-surface);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-sm);
-  padding: 7px 10px; font-size: 13px;
-  color: var(--vc-text);
-  font-family: var(--vc-font-body);
-  appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23847B6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
-  cursor: pointer;
-}
+      .align-select {
+        width: 100%;
+        background: var(--vc-surface);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-sm);
+        padding: 7px 10px;
+        font-size: 13px;
+        color: var(--vc-text);
+        font-family: var(--vc-font-body);
+        appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23847B6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+        cursor: pointer;
+      }
 
-/* Color section */
-.color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.cfield { display: flex; flex-direction: column; gap: 5px; }
-.cfield > label { font-size: 12px; color: var(--vc-text-muted); font-weight: 500; }
-.cswatch {
-  height: 30px; border-radius: var(--vc-radius-sm);
-  border: 1px solid var(--vc-border);
-  cursor: pointer; transition: border-color var(--vc-dur-fast) var(--vc-ease);
-}
-.cswatch:hover { border-color: var(--vc-border-strong); }
-.cswatch--white { background: #ffffff; }
-.cswatch--yellow { background: #facc15; }
-.cswatch--transparent { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 10px 10px; }
+      /* Color section */
+      .color-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .cfield {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .cfield > label {
+        font-size: 12px;
+        color: var(--vc-text-muted);
+        font-weight: 500;
+      }
+      .cswatch {
+        height: 30px;
+        border-radius: var(--vc-radius-sm);
+        border: 1px solid var(--vc-border);
+        cursor: pointer;
+        transition: border-color var(--vc-dur-fast) var(--vc-ease);
+      }
+      .cswatch:hover {
+        border-color: var(--vc-border-strong);
+      }
+      .cswatch--white {
+        background: #ffffff;
+      }
+      .cswatch--yellow {
+        background: #facc15;
+      }
+      .cswatch--transparent {
+        background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 10px 10px;
+      }
 
-.outline-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
-.outline-chk { display: flex; align-items: center; gap: 6px; }
-.outline-chk input { accent-color: var(--vc-clay-500); width: 14px; height: 14px; cursor: pointer; }
-.outline-chk label { font-size: 12px; color: var(--vc-text-muted); font-weight: 500; cursor: pointer; }
-.cswatch--black { background: #000000; }
-.outline-w { display: flex; flex-direction: column; gap: 5px; }
-.outline-w > label { font-size: 12px; color: var(--vc-text-muted); font-weight: 500; }
-.outline-w-row { display: flex; align-items: center; gap: 6px; }
-.outline-w-row .vc-slider { flex: 1; }
+      .outline-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        align-items: end;
+      }
+      .outline-chk {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .outline-chk input {
+        accent-color: var(--vc-clay-500);
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+      }
+      .outline-chk label {
+        font-size: 12px;
+        color: var(--vc-text-muted);
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .cswatch--black {
+        background: #000000;
+      }
+      .outline-w {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .outline-w > label {
+        font-size: 12px;
+        color: var(--vc-text-muted);
+        font-weight: 500;
+      }
+      .outline-w-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .outline-w-row .vc-slider {
+        flex: 1;
+      }
 
-/* Position */
-.pos-label-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 12px; color: var(--vc-text-muted);
-}
-.pos-label-row .pv { font-family: var(--vc-font-mono); color: var(--vc-text); font-weight: 600; font-size: 13px; }
-.pos-sub { display: flex; justify-content: space-between; font-family: var(--vc-font-mono); font-size: 10px; color: var(--vc-text-subtle); margin-top: 4px; }
+      /* Position */
+      .pos-label-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--vc-text-muted);
+      }
+      .pos-label-row .pv {
+        font-family: var(--vc-font-mono);
+        color: var(--vc-text);
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .pos-sub {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        color: var(--vc-text-subtle);
+        margin-top: 4px;
+      }
 
-/* ── TIMELINE ───────────────────────────────────────────────── */
-.timeline {
-  height: 118px;
-  background: var(--vc-surface);
-  border-top: 1px solid var(--vc-border);
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0 0;
-  flex-shrink: 0;
-}
-.tl-top {
-  display: flex; align-items: center; gap: 8px;
-  padding: 0 16px; margin-bottom: 6px;
-}
-.tl-fit {
-  font-family: var(--vc-font-mono); font-size: 11px;
-  background: var(--vc-surface-2);
-  border: 1px solid var(--vc-border);
-  border-radius: var(--vc-radius-sm);
-  padding: 2px 9px; color: var(--vc-text);
-  cursor: pointer;
-}
-.tl-range { font-family: var(--vc-font-mono); font-size: 11px; color: var(--vc-text-subtle); }
+      /* ── TIMELINE ───────────────────────────────────────────────── */
+      .timeline {
+        height: 118px;
+        background: var(--vc-surface);
+        border-top: 1px solid var(--vc-border);
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0 0;
+        flex-shrink: 0;
+      }
+      .tl-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        margin-bottom: 6px;
+      }
+      .tl-fit {
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        background: var(--vc-surface-2);
+        border: 1px solid var(--vc-border);
+        border-radius: var(--vc-radius-sm);
+        padding: 2px 9px;
+        color: var(--vc-text);
+        cursor: pointer;
+      }
+      .tl-range {
+        font-family: var(--vc-font-mono);
+        font-size: 11px;
+        color: var(--vc-text-subtle);
+      }
 
-.tl-tracks { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 3px; }
-.tl-track {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 5px; align-items: center;
-}
-.tl-lbl {
-  font-family: var(--vc-font-mono);
-  font-size: 9px; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--vc-text-subtle);
-  text-align: right; padding-right: 4px;
-}
-.tl-body {
-  height: 20px;
-  background: var(--vc-surface-2);
-  border-radius: 3px;
-  position: relative;
-  overflow: hidden;
-}
-.tl-trim { height: 100%; background: var(--vc-success-soft); border-top: 2px solid var(--vc-success); border-bottom: 2px solid var(--vc-success); }
+      .tl-tracks {
+        flex: 1;
+        padding: 0 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .tl-track {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 5px;
+        align-items: center;
+      }
+      .tl-lbl {
+        font-family: var(--vc-font-mono);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--vc-text-subtle);
+        text-align: right;
+        padding-right: 4px;
+      }
+      .tl-body {
+        height: 20px;
+        background: var(--vc-surface-2);
+        border-radius: 3px;
+        position: relative;
+        overflow: hidden;
+      }
+      .tl-trim {
+        height: 100%;
+        background: var(--vc-success-soft);
+        border-top: 2px solid var(--vc-success);
+        border-bottom: 2px solid var(--vc-success);
+      }
 
-.tl-seg {
-  position: absolute; top: 1px; bottom: 1px;
-  background: var(--vc-clay-soft);
-  border-left: 2px solid var(--vc-clay-500);
-  border-radius: 2px;
-  overflow: hidden;
-  white-space: nowrap;
-  font-family: var(--vc-font-mono);
-  font-size: 8px; color: var(--vc-clay-400);
-  display: flex; align-items: center;
-  padding: 0 3px;
-}
-.tl-seg--ovly {
-  background: var(--vc-info-soft);
-  border-color: var(--vc-info);
-  color: var(--vc-info);
-}
+      .tl-seg {
+        position: absolute;
+        top: 1px;
+        bottom: 1px;
+        background: var(--vc-clay-soft);
+        border-left: 2px solid var(--vc-clay-500);
+        border-radius: 2px;
+        overflow: hidden;
+        white-space: nowrap;
+        font-family: var(--vc-font-mono);
+        font-size: 8px;
+        color: var(--vc-clay-400);
+        display: flex;
+        align-items: center;
+        padding: 0 3px;
+      }
+      .tl-seg--ovly {
+        background: var(--vc-info-soft);
+        border-color: var(--vc-info);
+        color: var(--vc-info);
+      }
 
-.tl-ticks {
-  display: flex; justify-content: space-between;
-  padding: 3px 16px 0 60px;
-  font-family: var(--vc-font-mono);
-  font-size: 10px; color: var(--vc-text-subtle);
-}
+      .tl-ticks {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 16px 0 60px;
+        font-family: var(--vc-font-mono);
+        font-size: 10px;
+        color: var(--vc-text-subtle);
+      }
 
-/* ── Theme toggle ───────────────────────────────────────────── */
-.theme-toggle {
-  position: fixed;
-  bottom: 20px; right: 20px;
-  z-index: 99;
-}
-</style>
-</head>
-<body>
+      /* ── Theme toggle ───────────────────────────────────────────── */
+      .theme-toggle {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 99;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="editor">
+      <!-- ── TOPBAR ─────────────────────────────────────── -->
+      <div class="topbar">
+        <span class="vc-wordmark" style="font-size: 16px; margin-right: 8px">
+          Video Clipper<span class="vc-wordmark__dot" style="width: 4px; height: 4px"></span>
+        </span>
+        <div style="width: 1px; height: 20px; background: var(--vc-divider)"></div>
+        <span class="topbar__file">ttXHdaDTjnk_356_420.mp4</span>
+        <span class="topbar__meta">5:56 → 7:00</span>
+        <span class="topbar__sep">·</span>
+        <span class="topbar__chip">9:16</span>
 
-<div class="editor">
-
-  <!-- ── TOPBAR ─────────────────────────────────────── -->
-  <div class="topbar">
-    <span class="vc-wordmark" style="font-size:16px; margin-right: 8px;">
-      Video Clipper<span class="vc-wordmark__dot" style="width:4px;height:4px;"></span>
-    </span>
-    <div style="width:1px;height:20px;background:var(--vc-divider);"></div>
-    <span class="topbar__file">ttXHdaDTjnk_356_420.mp4</span>
-    <span class="topbar__meta">5:56 → 7:00</span>
-    <span class="topbar__sep">·</span>
-    <span class="topbar__chip">9:16</span>
-
-    <!-- workflow stepper -->
-    <div style="display:flex;align-items:center;gap:6px;margin-left:16px;">
-      <span style="font-size:12px;color:var(--vc-text-subtle);font-family:var(--vc-font-mono);">Step 4 of 5</span>
-      <div style="display:flex;gap:4px;align-items:center;">
-        <div style="display:flex;align-items:center;gap:4px;" title="Analyze">
-          <span style="width:22px;height:22px;border-radius:999px;background:var(--vc-success-soft);border:1px solid var(--vc-success);display:flex;align-items:center;justify-content:center;font-family:var(--vc-font-mono);font-size:10px;color:var(--vc-success);">✓</span>
-          <span style="font-size:12px;color:var(--vc-text-subtle);">Analyze</span>
-        </div>
-        <span style="color:var(--vc-divider);">·</span>
-        <div style="display:flex;align-items:center;gap:4px;" title="Clip">
-          <span style="width:22px;height:22px;border-radius:999px;background:var(--vc-success-soft);border:1px solid var(--vc-success);display:flex;align-items:center;justify-content:center;font-family:var(--vc-font-mono);font-size:10px;color:var(--vc-success);">✓</span>
-          <span style="font-size:12px;color:var(--vc-text-subtle);">Clip</span>
-        </div>
-        <span style="color:var(--vc-divider);">·</span>
-        <div style="display:flex;align-items:center;gap:4px;" title="Connect">
-          <span style="width:22px;height:22px;border-radius:999px;background:var(--vc-success-soft);border:1px solid var(--vc-success);display:flex;align-items:center;justify-content:center;font-family:var(--vc-font-mono);font-size:10px;color:var(--vc-success);">✓</span>
-          <span style="font-size:12px;color:var(--vc-text-subtle);">Connect</span>
-        </div>
-        <span style="color:var(--vc-divider);">·</span>
-        <div style="display:flex;align-items:center;gap:4px;" title="Prepare — current">
-          <span style="width:22px;height:22px;border-radius:999px;background:var(--vc-clay-500);display:flex;align-items:center;justify-content:center;font-family:var(--vc-font-mono);font-size:10px;color:white;font-weight:600;">4</span>
-          <span style="font-size:12px;color:var(--vc-text);font-weight:500;">Prepare</span>
-        </div>
-        <span style="color:var(--vc-divider);">·</span>
-        <div style="display:flex;align-items:center;gap:4px;opacity:0.45;" title="Publish — locked">
-          <span style="width:22px;height:22px;border-radius:999px;background:var(--vc-surface-2);border:1px solid var(--vc-border);display:flex;align-items:center;justify-content:center;font-family:var(--vc-font-mono);font-size:10px;color:var(--vc-text-subtle);">5</span>
-          <span style="font-size:12px;color:var(--vc-text-subtle);">Publish</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="topbar__spacer"></div>
-    <div class="topbar__actions">
-      <button class="vc-btn vc-btn--secondary vc-btn--sm">Save</button>
-      <button class="vc-btn vc-btn--primary vc-btn--sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><path d="m20 17-1.09-1.09"/><path d="M16.5 20.5a3.5 3.5 0 1 1 5-5"/></svg>
-        Render &amp; Save
-      </button>
-      <button class="vc-btn vc-btn--ghost vc-btn--icon" id="theme-btn" aria-label="Toggle theme" onclick="toggleTheme()">
-        <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-      <button class="vc-btn vc-btn--ghost vc-btn--icon" aria-label="Close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- ── BODY ──────────────────────────────────────── -->
-  <div class="editor-body">
-
-    <!-- LEFT PANEL -->
-    <div class="left-panel">
-
-      <div>
-        <p class="panel-h">Captions</p>
-        <div class="caption-presets">
-          <div class="caption-preset caption-preset--bold-white">Bold White</div>
-          <div class="caption-preset caption-preset--yellow-pop">Yellow Pop</div>
-          <div class="caption-preset caption-preset--subtle">Subtle</div>
-          <div class="caption-preset caption-preset--hooked">Hooked</div>
-          <div class="caption-preset caption-preset--karaoke is-active">
-            <div class="karaoke-fill"></div>
-            <span>Karaoke</span>
+        <!-- workflow stepper -->
+        <div style="display: flex; align-items: center; gap: 6px; margin-left: 16px">
+          <span
+            style="font-size: 12px; color: var(--vc-text-subtle); font-family: var(--vc-font-mono)"
+            >Step 4 of 5</span
+          >
+          <div style="display: flex; gap: 4px; align-items: center">
+            <div style="display: flex; align-items: center; gap: 4px" title="Analyze">
+              <span
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 999px;
+                  background: var(--vc-success-soft);
+                  border: 1px solid var(--vc-success);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-family: var(--vc-font-mono);
+                  font-size: 10px;
+                  color: var(--vc-success);
+                "
+                >✓</span
+              >
+              <span style="font-size: 12px; color: var(--vc-text-subtle)">Analyze</span>
+            </div>
+            <span style="color: var(--vc-divider)">·</span>
+            <div style="display: flex; align-items: center; gap: 4px" title="Clip">
+              <span
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 999px;
+                  background: var(--vc-success-soft);
+                  border: 1px solid var(--vc-success);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-family: var(--vc-font-mono);
+                  font-size: 10px;
+                  color: var(--vc-success);
+                "
+                >✓</span
+              >
+              <span style="font-size: 12px; color: var(--vc-text-subtle)">Clip</span>
+            </div>
+            <span style="color: var(--vc-divider)">·</span>
+            <div style="display: flex; align-items: center; gap: 4px" title="Connect">
+              <span
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 999px;
+                  background: var(--vc-success-soft);
+                  border: 1px solid var(--vc-success);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-family: var(--vc-font-mono);
+                  font-size: 10px;
+                  color: var(--vc-success);
+                "
+                >✓</span
+              >
+              <span style="font-size: 12px; color: var(--vc-text-subtle)">Connect</span>
+            </div>
+            <span style="color: var(--vc-divider)">·</span>
+            <div style="display: flex; align-items: center; gap: 4px" title="Prepare — current">
+              <span
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 999px;
+                  background: var(--vc-clay-500);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-family: var(--vc-font-mono);
+                  font-size: 10px;
+                  color: white;
+                  font-weight: 600;
+                "
+                >4</span
+              >
+              <span style="font-size: 12px; color: var(--vc-text); font-weight: 500">Prepare</span>
+            </div>
+            <span style="color: var(--vc-divider)">·</span>
+            <div
+              style="display: flex; align-items: center; gap: 4px; opacity: 0.45"
+              title="Publish — locked"
+            >
+              <span
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 999px;
+                  background: var(--vc-surface-2);
+                  border: 1px solid var(--vc-border);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-family: var(--vc-font-mono);
+                  font-size: 10px;
+                  color: var(--vc-text-subtle);
+                "
+                >5</span
+              >
+              <span style="font-size: 12px; color: var(--vc-text-subtle)">Publish</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div>
-        <p class="panel-h">Reframe</p>
-        <div class="radio-group">
-          <label class="radio-item">
-            <span class="rd is-on"></span>9:16
-          </label>
-          <label class="radio-item">
-            <span class="rd"></span>1:1
-          </label>
-          <label class="radio-item">
-            <span class="rd"></span>16:9
-          </label>
+        <div class="topbar__spacer"></div>
+        <div class="topbar__actions">
+          <button class="vc-btn vc-btn--secondary vc-btn--sm">Save</button>
+          <button class="vc-btn vc-btn--primary vc-btn--sm">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0" />
+              <path d="m20 17-1.09-1.09" />
+              <path d="M16.5 20.5a3.5 3.5 0 1 1 5-5" />
+            </svg>
+            Render &amp; Save
+          </button>
+          <button
+            class="vc-btn vc-btn--ghost vc-btn--icon"
+            id="theme-btn"
+            aria-label="Toggle theme"
+            onclick="toggleTheme()"
+          >
+            <svg
+              id="icon-sun"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="display: none"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              />
+            </svg>
+            <svg
+              id="icon-moon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+          <button class="vc-btn vc-btn--ghost vc-btn--icon" aria-label="Close">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div>
-        <p class="panel-h">Fill</p>
-        <div class="radio-group">
-          <label class="radio-item">
-            <span class="rd is-on"></span>Crop
-          </label>
-          <label class="radio-item">
-            <span class="rd"></span>Blur
-          </label>
-          <label class="radio-item">
-            <span class="rd"></span>Black
-          </label>
-        </div>
-      </div>
-
-    </div><!-- /left-panel -->
-
-    <!-- CENTER -->
-    <div class="center">
-      <div class="video-canvas">
-        <div class="video-output">
-
-          <!-- Face cam -->
-          <div class="video-frame video-frame--face">
-            <div class="face-ph">
-              <div class="face-ph__avatar">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <!-- ── BODY ──────────────────────────────────────── -->
+      <div class="editor-body">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+          <div>
+            <p class="panel-h">Captions</p>
+            <div class="caption-presets">
+              <div class="caption-preset caption-preset--bold-white">Bold White</div>
+              <div class="caption-preset caption-preset--yellow-pop">Yellow Pop</div>
+              <div class="caption-preset caption-preset--subtle">Subtle</div>
+              <div class="caption-preset caption-preset--hooked">Hooked</div>
+              <div class="caption-preset caption-preset--karaoke is-active">
+                <div class="karaoke-fill"></div>
+                <span>Karaoke</span>
               </div>
-              <span class="face-ph__label">face cam</span>
-            </div>
-            <!-- active caption overlay -->
-            <div class="caption-over">
-              <div class="caption-over__text"><span class="hl">She's</span> a coward.</div>
             </div>
           </div>
 
-          <!-- Game footage -->
-          <div class="video-frame video-frame--game">
-            <div class="game-ph">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/></svg>
-            </div>
-            <div class="game-subs">Ishikawa: (Sighs.) She'll be long gone by the time we get there.</div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Playback controls -->
-      <div class="playback">
-        <button class="play-btn" aria-label="Play">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        </button>
-        <span class="pb-time"><span class="now">0:00</span> / 1:04</span>
-        <div class="pb-track">
-          <div class="pb-fill"></div>
-        </div>
-      </div>
-
-      <!-- Subtitle action buttons -->
-      <div class="sub-actions">
-        <button class="vc-btn vc-btn--secondary vc-btn--sm">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Subtitle
-        </button>
-        <button class="vc-btn vc-btn--secondary vc-btn--sm">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Banner
-        </button>
-        <button class="vc-btn vc-btn--ghost vc-btn--sm">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          Auto-import Transcript
-        </button>
-      </div>
-    </div><!-- /center -->
-
-    <!-- RIGHT PANEL -->
-    <div class="right-panel">
-
-      <!-- Text + timing -->
-      <div class="rg">
-        <p class="rh">Text</p>
-        <textarea class="vc-textarea-cap">&gt;&gt; She's a coward. No, she's mocking me. She knows the last student I trained</textarea>
-        <div class="time-row">
-          <div class="tf">
-            <span class="fl">Start (s)</span>
-            <input class="ti" type="text" value="3.9663509">
-          </div>
-          <div class="tf">
-            <span class="fl">End (s)</span>
-            <input class="ti" type="text" value="10.1499999">
-          </div>
-        </div>
-      </div>
-
-      <!-- Word highlighting -->
-      <div class="rg">
-        <p class="rh">Words — tap to highlight</p>
-        <div class="words">
-          <span class="word">&gt;&gt;</span>
-          <span class="word hl">She's</span>
-          <span class="word">a</span>
-          <span class="word">coward.</span>
-          <span class="word">No,</span>
-          <span class="word">she's</span>
-          <span class="word">mocking</span>
-          <span class="word">me.</span>
-          <span class="word">She</span>
-          <span class="word">knows</span>
-          <span class="word">the</span>
-          <span class="word">last</span>
-          <span class="word">student</span>
-          <span class="word">I</span>
-          <span class="word">trained</span>
-        </div>
-      </div>
-
-      <!-- Style -->
-      <div class="rg">
-        <p class="rh">Style</p>
-        <div class="style-two">
-          <div class="sfield">
-            <label>Font size</label>
-            <div class="slider-row">
-              <input type="range" class="vc-slider" min="12" max="120" value="56">
-              <span class="sv">56</span>
+          <div>
+            <p class="panel-h">Reframe</p>
+            <div class="radio-group">
+              <label class="radio-item"> <span class="rd is-on"></span>9:16 </label>
+              <label class="radio-item"> <span class="rd"></span>1:1 </label>
+              <label class="radio-item"> <span class="rd"></span>16:9 </label>
             </div>
           </div>
-          <div class="sfield">
-            <label>Weight</label>
-            <div class="slider-row">
-              <input type="range" class="vc-slider" min="100" max="900" step="100" value="800">
-              <span class="sv">800</span>
+
+          <div>
+            <p class="panel-h">Fill</p>
+            <div class="radio-group">
+              <label class="radio-item"> <span class="rd is-on"></span>Crop </label>
+              <label class="radio-item"> <span class="rd"></span>Blur </label>
+              <label class="radio-item"> <span class="rd"></span>Black </label>
             </div>
           </div>
         </div>
-        <div class="sfield">
-          <label>Align</label>
-          <select class="align-select">
-            <option selected>Center</option>
-            <option>Left</option>
-            <option>Right</option>
-          </select>
-        </div>
-      </div>
+        <!-- /left-panel -->
 
-      <!-- Colors -->
-      <div class="rg">
-        <p class="rh">Color</p>
-        <div class="color-grid">
-          <div class="cfield">
-            <label>Color</label>
-            <div class="cswatch cswatch--white"></div>
+        <!-- CENTER -->
+        <div class="center">
+          <div class="video-canvas">
+            <div class="video-output">
+              <!-- Face cam -->
+              <div class="video-frame video-frame--face">
+                <div class="face-ph">
+                  <div class="face-ph__avatar">
+                    <svg
+                      width="26"
+                      height="26"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                  </div>
+                  <span class="face-ph__label">face cam</span>
+                </div>
+                <!-- active caption overlay -->
+                <div class="caption-over">
+                  <div class="caption-over__text"><span class="hl">She's</span> a coward.</div>
+                </div>
+              </div>
+
+              <!-- Game footage -->
+              <div class="video-frame video-frame--game">
+                <div class="game-ph">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="1"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <polygon points="10 9 15 12 10 15 10 9" />
+                  </svg>
+                </div>
+                <div class="game-subs">
+                  Ishikawa: (Sighs.) She'll be long gone by the time we get there.
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="cfield">
-            <label>Highlight</label>
-            <div class="cswatch cswatch--yellow"></div>
+
+          <!-- Playback controls -->
+          <div class="playback">
+            <button class="play-btn" aria-label="Play">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </button>
+            <span class="pb-time"><span class="now">0:00</span> / 1:04</span>
+            <div class="pb-track">
+              <div class="pb-fill"></div>
+            </div>
+          </div>
+
+          <!-- Subtitle action buttons -->
+          <div class="sub-actions">
+            <button class="vc-btn vc-btn--secondary vc-btn--sm">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Subtitle
+            </button>
+            <button class="vc-btn vc-btn--secondary vc-btn--sm">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Banner
+            </button>
+            <button class="vc-btn vc-btn--ghost vc-btn--sm">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              Auto-import Transcript
+            </button>
           </div>
         </div>
-        <div class="outline-row" style="margin-top:10px;">
-          <div class="outline-chk">
-            <input type="checkbox" id="outline-chk" checked>
-            <label for="outline-chk">Outline color</label>
+        <!-- /center -->
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+          <!-- Text + timing -->
+          <div class="rg">
+            <p class="rh">Text</p>
+            <textarea class="vc-textarea-cap">
+&gt;&gt; She's a coward. No, she's mocking me. She knows the last student I trained</textarea
+            >
+            <div class="time-row">
+              <div class="tf">
+                <span class="fl">Start (s)</span>
+                <input class="ti" type="text" value="3.9663509" />
+              </div>
+              <div class="tf">
+                <span class="fl">End (s)</span>
+                <input class="ti" type="text" value="10.1499999" />
+              </div>
+            </div>
           </div>
-          <div class="outline-w">
-            <label>Outline width</label>
-            <div class="outline-w-row">
-              <input type="range" class="vc-slider" min="0" max="10" value="3">
-              <span class="sv">3</span>
+
+          <!-- Word highlighting -->
+          <div class="rg">
+            <p class="rh">Words — tap to highlight</p>
+            <div class="words">
+              <span class="word">&gt;&gt;</span>
+              <span class="word hl">She's</span>
+              <span class="word">a</span>
+              <span class="word">coward.</span>
+              <span class="word">No,</span>
+              <span class="word">she's</span>
+              <span class="word">mocking</span>
+              <span class="word">me.</span>
+              <span class="word">She</span>
+              <span class="word">knows</span>
+              <span class="word">the</span>
+              <span class="word">last</span>
+              <span class="word">student</span>
+              <span class="word">I</span>
+              <span class="word">trained</span>
+            </div>
+          </div>
+
+          <!-- Style -->
+          <div class="rg">
+            <p class="rh">Style</p>
+            <div class="style-two">
+              <div class="sfield">
+                <label>Font size</label>
+                <div class="slider-row">
+                  <input type="range" class="vc-slider" min="12" max="120" value="56" />
+                  <span class="sv">56</span>
+                </div>
+              </div>
+              <div class="sfield">
+                <label>Weight</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    class="vc-slider"
+                    min="100"
+                    max="900"
+                    step="100"
+                    value="800"
+                  />
+                  <span class="sv">800</span>
+                </div>
+              </div>
+            </div>
+            <div class="sfield">
+              <label>Align</label>
+              <select class="align-select">
+                <option selected>Center</option>
+                <option>Left</option>
+                <option>Right</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Colors -->
+          <div class="rg">
+            <p class="rh">Color</p>
+            <div class="color-grid">
+              <div class="cfield">
+                <label>Color</label>
+                <div class="cswatch cswatch--white"></div>
+              </div>
+              <div class="cfield">
+                <label>Highlight</label>
+                <div class="cswatch cswatch--yellow"></div>
+              </div>
+            </div>
+            <div class="outline-row" style="margin-top: 10px">
+              <div class="outline-chk">
+                <input type="checkbox" id="outline-chk" checked />
+                <label for="outline-chk">Outline color</label>
+              </div>
+              <div class="outline-w">
+                <label>Outline width</label>
+                <div class="outline-w-row">
+                  <input type="range" class="vc-slider" min="0" max="10" value="3" />
+                  <span class="sv">3</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 8px">
+              <div class="cfield">
+                <label>Outline color</label>
+                <div class="cswatch cswatch--black"></div>
+              </div>
+            </div>
+            <div style="margin-top: 8px">
+              <div class="cfield">
+                <label>Background</label>
+                <div class="cswatch cswatch--transparent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Position -->
+          <div class="rg">
+            <p class="rh">Position</p>
+            <div class="pos-label-row">
+              <span>Vertical (0 = top, 1 = bottom)</span>
+              <span class="pv">0.85</span>
+            </div>
+            <input
+              type="range"
+              class="vc-slider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.85"
+              style="width: 100%; margin-top: 8px"
+            />
+            <div class="pos-sub"><span>top</span><span>bottom</span></div>
+          </div>
+        </div>
+        <!-- /right-panel -->
+      </div>
+      <!-- /editor-body -->
+
+      <!-- ── TIMELINE ───────────────────────────────────── -->
+      <div class="timeline">
+        <div class="tl-top">
+          <button class="tl-fit">Fit all</button>
+          <span class="tl-range">0:00 – 1:04</span>
+        </div>
+        <div class="tl-tracks">
+          <!-- SUBS track -->
+          <div class="tl-track">
+            <span class="tl-lbl">Subs</span>
+            <div class="tl-body">
+              <div class="tl-seg" style="left: 0%; width: 14%">&gt;&gt; She's a co…</div>
+              <div class="tl-seg" style="left: 15%; width: 9%">in who…</div>
+              <div class="tl-seg" style="left: 25%; width: 14%">there her was mi Naged…</div>
+              <div class="tl-seg" style="left: 40%; width: 7%">i was t…</div>
+              <div class="tl-seg" style="left: 48%; width: 5%">defin…</div>
+              <div class="tl-seg" style="left: 54%; width: 4%">Import…</div>
+              <div class="tl-seg" style="left: 59%; width: 4%">to in…</div>
+              <div class="tl-seg" style="left: 64%; width: 5%">full, but st…</div>
+              <div class="tl-seg" style="left: 71%; width: 5%">Export…</div>
+              <div class="tl-seg" style="left: 77%; width: 3%">the…</div>
+              <div class="tl-seg" style="left: 81%; width: 3%">film…</div>
+              <div class="tl-seg" style="left: 85%; width: 4%">main…</div>
+              <div class="tl-seg" style="left: 90%; width: 3%">fill…</div>
+              <div class="tl-seg" style="left: 94%; width: 3%">still…</div>
+            </div>
+          </div>
+
+          <!-- OVLYS track -->
+          <div class="tl-track">
+            <span class="tl-lbl">Ovlys</span>
+            <div class="tl-body">
+              <div class="tl-seg tl-seg--ovly" style="left: 0%; width: 62%"></div>
+            </div>
+          </div>
+
+          <!-- TRIM track -->
+          <div class="tl-track">
+            <span class="tl-lbl">Trim</span>
+            <div class="tl-body">
+              <div class="tl-trim"></div>
             </div>
           </div>
         </div>
-        <div style="margin-top:8px;">
-          <div class="cfield">
-            <label>Outline color</label>
-            <div class="cswatch cswatch--black"></div>
-          </div>
-        </div>
-        <div style="margin-top:8px;">
-          <div class="cfield">
-            <label>Background</label>
-            <div class="cswatch cswatch--transparent"></div>
-          </div>
+        <div class="tl-ticks">
+          <span>0:00</span><span>0:15</span><span>0:30</span><span>0:45</span><span>1:00</span>
         </div>
       </div>
-
-      <!-- Position -->
-      <div class="rg">
-        <p class="rh">Position</p>
-        <div class="pos-label-row">
-          <span>Vertical (0 = top, 1 = bottom)</span>
-          <span class="pv">0.85</span>
-        </div>
-        <input type="range" class="vc-slider" min="0" max="1" step="0.01" value="0.85" style="width:100%;margin-top:8px;">
-        <div class="pos-sub"><span>top</span><span>bottom</span></div>
-      </div>
-
-    </div><!-- /right-panel -->
-
-  </div><!-- /editor-body -->
-
-  <!-- ── TIMELINE ───────────────────────────────────── -->
-  <div class="timeline">
-    <div class="tl-top">
-      <button class="tl-fit">Fit all</button>
-      <span class="tl-range">0:00 – 1:04</span>
     </div>
-    <div class="tl-tracks">
+    <!-- /editor -->
 
-      <!-- SUBS track -->
-      <div class="tl-track">
-        <span class="tl-lbl">Subs</span>
-        <div class="tl-body">
-          <div class="tl-seg" style="left:0%;width:14%;">&gt;&gt; She's a co…</div>
-          <div class="tl-seg" style="left:15%;width:9%;">in who…</div>
-          <div class="tl-seg" style="left:25%;width:14%;">there her was mi Naged…</div>
-          <div class="tl-seg" style="left:40%;width:7%;">i was t…</div>
-          <div class="tl-seg" style="left:48%;width:5%;">defin…</div>
-          <div class="tl-seg" style="left:54%;width:4%;">Import…</div>
-          <div class="tl-seg" style="left:59%;width:4%;">to in…</div>
-          <div class="tl-seg" style="left:64%;width:5%;">full, but st…</div>
-          <div class="tl-seg" style="left:71%;width:5%;">Export…</div>
-          <div class="tl-seg" style="left:77%;width:3%;">the…</div>
-          <div class="tl-seg" style="left:81%;width:3%;">film…</div>
-          <div class="tl-seg" style="left:85%;width:4%;">main…</div>
-          <div class="tl-seg" style="left:90%;width:3%;">fill…</div>
-          <div class="tl-seg" style="left:94%;width:3%;">still…</div>
-        </div>
-      </div>
+    <script>
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.dataset.theme === 'dark';
+        html.dataset.theme = isDark ? 'light' : 'dark';
+        document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
+        document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+      }
 
-      <!-- OVLYS track -->
-      <div class="tl-track">
-        <span class="tl-lbl">Ovlys</span>
-        <div class="tl-body">
-          <div class="tl-seg tl-seg--ovly" style="left:0%;width:62%;"></div>
-        </div>
-      </div>
-
-      <!-- TRIM track -->
-      <div class="tl-track">
-        <span class="tl-lbl">Trim</span>
-        <div class="tl-body">
-          <div class="tl-trim"></div>
-        </div>
-      </div>
-
-    </div>
-    <div class="tl-ticks">
-      <span>0:00</span><span>0:15</span><span>0:30</span><span>0:45</span><span>1:00</span>
-    </div>
-  </div>
-
-</div><!-- /editor -->
-
-<script>
-  function toggleTheme() {
-    const html = document.documentElement;
-    const isDark = html.dataset.theme === 'dark';
-    html.dataset.theme = isDark ? 'light' : 'dark';
-    document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
-    document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
-  }
-
-  // Word token toggle
-  document.querySelectorAll('.word').forEach(w => {
-    w.addEventListener('click', () => w.classList.toggle('hl'));
-  });
-
-  // Caption preset selection
-  document.querySelectorAll('.caption-preset').forEach(p => {
-    p.addEventListener('click', () => {
-      document.querySelectorAll('.caption-preset').forEach(x => x.classList.remove('is-active'));
-      p.classList.add('is-active');
-    });
-  });
-
-  // Radio items (Reframe + Fill)
-  document.querySelectorAll('.radio-group').forEach(group => {
-    group.querySelectorAll('.radio-item').forEach(item => {
-      item.addEventListener('click', () => {
-        group.querySelectorAll('.rd').forEach(d => d.classList.remove('is-on'));
-        item.querySelector('.rd').classList.add('is-on');
+      // Word token toggle
+      document.querySelectorAll('.word').forEach((w) => {
+        w.addEventListener('click', () => w.classList.toggle('hl'));
       });
-    });
-  });
 
-  // Live slider value display
-  document.querySelectorAll('input[type="range"]').forEach(slider => {
-    const valEl = slider.parentElement.querySelector('.sv');
-    if (valEl) {
-      slider.addEventListener('input', () => { valEl.textContent = slider.value; });
-    }
-  });
-</script>
+      // Caption preset selection
+      document.querySelectorAll('.caption-preset').forEach((p) => {
+        p.addEventListener('click', () => {
+          document
+            .querySelectorAll('.caption-preset')
+            .forEach((x) => x.classList.remove('is-active'));
+          p.classList.add('is-active');
+        });
+      });
 
-</body>
+      // Radio items (Reframe + Fill)
+      document.querySelectorAll('.radio-group').forEach((group) => {
+        group.querySelectorAll('.radio-item').forEach((item) => {
+          item.addEventListener('click', () => {
+            group.querySelectorAll('.rd').forEach((d) => d.classList.remove('is-on'));
+            item.querySelector('.rd').classList.add('is-on');
+          });
+        });
+      });
+
+      // Live slider value display
+      document.querySelectorAll('input[type="range"]').forEach((slider) => {
+        const valEl = slider.parentElement.querySelector('.sv');
+        if (valEl) {
+          slider.addEventListener('input', () => {
+            valEl.textContent = slider.value;
+          });
+        }
+      });
+    </script>
+  </body>
 </html>
