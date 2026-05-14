@@ -1878,17 +1878,22 @@ code {
 }
 .ce-tl-ticks {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 6px 18px 6px 72px;
+  height: 20px;
+  padding: 0 18px 0 72px;
   font-family: var(--vc-font-mono);
   font-size: 10px;
   color: var(--vc-text-subtle);
-  cursor: pointer;
+  cursor: ew-resize;
+  background: var(--vc-bg);
+  border-bottom: 1px solid var(--vc-divider);
+  flex-shrink: 0;
 }
 .ce-tl-cursor-line {
   position: absolute;
   top: 38px;
-  bottom: 18px;
+  bottom: 0;
   width: 1px;
   background: var(--vc-clay-500);
   pointer-events: none;

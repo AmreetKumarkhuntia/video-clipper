@@ -5,6 +5,18 @@
 
   let dragMoved = false;
 
+  let outlineStyle = $derived(
+    overlay.style.outlineColor !== null
+      ? `-webkit-text-stroke: ${overlay.style.outlineWidth}px ${overlay.style.outlineColor}; paint-order: stroke fill;`
+      : '',
+  );
+
+  let bgStyle = $derived(
+    overlay.style.bgColor !== null
+      ? `background-color: ${overlay.style.bgColor}; padding: ${overlay.style.bgPaddingY}px ${overlay.style.bgPaddingX}px; border-radius: ${overlay.style.bgRadius}px;`
+      : '',
+  );
+
   // Mirror the canvas `translate(-50%, -50%)` center anchor, switching for align.
   let transformStyle = $derived(
     overlay.style.align === 'left'
@@ -64,7 +76,8 @@
   class:canvas-overlay--selected={selected}
   style="left: {overlay.position.xCenter * 100}%; top: {overlay.position.yCenter *
     100}%; font-size: {overlay.style.fontSize * 0.045}cqw; color: {overlay.style
-    .color}; font-weight: {overlay.style.weight}; transform: {transformStyle};"
+    .color}; font-weight: {overlay.style
+    .weight}; transform: {transformStyle}; {bgStyle}; {outlineStyle}"
   role="button"
   tabindex="0"
   onpointerdown={startDrag}
@@ -78,7 +91,6 @@
   .canvas-overlay {
     position: absolute;
     text-align: center;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     white-space: pre-wrap;
     cursor: grab;
   }

@@ -13,6 +13,7 @@
   import SliderField from '@web/components/SliderField.svelte';
   import ColorSwatch from '@web/components/ColorSwatch.svelte';
   import TimecodeInput from '@web/components/TimecodeInput.svelte';
+  import Button from '@web/components/Button.svelte';
   import SelectionHeader from './SelectionHeader.svelte';
 
   let { edits, selectedItemId, onupdate }: ClipEditorPropertiesPanelProps = $props();
@@ -147,9 +148,29 @@
     updateStyle('bgColor', on ? '#000000CC' : null);
   }
 
+  function applyStyleToAll(): void {
+    if (!selectedSubtitle) return;
+    const { style, position } = selectedSubtitle;
+    onupdate({
+      ...edits,
+      subtitles: edits.subtitles.map((s) => ({
+        ...s,
+        style: { ...style },
+        position: { ...position },
+        templateId: undefined,
+      })),
+    });
+  }
+
   function bgHexValue(value: string | null): string {
     if (!value) return '#000000';
-    return value.length > 7 ? value.slice(0, 7) : value;
+    return value.slice(0, 7);
+  }
+
+  function updateBgColor(newHex: string): void {
+    const current = selectedSubtitle?.style.bgColor ?? selectedOverlay?.style.bgColor ?? null;
+    const alpha = current && current.length > 7 ? current.slice(7) : '';
+    updateStyle('bgColor', newHex + alpha);
   }
 </script>
 
@@ -302,7 +323,33 @@
           kind="custom"
           label="Background"
           value={bgHexValue(style.bgColor)}
-          onchange={(v) => updateStyle('bgColor', v)}
+          onchange={(v) => updateBgColor(v)}
+        />
+        <div class="ce-grid-2">
+          <SliderField
+            label="Width"
+            value={style.bgPaddingX}
+            min={0}
+            max={32}
+            suffix="px"
+            onchange={(v) => updateStyle('bgPaddingX', v)}
+          />
+          <SliderField
+            label="Height"
+            value={style.bgPaddingY}
+            min={0}
+            max={32}
+            suffix="px"
+            onchange={(v) => updateStyle('bgPaddingY', v)}
+          />
+        </div>
+        <SliderField
+          label="Radius"
+          value={style.bgRadius}
+          min={0}
+          max={32}
+          suffix="px"
+          onchange={(v) => updateStyle('bgRadius', v)}
         />
       {/if}
     </section>
@@ -329,6 +376,14 @@
           <span>bottom</span>
         </div>
       </section>
+    {/if}
+
+    {#if itemKind === 'subtitle' && edits.subtitles.length > 1}
+      <div class="ce-rg">
+        <Button size="sm" variant="secondary" onclick={applyStyleToAll}>
+          Apply style to all subtitles
+        </Button>
+      </div>
     {/if}
   {/if}
 </div>

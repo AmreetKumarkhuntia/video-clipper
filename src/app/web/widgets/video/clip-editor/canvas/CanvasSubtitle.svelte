@@ -9,6 +9,18 @@
 
   let bottomPct = $derived((1 - line.position.yCenter) * 100);
 
+  let outlineStyle = $derived(
+    line.style.outlineColor !== null
+      ? `-webkit-text-stroke: ${line.style.outlineWidth}px ${line.style.outlineColor}; paint-order: stroke fill;`
+      : '',
+  );
+
+  let bgStyle = $derived(
+    line.style.bgColor !== null
+      ? `background-color: ${line.style.bgColor}; padding: ${line.style.bgPaddingY}px ${line.style.bgPaddingX}px; border-radius: ${line.style.bgRadius}px;`
+      : '',
+  );
+
   // Mirror the 90%-wide centered block from CSS, switching anchor based on align.
   // Canvas margin on each side = 5% (half of the 10% that "width: 90%" leaves out).
   let alignStyle = $derived(
@@ -23,19 +35,21 @@
 <div
   class="canvas-subtitle"
   style="bottom: {bottomPct}%; font-size: {line.style.fontSize * 0.045}cqw; font-weight: {line.style
-    .weight}; {alignStyle}"
+    .weight}; {alignStyle}; {outlineStyle}"
 >
-  {#if line.words.length > 0}
-    {#each line.words as word, wi}
-      <span
-        class="canvas-word"
-        style="color: {wi === activeWordIndex ? line.style.highlightColor : line.style.color};"
-        >{word.text}</span
-      >{#if wi < line.words.length - 1}{' '}{/if}
-    {/each}
-  {:else}
-    <span style="color: {line.style.color};">{line.text}</span>
-  {/if}
+  <span style={bgStyle}>
+    {#if line.words.length > 0}
+      {#each line.words as word, wi}
+        <span
+          class="canvas-word"
+          style="color: {wi === activeWordIndex ? line.style.highlightColor : line.style.color};"
+          >{word.text}</span
+        >{#if wi < line.words.length - 1}{' '}{/if}
+      {/each}
+    {:else}
+      <span style="color: {line.style.color};">{line.text}</span>
+    {/if}
+  </span>
 </div>
 
 <style>
@@ -43,7 +57,6 @@
     position: absolute;
     width: 90%;
     line-height: 1.3;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     pointer-events: none;
     white-space: pre-wrap;
     word-break: break-word;

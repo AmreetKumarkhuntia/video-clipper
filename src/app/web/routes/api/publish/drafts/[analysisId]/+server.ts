@@ -1,6 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { getPublishDraft } from '@app/web/lib/services/artifacts/artifactStore.js';
-import { buildPublishDraft } from '@app/web/lib/services/publishing/draftService.js';
+import { loadAndRefreshPublishDraft } from '@app/web/lib/services/publishing/draftService.js';
 import {
   errorMessage,
   jsonError,
@@ -22,10 +21,11 @@ export const GET: RequestHandler = async ({ params, locals }) => {
   }
 
   try {
-    const existingDraft = await getPublishDraft(locals.config.OUTPUT_DIR, parsed.data.analysisId);
-    const draft =
-      existingDraft ??
-      (await buildPublishDraft(parsed.data.analysisId, locals.config, locals.requestId));
+    const draft = await loadAndRefreshPublishDraft(
+      parsed.data.analysisId,
+      locals.config,
+      locals.requestId,
+    );
 
     if (!draft) {
       reqDone(404);

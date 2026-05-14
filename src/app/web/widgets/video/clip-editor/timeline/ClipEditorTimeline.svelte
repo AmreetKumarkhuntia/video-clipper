@@ -231,6 +231,17 @@
     </Button>
   </div>
 
+  <div
+    class="ce-tl-ticks"
+    role="presentation"
+    bind:this={ticksEl}
+    onpointerdown={(e) => startScrub(e, ticksEl)}
+  >
+    {#each ticks as t (t)}
+      <span>{formatTime(t)}</span>
+    {/each}
+  </div>
+
   <div class="ce-tl-tracks">
     <div class="ce-tl-track">
       <span class="ce-tl-lbl">Subs</span>
@@ -416,17 +427,6 @@
         </TimelineSegment>
       </div>
     </div>
-  </div>
-
-  <div
-    class="ce-tl-ticks"
-    role="presentation"
-    bind:this={ticksEl}
-    onpointerdown={(e) => startScrub(e, ticksEl)}
-  >
-    {#each ticks as t (t)}
-      <span>{formatTime(t)}</span>
-    {/each}
   </div>
 
   {#if playheadPct >= 0}
