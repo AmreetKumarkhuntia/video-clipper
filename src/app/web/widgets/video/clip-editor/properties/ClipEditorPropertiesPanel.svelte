@@ -5,6 +5,7 @@
   } from '@app/web/types/componentProps.js';
   import type { ClipEdits, SubtitleLine, TextOverlay } from '@lib/types/clipEdit.js';
   import { CAPTION_TEMPLATES } from '@web/lib/captionTemplates.js';
+  import { rescaleWords, wordsFromText } from '@web/lib/subtitleTiming.js';
   import Textarea from '@web/components/Textarea.svelte';
   import Toggle from '@web/components/Toggle.svelte';
   import PanelHeader from '@web/components/PanelHeader.svelte';
@@ -56,7 +57,28 @@
     const id = selectedSubtitle.id;
     const updated: ClipEdits = {
       ...edits,
-      subtitles: edits.subtitles.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+      subtitles: edits.subtitles.map((s) => {
+        if (s.id !== id) return s;
+        if (field === 'startSec' || field === 'endSec') {
+          const newStart = field === 'startSec' ? (value as number) : s.startSec;
+          const newEnd = field === 'endSec' ? (value as number) : s.endSec;
+          return {
+            ...s,
+            startSec: newStart,
+            endSec: newEnd,
+            words: rescaleWords(s.words, s.startSec, s.endSec, newStart, newEnd),
+          };
+        }
+        if (field === 'text') {
+          const newText = value as string;
+          return {
+            ...s,
+            text: newText,
+            words: wordsFromText(newText, s.startSec, s.endSec, s.words),
+          };
+        }
+        return { ...s, [field]: value };
+      }),
     };
     onupdate(updated);
   }

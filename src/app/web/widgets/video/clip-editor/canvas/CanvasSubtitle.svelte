@@ -20,8 +20,8 @@
       <span
         class="canvas-word"
         style="color: {wi === activeWordIndex ? line.style.highlightColor : line.style.color};"
-        >{word.text}
-      </span>
+        >{word.text}</span
+      >{#if wi < line.words.length - 1}{' '}{/if}
     {/each}
   {:else}
     <span style="color: {line.style.color};">{line.text}</span>

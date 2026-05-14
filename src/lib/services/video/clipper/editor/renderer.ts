@@ -84,7 +84,26 @@ export async function renderClipWithEdits(
       ])
       .output(outputPath)
       .on('end', () => resolve(outputPath))
-      .on('error', (err: Error) => reject(err))
+      .on('error', (err: Error, _stdout: string | null, stderr: string | null) => {
+        const msg = stderr ?? err.message;
+        if (/No such filter: 'subtitles'|No option name near.*\.ass/i.test(msg)) {
+          return reject(
+            new Error(
+              'ffmpeg is missing libass — the subtitles filter is not available. ' +
+                'On macOS the default `ffmpeg` Homebrew formula is minimal — install `ffmpeg-full` (`brew install ffmpeg-full`) and point FFMPEG_PATH / FFPROBE_PATH at `/usr/local/opt/ffmpeg-full/bin/{ffmpeg,ffprobe}`.',
+            ),
+          );
+        }
+        if (/No such filter: 'drawtext'/i.test(msg)) {
+          return reject(
+            new Error(
+              'ffmpeg is missing libfreetype — the drawtext filter is not available. ' +
+                'Reinstall ffmpeg with libfreetype support (e.g. `brew reinstall ffmpeg`).',
+            ),
+          );
+        }
+        reject(err);
+      })
       .run();
   });
 }

@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { ClipEditorTimelineProps } from '@app/web/types/componentProps.js';
+  import type { WordToken } from '@lib/types/clipEdit.js';
   import { formatTime } from '@web/lib/format.js';
+  import { shiftWords, rescaleWords } from '@web/lib/subtitleTiming.js';
   import Button from '@web/components/Button.svelte';
   import TimelineSegment from './TimelineSegment.svelte';
 
@@ -10,6 +12,7 @@
     currentTime,
     selectedItemId,
     onSelectItem,
+    onSeek,
     onupdate,
   }: ClipEditorTimelineProps = $props();
 
@@ -20,6 +23,7 @@
   let subtitleTrackEl = $state<HTMLDivElement | null>(null);
   let overlayTrackEl = $state<HTMLDivElement | null>(null);
   let trimTrackEl = $state<HTMLDivElement | null>(null);
+  let ticksEl = $state<HTMLDivElement | null>(null);
 
   $effect(() => {
     viewEnd = durationSec;
@@ -60,6 +64,42 @@
       ? ((currentTime - viewStart) / viewDuration) * 100
       : -1,
   );
+
+  $effect(() => {
+    if (viewDuration <= 0) return;
+    if (currentTime < viewStart || currentTime > viewEnd) {
+      let newStart = Math.max(0, currentTime - viewDuration / 2);
+      newStart = Math.min(Math.max(0, durationSec - viewDuration), newStart);
+      viewStart = newStart;
+      viewEnd = newStart + viewDuration;
+    }
+  });
+
+  function startScrub(e: PointerEvent, trackEl: HTMLElement | null): void {
+    if (!trackEl) return;
+    const target = e.currentTarget as HTMLElement;
+    target.setPointerCapture?.(e.pointerId);
+
+    function seekFromEvent(ev: PointerEvent): void {
+      const rect = trackEl!.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+      onSeek(viewStart + ratio * viewDuration);
+    }
+
+    seekFromEvent(e);
+
+    function onMove(ev: PointerEvent): void {
+      seekFromEvent(ev);
+    }
+    function onUp(ev: PointerEvent): void {
+      target.releasePointerCapture?.(ev.pointerId);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    }
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
 
   function handleWheel(e: WheelEvent): void {
     if (!e.ctrlKey && !e.metaKey) return;
@@ -105,6 +145,9 @@
     const trackWidth = trackEl.offsetWidth;
     let moved = false;
 
+    const origWords: WordToken[] | null =
+      kind === 'subtitle' ? (edits.subtitles.find((s) => s.id === id)?.words ?? null) : null;
+
     function onMove(ev: PointerEvent): void {
       const delta = ((ev.clientX - startX) / trackWidth) * viewDuration;
       if (Math.abs(ev.clientX - startX) > 3) moved = true;
@@ -123,7 +166,7 @@
         newEnd = Math.min(durationSec, Math.max(origStart + 0.1, origEnd + delta));
       }
 
-      patchEdits(kind, id, newStart, newEnd);
+      patchEdits(kind, id, origStart, origEnd, newStart, newEnd, mode, origWords);
     }
 
     function onUp(): void {
@@ -141,15 +184,25 @@
   function patchEdits(
     kind: 'subtitle' | 'overlay' | 'trim',
     id: string,
+    origStart: number,
+    origEnd: number,
     newStart: number,
     newEnd: number,
+    mode: 'shift' | 'resize-start' | 'resize-end',
+    origWords: WordToken[] | null,
   ): void {
     if (kind === 'subtitle') {
       onupdate({
         ...edits,
-        subtitles: edits.subtitles.map((s) =>
-          s.id === id ? { ...s, startSec: newStart, endSec: newEnd } : s,
-        ),
+        subtitles: edits.subtitles.map((s) => {
+          if (s.id !== id) return s;
+          const source = origWords ?? s.words;
+          const words =
+            mode === 'shift'
+              ? shiftWords(source, newStart - origStart)
+              : rescaleWords(source, origStart, origEnd, newStart, newEnd);
+          return { ...s, startSec: newStart, endSec: newEnd, words };
+        }),
       });
     } else if (kind === 'overlay') {
       onupdate({
@@ -181,7 +234,12 @@
   <div class="ce-tl-tracks">
     <div class="ce-tl-track">
       <span class="ce-tl-lbl">Subs</span>
-      <div class="ce-tl-body" bind:this={subtitleTrackEl}>
+      <div
+        class="ce-tl-body"
+        role="presentation"
+        bind:this={subtitleTrackEl}
+        onpointerdown={(e) => startScrub(e, subtitleTrackEl)}
+      >
         {#each edits.subtitles as sub (sub.id)}
           {#if sub.startSec < viewEnd && sub.endSec > viewStart}
             <TimelineSegment
@@ -243,7 +301,12 @@
 
     <div class="ce-tl-track">
       <span class="ce-tl-lbl">Ovlys</span>
-      <div class="ce-tl-body" bind:this={overlayTrackEl}>
+      <div
+        class="ce-tl-body"
+        role="presentation"
+        bind:this={overlayTrackEl}
+        onpointerdown={(e) => startScrub(e, overlayTrackEl)}
+      >
         {#each edits.overlays as ov (ov.id)}
           {#if ov.startSec < viewEnd && ov.endSec > viewStart}
             <TimelineSegment
@@ -297,7 +360,12 @@
 
     <div class="ce-tl-track">
       <span class="ce-tl-lbl">Trim</span>
-      <div class="ce-tl-body" bind:this={trimTrackEl}>
+      <div
+        class="ce-tl-body"
+        role="presentation"
+        bind:this={trimTrackEl}
+        onpointerdown={(e) => startScrub(e, trimTrackEl)}
+      >
         <TimelineSegment
           kind="trim"
           leftPct={itemLeft(edits.trim.startSec)}
@@ -350,7 +418,12 @@
     </div>
   </div>
 
-  <div class="ce-tl-ticks">
+  <div
+    class="ce-tl-ticks"
+    role="presentation"
+    bind:this={ticksEl}
+    onpointerdown={(e) => startScrub(e, ticksEl)}
+  >
     {#each ticks as t (t)}
       <span>{formatTime(t)}</span>
     {/each}
@@ -359,7 +432,7 @@
   {#if playheadPct >= 0}
     <div
       class="ce-tl-cursor-line"
-      style="left: calc(66px + {playheadPct}% * (100% - 84px) / 100)"
+      style="left: calc(72px + (100% - 90px) * {playheadPct} / 100)"
     ></div>
   {/if}
 </div>
