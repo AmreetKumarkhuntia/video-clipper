@@ -89,8 +89,13 @@ export const ClipArtifactSchema = z.object({
   createdAt: z.string(),
   editsPath: z.string().optional(),
   editedPath: z.string().optional(),
+  currentEditsHash: z.string().optional(),
+  lastRenderedHash: z.string().optional(),
 });
 export type ClipArtifact = z.infer<typeof ClipArtifactSchema>;
+
+export const FileVariantSchema = z.enum(['original', 'edited']);
+export type FileVariant = z.infer<typeof FileVariantSchema>;
 
 export interface AnalysisStreamCallbacks {
   onChunkStarted?: (chunkIndex: number) => void;

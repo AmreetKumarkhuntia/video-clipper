@@ -8,12 +8,22 @@
   );
 
   let bottomPct = $derived((1 - line.position.yCenter) * 100);
+
+  // Mirror the 90%-wide centered block from CSS, switching anchor based on align.
+  // Canvas margin on each side = 5% (half of the 10% that "width: 90%" leaves out).
+  let alignStyle = $derived(
+    line.style.align === 'left'
+      ? 'left: 5%; right: auto; transform: none; text-align: left;'
+      : line.style.align === 'right'
+        ? 'left: auto; right: 5%; transform: none; text-align: right;'
+        : 'left: 50%; right: auto; transform: translateX(-50%); text-align: center;',
+  );
 </script>
 
 <div
   class="canvas-subtitle"
   style="bottom: {bottomPct}%; font-size: {line.style.fontSize * 0.045}cqw; font-weight: {line.style
-    .weight};"
+    .weight}; {alignStyle}"
 >
   {#if line.words.length > 0}
     {#each line.words as word, wi}
@@ -31,10 +41,7 @@
 <style>
   .canvas-subtitle {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     width: 90%;
-    text-align: center;
     line-height: 1.3;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     pointer-events: none;

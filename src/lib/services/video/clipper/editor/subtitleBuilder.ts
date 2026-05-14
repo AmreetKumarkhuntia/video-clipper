@@ -1,4 +1,5 @@
 import type { SubtitleLine } from '@lib/types/clipEdit.js';
+import { resolveRenderedFontSize } from '@lib/utils/textScale.js';
 import { escapeAss } from './textEscape.js';
 
 function cssToAssColor(hex: string): string {
@@ -15,6 +16,27 @@ function secToAssTime(sec: number): string {
   const s = Math.floor(sec % 60);
   const cs = Math.round((sec - Math.floor(sec)) * 100);
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
+
+/** Map style.align to ASS numpad alignment (bottom row: 1=left, 2=center, 3=right). */
+function alignToAssCode(align: 'left' | 'center' | 'right'): number {
+  if (align === 'left') return 1;
+  if (align === 'right') return 3;
+  return 2; // center
+}
+
+/**
+ * Canvas uses `width: 90%` centered, so the text block has 5% margins on each side.
+ * Mirror those margins in ASS so left/right aligned text matches the canvas anchor.
+ */
+function alignMargins(
+  align: 'left' | 'center' | 'right',
+  outputWidth: number,
+): { marginL: number; marginR: number } {
+  const margin = Math.round(0.05 * outputWidth);
+  if (align === 'left') return { marginL: margin, marginR: 0 };
+  if (align === 'right') return { marginL: 0, marginR: margin };
+  return { marginL: 0, marginR: 0 };
 }
 
 export function buildAss(
@@ -34,15 +56,19 @@ export function buildAss(
     const oc = sc.outlineColor ? cssToAssColor(sc.outlineColor) : '&H00000000';
     const b = sc.weight >= 600 ? -1 : 0;
     const marginV = Math.round((1 - sub.position.yCenter) * output.height);
-    return `Style: ${sub.id},${sc.fontFamily},${sc.fontSize},${pc},&H00FFFFFF,${oc},&H00000000,${b},0,0,0,100,100,0,0,1,${sc.outlineWidth},0,2,0,0,${marginV},1`;
+    const renderedSize = resolveRenderedFontSize(sc.fontSize, output);
+    const alignment = alignToAssCode(sc.align);
+    const { marginL, marginR } = alignMargins(sc.align, output.width);
+    return `Style: ${sub.id},${sc.fontFamily},${renderedSize},${pc},&H00FFFFFF,${oc},&H00000000,${b},0,0,0,100,100,0,0,1,${sc.outlineWidth},0,${alignment},${marginL},${marginR},${marginV},1`;
   });
 
   const dialogueLines = subtitles.map((sub) => {
     const start = secToAssTime(sub.startSec);
     const end = secToAssTime(sub.endSec);
     const marginV = Math.round((1 - sub.position.yCenter) * output.height);
+    const { marginL, marginR } = alignMargins(sub.style.align, output.width);
     const text = buildKaraokeText(sub);
-    return `Dialogue: 0,${start},${end},${sub.id},,0,0,${marginV},,${text}`;
+    return `Dialogue: 0,${start},${end},${sub.id},,${marginL},${marginR},${marginV},,${text}`;
   });
 
   const lines = [

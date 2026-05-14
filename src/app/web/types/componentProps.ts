@@ -452,3 +452,8 @@ export interface CanvasOverlayProps {
   onSelect: () => void;
   onUpdate: (overlay: TextOverlay) => void;
 }
+
+export interface ClipPreviewModalProps {
+  clipId: string;
+  onclose: () => void;
+}

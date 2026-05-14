@@ -18,6 +18,9 @@
   let errorMessage = $state('');
 
   let analysisId = $derived(page.params.analysisId);
+  let hasRenderRequired = $derived(
+    draft?.items.some((item) => item.selected && item.isRenderRequired) ?? false,
+  );
 
   $effect(() => {
     if (analysisId) void loadPage();
@@ -130,7 +133,7 @@
         <Button
           variant="primary"
           onclick={uploadSelected}
-          disabled={isUploading || !authStatus?.connected}
+          disabled={isUploading || !authStatus?.connected || hasRenderRequired}
         >
           {#if isUploading}
             <Icon name="loader" size={14} /> Uploading…
@@ -143,6 +146,15 @@
 
     {#if errorMessage}
       <p class="publish-error">{errorMessage}</p>
+    {/if}
+
+    {#if hasRenderRequired}
+      <p class="publish-warning">
+        One or more selected clips have pending edits that haven't been rendered yet. Go back to the
+        <a href={`/videos/${draft.videoId}/analysis/${draft.analysisId}`} class="vc-link"
+          >Analysis</a
+        > step and render them before uploading.
+      </p>
     {/if}
 
     <div class="publish-body">
@@ -206,7 +218,12 @@
             {#each draft.items.filter((i) => i.selected) as item (item.clipArtifactId)}
               <li class="draft-item">
                 <span class="draft-item__title">{item.title}</span>
-                <span class="draft-item__privacy">{item.privacyStatus}</span>
+                <span class="draft-item__badges">
+                  {#if item.isRenderRequired}
+                    <span class="draft-item__render-badge">Render required</span>
+                  {/if}
+                  <span class="draft-item__privacy">{item.privacyStatus}</span>
+                </span>
               </li>
             {/each}
           </ul>
@@ -224,6 +241,16 @@
     color: var(--vc-error);
     font-size: var(--vc-text-14);
     margin-bottom: 16px;
+  }
+  .publish-warning {
+    color: var(--vc-warning, #b45309);
+    background: var(--vc-warning-bg, #fef3c7);
+    border: 1px solid var(--vc-warning-border, #fde68a);
+    border-radius: var(--vc-radius-md);
+    font-size: var(--vc-text-14);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    line-height: 1.5;
   }
   .publish-muted {
     font-size: var(--vc-text-14);
@@ -346,13 +373,34 @@
 
   .draft-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
     padding: 10px 12px;
     border: 1px solid var(--vc-divider);
     border-radius: var(--vc-radius-md);
     background: var(--vc-surface-raised);
+  }
+
+  .draft-item__badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .draft-item__render-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--vc-warning, #b45309);
+    background: var(--vc-warning-bg, #fef3c7);
+    border: 1px solid var(--vc-warning-border, #fde68a);
+    border-radius: var(--vc-radius-sm, 4px);
+    padding: 2px 6px;
+    white-space: nowrap;
   }
 
   .draft-item__title {

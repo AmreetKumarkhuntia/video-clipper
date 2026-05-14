@@ -35,6 +35,26 @@
     edits.overlays.filter((o) => o.startSec <= currentTime && o.endSec > currentTime),
   );
 
+  // Trim: duration shown in the timeline/playback bar is the trimmed length.
+  let trimDuration = $derived(edits.trim.endSec - edits.trim.startSec);
+
+  // Clamp playback to [trim.startSec, trim.endSec].
+  $effect(() => {
+    if (!videoEl) return;
+    if (currentTime >= edits.trim.endSec) {
+      videoEl.pause();
+      videoEl.currentTime = edits.trim.endSec;
+    }
+  });
+
+  // Seek to trim start whenever the trim window changes.
+  $effect(() => {
+    const start = edits.trim.startSec;
+    if (videoEl && videoEl.currentTime < start) {
+      videoEl.currentTime = start;
+    }
+  });
+
   function handlePlay(): void {
     isPlaying = true;
   }
@@ -65,7 +85,7 @@
       <video
         bind:this={videoEl}
         bind:currentTime
-        src="/api/clips/{clip.id}/file"
+        src="/api/clips/{clip.id}/file?variant=original"
         preload="metadata"
         class="canvas-video"
         onplay={handlePlay}
@@ -97,7 +117,7 @@
     </div>
   </div>
 
-  <PlaybackBar {videoEl} {currentTime} durationSec={clip.durationSec} {isPlaying} />
+  <PlaybackBar {videoEl} {currentTime} durationSec={trimDuration} {isPlaying} />
 </div>
 
 <style>
