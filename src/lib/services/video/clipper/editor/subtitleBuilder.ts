@@ -42,6 +42,7 @@ function alignMargins(
 export function buildAss(
   subtitles: SubtitleLine[],
   output: { width: number; height: number },
+  trimStartSec: number = 0,
 ): string {
   if (subtitles.length === 0) {
     return (
@@ -62,14 +63,10 @@ export function buildAss(
     return `Style: ${sub.id},${sc.fontFamily},${renderedSize},${pc},&H00FFFFFF,${oc},&H00000000,${b},0,0,0,100,100,0,0,1,${sc.outlineWidth},0,${alignment},${marginL},${marginR},${marginV},1`;
   });
 
-  const dialogueLines = subtitles.map((sub) => {
-    const start = secToAssTime(sub.startSec);
-    const end = secToAssTime(sub.endSec);
-    const marginV = Math.round((1 - sub.position.yCenter) * output.height);
-    const { marginL, marginR } = alignMargins(sub.style.align, output.width);
-    const text = buildKaraokeText(sub);
-    return `Dialogue: 0,${start},${end},${sub.id},,${marginL},${marginR},${marginV},,${text}`;
-  });
+  // Each subtitle may produce multiple dialogue events (one per word window + gaps)
+  // so that exactly the currently-playing word is shown in highlightColor and all
+  // others revert to style.color — matching the canvas activeWordIndex behaviour.
+  const dialogueLines = subtitles.flatMap((sub) => buildWordEvents(sub, output, trimStartSec));
 
   const lines = [
     buildHeader(output),
@@ -96,21 +93,92 @@ function buildHeader(output: { width: number; height: number }): string {
   ].join('\n');
 }
 
-function buildKaraokeText(sub: SubtitleLine): string {
+/**
+ * Build one or more ASS Dialogue events for a subtitle line.
+ *
+ * Strategy: generate a separate event for each word's active time window, with only
+ * that word overridden to highlightColor (\\1c). All other words use the style's
+ * PrimaryColour (= style.color) by having no override. Gap periods between/around
+ * words also get an event showing all words in the base colour.
+ *
+ * This is the only reliable way to match the canvas behaviour (activeWordIndex) in
+ * libass: \\1c is a static text-position override and cannot be made time-dependent
+ * within a single dialogue event, so a per-word-window event approach is required.
+ *
+ * All timestamps are shifted by trimStartSec so they reference the output video's
+ * 0-based timeline rather than the original clip's absolute timeline.
+ */
+function buildWordEvents(
+  sub: SubtitleLine,
+  output: { width: number; height: number },
+  trimStartSec: number,
+): string[] {
+  const marginV = Math.round((1 - sub.position.yCenter) * output.height);
+  const { marginL, marginR } = alignMargins(sub.style.align, output.width);
+
+  // Shift subtitle window into the output (trimmed) timeline.
+  // Clamp the start to ≥ 0 — a subtitle that began before the trim start
+  // will simply begin at the first frame of the output.
+  const subStart = Math.max(0, sub.startSec - trimStartSec);
+  const subEnd = Math.max(0, sub.endSec - trimStartSec);
+
+  // Skip subtitles that fall entirely outside the output window.
+  if (subStart >= subEnd) return [];
+
+  const makeEvent = (startSec: number, endSec: number, text: string): string =>
+    `Dialogue: 0,${secToAssTime(startSec)},${secToAssTime(endSec)},${sub.id},,${marginL},${marginR},${marginV},,${text}`;
+
+  // No word timing: single event for the full duration, plain text.
   if (sub.words.length === 0) {
-    return escapeAss(sub.text);
+    return [makeEvent(subStart, subEnd, escapeAss(sub.text))];
   }
 
-  const highlightBgr = cssToAssColor(sub.style.highlightColor).replace('&H00', '');
+  const highlightColor = cssToAssColor(sub.style.highlightColor);
 
-  return sub.words
-    .map((word) => {
-      const cs = Math.round((word.endSec - word.startSec) * 100);
-      const escaped = escapeAss(word.text);
-      if (word.highlight) {
-        return `{\\1c&H${highlightBgr}&\\k${cs}}${escaped}{\\r}`;
-      }
-      return `{\\k${cs}}${escaped}`;
-    })
-    .join(' ');
+  /** All words joined in the style's base colour (no override tags). */
+  const allBase = (): string => sub.words.map((w) => escapeAss(w.text)).join(' ');
+
+  /**
+   * Build text for the window when word[activeIdx] is playing:
+   * – words before activeIdx: no override → PrimaryColour (base)
+   * – word[activeIdx]: \\1c{highlightColor} … \\r resets to base after
+   * – words after activeIdx: no override → PrimaryColour (base)
+   */
+  const withActive = (activeIdx: number): string =>
+    sub.words
+      .map((w, i) => {
+        const escaped = escapeAss(w.text);
+        if (i === activeIdx) return `{\\1c${highlightColor}}${escaped}{\\r}`;
+        return escaped;
+      })
+      .join(' ');
+
+  const events: string[] = [];
+  let cursor = subStart;
+
+  for (let wi = 0; wi < sub.words.length; wi++) {
+    const word = sub.words[wi];
+    // Offset word timestamps and clamp to the subtitle's (already-shifted) window.
+    const wordStart = Math.max(subStart, word.startSec - trimStartSec);
+    const wordEnd = Math.min(subEnd, word.endSec - trimStartSec);
+
+    if (wordStart >= wordEnd) continue; // word outside the output window — skip
+
+    // Gap before this word: all words in base colour.
+    if (wordStart > cursor) {
+      events.push(makeEvent(cursor, wordStart, allBase()));
+    }
+
+    // Word active window: only this word in highlightColor.
+    events.push(makeEvent(wordStart, wordEnd, withActive(wi)));
+
+    cursor = wordEnd;
+  }
+
+  // Gap after the last word (or if no words overlapped the subtitle window).
+  if (cursor < subEnd) {
+    events.push(makeEvent(cursor, subEnd, allBase()));
+  }
+
+  return events;
 }

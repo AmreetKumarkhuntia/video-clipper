@@ -5,6 +5,7 @@ import { escapeDrawtext } from './textEscape.js';
 export function buildDrawtext(
   overlay: TextOverlay,
   output: { width: number; height: number },
+  trimStartSec: number = 0,
 ): string {
   const xPx = Math.round(overlay.position.xCenter * output.width);
   const yPx = Math.round(overlay.position.yCenter * output.height);
@@ -21,9 +22,14 @@ export function buildDrawtext(
     xExpr = `(${xPx}-tw/2)`;
   }
 
+  // Shift the enable window into the output (trimmed) timeline so the overlay
+  // appears at the correct time relative to the 0-based output video.
+  const enableStart = Math.max(0, overlay.startSec - trimStartSec);
+  const enableEnd = Math.max(0, overlay.endSec - trimStartSec);
+
   const parts: string[] = [
     `text='${escapeDrawtext(overlay.text)}'`,
-    `enable='between(t,${overlay.startSec},${overlay.endSec})'`,
+    `enable='between(t,${enableStart},${enableEnd})'`,
     `x=${xExpr}`,
     `y=(${yPx}-th/2)`,
     `fontsize=${renderedSize}`,
