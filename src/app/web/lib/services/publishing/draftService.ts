@@ -77,11 +77,25 @@ function buildDraftItem(clip: ClipArtifact, analysis: ClipPlan, cfg: Config): Pu
   const candidate = analysis.candidates.find((item) => item.id === clip.segmentId);
   const baseTitle = candidate?.reason?.trim() || `${analysis.title} clip`;
 
+  // Use the rendered edited path if available; fall back to the original clip.
+  const resolvedPath = clip.editedPath ?? clip.path;
+
+  // A render is required when edits exist but haven't been rendered yet, or when the
+  // edits have changed since the last render (stale).
+  const isRenderRequired =
+    !!clip.editsPath &&
+    (!clip.editedPath ||
+      (!!clip.currentEditsHash &&
+        !!clip.lastRenderedHash &&
+        clip.currentEditsHash !== clip.lastRenderedHash));
+
   return {
     clipArtifactId: clip.id,
     segmentId: clip.segmentId,
     filename: clip.filename,
-    path: clip.path,
+    path: resolvedPath,
+    editedPath: clip.editedPath,
+    isRenderRequired,
     startSec: clip.startSec,
     endSec: clip.endSec,
     durationSec: clip.durationSec,

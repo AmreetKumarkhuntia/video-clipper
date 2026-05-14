@@ -12,6 +12,7 @@
   import Card from '@web/components/Card.svelte';
   import Slider from '@web/components/Slider.svelte';
   import ClipEditor from '@web/widgets/video/clip-editor/ClipEditor.svelte';
+  import ClipPreviewModal from '@web/widgets/video/clip-editor/preview/ClipPreviewModal.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let clips = $state<ClipArtifact[]>([]);
@@ -137,6 +138,7 @@
 
   let selectedCount = $derived(plan?.candidates.filter((c) => c.selected).length ?? 0);
   let editorClip = $state<ClipArtifact | null>(null);
+  let previewClip = $state<ClipArtifact | null>(null);
 </script>
 
 {#if isLoading}
@@ -284,7 +286,9 @@
               </div>
               <p class="clipcard__title">{clip.filename}</p>
               <div class="clipcard__actions">
-                {#if clip.editedPath}
+                {#if clip.editedPath && clip.currentEditsHash && clip.lastRenderedHash && clip.currentEditsHash !== clip.lastRenderedHash}
+                  <Badge variant="warning">Stale render</Badge>
+                {:else if clip.editedPath}
                   <Badge variant="success"><Icon name="check" size={10} /> Edited</Badge>
                 {:else}
                   <Badge variant="neutral"><Icon name="check" size={10} /> Ready</Badge>
@@ -294,6 +298,15 @@
                   onclick={() => {
                     editorClip = clip;
                   }}>Edit</Button
+                >
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={!clip.editedPath}
+                  title={clip.editedPath ? 'Preview rendered clip' : 'Render first'}
+                  onclick={() => {
+                    previewClip = clip;
+                  }}>Preview</Button
                 >
               </div>
             </div>
@@ -312,6 +325,15 @@
     onclose={() => {
       editorClip = null;
       void loadArtifacts();
+    }}
+  />
+{/if}
+
+{#if previewClip}
+  <ClipPreviewModal
+    clipId={previewClip.id}
+    onclose={() => {
+      previewClip = null;
     }}
   />
 {/if}

@@ -5,6 +5,15 @@
 
   let dragMoved = false;
 
+  // Mirror the canvas `translate(-50%, -50%)` center anchor, switching for align.
+  let transformStyle = $derived(
+    overlay.style.align === 'left'
+      ? 'translate(0, -50%)'
+      : overlay.style.align === 'right'
+        ? 'translate(-100%, -50%)'
+        : 'translate(-50%, -50%)',
+  );
+
   function startDrag(event: PointerEvent): void {
     event.stopPropagation();
     if (!containerEl) return;
@@ -55,7 +64,7 @@
   class:canvas-overlay--selected={selected}
   style="left: {overlay.position.xCenter * 100}%; top: {overlay.position.yCenter *
     100}%; font-size: {overlay.style.fontSize * 0.045}cqw; color: {overlay.style
-    .color}; font-weight: {overlay.style.weight};"
+    .color}; font-weight: {overlay.style.weight}; transform: {transformStyle};"
   role="button"
   tabindex="0"
   onpointerdown={startDrag}
@@ -68,7 +77,6 @@
 <style>
   .canvas-overlay {
     position: absolute;
-    transform: translate(-50%, -50%);
     text-align: center;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     white-space: pre-wrap;

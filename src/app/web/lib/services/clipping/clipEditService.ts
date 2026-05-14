@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { ClipEditsSchema } from '@lib/types/clipEdit.js';
@@ -12,6 +13,16 @@ import { renderClipWithEdits } from '@lib/services/video/clipper/editor/renderer
 
 function clipEditsPath(outputDir: string, clipId: string): string {
   return join(outputDir, 'web', 'clip-edits', `${clipId}.json`);
+}
+
+/**
+ * Compute a structural hash of ClipEdits, excluding `updatedAt` so that
+ * saving a timestamp change alone does not mark the render as stale.
+ */
+export function computeEditsHash(edits: ClipEdits): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { updatedAt: _updatedAt, ...stable } = edits;
+  return createHash('sha256').update(JSON.stringify(stable)).digest('hex');
 }
 
 export async function loadClipEdits(outputDir: string, clipId: string): Promise<ClipEdits> {
@@ -53,7 +64,10 @@ export async function saveClipEdits(outputDir: string, edits: ClipEdits): Promis
 
   const filePath = clipEditsPath(outputDir, parsed.clipId);
   await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), 'utf-8');
-  await updateClipArtifactPaths(outputDir, parsed.clipId, { editsPath: filePath });
+  await updateClipArtifactPaths(outputDir, parsed.clipId, {
+    editsPath: filePath,
+    currentEditsHash: computeEditsHash(parsed),
+  });
 
   return parsed;
 }
@@ -72,5 +86,9 @@ export async function renderEditedClip(
 
   const editedPath = artifact.path.replace(/\.mp4$/i, '_edited.mp4');
   await renderClipWithEdits(artifact.path, edits, editedPath, cfg);
-  return updateClipArtifactPaths(outputDir, clipId, { editedPath });
+
+  return updateClipArtifactPaths(outputDir, clipId, {
+    editedPath,
+    lastRenderedHash: computeEditsHash(edits),
+  });
 }

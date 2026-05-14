@@ -30,6 +30,8 @@ export const PublishDraftItemSchema = z.object({
   segmentId: z.string(),
   filename: z.string(),
   path: z.string(),
+  editedPath: z.string().optional(),
+  isRenderRequired: z.boolean().default(false),
   startSec: z.number().nonnegative(),
   endSec: z.number().positive(),
   durationSec: z.number().positive(),

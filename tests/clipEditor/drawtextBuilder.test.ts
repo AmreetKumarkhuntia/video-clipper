@@ -44,9 +44,10 @@ describe('buildDrawtext', () => {
     expect(result).toContain('y=(960-th/2)');
   });
 
-  it('applies fontsize', () => {
+  it('applies fontsize scaled to output dimensions', () => {
+    // resolveRenderedFontSize(48, { width: 1080 }) = Math.round(48 * 0.045 * 1080 / 100) = 23
     const result = buildDrawtext(makeOverlay(), OUTPUT);
-    expect(result).toContain('fontsize=48');
+    expect(result).toContain('fontsize=23');
   });
 
   it('applies fontcolor', () => {

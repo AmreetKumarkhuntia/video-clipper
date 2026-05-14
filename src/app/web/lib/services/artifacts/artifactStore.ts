@@ -77,7 +77,12 @@ export async function getClipArtifact(
 export async function updateClipArtifactPaths(
   outputDir: string,
   clipId: string,
-  patch: { editsPath?: string; editedPath?: string },
+  patch: {
+    editsPath?: string;
+    editedPath?: string;
+    currentEditsHash?: string;
+    lastRenderedHash?: string;
+  },
 ): Promise<ClipArtifact> {
   const existing = await getClipArtifact(outputDir, clipId);
   if (!existing) throw new Error(`Clip artifact not found: ${clipId}`);
