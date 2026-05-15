@@ -4,6 +4,7 @@ import { log } from '@lib/utils/logger.js';
 import type { Config } from '@lib/types/config.js';
 import {
   PlanSubtitlesResultSchema,
+  type PlannedSubtitleLine,
   type PlanSubtitlesRequest,
   type PlanSubtitlesResult,
 } from '@app/web/types/subtitlePlan.js';
@@ -14,7 +15,7 @@ Return a corrected version that:
 1. Regroups text into readable lines (≤ ~7 words or ~42 chars, no mid-clause splits, no orphan words).
 2. Fixes spacing, punctuation, capitalization, and removes artifacts like [Music], >>, --.
 3. Corrects obvious misspellings, especially proper nouns. Never invent facts.
-4. Adjusts each line's startSec/endSec and per-word timings for readability. Words must be in order and non-overlapping within a line.
+4. Adjusts each line's startSec/endSec and per-word timings for readability. Words must be in order and non-overlapping within a line. Each word's endSec must be strictly greater than its startSec; do not collapse multiple words to the same instant.
 
 Constraints:
 - Total span (first startSec … last endSec) must stay within [0, durationSec].
@@ -66,6 +67,8 @@ export async function planSubtitles(
     requestId,
   );
 
+  log.info('planSubtitles', `[subtitle-plan] result: ${JSON.stringify(result)}`, requestId);
+
   const toolCall = result.toolCalls.find((tc) => tc.toolName === 'register_planned_subtitles');
   if (!toolCall) {
     const names = result.toolCalls.map((tc) => tc.toolName).join(', ') || 'none';
@@ -78,10 +81,69 @@ export async function planSubtitles(
   }
 
   const planned = PlanSubtitlesResultSchema.parse(toolCall.input);
-  log.info('planSubtitles', `[subtitle-plan] ✓ ${planned.lines.length} lines returned`, requestId);
 
-  done({ lines: planned.lines.length });
-  return planned;
+  let redistributedLines = 0;
+  const normalizedLines = planned.lines.map((line) => {
+    const next = normalizeWordTimings(line);
+    if (next !== line) redistributedLines++;
+    return next;
+  });
+  if (redistributedLines > 0) {
+    log.info(
+      'planSubtitles',
+      `[subtitle-plan] redistributed timings on ${redistributedLines}/${planned.lines.length} lines`,
+      requestId,
+    );
+  }
+  const normalized: PlanSubtitlesResult = { ...planned, lines: normalizedLines };
+
+  log.info(
+    'planSubtitles',
+    `[subtitle-plan] ✓ ${normalized.lines.length} lines returned`,
+    requestId,
+  );
+
+  done({ lines: normalized.lines.length });
+  return normalized;
+}
+
+export function normalizeWordTimings(line: PlannedSubtitleLine): PlannedSubtitleLine {
+  const n = line.words.length;
+  if (n === 0) return line;
+
+  const clamped = line.words.map((w) => {
+    const startSec = Math.min(Math.max(w.startSec, line.startSec), line.endSec);
+    const endSec = Math.min(Math.max(w.endSec, startSec), line.endSec);
+    return { text: w.text, startSec, endSec };
+  });
+
+  let needsRedistribute = false;
+  for (let i = 0; i < n; i++) {
+    if (clamped[i].endSec <= clamped[i].startSec) {
+      needsRedistribute = true;
+      break;
+    }
+    if (i > 0 && clamped[i].startSec < clamped[i - 1].endSec) {
+      needsRedistribute = true;
+      break;
+    }
+  }
+
+  if (!needsRedistribute) {
+    const unchanged = clamped.every(
+      (w, i) => w.startSec === line.words[i].startSec && w.endSec === line.words[i].endSec,
+    );
+    return unchanged ? line : { ...line, words: clamped };
+  }
+
+  const span = Math.max(line.endSec - line.startSec, 0);
+  const step = span / n;
+  const words = clamped.map((w, i) => ({
+    text: w.text,
+    startSec: line.startSec + i * step,
+    endSec: line.startSec + (i + 1) * step,
+  }));
+  return { ...line, words };
 }
 
 function buildPlanPrompt(req: PlanSubtitlesRequest): string {

@@ -59,16 +59,29 @@ function cutClip(
 }
 
 /**
- * Remuxes a pre-downloaded segment file via ffmpeg stream copy.
- * Normalises timestamps with -avoid_negative_ts make_zero to fix A/V sync
- * without re-encoding — lossless, no quality loss.
+ * Re-encodes a pre-downloaded segment (yt-dlp --download-sections output) to
+ * normalise A/V sync. Stream copy preserves the independent DASH cut points
+ * yt-dlp makes for video vs. audio, which leaves the two slightly offset for
+ * short segments. Re-encoding rebuilds both streams from PTS=0 and keeps them
+ * locked together.
  */
+export function buildRemuxOutputOptions(cfg: Pick<ClipperConfig, 'ffmpegPreset'>): string[] {
+  return [
+    '-c:v',
+    'libx264',
+    '-preset',
+    cfg.ffmpegPreset,
+    '-c:a',
+    'aac',
+    '-avoid_negative_ts',
+    'make_zero',
+  ];
+}
+
 function remuxSegment(sourcePath: string, outputPath: string, cfg: ClipperConfig): Promise<string> {
   return new Promise((resolve, reject) => {
     ffmpeg(sourcePath)
-      .outputOptions('-c:v', 'copy')
-      .outputOptions('-c:a', 'copy')
-      .outputOptions('-avoid_negative_ts', 'make_zero')
+      .outputOptions(buildRemuxOutputOptions(cfg))
       .output(outputPath)
       .on('end', () => resolve(outputPath))
       .on('error', (err: Error) => reject(err))
@@ -260,7 +273,7 @@ export async function remuxClips(
   const limit = pLimit(concurrency);
   log.info(
     'remuxClips',
-    `Remuxing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (lossless, max ${concurrency} parallel)...`,
+    `Remuxing ${sourcePaths.length} clip${sourcePaths.length !== 1 ? 's' : ''} (transcoded for A/V sync, max ${concurrency} parallel)...`,
   );
 
   const jobs = sourcePaths.map((sourcePath) =>

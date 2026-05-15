@@ -439,6 +439,8 @@ export interface SelectionHeaderProps {
   valueLabel: string;
   badgeText?: string;
   badgeVariant?: BadgeVariant;
+  ondelete?: () => void;
+  deleteLabel?: string;
 }
 
 export interface CanvasSubtitleProps {
