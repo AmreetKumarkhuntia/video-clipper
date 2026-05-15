@@ -110,6 +110,28 @@ export async function saveClipArtifacts(
   return artifacts;
 }
 
+export async function deleteClipArtifact(outputDir: string, clipId: string): Promise<boolean> {
+  const dir = await ensureArtifactDir(outputDir, 'clips');
+  try {
+    await fs.unlink(join(dir, `${clipId}.json`));
+    return true;
+  } catch (error) {
+    if (isMissingFileError(error)) return false;
+    throw error;
+  }
+}
+
+export async function deleteClipEdits(outputDir: string, clipId: string): Promise<boolean> {
+  const dir = await ensureArtifactDir(outputDir, 'clip-edits');
+  try {
+    await fs.unlink(join(dir, `${clipId}.json`));
+    return true;
+  } catch (error) {
+    if (isMissingFileError(error)) return false;
+    throw error;
+  }
+}
+
 export async function savePublishDraft(
   draft: PublishDraft,
   outputDir: string,
