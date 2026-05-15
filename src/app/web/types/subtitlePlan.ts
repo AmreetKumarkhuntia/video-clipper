@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const PlannedWordSchema = z.object({
   text: z.string(),
   startSec: z.number().nonnegative(),
-  endSec: z.number().positive(),
+  endSec: z.number().nonnegative(),
 });
 
 export const PlannedSubtitleLineSchema = z.object({

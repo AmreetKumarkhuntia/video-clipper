@@ -93,6 +93,16 @@
     });
   }
 
+  function deleteSelected(): void {
+    if (selectedSubtitle) {
+      const id = selectedSubtitle.id;
+      onupdate({ ...edits, subtitles: edits.subtitles.filter((s) => s.id !== id) });
+    } else if (selectedOverlay) {
+      const id = selectedOverlay.id;
+      onupdate({ ...edits, overlays: edits.overlays.filter((o) => o.id !== id) });
+    }
+  }
+
   function updateStyle(field: string, value: unknown): void {
     if (selectedSubtitle) {
       const id = selectedSubtitle.id;
@@ -186,6 +196,8 @@
       valueLabel={selectionLabel}
       badgeText={selectionBadge}
       badgeVariant="clay"
+      ondelete={deleteSelected}
+      deleteLabel={itemKind === 'subtitle' ? 'Delete subtitle' : 'Delete banner'}
     />
 
     <section class="ce-rg">
