@@ -32,6 +32,7 @@ export interface ButtonProps {
   onclick?: (e: MouseEvent) => void;
   children: Snippet;
   'aria-label'?: string;
+  title?: string;
 }
 
 export type BadgeVariant = 'neutral' | 'clay' | 'success' | 'warn' | 'error' | 'info' | 'mono';
