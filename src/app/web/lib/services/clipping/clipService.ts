@@ -1,7 +1,12 @@
 import { basename } from 'path';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
-import { saveClipArtifacts } from '@app/web/lib/services/artifacts/artifactStore.js';
+import {
+  deleteClipArtifact,
+  deleteClipEdits,
+  listClipArtifactsByAnalysisId,
+  saveClipArtifacts,
+} from '@app/web/lib/services/artifacts/artifactStore.js';
 import type { ClipArtifact, CreateClipsRequest } from '@app/web/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
@@ -50,6 +55,11 @@ export async function generateWebClips(
     downloadSectionsMode: cfg.DOWNLOAD_SECTIONS_MODE,
   };
 
+  const existing = input.analysisId
+    ? await listClipArtifactsByAnalysisId(cfg.OUTPUT_DIR, input.analysisId)
+    : [];
+  const existingById = new Map(existing.map((artifact) => [artifact.id, artifact]));
+
   const segments = input.segments.map(toRankedSegment);
   const paths = await exportClips(
     input.videoId,
@@ -66,9 +76,11 @@ export async function generateWebClips(
     const source = input.segments[index];
     const startSec = source.startSec;
     const endSec = source.endSec;
+    const id = `clip-${input.videoId}-${source.id}`;
+    const prior = existingById.get(id);
 
     return {
-      id: `clip-${input.videoId}-${source.id}`,
+      id,
       videoId: input.videoId,
       analysisId: input.analysisId,
       segmentId: source.id,
@@ -78,6 +90,10 @@ export async function generateWebClips(
       endSec,
       durationSec: Math.max(0.01, endSec - startSec),
       createdAt,
+      ...(prior?.editsPath !== undefined && { editsPath: prior.editsPath }),
+      ...(prior?.editedPath !== undefined && { editedPath: prior.editedPath }),
+      ...(prior?.currentEditsHash !== undefined && { currentEditsHash: prior.currentEditsHash }),
+      ...(prior?.lastRenderedHash !== undefined && { lastRenderedHash: prior.lastRenderedHash }),
     };
   });
 
@@ -87,7 +103,27 @@ export async function generateWebClips(
     requestId,
   );
 
-  return saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);
+  const saved = await saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);
+
+  const keepIds = new Set(saved.map((artifact) => artifact.id));
+  const staleIds = existing
+    .filter((artifact) => !keepIds.has(artifact.id))
+    .map((artifact) => artifact.id);
+  if (staleIds.length > 0) {
+    await Promise.all(
+      staleIds.flatMap((id) => [
+        deleteClipArtifact(cfg.OUTPUT_DIR, id),
+        deleteClipEdits(cfg.OUTPUT_DIR, id),
+      ]),
+    );
+    log.info(
+      'generateWebClips',
+      `[clips] [pruned] | analysisId=${input.analysisId} stale=${staleIds.length}`,
+      requestId,
+    );
+  }
+
+  return saved;
 }
 
 function toRankedSegment(segment: CreateClipsRequest['segments'][number]): RankedSegment {
