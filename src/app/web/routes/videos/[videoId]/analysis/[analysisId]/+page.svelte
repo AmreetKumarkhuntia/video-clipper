@@ -4,7 +4,7 @@
   import type { ClipArtifact, ClipCandidate, ClipPlan } from '@app/web/types/analysis.js';
   import { apiFetch } from '@web/lib/api.js';
   import { untrack } from 'svelte';
-  import { configValues } from '@web/lib/stores/config.js';
+  import { configValues, configLoaded, initConfig, updateField } from '@web/lib/stores/config.js';
   import { videoStore, setAnalysisPlan, setClips } from '@web/lib/stores/video.js';
   import Icon from '@web/components/Icon.svelte';
   import Button from '@web/components/Button.svelte';
@@ -20,17 +20,19 @@
   let isClipping = $state(false);
   let errorMessage = $state('');
   let activeTab = $state<'candidates' | 'clips'>('candidates');
-  let threshold = $state<number>((get(configValues)['SCORE_THRESHOLD'] as number) ?? 7);
+  let threshold = $derived(($configValues['SCORE_THRESHOLD'] as number) ?? 7);
 
   let videoId = $derived(page.params.videoId);
   let analysisId = $derived(page.params.analysisId);
 
   $effect(() => {
+    if (!$configLoaded) return;
     const entry = get(videoStore)[videoId]?.analyses[analysisId];
     if (entry?.plan && !plan) {
+      const t = ($configValues['SCORE_THRESHOLD'] as number) ?? 7;
       plan = {
         ...entry.plan,
-        candidates: entry.plan.candidates.map((c) => ({ ...c, selected: c.score >= threshold })),
+        candidates: entry.plan.candidates.map((c) => ({ ...c, selected: c.score >= t })),
       };
     }
     if (entry?.clips.length && !clips.length) {
@@ -40,13 +42,13 @@
   });
 
   $effect(() => {
-    if (analysisId) {
-      void loadArtifacts();
-    }
+    if (analysisId) void loadArtifacts();
+    if (!get(configLoaded)) void initConfig();
   });
 
   $effect(() => {
-    const t = ($configValues['SCORE_THRESHOLD'] as number) ?? 7;
+    if (!$configLoaded) return;
+    const t = threshold;
     untrack(() => applyThreshold(t));
   });
 
@@ -70,14 +72,16 @@
               `/api/library/clips?analysisId=${encodeURIComponent(analysisId)}`,
             ).then((r) => r.clips)
           : Promise.resolve(cached!.clips),
+        get(configLoaded) ? Promise.resolve() : initConfig(),
       ]);
 
       if (needsPlan) setAnalysisPlan(videoId, analysisId, loadedPlan);
       if (needsClips) setClips(videoId, analysisId, loadedClips);
 
+      const t = (get(configValues)['SCORE_THRESHOLD'] as number) ?? 7;
       plan = {
         ...loadedPlan,
-        candidates: loadedPlan.candidates.map((c) => ({ ...c, selected: c.score >= threshold })),
+        candidates: loadedPlan.candidates.map((c) => ({ ...c, selected: c.score >= t })),
       };
       clips = loadedClips;
       if (clips.length > 0) activeTab = 'clips';
@@ -119,7 +123,6 @@
 
   function applyThreshold(t: number | undefined): void {
     if (!plan || t == null) return;
-    threshold = t;
     plan = {
       ...plan,
       candidates: plan.candidates.map((c) => ({ ...c, selected: c.score >= t })),
@@ -133,6 +136,22 @@
       candidates: plan.candidates.map((c) =>
         c.id === candidate.id ? { ...c, selected: !c.selected } : c,
       ),
+    };
+  }
+
+  function selectAllCandidates(): void {
+    if (!plan) return;
+    plan = {
+      ...plan,
+      candidates: plan.candidates.map((c) => ({ ...c, selected: true })),
+    };
+  }
+
+  function deselectAllCandidates(): void {
+    if (!plan) return;
+    plan = {
+      ...plan,
+      candidates: plan.candidates.map((c) => ({ ...c, selected: false })),
     };
   }
 
@@ -173,6 +192,12 @@
           >
         {/if}
         {#if activeTab === 'candidates'}
+          <Button variant="secondary" onclick={selectAllCandidates} disabled={isClipping}>
+            Select all
+          </Button>
+          <Button variant="secondary" onclick={deselectAllCandidates} disabled={isClipping}>
+            Deselect all
+          </Button>
           <Button
             variant="primary"
             onclick={clipSelected}
@@ -216,11 +241,15 @@
         <label class="vc-label" for="threshold-slider">Min score</label>
         <Slider
           id="threshold-slider"
-          bind:value={threshold}
+          value={threshold}
           min={1}
           max={10}
           step={1}
-          onchange={applyThreshold}
+          onchange={(t) => {
+            if (t == null) return;
+            updateField('SCORE_THRESHOLD', t);
+            applyThreshold(t);
+          }}
         />
       </div>
       <div class="clipgrid" style="margin-top:20px">
@@ -287,7 +316,7 @@
               <p class="clipcard__title">{clip.filename}</p>
               <div class="clipcard__actions">
                 {#if clip.editedPath && clip.currentEditsHash && clip.lastRenderedHash && clip.currentEditsHash !== clip.lastRenderedHash}
-                  <Badge variant="warning">Stale render</Badge>
+                  <Badge variant="warn">Stale render</Badge>
                 {:else if clip.editedPath}
                   <Badge variant="success"><Icon name="check" size={10} /> Edited</Badge>
                 {:else}

@@ -11,6 +11,7 @@
     onclick,
     children,
     'aria-label': ariaLabel,
+    title,
   }: ButtonProps = $props();
 
   const sizeClass: Record<ButtonSize, string> = {
@@ -32,11 +33,12 @@
     class:disabled
     aria-disabled={disabled || undefined}
     aria-label={ariaLabel}
+    {title}
   >
     {@render children()}
   </a>
 {:else}
-  <button class={classes} {type} {disabled} {onclick} aria-label={ariaLabel}>
+  <button class={classes} {type} {disabled} {onclick} aria-label={ariaLabel} {title}>
     {@render children()}
   </button>
 {/if}

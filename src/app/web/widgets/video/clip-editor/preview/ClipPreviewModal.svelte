@@ -9,8 +9,16 @@
   const ts = Date.now();
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="preview-backdrop" onclick={onclose}></div>
+<div
+  class="preview-backdrop"
+  role="button"
+  tabindex={-1}
+  aria-label="Close preview"
+  onclick={onclose}
+  onkeydown={(e) => {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') onclose();
+  }}
+></div>
 
 <div class="preview-modal" role="dialog" aria-modal="true" aria-label="Clip preview">
   <div class="preview-modal__header">
