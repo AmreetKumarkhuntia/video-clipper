@@ -44,31 +44,35 @@ export class TranscriptDetector {
   /**
    * Fetches, groups, and chunks the transcript for the given video ID.
    *
-   * Walks the analyzer chain in order, falling back on error. Cache is checked
-   * first (before any analyzer is tried) and written after the first successful
-   * fetch so subsequent runs with the same provider config are instant.
+   * Walks the analyzer chain in order, falling back on error. When a cache is
+   * provided it is checked first and written after the first successful fetch.
+   * Omit cache (or pass null) to always fetch fresh from the chain.
    *
    * @param videoId   - YouTube video ID
    * @param audioPath - Path to the downloaded WAV, or null if audio is not yet available
-   * @param cache     - Cache instance for read/write of transcript lines
+   * @param cache     - Optional cache for read/write of transcript lines
    */
   async detect(
     videoId: string,
     audioPath: string | null,
-    cache: CacheBackend,
+    cache?: CacheBackend | null,
   ): Promise<TranscriptDetectorResult> {
     let lines: TranscriptLine[];
 
-    const cached = await cache.readTranscript(videoId);
-    if (cached) {
-      log.info(
-        'TranscriptDetector.detect',
-        `[cache hit] Transcript loaded from cache (${cached.length} lines)`,
-      );
-      lines = cached;
+    if (cache) {
+      const cached = await cache.readTranscript(videoId);
+      if (cached) {
+        log.info(
+          'TranscriptDetector.detect',
+          `[cache hit] Transcript loaded from cache (${cached.length} lines)`,
+        );
+        lines = cached;
+      } else {
+        lines = await this.fetchFromChain(videoId, audioPath);
+        await cache.writeTranscript(videoId, lines);
+      }
     } else {
       lines = await this.fetchFromChain(videoId, audioPath);
-      await cache.writeTranscript(videoId, lines);
     }
 
     const microBlocks = this.buildMicroBlocks(lines);

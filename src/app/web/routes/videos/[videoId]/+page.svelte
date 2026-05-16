@@ -113,7 +113,7 @@
     isLoadingTranscript = true;
     errorMessage = '';
     try {
-      const result = await apiFetch<TranscriptBundle>(`/api/youtube/videos/${videoId}/transcript`);
+      const result = await apiFetch<TranscriptBundle>(`/api/videos/${videoId}/transcript`);
       setTranscript(videoId, result);
       transcript = result;
     } catch (error) {
@@ -259,7 +259,7 @@
   async function clearTranscript(): Promise<void> {
     if (!confirm('Clear cached transcript for this video?')) return;
     try {
-      await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/transcript`, {
+      await apiFetch<{ ok: true }>(`/api/videos/${videoId}/transcript`, {
         method: 'DELETE',
       });
       storeClearTranscript(videoId);

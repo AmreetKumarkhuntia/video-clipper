@@ -1,6 +1,9 @@
 import type { Handle } from '@sveltejs/kit';
 import { generateRequestId, log } from '@lib/utils/logger.js';
 import { getConfig, getMaskedConfig } from '@lib/config/index.js';
+import { runMigrations } from '@lib/services/db/migrate.js';
+
+runMigrations();
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.requestId = event.request.headers.get('x-request-id') ?? generateRequestId();

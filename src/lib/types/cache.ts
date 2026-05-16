@@ -76,7 +76,3 @@ export interface ClearVideoAnalysisResult {
   chunksDeleted: number;
   segmentsDeleted: number;
 }
-
-export interface ClearVideoTranscriptResult {
-  deleted: boolean;
-}

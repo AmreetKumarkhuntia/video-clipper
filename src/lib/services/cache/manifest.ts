@@ -2,11 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { log } from '@lib/utils/logger.js';
 import { computeVideoCacheKey } from './backends/file.js';
-import type {
-  VideoCacheManifest,
-  ClearVideoAnalysisResult,
-  ClearVideoTranscriptResult,
-} from '@lib/types/cache.js';
+import type { VideoCacheManifest, ClearVideoAnalysisResult } from '@lib/types/cache.js';
 
 function manifestPath(cacheDir: string, videoId: string): string {
   return path.join(cacheDir, 'manifests', `${computeVideoCacheKey(videoId)}.json`);
@@ -112,17 +108,4 @@ export async function clearVideoAnalysisManifest(
   }
 
   return { manifestExisted, chunksDeleted, segmentsDeleted };
-}
-
-export async function clearVideoTranscriptCache(
-  cacheDir: string,
-  videoId: string,
-): Promise<ClearVideoTranscriptResult> {
-  const filePath = path.join(cacheDir, 'transcript', `${computeVideoCacheKey(videoId)}.json`);
-  try {
-    await fs.unlink(filePath);
-    return { deleted: true };
-  } catch {
-    return { deleted: false };
-  }
 }
