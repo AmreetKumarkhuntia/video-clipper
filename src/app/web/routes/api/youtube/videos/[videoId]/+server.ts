@@ -8,6 +8,8 @@ import {
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 import { VideoParamsSchema } from '@app/web/types/youtube.js';
+import { upsertChannel } from '@lib/services/db/repos/channelsRepo.js';
+import { upsertVideo } from '@lib/services/db/repos/videosRepo.js';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   const reqDone = log.request('GET', '/api/youtube/videos/[videoId]', locals.requestId, {
@@ -23,6 +25,16 @@ export const GET: RequestHandler = async ({ params, locals }) => {
   try {
     const catalog = createYouTubeCatalogService();
     const video = await catalog.getVideoDetails(parsed.data.videoId);
+
+    try {
+      upsertChannel({ id: video.channelId, title: video.channelTitle });
+      upsertVideo(video);
+    } catch (dbErr) {
+      log.warn('videos.[videoId]', 'db upsert failed', locals.requestId, {
+        error: errorMessage(dbErr),
+      });
+    }
+
     reqDone(200);
     return jsonOk(video);
   } catch (error) {

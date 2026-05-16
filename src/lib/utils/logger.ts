@@ -90,6 +90,29 @@ export const log = {
   },
 
   /**
+   * Logs database call entry (db→) and returns a done-callback that logs exit (db←)
+   * with elapsed time merged into the result object.
+   *
+   * Usage:
+   *   const done = log.dbCalled('findUser', requestId, { collection: 'users', filter });
+   *   const result = await db.findOne(...);
+   *   done({ found: result !== null });
+   */
+  dbCalled: (
+    fn: string,
+    requestId?: string,
+    meta?: Record<string, unknown>,
+  ): ((result?: Record<string, unknown>) => void) => {
+    const start = Date.now();
+    console.log(buildLine(fn, C.cyan, 'db\u2192', '', requestId, meta));
+    return (result?: Record<string, unknown>): void => {
+      const elapsedMs = Date.now() - start;
+      const resultWithElapsed = { ...(result ?? {}), elapsedMs };
+      console.log(buildLine(fn, C.cyan, 'db\u2190', '', requestId, resultWithElapsed));
+    };
+  },
+
+  /**
    * Logs HTTP request entry (req→) and returns a done-callback that logs
    * exit (req←) with status and elapsed time.
    */
