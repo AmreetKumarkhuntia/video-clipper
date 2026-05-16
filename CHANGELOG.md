@@ -1,3 +1,25 @@
+# [1.10.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.9.0...v1.10.0) (2026-05-16)
+
+
+### Bug Fixes
+
+* **analysis:** respect saved SCORE_THRESHOLD, persist slider to config, add bulk select ([2ca031c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/2ca031cb7f43fb9f7d327ac95c5b9ce6413a494e))
+* **clip-editor:** fix render fidelity for crop mode, word highlights, and trim offsets ([9557b9d](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9557b9d7dd5e7eeddf719f03ae21ce8193a6fa54))
+* **clip-editor:** subtitle plan 400, partial-download A/V sync, delete subtitle UI ([e3bebc7](https://github.com/AmreetKumarkhuntia/video-clipper/commit/e3bebc7ac8857a94b27b9b6af16052ec412bbfef))
+* **clips:** prune dropped clip artifacts on re-selection so publish draft reflects current picks ([cebd0c0](https://github.com/AmreetKumarkhuntia/video-clipper/commit/cebd0c04941ef91a9696efc8e60bdfaaa12380fb))
+* **publish:** always upload edited clip when available, allow preview without render ([6c9524a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6c9524a2292accc67a8865552d5e6f1da6b8a683))
+
+
+### Features
+
+* **clip-editor:** add bg padding/radius controls, apply-to-all, and fix stale publish paths ([8908ab2](https://github.com/AmreetKumarkhuntia/video-clipper/commit/8908ab2ec4e9d70d53873cbda148f09b9cb12253))
+* **clip-editor:** add Phase 1 + Phase 2 clip editor ([ffc6f48](https://github.com/AmreetKumarkhuntia/video-clipper/commit/ffc6f486690d167b1ede1af294bd1e6723ce7811))
+* **clip-editor:** add Phase 3 timeline, canvas drag, and reframe focus ([f138e89](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f138e8943d13c3cedb693d61f84a09f5461ce478))
+* **clip-editor:** add Phase 4 dirty-warning dialog and Playwright smoke tests ([5e67fc3](https://github.com/AmreetKumarkhuntia/video-clipper/commit/5e67fc37ac9c68032a4c3c3f0032d0ac470542ba))
+* **clip-editor:** add preview modal, render parity, and stale-render tracking ([fe1188a](https://github.com/AmreetKumarkhuntia/video-clipper/commit/fe1188ac6149221f109e80d8cddcc38922bcf850))
+* **clip-editor:** plan subtitles, scrubbable timeline, word re-timing on edit ([1b221d7](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1b221d753af10cb8c7dea4dbf43b07e58d1c6a6a))
+* **video-store:** add session-level store keyed by video and analysis id ([4e83f4e](https://github.com/AmreetKumarkhuntia/video-clipper/commit/4e83f4e442ed9cf6bcfd3a6ecd133d5726eb98f4))
+
 # [1.9.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.8.0...v1.9.0) (2026-05-11)
 
 
