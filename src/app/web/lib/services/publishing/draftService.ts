@@ -2,9 +2,9 @@ import {
   createArtifactId,
   getAnalysis,
   getPublishDraft,
-  listClipArtifactsByAnalysisId,
   savePublishDraft,
 } from '@app/web/lib/services/artifacts/artifactStore.js';
+import { listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
 import type { ClipArtifact, ClipPlan } from '@app/web/types/analysis.js';
 import {
   PublishDraftSchema,
@@ -24,7 +24,7 @@ export async function buildPublishDraft(
 
   const [analysis, clips] = await Promise.all([
     getAnalysis(cfg.OUTPUT_DIR, analysisId),
-    listClipArtifactsByAnalysisId(cfg.OUTPUT_DIR, analysisId),
+    Promise.resolve(listClipsByAnalysisId(analysisId)),
   ]);
 
   if (!analysis || clips.length === 0) {
@@ -127,7 +127,7 @@ function buildDraftItem(clip: ClipArtifact, analysis: ClipPlan, cfg: Config): Pu
   // A render is required when edits exist but haven't been rendered yet, or when the
   // edits have changed since the last render (stale).
   const isRenderRequired =
-    !!clip.editsPath &&
+    clip.hasEdits &&
     (!clip.editedPath ||
       (!!clip.currentEditsHash &&
         !!clip.lastRenderedHash &&

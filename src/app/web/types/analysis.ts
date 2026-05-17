@@ -87,7 +87,7 @@ export const ClipArtifactSchema = z.object({
   endSec: z.number().positive(),
   durationSec: z.number().positive(),
   createdAt: z.string(),
-  editsPath: z.string().optional(),
+  hasEdits: z.boolean().default(false),
   editedPath: z.string().optional(),
   currentEditsHash: z.string().optional(),
   lastRenderedHash: z.string().optional(),

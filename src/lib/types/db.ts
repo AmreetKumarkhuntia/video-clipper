@@ -26,3 +26,16 @@ export type SegmentationInsert = {
   audioEvent?: string;
   optionsHash: string;
 };
+
+export type UpsertClipInput = {
+  id: string;
+  videoId: string;
+  analysisId?: string;
+  segmentationId?: string;
+  segmentRank: number;
+  filename: string;
+  path: string;
+  startSec: number;
+  endSec: number;
+  durationSec: number;
+};

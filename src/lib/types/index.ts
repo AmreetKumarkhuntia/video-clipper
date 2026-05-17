@@ -90,6 +90,8 @@ export type {
   YouTubePlayerResponse,
 } from './youtube.js';
 
+export type { ChannelInput, ChunkInsert, SegmentationInsert, UpsertClipInput } from './db.js';
+
 export type {
   YtDlpCookies,
   DownloaderConfig,

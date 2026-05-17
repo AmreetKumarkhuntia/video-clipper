@@ -3,7 +3,7 @@ import { stat } from 'fs/promises';
 import { Readable } from 'stream';
 import type { RequestHandler } from '@sveltejs/kit';
 import { ClipParamsSchema, FileVariantSchema } from '@app/web/types/analysis.js';
-import { getClipArtifact } from '@app/web/lib/services/artifacts/artifactStore.js';
+import { getClip } from '@lib/services/db/repos/clipsRepo.js';
 import { jsonError, zodErrorDetail } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 
@@ -32,7 +32,7 @@ export const GET: RequestHandler = async ({ params, locals, request, url }) => {
     return jsonError(400, 'Invalid clip id.', zodErrorDetail(parsed.error));
   }
 
-  const artifact = await getClipArtifact(locals.config.OUTPUT_DIR, parsed.data.clipId);
+  const artifact = getClip(parsed.data.clipId);
 
   if (!artifact) {
     reqDone(404);

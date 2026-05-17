@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
   }
 
   try {
-    const edits = await loadClipEdits(locals.config.OUTPUT_DIR, parsed.data.clipId);
+    const edits = await loadClipEdits(parsed.data.clipId);
     reqDone(200);
     return jsonOk({ edits });
   } catch (error) {
@@ -63,7 +63,7 @@ export const PUT: RequestHandler = async (event) => {
   }
 
   try {
-    const saved = await saveClipEdits(event.locals.config.OUTPUT_DIR, parsedBody.data);
+    const saved = await saveClipEdits(parsedBody.data);
     reqDone(200);
     return jsonOk({ edits: saved });
   } catch (error) {

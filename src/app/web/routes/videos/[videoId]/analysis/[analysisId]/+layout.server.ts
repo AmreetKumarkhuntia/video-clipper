@@ -1,10 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { ServerLoadEvent } from '@sveltejs/kit';
-import {
-  getAnalysis,
-  getPublishDraft,
-  listClipArtifactsByAnalysisId,
-} from '@app/web/lib/services/artifacts/artifactStore.js';
+import { getAnalysis, getPublishDraft } from '@app/web/lib/services/artifacts/artifactStore.js';
+import { listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
 import { getYouTubeAuthStatus } from '@app/web/lib/services/youtube/uploadAuth.js';
 
 export async function load({
@@ -16,7 +13,7 @@ export async function load({
 
   const [analysis, clips, authStatus, draft] = await Promise.all([
     getAnalysis(locals.config.OUTPUT_DIR, analysisId),
-    listClipArtifactsByAnalysisId(locals.config.OUTPUT_DIR, analysisId),
+    Promise.resolve(listClipsByAnalysisId(analysisId)),
     getYouTubeAuthStatus(),
     getPublishDraft(locals.config.OUTPUT_DIR, analysisId),
   ]);
