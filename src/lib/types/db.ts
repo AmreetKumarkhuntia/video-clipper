@@ -14,3 +14,15 @@ export type ChunkInsert = {
   end: number;
   rank?: number;
 };
+
+export type SegmentationInsert = {
+  videoId: string;
+  rank: number;
+  startSec: number;
+  endSec: number;
+  score: number;
+  reason: string;
+  source: string; // 'transcript' | 'audio' | 'both'
+  audioEvent?: string;
+  optionsHash: string;
+};
