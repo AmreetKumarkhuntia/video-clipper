@@ -61,6 +61,19 @@ export const segmentations = sqliteTable('segmentations', {
   updatedAt: integer('updated_at').notNull(),
 });
 
+// One row per completed analysis. Lean metadata only — candidates and chunkEvaluations
+// are reconstructed at read time from the segmentations and chunks tables.
+// optionsHash links to the correct segmentation batch for this analysis.
+export const analyses = sqliteTable('analyses', {
+  id: text('id').primaryKey(), // analysisId e.g. 'analysis-videoId-ts-uuid8'
+  videoId: text('video_id').notNull(),
+  title: text('title').notNull(),
+  durationSec: real('duration_sec').notNull(),
+  optionsHash: text('options_hash').notNull(), // links to segmentations batch
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
 // One row per generated clip. MP4 files still live on disk under outputs/web/clips/;
 // this table is the source of truth for clip metadata, edits payload, and render-path bookkeeping.
 // segmentationId is nullable so a clip remains queryable after its source segmentation row is

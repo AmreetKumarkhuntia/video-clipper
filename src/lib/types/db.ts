@@ -27,6 +27,12 @@ export type SegmentationInsert = {
   optionsHash: string;
 };
 
+export type AnalysisInsert = {
+  id: string;
+  videoId: string;
+  planJson: string;
+};
+
 export type UpsertClipInput = {
   id: string;
   videoId: string;
