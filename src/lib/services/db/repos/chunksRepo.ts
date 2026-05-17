@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../client.js';
 import { chunks } from '../schema.js';
@@ -39,4 +39,30 @@ export function deleteChunks(videoId: string): void {
   const done = log.dbCalled('deleteChunks', undefined, { videoId });
   db.delete(chunks).where(eq(chunks.videoId, videoId)).run();
   done({});
+}
+
+export function setChunkAnalysisByRange(
+  videoId: string,
+  start: number,
+  end: number,
+  analysis: string | null,
+  score: number | null,
+): void {
+  const done = log.dbCalled('setChunkAnalysisByRange', undefined, { videoId, start, end });
+  db.update(chunks)
+    .set({ analysis, score, updatedAt: Date.now() })
+    .where(and(eq(chunks.videoId, videoId), eq(chunks.start, start), eq(chunks.end, end)))
+    .run();
+  done({});
+}
+
+export function clearChunkAnalysis(videoId: string): number {
+  const done = log.dbCalled('clearChunkAnalysis', undefined, { videoId });
+  const result = db
+    .update(chunks)
+    .set({ analysis: null, score: null, rank: null, updatedAt: Date.now() })
+    .where(eq(chunks.videoId, videoId))
+    .run();
+  done({});
+  return result.changes ?? 0;
 }

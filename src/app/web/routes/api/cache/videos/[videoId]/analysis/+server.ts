@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
-import { clearVideoAnalysisManifest } from '@lib/services/cache/manifest.js';
+import { clearChunkAnalysis } from '@lib/services/db/repos/chunksRepo.js';
+import { clearSegmentations } from '@lib/services/db/repos/segmentationsRepo.js';
 import { log } from '@lib/utils/logger.js';
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
@@ -13,9 +14,10 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
   }
 
   try {
-    const result = await clearVideoAnalysisManifest(locals.config.CACHE_DIR, videoId);
+    const chunksCleared = clearChunkAnalysis(videoId);
+    const segmentationsCleared = clearSegmentations(videoId);
     reqDone(200);
-    return jsonOk({ ok: true, ...result });
+    return jsonOk({ ok: true, chunksCleared, segmentationsCleared });
   } catch (error) {
     reqDone(500);
     return jsonError(500, 'Failed to clear analysis cache.', errorMessage(error));
