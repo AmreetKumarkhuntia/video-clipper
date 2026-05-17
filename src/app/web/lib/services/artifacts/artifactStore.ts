@@ -1,10 +1,14 @@
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import { randomUUID } from 'crypto';
-import { ClipPlanSchema } from '@app/web/types/analysis.js';
 import type { ClipPlan } from '@app/web/types/analysis.js';
 import { PublishDraftSchema, UploadArtifactSchema } from '@app/web/types/publish.js';
 import type { PublishDraft, UploadArtifact } from '@app/web/types/publish.js';
+import {
+  saveAnalysisToDb,
+  getAnalysisFromDb,
+  listAnalysesFromDb,
+} from '@lib/services/db/repos/analysesRepo.js';
 
 const WEB_OUTPUT_DIR = 'web';
 
@@ -25,35 +29,24 @@ export function createArtifactId(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 }
 
-export async function saveAnalysis(plan: ClipPlan, outputDir: string): Promise<ClipPlan> {
-  const dir = await ensureArtifactDir(outputDir, 'analyses');
-  await fs.writeFile(join(dir, `${plan.id}.json`), JSON.stringify(plan, null, 2), 'utf-8');
+export async function saveAnalysis(
+  plan: ClipPlan,
+  _outputDir: string,
+  optionsHash: string,
+): Promise<ClipPlan> {
+  saveAnalysisToDb(plan, optionsHash);
   return plan;
 }
 
-export async function getAnalysis(outputDir: string, analysisId: string): Promise<ClipPlan | null> {
-  const dir = await ensureArtifactDir(outputDir, 'analyses');
-
-  try {
-    const raw = await fs.readFile(join(dir, `${analysisId}.json`), 'utf-8');
-    return ClipPlanSchema.parse(JSON.parse(raw));
-  } catch (error) {
-    if (isMissingFileError(error)) return null;
-    throw error;
-  }
+export async function getAnalysis(
+  _outputDir: string,
+  analysisId: string,
+): Promise<ClipPlan | null> {
+  return getAnalysisFromDb(analysisId);
 }
 
-export async function listAnalyses(outputDir: string): Promise<ClipPlan[]> {
-  const dir = await ensureArtifactDir(outputDir, 'analyses');
-  const names = await fs.readdir(dir);
-  const plans: ClipPlan[] = [];
-
-  for (const name of names.filter((item) => item.endsWith('.json'))) {
-    const raw = await fs.readFile(join(dir, name), 'utf-8');
-    plans.push(ClipPlanSchema.parse(JSON.parse(raw)));
-  }
-
-  return plans.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+export async function listAnalyses(_outputDir: string): Promise<ClipPlan[]> {
+  return listAnalysesFromDb();
 }
 
 export async function savePublishDraft(

@@ -13,7 +13,7 @@ import {
 } from '@lib/services/db/repos/segmentationsRepo.js';
 import { createArtifactId, saveAnalysis } from '@app/web/lib/services/artifacts/artifactStore.js';
 import { ClipPlanSchema } from '@app/web/types/analysis.js';
-import type { ClipCandidate, ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js';
+import type { ClipPlan, CreateAnalysisRequest } from '@app/web/types/analysis.js';
 import {
   ChunkEvaluationSchema,
   type LLMChunk,
@@ -22,6 +22,7 @@ import {
   type ChunkEvaluation,
   type StreamCallbacks,
 } from '@lib/types/index.js';
+import { toClipCandidate } from '@lib/utils/transcriptUtils.js';
 import type { Config } from '@lib/types/config.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
@@ -292,7 +293,7 @@ export async function analyzeTranscriptForWeb(
     createdAt,
   });
 
-  return saveAnalysis(plan, cfg.OUTPUT_DIR);
+  return saveAnalysis(plan, cfg.OUTPUT_DIR, optionsHash);
 }
 
 /**
@@ -359,35 +360,4 @@ async function runSegmentation(
   markSegmentationsComplete(videoId);
 
   return refined;
-}
-
-function toClipCandidate(
-  videoId: string,
-  segment: RankedSegment,
-  lines: TranscriptLine[],
-): ClipCandidate {
-  const id = `${videoId}-rank-${segment.rank}`;
-
-  return {
-    id,
-    rank: segment.rank,
-    startSec: segment.start,
-    endSec: segment.end,
-    score: segment.score,
-    reason: segment.reason,
-    source: segment.source,
-    audioEvent: segment.audio_event,
-    transcriptExcerpt: excerptForSegment(lines, segment.start, segment.end),
-    selected: true,
-  };
-}
-
-function excerptForSegment(lines: TranscriptLine[], startSec: number, endSec: number): string {
-  const text = lines
-    .filter((line) => line.start >= Math.max(0, startSec - 3) && line.start <= endSec + 3)
-    .map((line) => line.text)
-    .join(' ')
-    .trim();
-
-  return text.length > 500 ? `${text.slice(0, 497)}...` : text;
 }

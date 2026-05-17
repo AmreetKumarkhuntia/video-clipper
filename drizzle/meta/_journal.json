@@ -29,6 +29,20 @@
       "when": 1779017737379,
       "tag": "0003_cuddly_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779020371753,
+      "tag": "0004_gifted_toro",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1779022000000,
+      "tag": "0005_slim_ghost",
+      "breakpoints": true
     }
   ]
 }
