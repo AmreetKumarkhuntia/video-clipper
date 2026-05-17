@@ -60,3 +60,27 @@ export const segmentations = sqliteTable('segmentations', {
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
+
+// One row per generated clip. MP4 files still live on disk under outputs/web/clips/;
+// this table is the source of truth for clip metadata, edits payload, and render-path bookkeeping.
+// segmentationId is nullable so a clip remains queryable after its source segmentation row is
+// replaced (segmentations get delete-then-inserted on re-runs). segmentRank is denormalised for
+// matching back to a fresh segmentation row by (videoId, rank).
+export const clips = sqliteTable('clips', {
+  id: text('id').primaryKey(), // clip-<videoId>-<segmentId>
+  videoId: text('video_id').notNull(),
+  analysisId: text('analysis_id'), // denorm from generation request; null if generated outside an analysis flow
+  segmentationId: text('segmentation_id'), // FK to segmentations.id, nullable on re-segmentation
+  segmentRank: integer('segment_rank').notNull(),
+  filename: text('filename').notNull(),
+  path: text('path').notNull(), // absolute path to source mp4 on disk
+  editedPath: text('edited_path'), // absolute path to rendered _edited.mp4 if present
+  editsJson: text('edits_json'), // JSON of ClipEdits (clipId stripped); null until first save
+  currentEditsHash: text('current_edits_hash'),
+  lastRenderedHash: text('last_rendered_hash'),
+  startSec: real('start_sec').notNull(),
+  endSec: real('end_sec').notNull(),
+  durationSec: real('duration_sec').notNull(),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});

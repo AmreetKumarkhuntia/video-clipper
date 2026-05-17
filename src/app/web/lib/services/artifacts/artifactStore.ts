@@ -1,23 +1,20 @@
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import { randomUUID } from 'crypto';
-import { ClipArtifactSchema, ClipPlanSchema } from '@app/web/types/analysis.js';
-import type { ClipArtifact, ClipPlan } from '@app/web/types/analysis.js';
+import { ClipPlanSchema } from '@app/web/types/analysis.js';
+import type { ClipPlan } from '@app/web/types/analysis.js';
 import { PublishDraftSchema, UploadArtifactSchema } from '@app/web/types/publish.js';
 import type { PublishDraft, UploadArtifact } from '@app/web/types/publish.js';
 
 const WEB_OUTPUT_DIR = 'web';
 
-function artifactRoot(
-  outputDir: string,
-  kind: 'analyses' | 'clips' | 'publish-drafts' | 'uploads' | 'clip-edits',
-): string {
+function artifactRoot(outputDir: string, kind: 'analyses' | 'publish-drafts' | 'uploads'): string {
   return resolve(outputDir, WEB_OUTPUT_DIR, kind);
 }
 
 async function ensureArtifactDir(
   outputDir: string,
-  kind: 'analyses' | 'clips' | 'publish-drafts' | 'uploads' | 'clip-edits',
+  kind: 'analyses' | 'publish-drafts' | 'uploads',
 ): Promise<string> {
   const dir = artifactRoot(outputDir, kind);
   await fs.mkdir(dir, { recursive: true });
@@ -59,79 +56,6 @@ export async function listAnalyses(outputDir: string): Promise<ClipPlan[]> {
   return plans.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function getClipArtifact(
-  outputDir: string,
-  clipId: string,
-): Promise<ClipArtifact | null> {
-  const dir = await ensureArtifactDir(outputDir, 'clips');
-
-  try {
-    const raw = await fs.readFile(join(dir, `${clipId}.json`), 'utf-8');
-    return ClipArtifactSchema.parse(JSON.parse(raw));
-  } catch (error) {
-    if (isMissingFileError(error)) return null;
-    throw error;
-  }
-}
-
-export async function updateClipArtifactPaths(
-  outputDir: string,
-  clipId: string,
-  patch: {
-    editsPath?: string;
-    editedPath?: string;
-    currentEditsHash?: string;
-    lastRenderedHash?: string;
-  },
-): Promise<ClipArtifact> {
-  const existing = await getClipArtifact(outputDir, clipId);
-  if (!existing) throw new Error(`Clip artifact not found: ${clipId}`);
-
-  const updated = ClipArtifactSchema.parse({ ...existing, ...patch });
-  const dir = artifactRoot(outputDir, 'clips');
-  await fs.writeFile(join(dir, `${clipId}.json`), JSON.stringify(updated, null, 2), 'utf-8');
-  return updated;
-}
-
-export async function saveClipArtifacts(
-  artifacts: ClipArtifact[],
-  outputDir: string,
-): Promise<ClipArtifact[]> {
-  const dir = await ensureArtifactDir(outputDir, 'clips');
-
-  for (const artifact of artifacts) {
-    await fs.writeFile(
-      join(dir, `${artifact.id}.json`),
-      JSON.stringify(artifact, null, 2),
-      'utf-8',
-    );
-  }
-
-  return artifacts;
-}
-
-export async function deleteClipArtifact(outputDir: string, clipId: string): Promise<boolean> {
-  const dir = await ensureArtifactDir(outputDir, 'clips');
-  try {
-    await fs.unlink(join(dir, `${clipId}.json`));
-    return true;
-  } catch (error) {
-    if (isMissingFileError(error)) return false;
-    throw error;
-  }
-}
-
-export async function deleteClipEdits(outputDir: string, clipId: string): Promise<boolean> {
-  const dir = await ensureArtifactDir(outputDir, 'clip-edits');
-  try {
-    await fs.unlink(join(dir, `${clipId}.json`));
-    return true;
-  } catch (error) {
-    if (isMissingFileError(error)) return false;
-    throw error;
-  }
-}
-
 export async function savePublishDraft(
   draft: PublishDraft,
   outputDir: string,
@@ -156,27 +80,6 @@ export async function saveUploadArtifacts(
   }
 
   return uploads;
-}
-
-export async function listClipArtifacts(outputDir: string): Promise<ClipArtifact[]> {
-  const dir = await ensureArtifactDir(outputDir, 'clips');
-  const names = await fs.readdir(dir);
-  const artifacts: ClipArtifact[] = [];
-
-  for (const name of names.filter((item) => item.endsWith('.json'))) {
-    const raw = await fs.readFile(join(dir, name), 'utf-8');
-    artifacts.push(ClipArtifactSchema.parse(JSON.parse(raw)));
-  }
-
-  return artifacts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-}
-
-export async function listClipArtifactsByAnalysisId(
-  outputDir: string,
-  analysisId: string,
-): Promise<ClipArtifact[]> {
-  const artifacts = await listClipArtifacts(outputDir);
-  return artifacts.filter((artifact) => artifact.analysisId === analysisId);
 }
 
 export async function getPublishDraft(
@@ -214,7 +117,7 @@ export async function listUploadArtifactsByAnalysisId(
   return uploads.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-function isMissingFileError(error: unknown): boolean {
+export function isMissingFileError(error: unknown): boolean {
   return (
     typeof error === 'object' &&
     error !== null &&

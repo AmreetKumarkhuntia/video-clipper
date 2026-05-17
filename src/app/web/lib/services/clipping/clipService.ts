@@ -1,12 +1,13 @@
 import { basename } from 'path';
+import { promises as fs } from 'fs';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
 import {
-  deleteClipArtifact,
-  deleteClipEdits,
-  listClipArtifactsByAnalysisId,
-  saveClipArtifacts,
-} from '@app/web/lib/services/artifacts/artifactStore.js';
+  getClipRow,
+  upsertClip,
+  listClipsByAnalysisId,
+  deleteClipsByAnalysisId,
+} from '@lib/services/db/repos/clipsRepo.js';
 import type { ClipArtifact, CreateClipsRequest } from '@app/web/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
@@ -55,9 +56,7 @@ export async function generateWebClips(
     downloadSectionsMode: cfg.DOWNLOAD_SECTIONS_MODE,
   };
 
-  const existing = input.analysisId
-    ? await listClipArtifactsByAnalysisId(cfg.OUTPUT_DIR, input.analysisId)
-    : [];
+  const existing = input.analysisId ? listClipsByAnalysisId(input.analysisId) : [];
   const existingById = new Map(existing.map((artifact) => [artifact.id, artifact]));
 
   const segments = input.segments.map(toRankedSegment);
@@ -70,52 +69,53 @@ export async function generateWebClips(
     },
     exporterConfig,
   );
-  const createdAt = new Date().toISOString();
 
-  const artifacts = paths.map((path, index) => {
+  const saved = paths.map((path, index) => {
     const source = input.segments[index];
-    const startSec = source.startSec;
-    const endSec = source.endSec;
-    const id = `clip-${input.videoId}-${source.id}`;
-    const prior = existingById.get(id);
-
-    return {
-      id,
+    return upsertClip({
+      id: `clip-${input.videoId}-${source.id}`,
       videoId: input.videoId,
       analysisId: input.analysisId,
-      segmentId: source.id,
+      segmentationId: source.id,
+      segmentRank: source.rank,
       filename: basename(path),
       path,
-      startSec,
-      endSec,
-      durationSec: Math.max(0.01, endSec - startSec),
-      createdAt,
-      ...(prior?.editsPath !== undefined && { editsPath: prior.editsPath }),
-      ...(prior?.editedPath !== undefined && { editedPath: prior.editedPath }),
-      ...(prior?.currentEditsHash !== undefined && { currentEditsHash: prior.currentEditsHash }),
-      ...(prior?.lastRenderedHash !== undefined && { lastRenderedHash: prior.lastRenderedHash }),
-    };
+      startSec: source.startSec,
+      endSec: source.endSec,
+      durationSec: Math.max(0.01, source.endSec - source.startSec),
+    });
   });
 
   log.info(
     'generateWebClips',
-    `[clips] [generated] | analysisId=${input.analysisId} requested=${input.segments.length} created=${artifacts.length}`,
+    `[clips] [generated] | analysisId=${input.analysisId} requested=${input.segments.length} created=${saved.length}`,
     requestId,
   );
 
-  const saved = await saveClipArtifacts(artifacts, cfg.OUTPUT_DIR);
-
-  const keepIds = new Set(saved.map((artifact) => artifact.id));
+  const keepIds = saved.map((artifact) => artifact.id);
   const staleIds = existing
-    .filter((artifact) => !keepIds.has(artifact.id))
+    .filter((artifact) => !keepIds.includes(artifact.id))
     .map((artifact) => artifact.id);
+
   if (staleIds.length > 0) {
+    // Unlink MP4 files from disk before removing DB rows
     await Promise.all(
-      staleIds.flatMap((id) => [
-        deleteClipArtifact(cfg.OUTPUT_DIR, id),
-        deleteClipEdits(cfg.OUTPUT_DIR, id),
-      ]),
+      staleIds.map(async (id) => {
+        const row = getClipRow(id);
+        if (!row) return;
+        for (const filePath of [row.path, row.editedPath].filter(Boolean) as string[]) {
+          await fs.unlink(filePath).catch((e: NodeJS.ErrnoException) => {
+            if (e.code !== 'ENOENT')
+              log.warn('generateWebClips', `unlink failed: ${filePath}`, requestId, {
+                error: String(e),
+              });
+          });
+        }
+      }),
     );
+    if (input.analysisId) {
+      deleteClipsByAnalysisId(input.analysisId, keepIds);
+    }
     log.info(
       'generateWebClips',
       `[clips] [pruned] | analysisId=${input.analysisId} stale=${staleIds.length}`,

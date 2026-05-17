@@ -30,7 +30,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
   };
 
   try {
-    const clip = await renderEditedClip(locals.config.OUTPUT_DIR, cfg, parsed.data.clipId);
+    const clip = await renderEditedClip(cfg, parsed.data.clipId);
     reqDone(200);
     return jsonOk({ clip });
   } catch (error) {

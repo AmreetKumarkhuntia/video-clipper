@@ -1,8 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import {
-  listClipArtifacts,
-  listClipArtifactsByAnalysisId,
-} from '@app/web/lib/services/artifacts/artifactStore.js';
+import { listClips, listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 import { ListClipsQuerySchema } from '@app/web/types/analysis.js';
@@ -21,8 +18,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
   try {
     const clips = parsed.data.analysisId
-      ? await listClipArtifactsByAnalysisId(locals.config.OUTPUT_DIR, parsed.data.analysisId)
-      : await listClipArtifacts(locals.config.OUTPUT_DIR);
+      ? listClipsByAnalysisId(parsed.data.analysisId)
+      : listClips();
     reqDone(200);
     return jsonOk({ clips });
   } catch (error) {
