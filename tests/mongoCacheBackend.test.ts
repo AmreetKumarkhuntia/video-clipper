@@ -1,13 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MongoCacheBackend } from '../src/lib/services/cache/backends/mongo.js';
 import type { MongoClient, Db, Collection } from 'mongodb';
-import type {
-  TranscriptLine,
-  LLMChunk,
-  ChunkEvaluation,
-  AudioEvent,
-  SegmentRefinement,
-} from '../src/lib/types/index.js';
+import type { TranscriptLine, AudioEvent } from '../src/lib/types/index.js';
 
 // ---------------------------------------------------------------------------
 // MongoDB mock factory
@@ -65,38 +59,11 @@ function makeCollectionMock(store: Map<string, unknown>) {
 
 const TRANSCRIPT_LINE: TranscriptLine = { text: 'hello', start: 0, duration: 2 };
 
-const LLM_CHUNK: LLMChunk = { start: 0, end: 120, text: 'some text' };
-
-const SUCCESS_EVAL: ChunkEvaluation = {
-  status: 'success',
-  chunk_index: 0,
-  chunk_start: 0,
-  chunk_end: 120,
-  interesting: true,
-  score: 8,
-  reason: 'great moment',
-  clip_start: 10,
-  clip_end: 40,
-};
-
-const FAILED_EVAL: ChunkEvaluation = {
-  status: 'failed',
-  chunk_index: 0,
-  chunk_start: 0,
-  chunk_end: 120,
-  error: 'timeout',
-};
-
 const AUDIO_EVENT: AudioEvent = {
   time: 30,
   event: 'gunshot',
   confidence: 0.9,
   source: 'gemini',
-};
-
-const SEGMENT_REFINEMENT: SegmentRefinement = {
-  refined_start: 12,
-  refined_end: 58,
 };
 
 // ---------------------------------------------------------------------------
@@ -144,66 +111,6 @@ describe('MongoCacheBackend', () => {
         .fn()
         .mockResolvedValue({ cacheKey: 'k', data: { not: 'a transcript' }, createdAt: new Date() });
       expect(await backend.readTranscript('vid123')).toBeNull();
-    });
-  });
-
-  // ── LLM chunk results ──────────────────────────────────────────────────────
-
-  describe('chunk evaluations', () => {
-    it('returns null on cache miss', async () => {
-      expect(await backend.readChunk(LLM_CHUNK)).toBeNull();
-    });
-
-    it('round-trips a successful evaluation', async () => {
-      await backend.writeChunk(LLM_CHUNK, SUCCESS_EVAL);
-      const result = await backend.readChunk(LLM_CHUNK);
-      expect(result).toEqual(SUCCESS_EVAL);
-    });
-
-    it('does not write failed evaluations', async () => {
-      await backend.writeChunk(LLM_CHUNK, FAILED_EVAL);
-      expect(collection.updateOne).not.toHaveBeenCalled();
-      expect(await backend.readChunk(LLM_CHUNK)).toBeNull();
-    });
-
-    it('different chunks (different text) are independent', async () => {
-      const chunk2: LLMChunk = { ...LLM_CHUNK, text: 'different text' };
-      const eval2: ChunkEvaluation = { ...SUCCESS_EVAL, score: 5 };
-      await backend.writeChunk(LLM_CHUNK, SUCCESS_EVAL);
-      await backend.writeChunk(chunk2, eval2);
-      expect(await backend.readChunk(LLM_CHUNK)).toEqual(SUCCESS_EVAL);
-      expect(await backend.readChunk(chunk2)).toEqual(eval2);
-    });
-
-    it('returns null for corrupt chunk data', async () => {
-      collection.findOne = vi
-        .fn()
-        .mockResolvedValue({ cacheKey: 'k', data: { garbage: true }, createdAt: new Date() });
-      expect(await backend.readChunk(LLM_CHUNK)).toBeNull();
-    });
-  });
-
-  // ── Segment refinement ─────────────────────────────────────────────────────
-
-  describe('segment refinement', () => {
-    it('returns null on cache miss', async () => {
-      expect(await backend.readSegmentRefinement(10, 40, 'great moment')).toBeNull();
-    });
-
-    it('round-trips a segment refinement', async () => {
-      await backend.writeSegmentRefinement(10, 40, 'great moment', SEGMENT_REFINEMENT);
-      const result = await backend.readSegmentRefinement(10, 40, 'great moment');
-      expect(result).toEqual(SEGMENT_REFINEMENT);
-    });
-
-    it('different keys are independent', async () => {
-      const ref2: SegmentRefinement = { refined_start: 20, refined_end: 80 };
-      await backend.writeSegmentRefinement(10, 40, 'great moment', SEGMENT_REFINEMENT);
-      await backend.writeSegmentRefinement(20, 80, 'other reason', ref2);
-      expect(await backend.readSegmentRefinement(10, 40, 'great moment')).toEqual(
-        SEGMENT_REFINEMENT,
-      );
-      expect(await backend.readSegmentRefinement(20, 80, 'other reason')).toEqual(ref2);
     });
   });
 

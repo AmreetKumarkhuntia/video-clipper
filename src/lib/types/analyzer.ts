@@ -16,7 +16,6 @@ export interface LLMAnalyzerOpts {
   audioEvents: AudioEvent[];
   maxChunks?: number;
   maxParallel: number;
-  noCache: boolean;
   requestId?: string;
   signal?: AbortSignal;
 }

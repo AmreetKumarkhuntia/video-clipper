@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TranscriptDetector } from '../src/lib/services/analysis/transcript/detector.js';
 import type { TranscriptAnalyzer } from '../src/lib/services/audio/transcriber/index.js';
 import type { TranscriptLine } from '../src/lib/types/index.js';
-import type { Cache } from '../src/lib/services/cache/cache.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -20,13 +19,6 @@ function makeAnalyzer(source: string, result: TranscriptLine[] | Error): Transcr
         result instanceof Error ? Promise.reject(result) : Promise.resolve(result),
       ),
   } as unknown as TranscriptAnalyzer;
-}
-
-function makeCache(cachedLines: TranscriptLine[] | null = null): Cache {
-  return {
-    readTranscript: vi.fn().mockResolvedValue(cachedLines),
-    writeTranscript: vi.fn().mockResolvedValue(undefined),
-  } as unknown as Cache;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,36 +42,14 @@ describe('TranscriptDetector', () => {
     });
   });
 
-  describe('detect — cache-first behaviour', () => {
-    it('returns cached lines without calling any analyzer', async () => {
-      const cached = [LINE_A, LINE_B];
-      const analyzer = makeAnalyzer('ytdlp', []);
-      const cache = makeCache(cached);
-      const detector = makeDetector([analyzer]);
-
-      const result = await detector.detect('abc123', null, cache);
-
-      expect(result.lines).toEqual(cached);
-      expect(analyzer.detect).not.toHaveBeenCalled();
-      expect(cache.writeTranscript).not.toHaveBeenCalled();
-    });
-  });
-
   describe('detect — provider chain', () => {
-    let cache: Cache;
-
-    beforeEach(() => {
-      cache = makeCache(null); // no cache → always hits the chain
-    });
-
     it('returns lines from the first analyzer on success', async () => {
       const analyzer = makeAnalyzer('ytdlp', [LINE_A]);
       const detector = makeDetector([analyzer]);
 
-      const result = await detector.detect('abc123', null, cache);
+      const result = await detector.detect('abc123', null);
 
       expect(result.lines).toEqual([LINE_A]);
-      expect(cache.writeTranscript).toHaveBeenCalledWith('abc123', [LINE_A]);
     });
 
     it('falls back to second analyzer when first throws', async () => {
@@ -87,10 +57,9 @@ describe('TranscriptDetector', () => {
       const second = makeAnalyzer('whisper', [LINE_B]);
       const detector = makeDetector([first, second]);
 
-      const result = await detector.detect('abc123', null, cache);
+      const result = await detector.detect('abc123', null);
 
       expect(result.lines).toEqual([LINE_B]);
-      expect(cache.writeTranscript).toHaveBeenCalledWith('abc123', [LINE_B]);
     });
 
     it('re-throws the last error when the whole chain is exhausted', async () => {
@@ -100,7 +69,7 @@ describe('TranscriptDetector', () => {
       const second = makeAnalyzer('whisper', err2);
       const detector = makeDetector([first, second]);
 
-      await expect(detector.detect('abc123', null, cache)).rejects.toThrow('whisper crashed');
+      await expect(detector.detect('abc123', null)).rejects.toThrow('whisper crashed');
     });
 
     it('does not call the second analyzer when the first succeeds', async () => {
@@ -108,7 +77,7 @@ describe('TranscriptDetector', () => {
       const second = makeAnalyzer('whisper', [LINE_B]);
       const detector = makeDetector([first, second]);
 
-      await detector.detect('abc123', null, cache);
+      await detector.detect('abc123', null);
       expect(second.detect).not.toHaveBeenCalled();
     });
   });
@@ -122,10 +91,9 @@ describe('TranscriptDetector', () => {
         duration: 5,
       }));
       const analyzer = makeAnalyzer('ytdlp', lines);
-      const cache = makeCache(null);
       const detector = makeDetector([analyzer]);
 
-      const result = await detector.detect('abc123', null, cache);
+      const result = await detector.detect('abc123', null);
 
       expect(result.lines).toHaveLength(20);
       expect(result.microBlocks.length).toBeGreaterThan(0);
@@ -134,10 +102,9 @@ describe('TranscriptDetector', () => {
 
     it('returns empty microBlocks and chunks for an empty transcript', async () => {
       const analyzer = makeAnalyzer('ytdlp', []);
-      const cache = makeCache(null);
       const detector = makeDetector([analyzer]);
 
-      const result = await detector.detect('abc123', null, cache);
+      const result = await detector.detect('abc123', null);
 
       expect(result.lines).toHaveLength(0);
       expect(result.microBlocks).toHaveLength(0);
@@ -148,10 +115,9 @@ describe('TranscriptDetector', () => {
   describe('detect — audioPath forwarding', () => {
     it('passes audioPath through to the analyzer', async () => {
       const analyzer = makeAnalyzer('whisper', [LINE_A]);
-      const cache = makeCache(null);
       const detector = makeDetector([analyzer]);
 
-      await detector.detect('abc123', '/tmp/audio.wav', cache);
+      await detector.detect('abc123', '/tmp/audio.wav');
       expect(analyzer.detect).toHaveBeenCalledWith('abc123', '/tmp/audio.wav');
     });
   });

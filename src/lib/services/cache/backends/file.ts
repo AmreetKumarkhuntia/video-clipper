@@ -3,50 +3,16 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import {
-  TranscriptLineSchema,
-  ChunkEvaluationSchema,
-  AudioEventSchema,
-  SegmentRefinementSchema,
-} from '@lib/types/index.js';
-import type {
-  TranscriptLine,
-  LLMChunk,
-  ChunkEvaluation,
-  AudioEvent,
-  SegmentRefinement,
-} from '@lib/types/index.js';
+import { TranscriptLineSchema, AudioEventSchema } from '@lib/types/index.js';
+import type { TranscriptLine, AudioEvent } from '@lib/types/index.js';
 import type { CacheBackend } from '@lib/types/cache.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Serializes audio events into a stable string for cache keying.
- * Events are sorted by time so the key is order-independent.
- */
-function audioEventsKey(events: AudioEvent[]): string {
-  if (events.length === 0) return '';
-  const sorted = [...events].sort((a, b) => a.time - b.time);
-  return JSON.stringify(sorted);
-}
-
 function hashContent(input: string): string {
   return createHash('sha256').update(input).digest('hex');
-}
-
-export function computeChunkCacheKey(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
-  const audioKey = audioEventsKey(chunkAudioEvents);
-  return hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`);
-}
-
-export function computeSegmentRefinementCacheKey(
-  start: number,
-  end: number,
-  reason: string,
-): string {
-  return hashContent(`${start}|${end}|${reason}`);
 }
 
 export function computeVideoCacheKey(videoId: string): string {
@@ -90,8 +56,6 @@ async function writeCacheFile(filePath: string, data: unknown): Promise<void> {
  *
  * Directory layout:
  *   <cacheDir>/transcript/<hash>.json
- *   <cacheDir>/chunks/<hash>.json
- *   <cacheDir>/segments/<hash>.json
  *   <cacheDir>/audio/<hash>.json
  */
 export class FileCacheBackend implements CacheBackend {
@@ -109,59 +73,6 @@ export class FileCacheBackend implements CacheBackend {
 
   async writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void> {
     await writeCacheFile(this.transcriptPath(videoId), lines);
-  }
-
-  // ---- LLM chunk results ----------------------------------------------------
-
-  private chunkPath(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
-    return path.join(
-      this.cacheDir,
-      'chunks',
-      `${computeChunkCacheKey(chunk, chunkAudioEvents)}.json`,
-    );
-  }
-
-  async readChunk(
-    chunk: LLMChunk,
-    chunkAudioEvents: AudioEvent[] = [],
-  ): Promise<ChunkEvaluation | null> {
-    return readCacheFile(this.chunkPath(chunk, chunkAudioEvents), ChunkEvaluationSchema);
-  }
-
-  async writeChunk(
-    chunk: LLMChunk,
-    evaluation: ChunkEvaluation,
-    chunkAudioEvents: AudioEvent[] = [],
-  ): Promise<void> {
-    if (evaluation.status !== 'success') return;
-    await writeCacheFile(this.chunkPath(chunk, chunkAudioEvents), evaluation);
-  }
-
-  // ---- Segment refinement ---------------------------------------------------
-
-  private segmentRefinementPath(start: number, end: number, reason: string): string {
-    return path.join(
-      this.cacheDir,
-      'segments',
-      `${computeSegmentRefinementCacheKey(start, end, reason)}.json`,
-    );
-  }
-
-  async readSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-  ): Promise<SegmentRefinement | null> {
-    return readCacheFile(this.segmentRefinementPath(start, end, reason), SegmentRefinementSchema);
-  }
-
-  async writeSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-    refined: SegmentRefinement,
-  ): Promise<void> {
-    await writeCacheFile(this.segmentRefinementPath(start, end, reason), refined);
   }
 
   // ---- Audio events (whole-video) -------------------------------------------

@@ -1,17 +1,5 @@
 import type { CacheBackend } from '@lib/types/cache.js';
-import type {
-  TranscriptLine,
-  LLMChunk,
-  ChunkEvaluation,
-  AudioEvent,
-  SegmentRefinement,
-} from '@lib/types/index.js';
-import {
-  FileCacheBackend,
-  computeChunkCacheKey,
-  computeSegmentRefinementCacheKey,
-} from './backends/file.js';
-import { appendChunkHash, appendSegmentHash } from './manifest.js';
+import type { TranscriptLine, AudioEvent } from '@lib/types/index.js';
 
 /**
  * Facade that wraps a CacheBackend and implements the CacheBackend interface.
@@ -25,16 +13,7 @@ import { appendChunkHash, appendSegmentHash } from './manifest.js';
  * (important for the MongoDB backend which holds an open connection).
  */
 export class Cache implements CacheBackend {
-  constructor(
-    readonly backend: CacheBackend,
-    private readonly videoId?: string,
-  ) {}
-
-  private get manifestCacheDir(): string | null {
-    if (!this.videoId) return null;
-    if (this.backend instanceof FileCacheBackend) return this.backend.cacheDir;
-    return null;
-  }
+  constructor(readonly backend: CacheBackend) {}
 
   // ---- Transcript -----------------------------------------------------------
 
@@ -44,52 +23,6 @@ export class Cache implements CacheBackend {
 
   async writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void> {
     return this.backend.writeTranscript(videoId, lines);
-  }
-
-  // ---- LLM chunk results ----------------------------------------------------
-
-  async readChunk(
-    chunk: LLMChunk,
-    chunkAudioEvents?: AudioEvent[],
-  ): Promise<ChunkEvaluation | null> {
-    return this.backend.readChunk(chunk, chunkAudioEvents);
-  }
-
-  async writeChunk(
-    chunk: LLMChunk,
-    evaluation: ChunkEvaluation,
-    chunkAudioEvents?: AudioEvent[],
-  ): Promise<void> {
-    await this.backend.writeChunk(chunk, evaluation, chunkAudioEvents);
-    const cacheDir = this.manifestCacheDir;
-    if (cacheDir && this.videoId && evaluation.status === 'success') {
-      const hash = computeChunkCacheKey(chunk, chunkAudioEvents ?? []);
-      await appendChunkHash(cacheDir, this.videoId, hash);
-    }
-  }
-
-  // ---- Segment refinement ---------------------------------------------------
-
-  async readSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-  ): Promise<SegmentRefinement | null> {
-    return this.backend.readSegmentRefinement(start, end, reason);
-  }
-
-  async writeSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-    refined: SegmentRefinement,
-  ): Promise<void> {
-    await this.backend.writeSegmentRefinement(start, end, reason, refined);
-    const cacheDir = this.manifestCacheDir;
-    if (cacheDir && this.videoId) {
-      const hash = computeSegmentRefinementCacheKey(start, end, reason);
-      await appendSegmentHash(cacheDir, this.videoId, hash);
-    }
   }
 
   // ---- Audio events (whole-video) -------------------------------------------

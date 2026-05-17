@@ -27,9 +27,6 @@ export type {
   ClipExporterOpts,
 } from './types/pipeline.js';
 
-export { SegmentRefinementSchema } from './types/cache.js';
-export type { SegmentRefinement } from './types/cache.js';
-
 export type { TranscriptProviderName, AudioProviderName } from './types/factory.js';
 
 // ── Types re-exported from types/ ──

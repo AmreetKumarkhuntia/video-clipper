@@ -5,12 +5,7 @@ import path from 'path';
 import { Cache } from '../src/lib/services/cache/cache.js';
 import { FileCacheBackend } from '../src/lib/services/cache/backends/file.js';
 import { DisabledCacheBackend } from '../src/lib/services/cache/backends/disabled.js';
-import type {
-  TranscriptLine,
-  LLMChunk,
-  ChunkEvaluation,
-  AudioEvent,
-} from '../src/lib/types/index.js';
+import type { TranscriptLine, AudioEvent } from '../src/lib/types/index.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,24 +16,6 @@ function tmpDir(): string {
 }
 
 const TRANSCRIPT_LINE: TranscriptLine = { text: 'hello world', start: 0, duration: 2 };
-
-const LLM_CHUNK: LLMChunk = {
-  start: 0,
-  end: 120,
-  text: 'some transcript text',
-};
-
-const CHUNK_EVALUATION: ChunkEvaluation = {
-  status: 'success',
-  chunk_index: 0,
-  chunk_start: 0,
-  chunk_end: 120,
-  interesting: true,
-  score: 8,
-  reason: 'great moment',
-  clip_start: 10,
-  clip_end: 40,
-};
 
 const AUDIO_EVENT: AudioEvent = {
   time: 30,
@@ -91,43 +68,6 @@ describe('Cache', () => {
     });
   });
 
-  // ── LLM chunk results ─────────────────────────────────────────────────────
-
-  describe('chunk evaluations', () => {
-    it('returns null on cache miss', async () => {
-      expect(await cache.readChunk(LLM_CHUNK)).toBeNull();
-    });
-
-    it('round-trips a successful evaluation', async () => {
-      await cache.writeChunk(LLM_CHUNK, CHUNK_EVALUATION);
-      const loaded = await cache.readChunk(LLM_CHUNK);
-      expect(loaded).toEqual(CHUNK_EVALUATION);
-    });
-
-    it('does not write failed evaluations', async () => {
-      const failed: ChunkEvaluation = {
-        status: 'failed',
-        chunk_index: 0,
-        chunk_start: 0,
-        chunk_end: 120,
-        error: 'timeout',
-      };
-      await cache.writeChunk(LLM_CHUNK, failed);
-      expect(await cache.readChunk(LLM_CHUNK)).toBeNull();
-    });
-
-    it('different chunks (different text) are independent', async () => {
-      const chunk2: LLMChunk = { ...LLM_CHUNK, text: 'different text' };
-      const eval2: ChunkEvaluation = { ...CHUNK_EVALUATION, score: 5 };
-
-      await cache.writeChunk(LLM_CHUNK, CHUNK_EVALUATION);
-      await cache.writeChunk(chunk2, eval2);
-
-      expect(await cache.readChunk(LLM_CHUNK)).toEqual(CHUNK_EVALUATION);
-      expect(await cache.readChunk(chunk2)).toEqual(eval2);
-    });
-  });
-
   // ── Audio events ──────────────────────────────────────────────────────────
 
   describe('audio events', () => {
@@ -175,11 +115,6 @@ describe('Cache', () => {
       // No error thrown, file is not written
       await disabledCache.writeTranscript('abc12345678', [TRANSCRIPT_LINE]);
       expect(await cache.readTranscript('abc12345678')).toBeNull();
-    });
-
-    it('returns null for chunk reads', async () => {
-      await cache.writeChunk(LLM_CHUNK, CHUNK_EVALUATION);
-      expect(await disabledCache.readChunk(LLM_CHUNK)).toBeNull();
     });
 
     it('returns null for audio event reads', async () => {

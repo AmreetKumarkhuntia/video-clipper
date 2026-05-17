@@ -1,7 +1,6 @@
 import { buildMicroBlocks, buildLLMChunks } from './chunker/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { TranscriptAnalyzer } from '../../audio/transcriber/base.js';
-import type { CacheBackend } from '@lib/types/cache.js';
 import type { TranscriptLine, MicroBlock, LLMChunk } from '@lib/types/transcript.js';
 import type { TranscriptDetectorResult } from '@lib/types/analyzer.js';
 
@@ -43,41 +42,12 @@ export class TranscriptDetector {
 
   /**
    * Fetches, groups, and chunks the transcript for the given video ID.
-   *
-   * Walks the analyzer chain in order, falling back on error. When a cache is
-   * provided it is checked first and written after the first successful fetch.
-   * Omit cache (or pass null) to always fetch fresh from the chain.
-   *
-   * @param videoId   - YouTube video ID
-   * @param audioPath - Path to the downloaded WAV, or null if audio is not yet available
-   * @param cache     - Optional cache for read/write of transcript lines
+   * Walks the analyzer chain in order, falling back on error.
    */
-  async detect(
-    videoId: string,
-    audioPath: string | null,
-    cache?: CacheBackend | null,
-  ): Promise<TranscriptDetectorResult> {
-    let lines: TranscriptLine[];
-
-    if (cache) {
-      const cached = await cache.readTranscript(videoId);
-      if (cached) {
-        log.info(
-          'TranscriptDetector.detect',
-          `[cache hit] Transcript loaded from cache (${cached.length} lines)`,
-        );
-        lines = cached;
-      } else {
-        lines = await this.fetchFromChain(videoId, audioPath);
-        await cache.writeTranscript(videoId, lines);
-      }
-    } else {
-      lines = await this.fetchFromChain(videoId, audioPath);
-    }
-
+  async detect(videoId: string, audioPath: string | null): Promise<TranscriptDetectorResult> {
+    const lines = await this.fetchFromChain(videoId, audioPath);
     const microBlocks = this.buildMicroBlocks(lines);
     const chunks = this.buildChunks(microBlocks);
-
     return { lines, microBlocks, chunks };
   }
 

@@ -2,19 +2,8 @@ import { createHash } from 'node:crypto';
 import type { MongoClient } from 'mongodb';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import {
-  TranscriptLineSchema,
-  ChunkEvaluationSchema,
-  AudioEventSchema,
-  SegmentRefinementSchema,
-} from '@lib/types/index.js';
-import type {
-  TranscriptLine,
-  LLMChunk,
-  ChunkEvaluation,
-  AudioEvent,
-  SegmentRefinement,
-} from '@lib/types/index.js';
+import { TranscriptLineSchema, AudioEventSchema } from '@lib/types/index.js';
+import type { TranscriptLine, AudioEvent } from '@lib/types/index.js';
 import type { CacheBackend, CacheDocument } from '@lib/types/cache.js';
 
 // ---------------------------------------------------------------------------
@@ -23,16 +12,6 @@ import type { CacheBackend, CacheDocument } from '@lib/types/cache.js';
 
 function hashContent(input: string): string {
   return createHash('sha256').update(input).digest('hex');
-}
-
-/**
- * Serializes audio events into a stable string for cache keying.
- * Events are sorted by time so the key is order-independent.
- */
-function audioEventsKey(events: AudioEvent[]): string {
-  if (events.length === 0) return '';
-  const sorted = [...events].sort((a, b) => a.time - b.time);
-  return JSON.stringify(sorted);
 }
 
 // ---------------------------------------------------------------------------
@@ -163,73 +142,6 @@ export class MongoCacheBackend implements CacheBackend {
 
   async writeTranscript(videoId: string, lines: TranscriptLine[]): Promise<void> {
     await this.writeDoc(MongoCacheBackend.TRANSCRIPTS, hashContent(videoId), lines);
-  }
-
-  // ---------------------------------------------------------------------------
-  // LLM chunk results
-  // ---------------------------------------------------------------------------
-
-  private static readonly CHUNKS = 'chunkEvaluations';
-
-  private chunkKey(chunk: LLMChunk, chunkAudioEvents: AudioEvent[] = []): string {
-    const audioKey = audioEventsKey(chunkAudioEvents);
-    return hashContent(`${chunk.start}|${chunk.end}|${chunk.text}|${audioKey}`);
-  }
-
-  async readChunk(
-    chunk: LLMChunk,
-    chunkAudioEvents: AudioEvent[] = [],
-  ): Promise<ChunkEvaluation | null> {
-    return this.readDoc(
-      MongoCacheBackend.CHUNKS,
-      this.chunkKey(chunk, chunkAudioEvents),
-      ChunkEvaluationSchema,
-    );
-  }
-
-  async writeChunk(
-    chunk: LLMChunk,
-    evaluation: ChunkEvaluation,
-    chunkAudioEvents: AudioEvent[] = [],
-  ): Promise<void> {
-    // Only cache successful evaluations — mirrors the file backend behaviour
-    if (evaluation.status !== 'success') return;
-    await this.writeDoc(
-      MongoCacheBackend.CHUNKS,
-      this.chunkKey(chunk, chunkAudioEvents),
-      evaluation,
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Segment refinement
-  // ---------------------------------------------------------------------------
-
-  private static readonly SEGMENTS = 'segmentRefinements';
-
-  async readSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-  ): Promise<SegmentRefinement | null> {
-    return this.readDoc(
-      MongoCacheBackend.SEGMENTS,
-      hashContent(`${start}|${end}|${reason}`),
-      SegmentRefinementSchema,
-    );
-  }
-
-  async writeSegmentRefinement(
-    start: number,
-    end: number,
-    reason: string,
-    refined: SegmentRefinement,
-  ): Promise<void> {
-    await this.writeDoc(
-      MongoCacheBackend.SEGMENTS,
-      hashContent(`${start}|${end}|${reason}`),
-      refined,
-    );
   }
 
   // ---------------------------------------------------------------------------

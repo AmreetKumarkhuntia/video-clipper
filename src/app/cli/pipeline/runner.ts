@@ -194,11 +194,9 @@ export async function runPipeline(args: CliArgs, requestId: string): Promise<voi
       videoId,
       audioPath,
       audioEvents,
-      cache,
       {
         maxChunks: args.maxChunks,
         maxParallel,
-        noCache: args.noCache,
         transcriptProvider: config.TRANSCRIPT_PROVIDER,
         transcriptChainConfig,
         microBlockSec: config.MICRO_BLOCK_SEC,
@@ -240,9 +238,8 @@ export async function runPipeline(args: CliArgs, requestId: string): Promise<voi
       return;
     }
 
-    const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, cache, {
+    const refinedSegments = await refineRankedSegments(rankedSegments, microBlocks, {
       maxParallel,
-      noCache: args.noCache,
       maxRetries: config.LLM_MAX_RETRIES,
       model,
       requestId,
