@@ -3,7 +3,6 @@ import { refineSegments } from '../refiner/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { LanguageModel } from 'ai';
 import type { TranscriptDetector } from '../transcript/detector.js';
-import type { CacheBackend } from '@lib/types/cache.js';
 import type {
   MicroBlock,
   RankedSegment,
@@ -17,7 +16,6 @@ import type {
 export class LLMAnalyzer {
   constructor(
     private readonly transcriptDetector: TranscriptDetector,
-    private readonly cache: CacheBackend,
     private readonly model: LanguageModel,
     private readonly maxChunks: number | undefined,
     private readonly maxRetries: number,
@@ -30,7 +28,6 @@ export class LLMAnalyzer {
     const { lines, microBlocks, chunks } = await this.transcriptDetector.detect(
       opts.videoId,
       opts.audioPath,
-      this.cache,
     );
 
     const chunkLimit = opts.maxChunks ?? this.maxChunks;
@@ -69,8 +66,6 @@ export class LLMAnalyzer {
       lines,
       opts.audioEvents,
       opts.maxParallel,
-      this.cache,
-      opts.noCache,
       analyzeOpts,
     );
 
@@ -85,7 +80,7 @@ export class LLMAnalyzer {
   async refine(
     rankedSegments: RankedSegment[],
     microBlocks: MicroBlock[],
-    opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'noCache' | 'requestId' | 'signal'>,
+    opts: Pick<LLMAnalyzerOpts, 'maxParallel' | 'requestId' | 'signal'>,
   ): Promise<RankedSegment[]> {
     log.info('LLMAnalyzer.refine', 'Refining clip boundaries...', opts.requestId);
     const refineOpts: RefineSegmentsOpts = {
@@ -100,13 +95,6 @@ export class LLMAnalyzer {
           }
         : undefined,
     };
-    return refineSegments(
-      rankedSegments,
-      microBlocks,
-      opts.maxParallel,
-      this.cache,
-      opts.noCache,
-      refineOpts,
-    );
+    return refineSegments(rankedSegments, microBlocks, opts.maxParallel, refineOpts);
   }
 }

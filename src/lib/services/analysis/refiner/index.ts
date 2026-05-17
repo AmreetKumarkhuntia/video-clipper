@@ -2,7 +2,6 @@ import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import type { CacheBackend } from '@lib/types/cache.js';
 import type { RankedSegment, MicroBlock, StreamCallbacks } from '@lib/types/index.js';
 import type { RefineSegmentsOpts } from '@lib/types/analyzer.js';
 import { RefinedBoundariesSchema } from '@lib/types/analyzer.js';
@@ -74,21 +73,9 @@ function createReportRefinedBoundariesTool() {
 async function refineSegment(
   segment: RankedSegment,
   allBlocks: MicroBlock[],
-  cache: CacheBackend,
-  noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment> {
   opts.callbacks?.onSegmentStarted?.(segment.rank);
-
-  if (!noCache) {
-    const cached = await cache.readSegmentRefinement(segment.start, segment.end, segment.reason);
-    if (cached) {
-      log.info('refineSegment', `[segment] cache hit (rank=${segment.rank})`, opts.requestId);
-      const refined = { ...segment, start: cached.refined_start, end: cached.refined_end };
-      opts.callbacks?.onSegmentRefined?.(segment.rank, refined);
-      return refined;
-    }
-  }
 
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
@@ -122,13 +109,6 @@ async function refineSegment(
   const refinedStart = Math.max(windowStart, Math.min(object.clip_start, object.clip_end - 1));
   const refinedEnd = Math.min(windowEnd, Math.max(object.clip_end, object.clip_start + 1));
 
-  if (!noCache) {
-    await cache.writeSegmentRefinement(segment.start, segment.end, segment.reason, {
-      refined_start: refinedStart,
-      refined_end: refinedEnd,
-    });
-  }
-
   const refined = { ...segment, start: refinedStart, end: refinedEnd };
   opts.callbacks?.onSegmentRefined?.(segment.rank, refined);
   return refined;
@@ -138,8 +118,6 @@ export async function refineSegments(
   segments: RankedSegment[],
   allBlocks: MicroBlock[],
   concurrency: number,
-  cache: CacheBackend,
-  noCache: boolean,
   opts: RefineSegmentsOpts,
 ): Promise<RankedSegment[]> {
   const done = log.fnCalled('refineSegments', opts.requestId, {
@@ -149,7 +127,7 @@ export async function refineSegments(
 
   const limit = pLimit(concurrency);
   const results = await Promise.allSettled(
-    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, cache, noCache, opts))),
+    segments.map((segment) => limit(() => refineSegment(segment, allBlocks, opts))),
   );
 
   const refined = results.map((result, i) => {

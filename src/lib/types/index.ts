@@ -22,8 +22,7 @@ export type {
   AudioProcessorConfig,
 } from './pipeline.js';
 
-export { SegmentRefinementSchema } from './cache.js';
-export type { SegmentRefinement, CacheBackend, CacheDocument } from './cache.js';
+export type { CacheBackend, CacheDocument } from './cache.js';
 
 export type { TranscriptProviderName, AudioProviderName } from './factory.js';
 

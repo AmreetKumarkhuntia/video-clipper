@@ -2,7 +2,6 @@ import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
 import { log } from '@lib/utils/logger.js';
-import { formatSeconds } from '@lib/utils/format.js';
 import { AnalyzedSegmentSchema } from '@lib/types/segment.js';
 import type {
   LLMChunk,
@@ -12,7 +11,6 @@ import type {
   AudioEvent,
   StreamCallbacks,
 } from '@lib/types/index.js';
-import type { CacheBackend } from '@lib/types/cache.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
 const BACKOFF_BASE_MS = 1000;
@@ -142,30 +140,9 @@ async function analyzeChunk(
   chunk: LLMChunk,
   chunkLines: TranscriptLine[],
   chunkAudioEvents: AudioEvent[],
-  cache: CacheBackend,
-  noCache: boolean,
   chunkIndex: number,
   opts: AnalyzeChunksOpts,
 ): Promise<AnalyzedSegment> {
-  if (!noCache) {
-    const cached = await cache.readChunk(chunk, chunkAudioEvents);
-    if (cached && cached.status === 'success') {
-      log.info(
-        'analyzeChunk',
-        `[chunk] cache hit (${formatSeconds(chunk.start)}–${formatSeconds(chunk.end)})`,
-        opts.requestId,
-      );
-      const result: AnalyzedSegment = {
-        interesting: cached.interesting,
-        score: cached.score,
-        reason: cached.reason,
-        clip_start: cached.clip_start,
-        clip_end: cached.clip_end,
-      };
-      return result;
-    }
-  }
-
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
@@ -206,20 +183,6 @@ async function analyzeChunk(
         `Chunk ${chunkIndex} analysis complete: interesting=${object.interesting}, score=${object.score}, reason=${object.reason}`,
         opts.requestId,
       );
-      if (!noCache) {
-        const evaluation: ChunkEvaluation = {
-          status: 'success' as const,
-          chunk_index: chunkIndex,
-          chunk_start: chunk.start,
-          chunk_end: chunk.end,
-          interesting: object.interesting,
-          score: object.score,
-          reason: object.reason,
-          clip_start: object.clip_start,
-          clip_end: object.clip_end,
-        };
-        await cache.writeChunk(chunk, evaluation, chunkAudioEvents);
-      }
       return object;
     } catch (err) {
       lastError = err;
@@ -254,8 +217,6 @@ export async function analyzeChunks(
   lines: TranscriptLine[],
   audioEvents: AudioEvent[],
   concurrency: number,
-  cache: CacheBackend,
-  noCache: boolean,
   opts: AnalyzeChunksOpts,
 ): Promise<ChunkEvaluation[]> {
   const done = log.fnCalled('analyzeChunks', opts.requestId, {
@@ -274,15 +235,7 @@ export async function analyzeChunks(
         opts.callbacks?.onChunkStarted?.(i);
 
         try {
-          const seg = await analyzeChunk(
-            chunk,
-            chunkLines,
-            chunkAudioEvents,
-            cache,
-            noCache,
-            i,
-            opts,
-          );
+          const seg = await analyzeChunk(chunk, chunkLines, chunkAudioEvents, i, opts);
           const evaluation = toSuccessEvaluation(chunk, i, seg);
           opts.callbacks?.onChunkAnalyzed?.(i, evaluation);
           return evaluation;
