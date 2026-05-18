@@ -53,7 +53,13 @@
     try {
       const [editsRes, transcriptRes] = await Promise.all([
         apiFetch<{ edits: ClipEdits }>(`/api/clips/${clip.id}/edits`),
-        apiFetch<TranscriptBundle>(`/api/youtube/videos/${videoId}/transcript`).catch(() => null),
+        apiFetch<TranscriptBundle>(`/api/videos/${videoId}/transcript`).catch((err: unknown) => {
+          showToast(
+            'error',
+            `Could not load transcript: ${err instanceof Error ? err.message : String(err)}`,
+          );
+          return null;
+        }),
       ]);
       edits = editsRes.edits;
       originalEditsJson = JSON.stringify(edits);

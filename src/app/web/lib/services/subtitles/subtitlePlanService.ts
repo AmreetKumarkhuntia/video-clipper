@@ -46,6 +46,12 @@ export async function planSubtitles(
 
   const prompt = buildPlanPrompt(req);
 
+  log.info(
+    'planSubtitles',
+    `[subtitle-plan] prompt built: ${JSON.stringify({ system: effectiveSystemPrompt, prompt })}`,
+    requestId,
+  );
+
   const t0 = Date.now();
   const result = await generateText({
     model,
@@ -66,8 +72,6 @@ export async function planSubtitles(
     `[subtitle-plan] toolCalls=${result.toolCalls.length} finishReason=${result.finishReason} (${Date.now() - t0}ms)`,
     requestId,
   );
-
-  log.info('planSubtitles', `[subtitle-plan] result: ${JSON.stringify(result)}`, requestId);
 
   const toolCall = result.toolCalls.find((tc) => tc.toolName === 'register_planned_subtitles');
   if (!toolCall) {
@@ -103,7 +107,7 @@ export async function planSubtitles(
     requestId,
   );
 
-  done({ lines: normalized.lines.length });
+  done({ lines: normalized.lines.length, normalized });
   return normalized;
 }
 
