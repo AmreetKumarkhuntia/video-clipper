@@ -123,22 +123,13 @@ function buildDraftItem(clip: ClipArtifact, analysis: ClipPlan, cfg: Config): Pu
   // Use the rendered edited path if available; fall back to the original clip.
   const resolvedPath = clip.editedPath ?? clip.path;
 
-  // A render is required when edits exist but haven't been rendered yet, or when the
-  // edits have changed since the last render (stale).
-  const isRenderRequired =
-    clip.hasEdits &&
-    (!clip.editedPath ||
-      (!!clip.currentEditsHash &&
-        !!clip.lastRenderedHash &&
-        clip.currentEditsHash !== clip.lastRenderedHash));
-
   return {
     clipArtifactId: clip.id,
     segmentId: clip.segmentId,
     filename: clip.filename,
     path: resolvedPath,
     editedPath: clip.editedPath,
-    isRenderRequired,
+    isRenderRequired: false,
     startSec: clip.startSec,
     endSec: clip.endSec,
     durationSec: clip.durationSec,
