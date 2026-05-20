@@ -1,6 +1,6 @@
 import { generateText, tool } from 'ai';
 import pLimit from 'p-limit';
-import { getModel } from '@lib/utils/modelFactory.js';
+import { getModel } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import {
   YOUTUBE_CATEGORIES,

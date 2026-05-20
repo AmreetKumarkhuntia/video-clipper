@@ -1,5 +1,5 @@
 import { generateText, tool } from 'ai';
-import { getModel } from '@lib/utils/modelFactory.js';
+import { getModel } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { Config } from '@lib/types/config.js';
 import {
