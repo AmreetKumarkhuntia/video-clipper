@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
   }
 
   try {
-    const analysis = await getAnalysis(locals.config.OUTPUT_DIR, parsed.data.analysisId);
+    const analysis = await getAnalysis(parsed.data.analysisId);
 
     if (!analysis) {
       reqDone(404);

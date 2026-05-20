@@ -23,7 +23,7 @@ export async function buildPublishDraft(
   const done = log.fnCalled('buildPublishDraft', requestId, { analysisId });
 
   const [analysis, clips] = await Promise.all([
-    getAnalysis(cfg.OUTPUT_DIR, analysisId),
+    getAnalysis(analysisId),
     Promise.resolve(listClipsByAnalysisId(analysisId)),
   ]);
 
@@ -52,7 +52,7 @@ export async function loadAndRefreshPublishDraft(
   requestId?: string,
 ): Promise<PublishDraft | null> {
   const [existingDraft, freshDraft] = await Promise.all([
-    getPublishDraft(cfg.OUTPUT_DIR, analysisId),
+    getPublishDraft(analysisId),
     buildPublishDraft(analysisId, cfg, requestId),
   ]);
 
@@ -84,7 +84,7 @@ export async function savePublishDraftFromRequest(
   const done = log.fnCalled('savePublishDraft', requestId, { analysisId: input.analysisId });
 
   const [existing, fresh] = await Promise.all([
-    getPublishDraft(cfg.OUTPUT_DIR, input.analysisId),
+    getPublishDraft(input.analysisId),
     buildPublishDraft(input.analysisId, cfg, requestId),
   ]);
   const createdAt = existing?.createdAt ?? fresh?.createdAt ?? new Date().toISOString();
@@ -111,7 +111,6 @@ export async function savePublishDraftFromRequest(
       updatedAt: new Date().toISOString(),
       items,
     }),
-    cfg.OUTPUT_DIR,
   );
   done({ items: items.length });
   return saved;

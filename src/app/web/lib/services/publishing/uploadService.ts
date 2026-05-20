@@ -88,7 +88,7 @@ export async function uploadDraftClips(
     }
   }
 
-  const saved = await saveUploadArtifacts(uploads, cfg.OUTPUT_DIR);
+  const saved = await saveUploadArtifacts(uploads);
   const uploaded = uploads.filter((u) => u.status === 'uploaded').length;
   const failed = uploads.length - uploaded;
   log.info('uploadDraftClips', '[persisted]', requestId, {

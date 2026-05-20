@@ -35,6 +35,14 @@ export function getModel(
     case 'zai':
       return createOpenAICompatible({
         name: 'zai',
+        baseURL: 'https://api.z.ai/api/paas/v4',
+        apiKey: apiKeys.ZAI_API_KEY!,
+        supportsStructuredOutputs: true,
+      }).languageModel(model);
+
+    case 'zaicoding':
+      return createOpenAICompatible({
+        name: 'zaicoding',
         baseURL: 'https://api.z.ai/api/coding/paas/v4',
         apiKey: apiKeys.ZAI_API_KEY!,
         supportsStructuredOutputs: true,
