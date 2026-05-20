@@ -46,11 +46,10 @@ export async function planSubtitles(
 
   const prompt = buildPlanPrompt(req);
 
-  log.info(
-    'planSubtitles',
-    `[subtitle-plan] prompt built: ${JSON.stringify({ system: effectiveSystemPrompt, prompt })}`,
-    requestId,
-  );
+  log.info('planSubtitles', `[subtitle-plan] prompt built`, requestId, {
+    system: effectiveSystemPrompt,
+    prompt,
+  });
 
   const t0 = Date.now();
   const result = await generateText({
@@ -161,7 +160,7 @@ function buildPlanPrompt(req: PlanSubtitlesRequest): string {
   return `Clip duration: ${req.durationSec.toFixed(2)}s
 
 Current subtitle lines (${lines.length} total):
-${JSON.stringify(lines, null, 2)}
+${JSON.stringify(lines)}
 
 Return corrected subtitles via register_planned_subtitles.`;
 }

@@ -12,10 +12,10 @@ export async function load({
   const analysisId = params.analysisId;
 
   const [analysis, clips, authStatus, draft] = await Promise.all([
-    getAnalysis(locals.config.OUTPUT_DIR, analysisId),
+    getAnalysis(analysisId),
     Promise.resolve(listClipsByAnalysisId(analysisId)),
     getYouTubeAuthStatus(),
-    getPublishDraft(locals.config.OUTPUT_DIR, analysisId),
+    getPublishDraft(analysisId),
   ]);
 
   if (!analysis) {

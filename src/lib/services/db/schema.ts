@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 
 // Stable channel identity only — dynamic stats fetched from YouTube API on demand
 export const channels = sqliteTable('channels', {
@@ -73,6 +73,37 @@ export const analyses = sqliteTable('analyses', {
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
+
+// One row per analysis's publish draft. Items serialised as JSON; one draft per analysis (UNIQUE on analysis_id).
+export const publishDrafts = sqliteTable('publish_drafts', {
+  id: text('id').primaryKey(),
+  analysisId: text('analysis_id').notNull().unique(),
+  videoId: text('video_id').notNull(),
+  title: text('title').notNull(),
+  itemsJson: text('items_json').notNull(), // JSON: PublishDraftItem[]
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+// One row per upload attempt. Indexed by analysisId for bulk listing.
+export const uploadArtifacts = sqliteTable(
+  'upload_artifacts',
+  {
+    id: text('id').primaryKey(),
+    analysisId: text('analysis_id').notNull(),
+    videoId: text('video_id').notNull(),
+    clipArtifactId: text('clip_artifact_id').notNull(),
+    title: text('title').notNull(),
+    privacyStatus: text('privacy_status').notNull(),
+    status: text('status').notNull(), // 'uploaded' | 'failed'
+    youtubeVideoId: text('youtube_video_id'),
+    youtubeUrl: text('youtube_url'),
+    error: text('error'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('upload_artifacts_analysis_id_idx').on(t.analysisId)],
+);
 
 // One row per generated clip. MP4 files still live on disk under outputs/web/clips/;
 // this table is the source of truth for clip metadata, edits payload, and render-path bookkeeping.

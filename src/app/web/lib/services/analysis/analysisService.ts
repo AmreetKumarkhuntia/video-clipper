@@ -293,7 +293,7 @@ export async function analyzeTranscriptForWeb(
     createdAt,
   });
 
-  return saveAnalysis(plan, cfg.OUTPUT_DIR, optionsHash);
+  return saveAnalysis(plan, optionsHash);
 }
 
 /**

@@ -28,10 +28,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
   }
 
   try {
-    const uploads = await listUploadArtifactsByAnalysisId(
-      locals.config.OUTPUT_DIR,
-      parsed.data.analysisId,
-    );
+    const uploads = await listUploadArtifactsByAnalysisId(parsed.data.analysisId);
     reqDone(200);
     return jsonOk({ uploads });
   } catch (error) {

@@ -26,6 +26,7 @@ const FIELD_CONSTRAINTS: Record<
       'mistral',
       'groq',
       'zai',
+      'zaicoding',
       'openrouter',
       'custom',
     ],

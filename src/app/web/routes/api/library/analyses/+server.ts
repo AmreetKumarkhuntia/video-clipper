@@ -6,7 +6,7 @@ import { log } from '@lib/utils/logger.js';
 export const GET: RequestHandler = async ({ locals }) => {
   const reqDone = log.request('GET', '/api/library/analyses', locals.requestId);
   try {
-    const analyses = await listAnalyses(locals.config.OUTPUT_DIR);
+    const analyses = await listAnalyses();
     reqDone(200);
     return jsonOk({ analyses });
   } catch (error) {
