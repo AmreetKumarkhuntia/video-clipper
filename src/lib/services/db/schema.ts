@@ -105,6 +105,17 @@ export const uploadArtifacts = sqliteTable(
   (t) => [index('upload_artifacts_analysis_id_idx').on(t.analysisId)],
 );
 
+// User-defined caption style presets. Global — available across all clips and videos.
+// style and position are stored as JSON blobs matching TextStyle and Position from clipEdit.ts.
+export const captionPresets = sqliteTable('caption_presets', {
+  id: text('id').primaryKey(), // nanoid
+  name: text('name').notNull(),
+  style: text('style').notNull(), // JSON: TextStyle
+  position: text('position').notNull(), // JSON: Position
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
 // One row per generated clip. MP4 files still live on disk under outputs/web/clips/;
 // this table is the source of truth for clip metadata, edits payload, and render-path bookkeeping.
 // segmentationId is nullable so a clip remains queryable after its source segmentation row is

@@ -33,6 +33,21 @@ export type AnalysisInsert = {
   planJson: string;
 };
 
+export type CaptionPresetRecord = {
+  id: string;
+  name: string;
+  style: string; // JSON: TextStyle
+  position: string; // JSON: Position
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type CaptionPresetInsert = {
+  name: string;
+  style: string; // JSON: TextStyle
+  position: string; // JSON: Position
+};
+
 export type UpsertClipInput = {
   id: string;
   videoId: string;
