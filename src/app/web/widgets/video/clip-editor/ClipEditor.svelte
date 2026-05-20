@@ -62,9 +62,9 @@
         }),
       ]);
       edits = editsRes.edits;
-      originalEditsJson = JSON.stringify(edits);
       transcript = transcriptRes;
       if (edits.subtitles.length === 0 && transcript) importTranscript();
+      originalEditsJson = JSON.stringify(edits);
     } catch (e) {
       errorMessage = e instanceof Error ? e.message : String(e);
     } finally {
