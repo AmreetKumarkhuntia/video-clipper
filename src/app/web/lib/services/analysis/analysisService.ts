@@ -1,4 +1,4 @@
-import { getModel } from '@lib/utils/modelFactory.js';
+import { getModel } from '@lib/services/modelFactory/index.js';
 import { analyzeChunks } from '@lib/services/analysis/llm/index.js';
 import { refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';

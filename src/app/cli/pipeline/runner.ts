@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { config } from '@lib/config/index.js';
 import { Cache, createCacheBackend } from '@lib/services/cache/index.js';
 import { log } from '@lib/utils/logger.js';
-import { getModel } from '@lib/utils/modelFactory.js';
+import { getModel } from '@lib/services/modelFactory/index.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
 import { processAudio } from './stages/audioProcessor.js';
