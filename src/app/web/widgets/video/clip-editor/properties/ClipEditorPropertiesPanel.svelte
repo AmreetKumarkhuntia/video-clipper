@@ -5,6 +5,7 @@
   } from '@app/web/types/componentProps.js';
   import type { ClipEdits, SubtitleLine, TextOverlay } from '@lib/types/clipEdit.js';
   import { CAPTION_TEMPLATES } from '@web/lib/captionTemplates.js';
+  import { captionPresets } from '@web/lib/stores/captionPresets.js';
   import { rescaleWords, wordsFromText } from '@web/lib/subtitleTiming.js';
   import Textarea from '@web/components/Textarea.svelte';
   import Toggle from '@web/components/Toggle.svelte';
@@ -14,7 +15,10 @@
   import ColorSwatch from '@web/components/ColorSwatch.svelte';
   import TimecodeInput from '@web/components/TimecodeInput.svelte';
   import Button from '@web/components/Button.svelte';
+  import Icon from '@web/components/Icon.svelte';
   import SelectionHeader from './SelectionHeader.svelte';
+  import SavePresetDialog from '../templates/SavePresetDialog.svelte';
+  import { saveCaptionPreset, updateCaptionPreset } from '@web/lib/stores/captionPresets.js';
 
   let { edits, selectedItemId, onupdate }: ClipEditorPropertiesPanelProps = $props();
 
@@ -44,7 +48,12 @@
 
   let selectionBadge = $derived.by(() => {
     if (itemKind !== 'subtitle' || !selectedSubtitle?.templateId) return undefined;
-    return CAPTION_TEMPLATES.find((t) => t.id === selectedSubtitle?.templateId)?.id;
+    const tid = selectedSubtitle.templateId;
+    // Check built-in templates first, then user presets
+    const builtin = CAPTION_TEMPLATES.find((t) => t.id === tid);
+    if (builtin) return builtin.id;
+    const user = $captionPresets.find((p) => p.id === tid);
+    return user?.name ?? tid;
   });
 
   const alignOptions: SegmentedControlOption<'left' | 'center' | 'right'>[] = [
@@ -182,6 +191,31 @@
     const alpha = current && current.length > 7 ? current.slice(7) : '';
     updateStyle('bgColor', newHex + alpha);
   }
+
+  // Save-as-preset dialog
+  let saveDialogOpen = $state(false);
+
+  let saveDialogExistingId = $derived.by(() => {
+    if (!selectedSubtitle?.templateId) return undefined;
+    return $captionPresets.find((p) => p.id === selectedSubtitle?.templateId)?.id;
+  });
+
+  let saveDialogExistingName = $derived.by(() => {
+    if (!saveDialogExistingId) return undefined;
+    return $captionPresets.find((p) => p.id === saveDialogExistingId)?.name;
+  });
+
+  async function handleSavePreset(name: string, id?: string): Promise<void> {
+    saveDialogOpen = false;
+    if (!selectedSubtitle) return;
+    const style = { ...selectedSubtitle.style };
+    const position = { ...selectedSubtitle.position };
+    if (id) {
+      await updateCaptionPreset(id, { name, style, position });
+    } else {
+      await saveCaptionPreset(name, style, position);
+    }
+  }
 </script>
 
 <div class="props-panel">
@@ -199,6 +233,15 @@
       ondelete={deleteSelected}
       deleteLabel={itemKind === 'subtitle' ? 'Delete subtitle' : 'Delete banner'}
     />
+
+    {#if itemKind === 'subtitle'}
+      <div class="ce-rg ce-save-preset-row">
+        <Button size="sm" variant="secondary" onclick={() => (saveDialogOpen = true)}>
+          <Icon name="bookmark" size={13} />
+          Save as preset
+        </Button>
+      </div>
+    {/if}
 
     <section class="ce-rg">
       <PanelHeader text="Text" />
@@ -400,6 +443,17 @@
   {/if}
 </div>
 
+{#if saveDialogOpen && selectedSubtitle}
+  <SavePresetDialog
+    style={selectedSubtitle.style}
+    position={selectedSubtitle.position}
+    existingPresetId={saveDialogExistingId}
+    existingPresetName={saveDialogExistingName}
+    onSave={handleSavePreset}
+    onCancel={() => (saveDialogOpen = false)}
+  />
+{/if}
+
 <style>
   .props-panel {
     display: flex;
@@ -415,5 +469,9 @@
     margin: 0;
     padding: 24px 16px;
     text-align: center;
+  }
+
+  .ce-save-preset-row {
+    padding-top: 0;
   }
 </style>

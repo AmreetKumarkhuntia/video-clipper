@@ -15,6 +15,7 @@ import type { PublishDraftItem, PublishDraftItemEvent, UploadArtifact } from './
 import type { UploadQueueItem } from './upload.js';
 import type { SectionConfig, SelectOption, Toast } from './web.js';
 import type { VideoWorkflowStep } from './workflow.js';
+import type { UserCaptionPreset } from './captionPreset.js';
 
 // ---------- UI primitives ----------
 
@@ -459,4 +460,22 @@ export interface CanvasOverlayProps {
 export interface ClipPreviewModalProps {
   clipId: string;
   onclose: () => void;
+}
+
+export interface SavePresetDialogProps {
+  style: TextStyle;
+  position: Position;
+  /** If set, the dialog pre-fills the name and offers an "Update" path. */
+  existingPresetId?: string;
+  existingPresetName?: string;
+  onSave: (name: string, id?: string) => void;
+  onCancel: () => void;
+}
+
+export interface UserPresetChipProps {
+  preset: UserCaptionPreset;
+  active: boolean;
+  onApply: () => void;
+  onEdit: (preset: UserCaptionPreset) => void;
+  onDelete: (id: string) => void;
 }
