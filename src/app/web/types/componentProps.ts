@@ -265,6 +265,7 @@ export interface SkeletonProps {
   width?: string;
   height?: string;
   short?: boolean;
+  style?: string;
   class?: string;
 }
 

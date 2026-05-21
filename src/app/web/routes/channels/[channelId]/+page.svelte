@@ -6,6 +6,7 @@
   import Pagination from '@web/components/Pagination.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
 
   let channelId = $derived(page.params.channelId);
 
@@ -51,8 +52,8 @@
         <Card class="clipcard">
           <div class="clipcard__thumb"><div class="clipcard__thumb-bg"></div></div>
           <div class="clipcard__body">
-            <div class="sk sk--line" style="width:90%;margin-bottom:8px"></div>
-            <div class="sk sk--line sk--short"></div>
+            <Skeleton width="90%" style="margin-bottom:8px" />
+            <Skeleton short />
           </div>
         </Card>
       {/each}

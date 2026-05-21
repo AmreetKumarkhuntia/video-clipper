@@ -8,6 +8,7 @@
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
   import Textarea from '@web/components/Textarea.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
   import type { SaveYouTubeManualAuthRequest, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let authStatus = $state<YouTubeAuthStatus | null>(null);
@@ -120,8 +121,8 @@
     <div class="provider-grid">
       {#each Array(2) as _}
         <div class="provider">
-          <div class="sk sk--line" style="width:120px;height:14px;margin-bottom:8px"></div>
-          <div class="sk sk--line sk--short"></div>
+          <Skeleton width="120px" height="14px" style="margin-bottom:8px" />
+          <Skeleton short />
         </div>
       {/each}
     </div>
