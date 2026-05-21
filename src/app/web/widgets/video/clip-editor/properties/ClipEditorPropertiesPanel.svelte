@@ -15,7 +15,9 @@
   import ColorSwatch from '@web/components/ColorSwatch.svelte';
   import TimecodeInput from '@web/components/TimecodeInput.svelte';
   import Button from '@web/components/Button.svelte';
+  import Field from '@web/components/Field.svelte';
   import Icon from '@web/components/Icon.svelte';
+  import Slider from '@web/components/Slider.svelte';
   import SelectionHeader from './SelectionHeader.svelte';
   import SavePresetDialog from '../templates/SavePresetDialog.svelte';
   import { saveCaptionPreset, updateCaptionPreset } from '@web/lib/stores/captionPresets.js';
@@ -252,8 +254,7 @@
           itemKind === 'subtitle' ? updateSubtitleField('text', v) : updateOverlayField('text', v)}
       />
       <div class="ce-time-row">
-        <div class="ce-field">
-          <label class="ce-field__label" for="prop-start">Start</label>
+        <Field label="Start" for="prop-start">
           <TimecodeInput
             id="prop-start"
             valueSec={item.startSec}
@@ -262,9 +263,8 @@
                 ? updateSubtitleField('startSec', sec)
                 : updateOverlayField('startSec', sec)}
           />
-        </div>
-        <div class="ce-field">
-          <label class="ce-field__label" for="prop-end">End</label>
+        </Field>
+        <Field label="End" for="prop-end">
           <TimecodeInput
             id="prop-end"
             valueSec={item.endSec}
@@ -273,7 +273,7 @@
                 ? updateSubtitleField('endSec', sec)
                 : updateOverlayField('endSec', sec)}
           />
-        </div>
+        </Field>
       </div>
     </section>
 
@@ -315,15 +315,14 @@
           onchange={(v) => updateStyle('weight', v)}
         />
       </div>
-      <div class="ce-field" role="group" aria-label="Text alignment">
-        <span class="ce-field__label">Align</span>
+      <Field label="Align">
         <SegmentedControl
           options={alignOptions}
           value={style.align}
           ariaLabel="Text alignment"
           onchange={(v) => updateStyle('align', v)}
         />
-      </div>
+      </Field>
     </section>
 
     <section class="ce-rg">
@@ -416,15 +415,15 @@
           <span>Vertical</span>
           <span class="ce-pos-head__v">{selectedSubtitle.position.yCenter.toFixed(2)}</span>
         </div>
-        <input
-          type="range"
-          class="vc-slider"
-          min="0"
-          max="1"
-          step="0.01"
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
           value={selectedSubtitle.position.yCenter}
-          oninput={(e) =>
-            updateSubtitleYCenter(Number((e.currentTarget as HTMLInputElement).value))}
+          showValue={false}
+          onchange={(v) => {
+            if (v != null) updateSubtitleYCenter(v);
+          }}
         />
         <div class="ce-pos-sub">
           <span>top</span>
