@@ -790,6 +790,9 @@ body {
   font-weight: 400;
   line-height: 1.4;
 }
+.toggle-row--flush {
+  padding: 0;
+}
 
 /* ── Live log ─────────────────────────────────────────────────── */
 .log {
@@ -1698,15 +1701,6 @@ code {
 }
 .ce-swatch--transparent .ce-swatch__chip {
   background: repeating-conic-gradient(#5a5247 0% 25%, #8a7e6b 0% 50%) 0 0 / 10px 10px;
-}
-
-.ce-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--vc-text);
-  cursor: pointer;
 }
 
 .ce-pos-head {
