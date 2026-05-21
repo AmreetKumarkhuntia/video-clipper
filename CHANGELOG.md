@@ -1,3 +1,28 @@
+# [1.11.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.10.0...v1.11.0) (2026-05-21)
+
+
+### Bug Fixes
+
+* **analysis:** replace raw button elements with Button component ([c864e44](https://github.com/AmreetKumarkhuntia/video-clipper/commit/c864e4451a3ed7c69bcd82ec98fb07f11be979a6))
+* **ds:** add button resets to vc-menu__item, fix ce-preset text color, remove dead CSS ([0bf4dc3](https://github.com/AmreetKumarkhuntia/video-clipper/commit/0bf4dc38442c1c91ebf2fc908a81187d0886eba6))
+* **editor:** correct showToast call signature in ClipEditor; move subtitle log to prompt ([6906a1b](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6906a1b64aadc9184a9deedf40ed597bcf73192d))
+* **editor:** replace raw button elements with Button component ([e0ea508](https://github.com/AmreetKumarkhuntia/video-clipper/commit/e0ea50815a8030456ca868471065c69a1ed8fe9d))
+* **editor:** treat auto-transcript-import as baseline, not a user edit ([1a6e73b](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1a6e73b8933bdae3d10bae0cf6e9f2ca94a09da9))
+* **icon:** add missing ellipsis, pencil, clock, and bookmark icons ([bdc45c6](https://github.com/AmreetKumarkhuntia/video-clipper/commit/bdc45c6e978a19287ff6b2ac2091636648b648e1))
+* **presets:** fix CSS tokens and backdrop accessibility in preset templates ([f7ec30c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f7ec30c898e35b5141ea776735446af2b3f0e341))
+* **publish:** remove isRenderRequired gate; use editedPath if present else original ([b5e63e7](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b5e63e717eea79e4e09d38e5416361139bd3617b))
+* **publish:** replace raw button elements with Button component ([f4fdd42](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f4fdd4293a209bd6b346ff8ddac0f03f1eaf40f9))
+
+
+### Features
+
+* **clips:** persist clip metadata in SQLite, remove file-based sidecars ([52481c5](https://github.com/AmreetKumarkhuntia/video-clipper/commit/52481c58476d7d4cf5bc3057bff8a6013412d8ea))
+* **db:** add db-first segmentation caching with completed-flag lifecycle ([6787cae](https://github.com/AmreetKumarkhuntia/video-clipper/commit/6787cae8ae1ef8e8b9f006a4ebe4bb313911a43d))
+* **db:** introduce sqlite persistence via drizzle orm for transcripts ([1d62d6c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/1d62d6c3e0a175e5877f925f98f16d8d241237b3))
+* **db:** persist analyses in SQLite, reconstruct ClipPlan from existing tables ([20f297f](https://github.com/AmreetKumarkhuntia/video-clipper/commit/20f297f636bef3727ab168e6f85c71caed0db14a))
+* **db:** persist publish drafts and upload artifacts in SQLite ([4cbe593](https://github.com/AmreetKumarkhuntia/video-clipper/commit/4cbe5938602c4f267a1c1bcd56ef29c3f2ae968b))
+* **editor:** add caption style presets with save/load UI ([840e488](https://github.com/AmreetKumarkhuntia/video-clipper/commit/840e4881ed27a79bf81d2ab429b6822a6cec40d0))
+
 # [1.10.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.9.0...v1.10.0) (2026-05-16)
 
 
