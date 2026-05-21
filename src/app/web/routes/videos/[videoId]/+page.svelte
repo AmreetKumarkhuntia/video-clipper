@@ -38,6 +38,7 @@
   import SegmentPreview from '@web/widgets/video/analysis/SegmentPreview.svelte';
   import TranscriptPanel from '@web/widgets/video/analysis/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/widgets/video/analysis/VideoDetailsRail.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let streamingCandidates = $state<ClipCandidate[]>([]);
@@ -310,7 +311,7 @@
 
 {#if isLoadingVideo}
   <div class="analyze-loading">
-    <div class="sk sk--line" style="width:240px;height:16px"></div>
+    <Skeleton width="240px" height="16px" />
   </div>
 {:else if errorMessage && !video}
   <p class="analyze-error">{errorMessage}</p>

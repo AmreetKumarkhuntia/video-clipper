@@ -14,6 +14,7 @@
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
   import ToggleRow from '@web/components/ToggleRow.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
     GeneratedPublishMetadata,
@@ -236,7 +237,7 @@
 
 {#if isLoading}
   <div class="prepare-loading">
-    <div class="sk sk--line" style="width:280px;height:16px"></div>
+    <Skeleton width="280px" height="16px" />
   </div>
 {:else if errorMessage && !draft}
   <p class="prepare-error">{errorMessage}</p>

@@ -7,6 +7,7 @@
   import UploadStatusCard from '@web/widgets/publish/UploadStatusCard.svelte';
   import Button from '@web/components/Button.svelte';
   import Card from '@web/components/Card.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
   import type { PublishDraft, UploadArtifact, YouTubeAuthStatus } from '@app/web/types/publish.js';
 
   let draft = $state<PublishDraft | null>(null);
@@ -105,8 +106,8 @@
 
 {#if isLoading}
   <div class="publish-loading">
-    <div class="sk sk--line" style="width:220px;height:16px;margin-bottom:10px"></div>
-    <div class="sk sk--line sk--short"></div>
+    <Skeleton width="220px" height="16px" style="margin-bottom:10px" />
+    <Skeleton short />
   </div>
 {:else if errorMessage && !draft}
   <p class="publish-error">{errorMessage}</p>

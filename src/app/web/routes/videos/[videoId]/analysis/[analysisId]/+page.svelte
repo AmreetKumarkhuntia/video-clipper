@@ -12,6 +12,7 @@
   import Card from '@web/components/Card.svelte';
   import Slider from '@web/components/Slider.svelte';
   import Tabs from '@web/components/Tabs.svelte';
+  import Skeleton from '@web/components/Skeleton.svelte';
   import ClipEditor from '@web/widgets/video/clip-editor/ClipEditor.svelte';
   import ClipPreviewModal from '@web/widgets/video/clip-editor/preview/ClipPreviewModal.svelte';
 
@@ -168,8 +169,8 @@
         <Card class="clipcard">
           <div class="clipcard__thumb"><div class="clipcard__thumb-bg"></div></div>
           <div class="clipcard__body">
-            <div class="sk sk--line" style="width:90%;margin-bottom:8px"></div>
-            <div class="sk sk--line sk--short"></div>
+            <Skeleton width="90%" style="margin-bottom:8px" />
+            <Skeleton short />
           </div>
         </Card>
       {/each}
