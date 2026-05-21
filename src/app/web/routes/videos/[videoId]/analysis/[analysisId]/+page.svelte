@@ -11,6 +11,7 @@
   import Badge from '@web/components/Badge.svelte';
   import Card from '@web/components/Card.svelte';
   import Slider from '@web/components/Slider.svelte';
+  import Tabs from '@web/components/Tabs.svelte';
   import ClipEditor from '@web/widgets/video/clip-editor/ClipEditor.svelte';
   import ClipPreviewModal from '@web/widgets/video/clip-editor/preview/ClipPreviewModal.svelte';
 
@@ -217,24 +218,14 @@
       <p class="clip-error">{errorMessage}</p>
     {/if}
 
-    <div class="vc-tabs" role="tablist">
-      <button
-        class="vc-tab"
-        role="tab"
-        aria-selected={activeTab === 'candidates'}
-        class:is-active={activeTab === 'candidates'}
-        onclick={() => (activeTab = 'candidates')}
-        >Candidates<span class="tab-count">{plan.candidates.length}</span></button
-      >
-      <button
-        class="vc-tab"
-        role="tab"
-        aria-selected={activeTab === 'clips'}
-        class:is-active={activeTab === 'clips'}
-        onclick={() => (activeTab = 'clips')}
-        >Clips<span class="tab-count">{clips.length}</span></button
-      >
-    </div>
+    <Tabs
+      options={[
+        { value: 'candidates', label: 'Candidates', count: plan.candidates.length },
+        { value: 'clips', label: 'Clips', count: clips.length },
+      ]}
+      value={activeTab}
+      onchange={(v) => (activeTab = v)}
+    />
 
     {#if activeTab === 'candidates'}
       <div class="vc-field" style="margin-top:20px">
