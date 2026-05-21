@@ -59,19 +59,19 @@
 
   {#if menuOpen}
     <div class="vc-menu up-chip__menu" role="menu">
-      <button type="button" class="vc-menu__item" role="menuitem" onclick={handleEdit}>
+      <Button variant="ghost" class="vc-menu__item" role="menuitem" onclick={handleEdit}>
         <Icon name="pencil" size={13} />
         <span>Rename</span>
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="ghost"
         class="vc-menu__item vc-menu__item--danger"
         role="menuitem"
         onclick={handleDelete}
       >
         <Icon name="trash" size={13} />
         <span>Delete</span>
-      </button>
+      </Button>
     </div>
   {/if}
 </div>
