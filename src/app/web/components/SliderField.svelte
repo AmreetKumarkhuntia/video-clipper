@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { SliderFieldProps } from '@app/web/types/componentProps.js';
+  import Field from '@web/components/Field.svelte';
 
   let {
     label,
@@ -19,9 +20,8 @@
   }
 </script>
 
-<label class="ce-field">
-  <span class="ce-field__label">{label}</span>
-  <span class="ce-slider-row">
+<Field {label}>
+  <div class="slider-row">
     <input
       type="range"
       class="vc-slider"
@@ -32,6 +32,26 @@
       {disabled}
       oninput={handleInput}
     />
-    <span class="ce-slider-row__v">{value}{suffix ?? ''}</span>
-  </span>
-</label>
+    <span class="slider-val">{value}{suffix ?? ''}</span>
+  </div>
+</Field>
+
+<style>
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slider-row :global(.vc-slider) {
+    flex: 1;
+  }
+
+  .slider-val {
+    font-family: var(--vc-font-mono);
+    font-size: var(--vc-text-12);
+    color: var(--vc-text);
+    min-width: 36px;
+    text-align: right;
+  }
+</style>
