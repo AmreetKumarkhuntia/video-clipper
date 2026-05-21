@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '@web/components/Icon.svelte';
   import Badge from '@web/components/Badge.svelte';
+  import Button from '@web/components/Button.svelte';
   import type { ConfigInputProviderGridProps, ProviderDef } from '@app/web/types/componentProps.js';
 
   const PROVIDERS: ProviderDef[] = [
@@ -20,10 +21,9 @@
 
 <div class="provider-grid">
   {#each PROVIDERS as p (p.key)}
-    <button
-      type="button"
-      class="provider"
-      class:is-active={value === p.key}
+    <Button
+      variant="ghost"
+      class={`provider${value === p.key ? ' is-active' : ''}`}
       onclick={() => onchange?.(p.key)}
     >
       <div class="provider__head">
@@ -38,6 +38,6 @@
           <Icon name="check" size={14} />
         </div>
       {/if}
-    </button>
+    </Button>
   {/each}
 </div>

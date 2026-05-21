@@ -47,17 +47,16 @@
     <nav class="settings-nav">
       <p class="settings-nav__h">Configuration</p>
       {#each $configRegistry.groups as group (group.id)}
-        <button
-          type="button"
-          class="settings-nav__item"
-          class:is-active={group.id === activeGroup?.id}
+        <Button
+          variant="ghost"
+          class={`settings-nav__item${group.id === activeGroup?.id ? ' is-active' : ''}`}
           onclick={() => (activeGroupId = group.id)}
         >
           {#if GROUP_CONFIG[group.id]}
             <Icon name={GROUP_CONFIG[group.id].icon} size={16} />
           {/if}
           {group.label}
-        </button>
+        </Button>
       {/each}
     </nav>
 

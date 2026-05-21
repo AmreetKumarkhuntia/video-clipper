@@ -1214,6 +1214,7 @@ body {
 .settings-nav__item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   width: 100%;
   padding: 8px 12px;
@@ -1226,6 +1227,7 @@ body {
   text-align: left;
   font-family: var(--vc-font-body);
   transition: all var(--vc-dur-fast) var(--vc-ease);
+  white-space: normal;
 }
 .settings-nav__item:hover {
   background: var(--vc-surface-2);
@@ -1296,6 +1298,7 @@ body {
   gap: 10px;
 }
 .provider {
+  display: block;
   background: var(--vc-surface);
   border: 1px solid var(--vc-border);
   border-radius: var(--vc-radius-md);
@@ -1305,6 +1308,7 @@ body {
   transition: all var(--vc-dur-fast) var(--vc-ease);
   color: var(--vc-text);
   text-align: left;
+  white-space: normal;
 }
 .provider:hover {
   border-color: var(--vc-border-strong);
