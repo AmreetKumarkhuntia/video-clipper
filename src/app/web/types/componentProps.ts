@@ -247,6 +247,26 @@ export interface ToggleRowProps {
   class?: string;
 }
 
+export interface TabOption<T extends string> {
+  value: T;
+  label: string;
+  count?: number;
+}
+
+export interface TabsProps<T extends string> {
+  options: TabOption<T>[];
+  value: T;
+  ariaLabel?: string;
+  onchange: (value: T) => void;
+}
+
+export interface SkeletonProps {
+  width?: string;
+  height?: string;
+  short?: boolean;
+  class?: string;
+}
+
 // ---------- Cards ----------
 
 export interface CandidateCardProps {
