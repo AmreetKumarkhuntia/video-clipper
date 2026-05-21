@@ -7,7 +7,7 @@
   import InputText from '@web/components/InputText.svelte';
   import Textarea from '@web/components/Textarea.svelte';
   import Select from '@web/components/Select.svelte';
-  import Toggle from '@web/components/Toggle.svelte';
+  import ToggleRow from '@web/components/ToggleRow.svelte';
   import { formatDuration, formatTime } from '@web/lib/format.js';
   import { apiFetch } from '@web/lib/api.js';
   import {
@@ -187,77 +187,49 @@
           />
         </Field>
 
-        <label class="toggle-row">
-          <div class="toggle-row__text">
-            <span class="toggle-row__t">Format</span>
-            <span class="toggle-row__d">
-              {item.isShort ? 'Upload as YouTube Short' : 'Standard upload'}
-            </span>
-          </div>
-          <Toggle
-            checked={item.isShort}
-            ariaLabel="Format"
-            onchange={(c) => patchItem({ isShort: c })}
-          />
-        </label>
+        <ToggleRow
+          title="Format"
+          description={item.isShort ? 'Upload as YouTube Short' : 'Standard upload'}
+          checked={item.isShort}
+          ariaLabel="Format"
+          onchange={(c) => patchItem({ isShort: c })}
+        />
 
-        <label class="toggle-row">
-          <div class="toggle-row__text">
-            <span class="toggle-row__t">Made for kids</span>
-            <span class="toggle-row__d">
-              {item.selfDeclaredMadeForKids ? 'Made for children' : 'Not made for children'}
-            </span>
-          </div>
-          <Toggle
-            checked={item.selfDeclaredMadeForKids}
-            ariaLabel="Made for kids"
-            onchange={(c) => patchItem({ selfDeclaredMadeForKids: c })}
-          />
-        </label>
+        <ToggleRow
+          title="Made for kids"
+          description={item.selfDeclaredMadeForKids ? 'Made for children' : 'Not made for children'}
+          checked={item.selfDeclaredMadeForKids}
+          ariaLabel="Made for kids"
+          onchange={(c) => patchItem({ selfDeclaredMadeForKids: c })}
+        />
 
-        <label class="toggle-row">
-          <div class="toggle-row__text">
-            <span class="toggle-row__t">Embeddable</span>
-            <span class="toggle-row__d">
-              {item.embeddable ? 'Embeddable on other sites' : 'Not embeddable'}
-            </span>
-          </div>
-          <Toggle
-            checked={item.embeddable}
-            ariaLabel="Embeddable"
-            onchange={(c) => patchItem({ embeddable: c })}
-          />
-        </label>
+        <ToggleRow
+          title="Embeddable"
+          description={item.embeddable ? 'Embeddable on other sites' : 'Not embeddable'}
+          checked={item.embeddable}
+          ariaLabel="Embeddable"
+          onchange={(c) => patchItem({ embeddable: c })}
+        />
 
-        <label class="toggle-row">
-          <div class="toggle-row__text">
-            <span class="toggle-row__t">Public stats</span>
-            <span class="toggle-row__d">
-              {item.publicStatsViewable ? 'View count visible to others' : 'View count hidden'}
-            </span>
-          </div>
-          <Toggle
-            checked={item.publicStatsViewable}
-            ariaLabel="Public stats"
-            onchange={(c) => patchItem({ publicStatsViewable: c })}
-          />
-        </label>
+        <ToggleRow
+          title="Public stats"
+          description={item.publicStatsViewable
+            ? 'View count visible to others'
+            : 'View count hidden'}
+          checked={item.publicStatsViewable}
+          ariaLabel="Public stats"
+          onchange={(c) => patchItem({ publicStatsViewable: c })}
+        />
 
-        <label class="toggle-row">
-          <div class="toggle-row__text">
-            <span class="toggle-row__t">AI-generated content</span>
-            <span class="toggle-row__d">
-              {item.containsSyntheticMedia
-                ? 'Contains AI-generated content'
-                : 'No AI-generated content'}
-            </span>
-          </div>
-          <Toggle
-            checked={item.containsSyntheticMedia}
-            ariaLabel="AI-generated content"
-            onchange={(c) => patchItem({ containsSyntheticMedia: c })}
-          />
-        </label>
+        <ToggleRow
+          title="AI-generated content"
+          description={item.containsSyntheticMedia
+            ? 'Contains AI-generated content'
+            : 'No AI-generated content'}
+          checked={item.containsSyntheticMedia}
+          ariaLabel="AI-generated content"
+          onchange={(c) => patchItem({ containsSyntheticMedia: c })}
+        />
 
         <div class="vc-field field--full">
           <span class="vc-label">Thumbnail</span>
