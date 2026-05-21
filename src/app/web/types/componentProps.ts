@@ -239,7 +239,8 @@ export interface ScrubberProps {
 }
 
 export interface ToggleRowProps {
-  title: string;
+  title?: string;
+  titleContent?: Snippet;
   description?: string;
   checked: boolean;
   ariaLabel?: string;

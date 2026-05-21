@@ -4,6 +4,7 @@
 
   let {
     title,
+    titleContent,
     description,
     checked,
     ariaLabel,
@@ -14,7 +15,9 @@
 
 <label class={['toggle-row', extraClass].filter(Boolean).join(' ')}>
   <div class="toggle-row__text">
-    <span class="toggle-row__t">{title}</span>
+    <span class="toggle-row__t">
+      {#if titleContent}{@render titleContent()}{:else}{title ?? ''}{/if}
+    </span>
     {#if description}<span class="toggle-row__d">{description}</span>{/if}
   </div>
   <Toggle {checked} {ariaLabel} {onchange} />

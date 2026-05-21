@@ -1,7 +1,7 @@
 <script lang="ts">
   import InputText from '@web/components/InputText.svelte';
   import Textarea from '@web/components/Textarea.svelte';
-  import Toggle from '@web/components/Toggle.svelte';
+  import ToggleRow from '@web/components/ToggleRow.svelte';
   import Slider from '@web/components/Slider.svelte';
   import Select from '@web/components/Select.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
@@ -40,20 +40,18 @@
 
 {#if field.widget === 'toggle'}
   <!-- Toggle fields render as a toggle-row (used inside .settings-toggles) -->
-  <label class="toggle-row">
-    <div class="toggle-row__text">
-      <span class="toggle-row__t">
-        {field.label}
-        {#if field.secret}
-          <Badge variant="clay" title="Secret">Secret</Badge>
-        {/if}
-      </span>
-      {#if field.description}
-        <span class="toggle-row__d">{field.description}</span>
+  <ToggleRow
+    description={field.description}
+    checked={Boolean(resolvedValue)}
+    onchange={(v) => emit(v)}
+  >
+    {#snippet titleContent()}
+      {field.label}
+      {#if field.secret}
+        <Badge variant="clay" title="Secret">Secret</Badge>
       {/if}
-    </div>
-    <Toggle checked={Boolean(resolvedValue)} onchange={(v) => emit(v)} />
-  </label>
+    {/snippet}
+  </ToggleRow>
 {:else}
   <!-- All other fields render as a vc-field -->
   <div class="vc-field" class:field--secret={field.secret}>
@@ -130,10 +128,5 @@
     border-radius: var(--vc-radius-md);
     padding: var(--vc-space-3);
     margin: calc(-1 * var(--vc-space-3));
-  }
-
-  .toggle-row__text {
-    display: flex;
-    flex-direction: column;
   }
 </style>
