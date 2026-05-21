@@ -2,6 +2,7 @@
   import type { ClipCandidate } from '@app/web/types/analysis.js';
   import type { ClipTimelineProps } from '@app/web/types/componentProps.js';
   import { formatTime } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
 
   let {
     durationSec,
@@ -162,14 +163,9 @@
       {/if}
     </div>
     <div class="timeline__head-right">
-      <button
-        class="timeline__zoom-btn"
-        onclick={handleZoomOut}
-        type="button"
-        title="Zoom out to full video"
-      >
+      <Button variant="ghost" size="sm" onclick={handleZoomOut} title="Zoom out to full video">
         Fit all
-      </button>
+      </Button>
       <span class="timeline__duration">/ {formatTime(durationSec)}</span>
     </div>
   </div>
@@ -255,23 +251,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-
-  .timeline__zoom-btn {
-    font-family: var(--vc-font-mono);
-    font-size: 10px;
-    color: var(--vc-text-muted);
-    background: var(--vc-surface-2);
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-sm);
-    padding: 2px 8px;
-    cursor: pointer;
-    transition: all var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .timeline__zoom-btn:hover {
-    background: var(--vc-surface-raised);
-    color: var(--vc-text);
   }
 
   .timeline__active-time {
