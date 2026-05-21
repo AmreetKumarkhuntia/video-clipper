@@ -8,7 +8,7 @@
   import { captionPresets } from '@web/lib/stores/captionPresets.js';
   import { rescaleWords, wordsFromText } from '@web/lib/subtitleTiming.js';
   import Textarea from '@web/components/Textarea.svelte';
-  import Toggle from '@web/components/Toggle.svelte';
+  import ToggleRow from '@web/components/ToggleRow.svelte';
   import PanelHeader from '@web/components/PanelHeader.svelte';
   import SegmentedControl from '@web/components/SegmentedControl.svelte';
   import SliderField from '@web/components/SliderField.svelte';
@@ -282,14 +282,14 @@
         <PanelHeader text="Words" hint="tap a word to highlight" />
         <div class="ce-words">
           {#each selectedSubtitle.words as word, wi}
-            <button
-              type="button"
-              class="ce-word"
-              class:is-hl={word.highlight}
+            <Button
+              variant="ghost"
+              size="sm"
+              class={`ce-word${word.highlight ? ' is-hl' : ''}`}
               onclick={() => toggleWordHighlight(wi)}
             >
               {word.text}
-            </button>
+            </Button>
           {/each}
         </div>
       </section>
@@ -342,10 +342,13 @@
         />
       </div>
 
-      <label class="ce-toggle-row">
-        <span>Outline</span>
-        <Toggle checked={style.outlineColor !== null} ariaLabel="Outline" onchange={setOutline} />
-      </label>
+      <ToggleRow
+        title="Outline"
+        class="toggle-row--flush"
+        checked={style.outlineColor !== null}
+        ariaLabel="Outline"
+        onchange={setOutline}
+      />
 
       {#if style.outlineColor !== null}
         <div class="ce-grid-2">
@@ -367,10 +370,13 @@
         </div>
       {/if}
 
-      <label class="ce-toggle-row">
-        <span>Background</span>
-        <Toggle checked={style.bgColor !== null} ariaLabel="Background" onchange={setBackground} />
-      </label>
+      <ToggleRow
+        title="Background"
+        class="toggle-row--flush"
+        checked={style.bgColor !== null}
+        ariaLabel="Background"
+        onchange={setBackground}
+      />
 
       {#if style.bgColor !== null}
         <ColorSwatch

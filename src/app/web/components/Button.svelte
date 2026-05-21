@@ -8,6 +8,7 @@
     disabled = false,
     href,
     class: extraClass = '',
+    role,
     onclick,
     children,
     'aria-label': ariaLabel,
@@ -38,7 +39,7 @@
     {@render children()}
   </a>
 {:else}
-  <button class={classes} {type} {disabled} {onclick} aria-label={ariaLabel} {title}>
+  <button class={classes} {type} {disabled} {role} {onclick} aria-label={ariaLabel} {title}>
     {@render children()}
   </button>
 {/if}

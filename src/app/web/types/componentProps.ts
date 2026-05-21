@@ -30,6 +30,7 @@ export interface ButtonProps {
   disabled?: boolean;
   href?: string;
   class?: string;
+  role?: string;
   onclick?: (e: MouseEvent) => void;
   children: Snippet;
   'aria-label'?: string;

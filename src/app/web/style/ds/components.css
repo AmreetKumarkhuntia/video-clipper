@@ -394,6 +394,7 @@
 .vc-menu__item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--vc-space-2);
   padding: 8px 10px;
   font-size: var(--vc-text-14);
@@ -405,6 +406,7 @@
   background: transparent;
   width: 100%;
   text-align: left;
+  white-space: normal;
 }
 .vc-menu__item:hover {
   background: var(--vc-surface-2);
