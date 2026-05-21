@@ -164,14 +164,10 @@
     </div>
 
     <div class="advanced-section">
-      <button
-        class="advanced-toggle"
-        type="button"
-        onclick={() => (showAdvancedAuth = !showAdvancedAuth)}
-      >
+      <Button variant="ghost" size="sm" onclick={() => (showAdvancedAuth = !showAdvancedAuth)}>
         {showAdvancedAuth ? 'Hide' : 'Advanced:'} manual token entry
         <Icon name={showAdvancedAuth ? 'chevron-down' : 'chevron-right'} size={13} />
-      </button>
+      </Button>
 
       {#if showAdvancedAuth}
         <div class="settings-form" style="max-width:560px;margin-top:16px">
@@ -270,23 +266,5 @@
     margin-top: 28px;
     padding-top: 20px;
     border-top: 1px solid var(--vc-divider);
-  }
-
-  .advanced-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--vc-clay-600);
-    font: inherit;
-    font-size: var(--vc-text-13);
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  :global([data-theme='dark']) .advanced-toggle {
-    color: var(--vc-clay-400);
   }
 </style>

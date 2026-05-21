@@ -123,14 +123,9 @@
           )}
         </p>
       </div>
-      <button
-        class="draft-overlay__close"
-        type="button"
-        aria-label="Close editor"
-        onclick={() => onclose?.()}
-      >
+      <Button variant="ghost" size="icon" aria-label="Close editor" onclick={() => onclose?.()}>
         <Icon name="x" size={16} />
-      </button>
+      </Button>
     </header>
 
     <div class="draft-overlay__body">
@@ -309,13 +304,13 @@
               }}
             />
             {#if item.scheduledAt}
-              <button
-                type="button"
-                class="schedule-clear-btn"
+              <Button
+                variant="ghost"
+                size="sm"
                 onclick={() => patchItem({ scheduledAt: undefined })}
               >
                 Clear
-              </button>
+              </Button>
             {/if}
           </div>
         </Field>
@@ -386,28 +381,6 @@
     margin: 0 0 4px;
     color: var(--vc-text);
     overflow-wrap: anywhere;
-  }
-
-  .draft-overlay__close {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--vc-divider);
-    border-radius: var(--vc-radius-sm, 6px);
-    background: transparent;
-    color: var(--vc-text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition:
-      background var(--vc-dur-fast) var(--vc-ease),
-      color var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .draft-overlay__close:hover {
-    background: var(--vc-surface-hover, var(--vc-surface));
-    color: var(--vc-text);
   }
 
   .draft-overlay__body {
@@ -493,22 +466,6 @@
     outline: none;
     border-color: var(--vc-accent);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--vc-accent) 20%, transparent);
-  }
-
-  .schedule-clear-btn {
-    font: inherit;
-    font-size: var(--vc-text-13);
-    color: var(--vc-text-muted);
-    background: none;
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-sm, 6px);
-    padding: 4px 10px;
-    cursor: pointer;
-  }
-
-  .schedule-clear-btn:hover {
-    color: var(--vc-text);
-    background: var(--vc-surface-hover, var(--vc-surface));
   }
 
   .excerpt {
