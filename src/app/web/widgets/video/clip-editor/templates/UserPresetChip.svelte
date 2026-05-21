@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { UserPresetChipProps } from '@app/web/types/componentProps.js';
+  import Button from '@web/components/Button.svelte';
   import Icon from '@web/components/Icon.svelte';
 
   let { preset, active, onApply, onEdit, onDelete }: UserPresetChipProps = $props();
@@ -44,19 +45,27 @@
     {/if}
   </button>
 
-  <button type="button" class="up-chip__menu-btn" aria-label="Preset options" onclick={toggleMenu}>
-    <Icon name="ellipsis" size={14} />
-  </button>
+  <span class="up-chip__menu-wrap">
+    <Button
+      variant="ghost"
+      size="icon"
+      class="vc-btn--sm"
+      onclick={toggleMenu}
+      aria-label="Preset options"
+    >
+      <Icon name="ellipsis" size={14} />
+    </Button>
+  </span>
 
   {#if menuOpen}
-    <div class="up-chip__menu" role="menu">
-      <button type="button" class="up-chip__menu-item" role="menuitem" onclick={handleEdit}>
+    <div class="vc-menu up-chip__menu" role="menu">
+      <button type="button" class="vc-menu__item" role="menuitem" onclick={handleEdit}>
         <Icon name="pencil" size={13} />
         <span>Rename</span>
       </button>
       <button
         type="button"
-        class="up-chip__menu-item up-chip__menu-item--danger"
+        class="vc-menu__item vc-menu__item--danger"
         role="menuitem"
         onclick={handleDelete}
       >
@@ -87,32 +96,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: var(--vc-text-13);
     font-weight: 500;
   }
 
-  .up-chip__menu-btn {
+  .up-chip__menu-wrap {
     position: absolute;
-    right: 6px;
+    right: 3px;
     top: 50%;
     transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: var(--vc-radius-sm);
-    border: none;
-    background: transparent;
-    color: var(--vc-text-subtle);
-    cursor: pointer;
-    padding: 0;
-    transition: background var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .up-chip__menu-btn:hover {
-    background: var(--vc-surface-2);
-    color: var(--vc-text);
   }
 
   .up-chip__menu {
@@ -120,40 +112,6 @@
     top: calc(100% + 4px);
     right: 0;
     min-width: 140px;
-    background: var(--vc-surface);
-    border: 1px solid var(--vc-border);
-    border-radius: var(--vc-radius-md);
-    box-shadow: var(--vc-shadow-2);
     z-index: 50;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .up-chip__menu-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: var(--vc-text);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-    transition: background var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .up-chip__menu-item:hover {
-    background: var(--vc-surface-2);
-  }
-
-  .up-chip__menu-item--danger {
-    color: var(--vc-error);
-  }
-
-  .up-chip__menu-item--danger:hover {
-    background: var(--vc-error-soft, color-mix(in srgb, var(--vc-error) 12%, transparent));
   }
 </style>

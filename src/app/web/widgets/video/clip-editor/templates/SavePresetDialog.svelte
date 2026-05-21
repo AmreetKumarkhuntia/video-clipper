@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SavePresetDialogProps } from '@app/web/types/componentProps.js';
   import Button from '@web/components/Button.svelte';
+  import Field from '@web/components/Field.svelte';
   import Icon from '@web/components/Icon.svelte';
   import InputText from '@web/components/InputText.svelte';
 
@@ -26,18 +27,15 @@
     if (!valid) return;
     onSave(trimmedName, isUpdate ? existingPresetId : undefined);
   }
+
+  function handleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape') onCancel();
+  }
 </script>
 
-<div
-  class="sp-backdrop"
-  role="button"
-  tabindex={-1}
-  aria-label="Close dialog"
-  onclick={onCancel}
-  onkeydown={(e) => {
-    if (e.key === 'Escape') onCancel();
-  }}
-></div>
+<svelte:window onkeydown={handleKeydown} />
+
+<div class="sp-backdrop" role="presentation" onclick={onCancel}></div>
 
 <div class="sp-dialog" role="dialog" aria-modal="true" aria-label="Save caption preset">
   <div class="sp-header">
@@ -48,15 +46,15 @@
   </div>
 
   <form class="sp-body" onsubmit={handleSubmit}>
-    <label class="sp-field">
-      <span class="sp-label">Preset name</span>
+    <Field label="Preset name" for="preset-name-input">
       <InputText
+        id="preset-name-input"
         bind:value={name}
         placeholder="e.g. My Bold Style"
         maxlength={80}
         autocomplete="off"
       />
-    </label>
+    </Field>
 
     {#if canOverwrite}
       <div class="sp-mode">
@@ -127,7 +125,7 @@
   }
 
   .sp-title {
-    font-size: 13px;
+    font-size: var(--vc-text-13);
     font-weight: 600;
     color: var(--vc-text);
   }
@@ -137,20 +135,6 @@
     flex-direction: column;
     gap: 16px;
     padding: 16px;
-  }
-
-  .sp-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .sp-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--vc-text-subtle);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
   }
 
   .sp-mode {
@@ -163,7 +147,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: var(--vc-text-13);
     color: var(--vc-text);
     cursor: pointer;
   }
