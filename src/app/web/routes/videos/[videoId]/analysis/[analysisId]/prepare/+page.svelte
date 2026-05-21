@@ -13,7 +13,7 @@
   import Card from '@web/components/Card.svelte';
   import Field from '@web/components/Field.svelte';
   import InputText from '@web/components/InputText.svelte';
-  import Toggle from '@web/components/Toggle.svelte';
+  import ToggleRow from '@web/components/ToggleRow.svelte';
   import type { VideoDetails } from '@lib/types/index.js';
   import type {
     GeneratedPublishMetadata,
@@ -289,25 +289,19 @@
     <Card as="div" class="prepare-card-spaced">
       <div class="schedule-header">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <label class="toggle-row" style="margin:0">
-            <div class="toggle-row__text">
-              <span class="toggle-row__t">Schedule publish</span>
-              <span class="toggle-row__d">
-                {scheduleEnabled
-                  ? 'Clips will go live at staggered times'
-                  : 'Publish immediately on upload'}
-              </span>
-            </div>
-            <Toggle
-              checked={scheduleEnabled}
-              ariaLabel="Schedule publish"
-              onchange={(c) => {
-                scheduleEnabled = c;
-                if (c) applySchedule();
-                else clearSchedule();
-              }}
-            />
-          </label>
+          <ToggleRow
+            title="Schedule publish"
+            description={scheduleEnabled
+              ? 'Clips will go live at staggered times'
+              : 'Publish immediately on upload'}
+            checked={scheduleEnabled}
+            ariaLabel="Schedule publish"
+            onchange={(c) => {
+              scheduleEnabled = c;
+              if (c) applySchedule();
+              else clearSchedule();
+            }}
+          />
         </div>
       </div>
       {#if scheduleEnabled}
