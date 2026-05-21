@@ -301,9 +301,9 @@
           <Icon name="scissors" size={14} />
           {isRendering ? 'Rendering…' : 'Render & Save'}
         </Button>
-        <button class="editor-close" type="button" aria-label="Close" onclick={requestClose}>
+        <Button variant="ghost" size="icon" aria-label="Close" onclick={requestClose}>
           <Icon name="x" size={16} />
-        </button>
+        </Button>
       </div>
     </header>
 
@@ -484,27 +484,6 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
-  }
-
-  .editor-close {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--vc-divider);
-    border-radius: var(--vc-radius-sm, 6px);
-    background: transparent;
-    color: var(--vc-text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-      background var(--vc-dur-fast) var(--vc-ease),
-      color var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .editor-close:hover {
-    background: var(--vc-surface-hover, var(--vc-surface));
-    color: var(--vc-text);
   }
 
   .editor-error {
