@@ -1,4 +1,4 @@
-import { getModel } from '@lib/services/modelFactory/index.js';
+import { Model } from '@lib/services/modelFactory/index.js';
 import { analyzeChunks } from '@lib/services/analysis/llm/index.js';
 import { refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
@@ -99,11 +99,15 @@ export async function analyzeTranscriptForWeb(
   const noCache = input.options.noCache;
   const maxParallel = input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY;
 
-  const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
-    ZAI_API_KEY: cfg.ZAI_API_KEY,
-    OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
-    CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
-    CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+  const model = new Model({
+    provider: cfg.LLM_PROVIDER,
+    model: cfg.LLM_MODEL,
+    apiKeys: {
+      ZAI_API_KEY: cfg.ZAI_API_KEY,
+      OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
+      CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
+      CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+    },
   });
 
   const basePrompt = cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT;
@@ -317,7 +321,7 @@ async function runSegmentation(
   selectOpts: Parameters<typeof selectSegments>[2],
   input: CreateAnalysisRequest,
   cfg: Config,
-  model: ReturnType<typeof getModel>,
+  model: Model,
   maxParallel: number,
   requestId: string | undefined,
   callbacks: StreamCallbacks | undefined,

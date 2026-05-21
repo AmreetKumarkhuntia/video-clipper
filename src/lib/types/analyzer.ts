@@ -1,7 +1,7 @@
 import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
 import type { AudioEvent } from './audio.js';
 import type { ChunkEvaluation, RankedSegment } from './segment.js';
-import type { LanguageModel } from 'ai';
+import type { Model } from '@lib/services/modelFactory/index.js';
 
 export interface LLMAnalyzerResult {
   lines: TranscriptLine[];
@@ -38,7 +38,7 @@ export interface StreamCallbacks {
 export interface AnalyzeChunksOpts {
   maxRetries: number;
   systemPrompt: string;
-  model: LanguageModel;
+  model: Model;
   callbacks?: Pick<StreamCallbacks, 'onChunkStarted' | 'onChunkTextDelta' | 'onChunkAnalyzed'>;
   requestId?: string;
   signal?: AbortSignal;
@@ -46,7 +46,7 @@ export interface AnalyzeChunksOpts {
 
 export interface RefineSegmentsOpts {
   maxRetries: number;
-  model: LanguageModel;
+  model: Model;
   callbacks?: Pick<StreamCallbacks, 'onSegmentStarted' | 'onSegmentTextDelta' | 'onSegmentRefined'>;
   requestId?: string;
   videoTitle?: string;

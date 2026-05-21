@@ -8,6 +8,18 @@ export type {
   ConfigRegistryResponse,
 } from './config.js';
 
+export type {
+  ModelOpts,
+  ModelGenerateTextOpts,
+  ModelStreamTextOpts,
+  ModelGenerateJSONOpts,
+  ModelStreamJSONOpts,
+  AudioModelOpts,
+  GenerateSpeechOpts,
+  TranscribeOpts,
+  DefineToolOpts,
+} from './modelFactory.js';
+
 export type { CliArgs } from './cli.js';
 
 export type {

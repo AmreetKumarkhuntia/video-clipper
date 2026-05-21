@@ -98,7 +98,6 @@
     "@ai-sdk/openai-compatible": "^1.0.34",
     "@ai-sdk/provider": "^3.0.8",
     "@ai-sdk/xai": "^2.0.62",
-    "@google/generative-ai": "^0.21.0",
     "@googleapis/youtube": "^31.0.0",
     "ai": "^5.0.154",
     "better-sqlite3": "^12.10.0",

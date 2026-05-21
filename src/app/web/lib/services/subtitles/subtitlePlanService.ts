@@ -1,5 +1,4 @@
-import { generateText, tool } from 'ai';
-import { getModel } from '@lib/services/modelFactory/index.js';
+import { Model, defineTool } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { Config } from '@lib/types/config.js';
 import {
@@ -29,11 +28,15 @@ export async function planSubtitles(
 ): Promise<PlanSubtitlesResult> {
   const done = log.fnCalled('planSubtitles', requestId, { lines: req.subtitles.length });
 
-  const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
-    ZAI_API_KEY: cfg.ZAI_API_KEY,
-    OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
-    CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
-    CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+  const model = new Model({
+    provider: cfg.LLM_PROVIDER,
+    model: cfg.LLM_MODEL,
+    apiKeys: {
+      ZAI_API_KEY: cfg.ZAI_API_KEY,
+      OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
+      CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
+      CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+    },
   });
   log.info(
     'planSubtitles',
@@ -52,12 +55,11 @@ export async function planSubtitles(
   });
 
   const t0 = Date.now();
-  const result = await generateText({
-    model,
+  const result = await model.generateText({
     system: effectiveSystemPrompt,
     prompt,
     tools: {
-      register_planned_subtitles: tool({
+      register_planned_subtitles: defineTool({
         description: 'Register the corrected subtitle lines',
         inputSchema: PlanSubtitlesResultSchema,
       }),

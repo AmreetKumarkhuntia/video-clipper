@@ -78,7 +78,7 @@ export { formatConfig, formatSeconds } from './utils/format.js';
 export { scriptPath, PACKAGE_ROOT } from './utils/paths.js';
 export { getPythonBin } from './utils/pythonBin.js';
 export { buildWindows } from './utils/chunker.js';
-export { getModel } from './services/modelFactory/index.js';
+export { Model, AudioModel, defineTool } from './services/modelFactory/index.js';
 export { Cache, createCacheBackend } from './services/cache/index.js';
 export type { CacheBackend } from './types/cache.js';
 

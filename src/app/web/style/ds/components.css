@@ -401,6 +401,10 @@
   border-radius: var(--vc-radius-sm);
   cursor: pointer;
   transition: background var(--vc-dur-fast) var(--vc-ease);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
 }
 .vc-menu__item:hover {
   background: var(--vc-surface-2);

@@ -1,11 +1,10 @@
-import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
+import { defineTool } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import type { RankedSegment, MicroBlock, StreamCallbacks } from '@lib/types/index.js';
 import type { RefineSegmentsOpts } from '@lib/types/analyzer.js';
 import { RefinedBoundariesSchema } from '@lib/types/analyzer.js';
-import type { LanguageModel } from 'ai';
 
 const CONTEXT_PADDING_SEC = 30;
 
@@ -58,15 +57,13 @@ After analyzing, call the report_refined_boundaries tool with your refined clip 
 }
 
 function createReportRefinedBoundariesTool() {
-  return tool({
+  return defineTool({
     description:
       'Report the refined clip boundaries. Call this tool once you have determined the optimal start and end times.',
-    inputSchema: zodSchema(
-      z.object({
-        clip_start: z.number().describe('Refined clip start time in seconds'),
-        clip_end: z.number().describe('Refined clip end time in seconds'),
-      }),
-    ),
+    inputSchema: z.object({
+      clip_start: z.number().describe('Refined clip start time in seconds'),
+      clip_end: z.number().describe('Refined clip end time in seconds'),
+    }),
   });
 }
 
@@ -79,8 +76,7 @@ async function refineSegment(
 
   const { text, windowStart, windowEnd } = buildContextText(segment, allBlocks);
 
-  const result = streamText({
-    model: opts.model,
+  const result = opts.model.streamText({
     tools: { report_refined_boundaries: createReportRefinedBoundariesTool() },
     toolChoice: 'required',
     prompt: buildPrompt(segment, text, windowStart, windowEnd, opts.videoTitle),
