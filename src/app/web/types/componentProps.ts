@@ -238,6 +238,15 @@ export interface ScrubberProps {
   onchange: (value: number) => void;
 }
 
+export interface ToggleRowProps {
+  title: string;
+  description?: string;
+  checked: boolean;
+  ariaLabel?: string;
+  onchange: (checked: boolean) => void;
+  class?: string;
+}
+
 // ---------- Cards ----------
 
 export interface CandidateCardProps {
