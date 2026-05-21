@@ -2,6 +2,7 @@
   import type { ClipCandidate } from '@app/web/types/analysis.js';
   import type { TranscriptLine } from '@lib/types/index.js';
   import { formatTime } from '@web/lib/format.js';
+  import Button from '@web/components/Button.svelte';
   import Icon from '@web/components/Icon.svelte';
 
   interface Props {
@@ -39,9 +40,9 @@
       >
       <span class="preview__dur">{Math.round(durationSec)}s</span>
     </div>
-    <button class="preview__close" onclick={onClose} type="button" aria-label="Close preview">
+    <Button variant="ghost" size="icon" onclick={onClose} aria-label="Close preview">
       <Icon name="x" size={14} />
-    </button>
+    </Button>
   </div>
 
   {#if candidate.reason}
@@ -116,25 +117,6 @@
     font-family: var(--vc-font-mono);
     font-size: 11px;
     color: var(--vc-text-subtle);
-  }
-
-  .preview__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 0;
-    background: var(--vc-surface-2);
-    border-radius: var(--vc-radius-sm);
-    color: var(--vc-text-muted);
-    cursor: pointer;
-    transition: all var(--vc-dur-fast) var(--vc-ease);
-  }
-
-  .preview__close:hover {
-    background: var(--vc-surface-raised);
-    color: var(--vc-text);
   }
 
   .preview__reason {
