@@ -879,7 +879,9 @@ body {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   width: 100%;
+  white-space: normal;
 }
 .clipcard__btn:focus-visible {
   outline: 2px solid var(--vc-clay-500);

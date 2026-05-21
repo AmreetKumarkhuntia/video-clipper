@@ -247,12 +247,15 @@
       <div class="clipgrid" style="margin-top:20px">
         {#each plan.candidates as candidate, i}
           <Card
-            interactive
             class={['clipcard', candidate.selected ? 'clipcard--selected' : '']
               .filter(Boolean)
               .join(' ')}
           >
-            <button type="button" class="clipcard__btn" onclick={() => toggleCandidate(candidate)}>
+            <Button
+              variant="ghost"
+              class="clipcard__btn"
+              onclick={() => toggleCandidate(candidate)}
+            >
               <div class="clipcard__thumb">
                 <div class="clipcard__thumb-bg"></div>
                 <div class="clipcard__thumb-time">
@@ -289,7 +292,7 @@
                   {candidate.reason ?? 'Clip candidate'}
                 </p>
               </div>
-            </button>
+            </Button>
           </Card>
         {/each}
       </div>
