@@ -8,7 +8,7 @@ import type {
   ChunkEvaluation,
   RankedSegment,
 } from '../src/lib/types/index.js';
-import type { LanguageModel } from 'ai';
+import type { Model } from '../src/lib/services/modelFactory/index.js';
 
 // ---------------------------------------------------------------------------
 // Module mocks — must be declared before any imports that touch these modules
@@ -76,8 +76,8 @@ function makeTranscriptDetector(
   } as unknown as TranscriptDetector;
 }
 
-function makeModel(): LanguageModel {
-  return {} as unknown as LanguageModel;
+function makeModel(): Model {
+  return {} as unknown as Model;
 }
 
 function makeAnalyzer(detector: TranscriptDetector): LLMAnalyzer {

@@ -1,7 +1,7 @@
 import { analyzeChunks } from './index.js';
 import { refineSegments } from '../refiner/index.js';
 import { log } from '@lib/utils/logger.js';
-import type { LanguageModel } from 'ai';
+import type { Model } from '@lib/services/modelFactory/index.js';
 import type { TranscriptDetector } from '../transcript/detector.js';
 import type {
   MicroBlock,
@@ -16,7 +16,7 @@ import type {
 export class LLMAnalyzer {
   constructor(
     private readonly transcriptDetector: TranscriptDetector,
-    private readonly model: LanguageModel,
+    private readonly model: Model,
     private readonly maxChunks: number | undefined,
     private readonly maxRetries: number,
     private readonly systemPrompt: string,

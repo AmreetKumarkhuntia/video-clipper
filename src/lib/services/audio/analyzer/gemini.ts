@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import { log } from '@lib/utils/logger.js';
+import { Model } from '@lib/services/modelFactory/index.js';
 import type { AudioEvent } from '@lib/types/audio.js';
 import type { GeminiAnalyzerConfig } from '@lib/types/audio.js';
 import { GeminiEventSchema } from '@lib/types/audio.js';
@@ -64,9 +64,15 @@ export function normalizeGeminiTime(value: number, chunkDurationSec: number): nu
  */
 export class GeminiAudioAnalyzer extends AudioAnalyzer {
   readonly source = 'gemini' as const;
+  private readonly model: Model;
 
   constructor(private readonly geminiConfig: GeminiAnalyzerConfig) {
     super();
+    this.model = new Model({
+      provider: 'google',
+      model: geminiConfig.model,
+      apiKeys: { GOOGLE_GENERATIVE_AI_API_KEY: geminiConfig.apiKey },
+    });
   }
 
   async detect(
@@ -75,11 +81,7 @@ export class GeminiAudioAnalyzer extends AudioAnalyzer {
     chunkOffsetSec: number,
     chunkDurationSec: number,
   ): Promise<AudioEvent[]> {
-    const genai = new GoogleGenerativeAI(this.geminiConfig.apiKey);
-    const model = genai.getGenerativeModel({ model: this.geminiConfig.model });
-
-    const audioData = fs.readFileSync(audioPath);
-    const base64Audio = audioData.toString('base64');
+    const audioData = await fs.readFile(audioPath);
 
     const extraInstructions = this.geminiConfig.extraInstructions
       ? `\nAdditional instructions:\n${this.geminiConfig.extraInstructions}\n`
@@ -98,12 +100,19 @@ Return ONLY a JSON array, no explanation. Format:
   {"time_sec": 45.2, "event": "explosion", "confidence": 0.9}
 ]`;
 
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'audio/wav', data: base64Audio } },
-      prompt,
-    ]);
+    const result = await this.model.generateText({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'file', data: audioData, mediaType: 'audio/wav' },
+            { type: 'text', text: prompt },
+          ],
+        },
+      ],
+    });
 
-    const text = result.response.text();
+    const text = result.text;
     log.info('GeminiAudioAnalyzer.detect', 'response received', undefined, { text });
 
     const cleaned = text

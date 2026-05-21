@@ -1,6 +1,6 @@
-import { streamText, tool, zodSchema } from 'ai';
 import pLimit from 'p-limit';
 import { z } from 'zod';
+import { defineTool } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import { AnalyzedSegmentSchema } from '@lib/types/segment.js';
 import type {
@@ -119,20 +119,16 @@ ${semanticRules}- clip_start and clip_end must be within [${chunk.start}, ${chun
 }
 
 function createReportAnalysisTool() {
-  return tool({
+  return defineTool({
     description:
       'Report the analysis result for this transcript segment. Call this tool once you have evaluated the segment.',
-    inputSchema: zodSchema(
-      z.object({
-        interesting: z.boolean().describe('Whether this segment contains an interesting moment'),
-        score: z.number().min(1).max(10).describe('Interest score from 1-10'),
-        reason: z
-          .string()
-          .describe('Brief explanation of why this segment is or is not interesting'),
-        clip_start: z.number().describe('Suggested clip start time in seconds'),
-        clip_end: z.number().describe('Suggested clip end time in seconds'),
-      }),
-    ),
+    inputSchema: z.object({
+      interesting: z.boolean().describe('Whether this segment contains an interesting moment'),
+      score: z.number().min(1).max(10).describe('Interest score from 1-10'),
+      reason: z.string().describe('Brief explanation of why this segment is or is not interesting'),
+      clip_start: z.number().describe('Suggested clip start time in seconds'),
+      clip_end: z.number().describe('Suggested clip end time in seconds'),
+    }),
   });
 }
 
@@ -154,8 +150,7 @@ async function analyzeChunk(
         opts.systemPrompt !== DEFAULT_SYSTEM_PROMPT,
       );
 
-      const result = streamText({
-        model: opts.model,
+      const result = opts.model.streamText({
         tools: { report_analysis: createReportAnalysisTool() },
         toolChoice: 'required',
         system: opts.systemPrompt,

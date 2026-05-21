@@ -319,6 +319,8 @@ export interface ConfigFieldMeta {
 }
 
 export interface ModelFactoryApiKeys {
+  OPENAI_API_KEY?: string;
+  GOOGLE_GENERATIVE_AI_API_KEY?: string;
   ZAI_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
   CUSTOM_OPENAI_BASE_URL?: string;

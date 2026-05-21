@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { config } from '@lib/config/index.js';
 import { Cache, createCacheBackend } from '@lib/services/cache/index.js';
 import { log } from '@lib/utils/logger.js';
-import { getModel } from '@lib/services/modelFactory/index.js';
+import { Model } from '@lib/services/modelFactory/index.js';
 import { dumpAnalysis, dumpTranscript } from './dumper.js';
 import { resolveVideo } from './stages/videoResolver.js';
 import { processAudio } from './stages/audioProcessor.js';
@@ -114,11 +114,15 @@ export async function runPipeline(args: CliArgs, requestId: string): Promise<voi
     whisperModel: config.AUDIO_WHISPER_MODEL,
   };
 
-  const model = getModel(config.LLM_PROVIDER, config.LLM_MODEL, {
-    ZAI_API_KEY: config.ZAI_API_KEY,
-    OPENROUTER_API_KEY: config.OPENROUTER_API_KEY,
-    CUSTOM_OPENAI_BASE_URL: config.CUSTOM_OPENAI_BASE_URL,
-    CUSTOM_OPENAI_API_KEY: config.CUSTOM_OPENAI_API_KEY,
+  const model = new Model({
+    provider: config.LLM_PROVIDER,
+    model: config.LLM_MODEL,
+    apiKeys: {
+      ZAI_API_KEY: config.ZAI_API_KEY,
+      OPENROUTER_API_KEY: config.OPENROUTER_API_KEY,
+      CUSTOM_OPENAI_BASE_URL: config.CUSTOM_OPENAI_BASE_URL,
+      CUSTOM_OPENAI_API_KEY: config.CUSTOM_OPENAI_API_KEY,
+    },
   });
 
   const backend = await createCacheBackend(config, args.noCache);

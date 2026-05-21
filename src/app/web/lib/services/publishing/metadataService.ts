@@ -1,6 +1,5 @@
-import { generateText, tool } from 'ai';
 import pLimit from 'p-limit';
-import { getModel } from '@lib/services/modelFactory/index.js';
+import { Model, defineTool } from '@lib/services/modelFactory/index.js';
 import { log } from '@lib/utils/logger.js';
 import {
   YOUTUBE_CATEGORIES,
@@ -48,11 +47,15 @@ export async function generatePublishMetadata(
   const done = log.fnCalled('generatePublishMetadata', requestId, { items: items.length });
 
   const concurrency = Math.max(1, Math.min(cfg.LLM_CONCURRENCY, 2));
-  const model = getModel(cfg.LLM_PROVIDER, cfg.LLM_MODEL, {
-    ZAI_API_KEY: cfg.ZAI_API_KEY,
-    OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
-    CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
-    CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+  const model = new Model({
+    provider: cfg.LLM_PROVIDER,
+    model: cfg.LLM_MODEL,
+    apiKeys: {
+      ZAI_API_KEY: cfg.ZAI_API_KEY,
+      OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
+      CUSTOM_OPENAI_BASE_URL: cfg.CUSTOM_OPENAI_BASE_URL,
+      CUSTOM_OPENAI_API_KEY: cfg.CUSTOM_OPENAI_API_KEY,
+    },
   });
   log.info(
     'generatePublishMetadata',
@@ -89,12 +92,11 @@ export async function generatePublishMetadata(
         requestId,
       );
 
-      const result = await generateText({
-        model,
+      const result = await model.generateText({
         system: effectiveSystemPrompt,
         prompt,
         tools: {
-          register_metadata: tool({
+          register_metadata: defineTool({
             description: 'Register YouTube clip upload metadata',
             inputSchema: PublishMetadataSchema,
           }),

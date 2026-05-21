@@ -2,7 +2,7 @@ import type { VideoMetadata } from './video.js';
 import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
 import type { ChunkEvaluation } from './segment.js';
 import type { LLMAnalyzerResult, StreamCallbacks } from './analyzer.js';
-import type { LanguageModel } from 'ai';
+import type { Model } from '@lib/services/modelFactory/index.js';
 import type { TranscriptChainConfig, DownloaderConfig, AudioDownloadConfig } from './downloader.js';
 import type { ClipperConfig } from './video.js';
 import type { AnalyzerChainConfig, SlicerConfig } from './audio.js';
@@ -37,7 +37,7 @@ export interface SegmentAnalyzerOpts {
   microBlockSec: number;
   chunkLengthSec: number;
   chunkOverlapSec: number;
-  model: LanguageModel;
+  model: Model;
   maxRetries: number;
   systemPrompt: string;
   llmModel: string;
