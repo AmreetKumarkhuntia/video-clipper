@@ -39,6 +39,7 @@
   import TranscriptPanel from '@web/widgets/video/analysis/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/widgets/video/analysis/VideoDetailsRail.svelte';
   import Skeleton from '@web/components/Skeleton.svelte';
+  import ConfirmDialog from '@web/components/ConfirmDialog.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let streamingCandidates = $state<ClipCandidate[]>([]);
@@ -55,6 +56,11 @@
   let completedChunkIndexes = $state<Set<number>>(new Set());
 
   let selectedCandidateId = $state<string | null>(null);
+  let confirmPending = $state<{
+    title: string;
+    message: string;
+    onconfirm: () => Promise<void>;
+  } | null>(null);
   let seekToSec = $state<number | undefined>(undefined);
 
   let videoId = $derived($page.params.videoId);
@@ -144,7 +150,7 @@
           description: video?.description,
           channelTitle: video?.channelTitle,
           durationSec: video?.durationSec,
-          options: { refine: true, noCache: false },
+          options: { refine: true, noCache: false, noSegmentCache: false },
         },
         {
           onChunkStarted: (chunkIndex) => {
@@ -257,37 +263,149 @@
     abortController?.abort();
   }
 
-  async function clearTranscript(): Promise<void> {
-    if (!confirm('Clear cached transcript for this video?')) return;
+  async function rerunRefinement(): Promise<void> {
+    isAnalyzing = true;
+    errorMessage = '';
+    analysisPhase = 'refining';
+    activityState = createStartedActivityState();
+    streamingCandidates = [];
+    plan = null;
+    abortController = new AbortController();
+
     try {
-      await apiFetch<{ ok: true }>(`/api/videos/${videoId}/transcript`, {
-        method: 'DELETE',
+      plan = await streamAnalysis(
+        {
+          videoId,
+          title: video?.title,
+          description: video?.description,
+          channelTitle: video?.channelTitle,
+          durationSec: video?.durationSec,
+          options: { refine: true, noCache: false, noSegmentCache: true },
+        },
+        {
+          onSegmentStarted: (rank) => {
+            logAnalysisEvent('segment_started', { rank });
+            activityState = upsertSegmentStarted(activityState, rank);
+          },
+          onSegmentProgress: (rank, text) => {
+            logAnalysisEvent(
+              'segment_progress',
+              { rank, textLength: text.length, preview: previewStreamText(text) },
+              'debug',
+            );
+            activityState = upsertSegmentProgress(activityState, rank, text);
+          },
+          onSegmentRefined: (rank, segment) => {
+            logAnalysisEvent('segment_refined', {
+              rank,
+              start: segment.start,
+              end: segment.end,
+              score: segment.score,
+            });
+            activityState = upsertSegmentCompletion(activityState, rank, segment, formatTime);
+            const candidate: ClipCandidate = {
+              id: `streaming-${rank}`,
+              rank,
+              startSec: segment.start,
+              endSec: segment.end,
+              score: segment.score,
+              reason: segment.reason,
+              source: segment.source,
+              audioEvent: segment.audio_event,
+              transcriptExcerpt: '',
+              selected: false,
+            };
+            const existingIdx = streamingCandidates.findIndex((c) => c.rank === rank);
+            if (existingIdx >= 0) {
+              const next = [...streamingCandidates];
+              next[existingIdx] = candidate;
+              streamingCandidates = next;
+            } else {
+              streamingCandidates = [...streamingCandidates, candidate].sort(
+                (a, b) => a.rank - b.rank,
+              );
+            }
+          },
+          onError: (message) => {
+            logAnalysisEvent('error', { message }, 'error');
+            errorMessage = message;
+            activityState = appendSystemActivity(activityState, {
+              title: 'Refinement failed',
+              status: 'error',
+              detail: message,
+            });
+          },
+        },
+        abortController.signal,
+      );
+
+      logAnalysisEvent('analysis_complete', { candidateCount: plan.candidates.length });
+      setAnalysisPlan(videoId, plan.id, plan);
+      analysisPhase = 'complete';
+      activityState = appendSystemActivity(activityState, {
+        title: 'Refinement complete',
+        status: 'done',
+        detail: `${plan.candidates.length} candidates re-refined.`,
       });
-      storeClearTranscript(videoId);
-      transcript = null;
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : String(error);
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
+      if (isAbort) {
+        analysisPhase = 'idle';
+        activityState = appendSystemActivity(activityState, {
+          title: 'Refinement stopped',
+          status: 'done',
+          detail: 'Stopped by user. Partial results kept.',
+        });
+      } else if (!errorMessage) {
+        errorMessage = error instanceof Error ? error.message : String(error);
+      }
+    } finally {
+      isAnalyzing = false;
+      abortController = null;
     }
   }
 
+  async function clearTranscript(): Promise<void> {
+    confirmPending = {
+      title: 'Clear transcript',
+      message: 'Clear cached transcript for this video?',
+      onconfirm: async () => {
+        try {
+          await apiFetch<{ ok: true }>(`/api/videos/${videoId}/transcript`, {
+            method: 'DELETE',
+          });
+          storeClearTranscript(videoId);
+          transcript = null;
+        } catch (error) {
+          errorMessage = error instanceof Error ? error.message : String(error);
+        }
+      },
+    };
+  }
+
   async function clearAnalysis(): Promise<void> {
-    if (!confirm('Clear cached LLM analysis for this video?')) return;
-    try {
-      await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/analysis`, {
-        method: 'DELETE',
-      });
-      storeClearAnalysis(videoId);
-      plan = null;
-      streamingCandidates = [];
-      selectedCandidateId = null;
-      analysisPhase = 'idle';
-      activityState = createInitialActivityState();
-      analyzedChunks = 0;
-      totalChunks = 0;
-      completedChunkIndexes = new Set();
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : String(error);
-    }
+    confirmPending = {
+      title: 'Clear analysis',
+      message: 'Clear cached LLM analysis for this video?',
+      onconfirm: async () => {
+        try {
+          await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/analysis`, {
+            method: 'DELETE',
+          });
+          storeClearAnalysis(videoId);
+          plan = null;
+          streamingCandidates = [];
+          selectedCandidateId = null;
+          analysisPhase = 'idle';
+          activityState = createInitialActivityState();
+          analyzedChunks = 0;
+          totalChunks = 0;
+          completedChunkIndexes = new Set();
+        } catch (error) {
+          errorMessage = error instanceof Error ? error.message : String(error);
+        }
+      },
+    };
   }
 
   function selectCandidate(id: string): void {
@@ -342,9 +460,10 @@
                 {displayCandidates.length}
                 {plan ? 'found' : 'streaming'}
               </span>
-              <Button variant="ghost" size="sm" onclick={clearAnalysis} disabled={isAnalyzing}>
-                Clear analysis
-              </Button>
+              {#if plan && !isAnalyzing}
+                <Button variant="ghost" size="sm" onclick={rerunRefinement}>Re-refine</Button>
+                <Button variant="ghost" size="sm" onclick={clearAnalysis}>Clear analysis</Button>
+              {/if}
             </div>
           </div>
           <ClipTimeline
@@ -431,6 +550,19 @@
       {/if}
     </div>
   </div>
+{/if}
+
+{#if confirmPending}
+  <ConfirmDialog
+    title={confirmPending.title}
+    message={confirmPending.message}
+    onconfirm={async () => {
+      const action = confirmPending!.onconfirm;
+      confirmPending = null;
+      await action();
+    }}
+    oncancel={() => (confirmPending = null)}
+  />
 {/if}
 
 <style>

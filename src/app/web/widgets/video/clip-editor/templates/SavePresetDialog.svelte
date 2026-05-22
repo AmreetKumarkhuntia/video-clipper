@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { SavePresetDialogProps } from '@app/web/types/componentProps.js';
   import Button from '@web/components/Button.svelte';
   import Field from '@web/components/Field.svelte';
@@ -14,8 +15,8 @@
     onCancel,
   }: SavePresetDialogProps = $props();
 
-  let name = $state(existingPresetName ?? '');
-  let saveAsNew = $state(!existingPresetId);
+  let name = $state(untrack(() => existingPresetName ?? ''));
+  let saveAsNew = $state(untrack(() => !existingPresetId));
 
   const canOverwrite = $derived(!!existingPresetId);
   const isUpdate = $derived(canOverwrite && !saveAsNew);

@@ -97,6 +97,7 @@ export async function analyzeTranscriptForWeb(
 ): Promise<ClipPlan> {
   const videoId = input.videoId;
   const noCache = input.options.noCache;
+  const noSegmentCache = input.options.noSegmentCache ?? false;
   const maxParallel = input.options.maxParallel ?? DEFAULT_WEB_LLM_CONCURRENCY;
 
   const model = new Model({
@@ -234,7 +235,7 @@ export async function analyzeTranscriptForWeb(
   // Use cached segmentations only when:
   //   - noCache is false (skip DB read on noCache=true)
   //   - no fresh chunk analysis ran (if chunks changed, rankings may differ)
-  const canUseSegmentCache = !noCache && freshEvals.length === 0;
+  const canUseSegmentCache = !noCache && !noSegmentCache && freshEvals.length === 0;
 
   let finalSegments: RankedSegment[];
 

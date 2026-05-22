@@ -30,6 +30,7 @@ export const AnalysisOptionsSchema = z.object({
   maxChunks: z.number().int().positive().optional(),
   maxParallel: z.number().int().positive().optional(),
   noCache: z.boolean().default(false),
+  noSegmentCache: z.boolean().default(false),
   threshold: z.number().min(1).max(10).optional(),
   topN: z.number().int().positive().optional(),
   refine: z.boolean().default(true),
@@ -42,7 +43,7 @@ export const CreateAnalysisRequestSchema = z.object({
   description: z.string().optional(),
   channelTitle: z.string().optional(),
   durationSec: z.number().nonnegative().optional(),
-  options: AnalysisOptionsSchema.default({ noCache: false, refine: true }),
+  options: AnalysisOptionsSchema.default({ noCache: false, noSegmentCache: false, refine: true }),
 });
 export type CreateAnalysisRequest = z.infer<typeof CreateAnalysisRequestSchema>;
 

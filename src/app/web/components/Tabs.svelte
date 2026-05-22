@@ -4,7 +4,7 @@
   let { options, value, ariaLabel, onchange }: TabsProps<T> = $props();
 </script>
 
-<div class="vc-tabs" role="tablist" {ariaLabel}>
+<div class="vc-tabs" role="tablist" aria-label={ariaLabel}>
   {#each options as opt (opt.value)}
     <button
       type="button"
