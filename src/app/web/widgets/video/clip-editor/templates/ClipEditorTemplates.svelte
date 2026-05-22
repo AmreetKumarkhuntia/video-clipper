@@ -5,6 +5,7 @@
     SegmentedControlOption,
   } from '@app/web/types/componentProps.js';
   import type { UserCaptionPreset } from '@app/web/types/captionPreset.js';
+  import type { CropRect, Placement } from '@lib/types/clipEdit.js';
   import { CAPTION_TEMPLATES } from '@web/lib/captionTemplates.js';
   import {
     captionPresets,
@@ -21,6 +22,8 @@
   import CaptionPreset from './CaptionPreset.svelte';
   import UserPresetChip from './UserPresetChip.svelte';
   import SavePresetDialog from './SavePresetDialog.svelte';
+  import ClipEditorCropPanel from './ClipEditorCropPanel.svelte';
+  import ClipEditorPlacementPanel from './ClipEditorPlacementPanel.svelte';
 
   let { edits, onupdate }: ClipEditorTemplatesProps = $props();
 
@@ -125,6 +128,14 @@
   function setFillMode(fillMode: 'crop' | 'pad-blur' | 'pad-black'): void {
     onupdate({ ...edits, viewport: { ...edits.viewport, fillMode } });
   }
+
+  function setCrop(crop: CropRect): void {
+    onupdate({ ...edits, viewport: { ...edits.viewport, crop } });
+  }
+
+  function setPlacement(placement: Placement): void {
+    onupdate({ ...edits, viewport: { ...edits.viewport, placement } });
+  }
 </script>
 
 <div class="templates-panel">
@@ -192,6 +203,16 @@
       ariaLabel="Fill mode"
       onchange={setFillMode}
     />
+  </section>
+
+  <section class="ce-rg">
+    <PanelHeader text="Crop" />
+    <ClipEditorCropPanel crop={edits.viewport.crop} onchange={setCrop} />
+  </section>
+
+  <section class="ce-rg">
+    <PanelHeader text="Placement" />
+    <ClipEditorPlacementPanel placement={edits.viewport.placement} onchange={setPlacement} />
   </section>
 </div>
 

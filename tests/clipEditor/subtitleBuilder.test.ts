@@ -177,4 +177,46 @@ describe('buildAss', () => {
       expect(result).not.toContain('\\k');
     });
   });
+
+  describe('crop-aware positioning', () => {
+    it('uses output-frame margins when crop is default', () => {
+      const result = buildAss([makeSubtitle()], OUTPUT);
+      // yCenter=0.85 → 15% of 1920 = 288 from frame bottom.
+      // Style line MarginV is the third-from-last comma-separated field.
+      const styleLine = result.split('\n').find((l) => l.startsWith('Style:')) ?? '';
+      const parts = styleLine.split(',');
+      const marginV = Number(parts[parts.length - 2]);
+      expect(marginV).toBe(288);
+    });
+
+    it('shifts marginV by crop.bottom and scales by inner picture height', () => {
+      const result = buildAss([makeSubtitle()], OUTPUT, 0, {
+        top: 0,
+        right: 0,
+        bottom: 0.2,
+        left: 0,
+      });
+      // crop.bottom=0.2 → 384 baseline + (1-0.85) * 1920 * 0.8 = 230.4 → marginV = 614 (rounded).
+      const styleLine = result.split('\n').find((l) => l.startsWith('Style:')) ?? '';
+      const parts = styleLine.split(',');
+      const marginV = Number(parts[parts.length - 2]);
+      expect(marginV).toBe(614);
+    });
+
+    it('shifts marginL/marginR by crop.left/right', () => {
+      const result = buildAss([makeSubtitle()], OUTPUT, 0, {
+        top: 0,
+        right: 0.1,
+        bottom: 0,
+        left: 0.1,
+      });
+      // For center align, marginL = crop.left * 1080 = 108, marginR = crop.right * 1080 = 108.
+      const styleLine = result.split('\n').find((l) => l.startsWith('Style:')) ?? '';
+      const parts = styleLine.split(',');
+      const marginL = Number(parts[parts.length - 4]);
+      const marginR = Number(parts[parts.length - 3]);
+      expect(marginL).toBe(108);
+      expect(marginR).toBe(108);
+    });
+  });
 });

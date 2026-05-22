@@ -18,6 +18,7 @@
 
   let isPlaying = $state(false);
   let viewportEl = $state<HTMLDivElement | null>(null);
+  let pictureAreaEl = $state<HTMLDivElement | null>(null);
 
   const ASPECT_RATIOS: Record<string, string> = {
     '9:16': '9 / 16',
@@ -27,16 +28,33 @@
 
   let aspectRatio = $derived(ASPECT_RATIOS[edits.viewport.preset] ?? '9 / 16');
 
-  // For crop mode the canvas must show the video cropped to the output aspect ratio — matching
-  // what FFmpeg will produce — so that subtitle/overlay positions reference visible content, not
-  // letterbox bars. object-position mirrors the user-controlled focus point.
-  // For pad modes (pad-blur, pad-black) the video IS letterboxed in the output too, so
-  // object-fit:contain is correct and position math already matches.
-  let videoStyle = $derived(
-    edits.viewport.fillMode === 'crop'
-      ? `object-fit:cover;object-position:${edits.viewport.focus.xCenter * 100}% ${edits.viewport.focus.yCenter * 100}%`
-      : 'object-fit:contain',
-  );
+  // Inner picture rect = output frame minus crop bars. Subtitles & overlays anchor here so
+  // they stay on the picture instead of sliding onto the black crop bars.
+  let pictureAreaStyle = $derived.by(() => {
+    const c = edits.viewport.crop;
+    return `top:${c.top * 100}%;right:${c.right * 100}%;bottom:${c.bottom * 100}%;left:${c.left * 100}%`;
+  });
+
+  // Fit the source to the viewport using the chosen fill mode, then mask edges with
+  // `clip-path: inset(...)`. The viewport's black background shows through the masked edges,
+  // matching the renderer's "crop = black bars over the output" semantic. Crop is never a zoom.
+  let videoStyle = $derived.by(() => {
+    const fit =
+      edits.viewport.fillMode === 'crop'
+        ? `object-fit:cover;object-position:${edits.viewport.focus.xCenter * 100}% ${edits.viewport.focus.yCenter * 100}%`
+        : 'object-fit:contain';
+    const c = edits.viewport.crop;
+    const clipPath =
+      c.top || c.right || c.bottom || c.left
+        ? `clip-path:inset(${c.top * 100}% ${c.right * 100}% ${c.bottom * 100}% ${c.left * 100}%)`
+        : '';
+    return [fit, clipPath].filter(Boolean).join(';');
+  });
+
+  let placementStyle = $derived.by(() => {
+    const p = edits.viewport.placement;
+    return `transform:translate(${p.offsetX * 100}%, ${p.offsetY * 100}%) scale(${p.scale});transform-origin:50% 50%`;
+  });
 
   let activeSubtitleLine = $derived(
     edits.subtitles.find((s) => s.startSec <= currentTime && s.endSec > currentTime) ?? null,
@@ -92,32 +110,36 @@
 <div class="canvas-wrap">
   <div class="canvas-stage">
     <div class="canvas-viewport" style="aspect-ratio: {aspectRatio}" bind:this={viewportEl}>
-      <!-- svelte-ignore a11y_media_has_caption -->
-      <video
-        bind:this={videoEl}
-        bind:currentTime
-        src="/api/clips/{clip.id}/file?variant=original"
-        preload="metadata"
-        class="canvas-video"
-        style={videoStyle}
-        onplay={handlePlay}
-        onpause={handlePause}
-        onended={handleEnded}
-      ></video>
+      <div class="placement-stage" style={placementStyle}>
+        <!-- svelte-ignore a11y_media_has_caption -->
+        <video
+          bind:this={videoEl}
+          bind:currentTime
+          src="/api/clips/{clip.id}/file?variant=original"
+          preload="metadata"
+          class="canvas-video"
+          style={videoStyle}
+          onplay={handlePlay}
+          onpause={handlePause}
+          onended={handleEnded}
+        ></video>
+      </div>
 
-      {#if activeSubtitleLine}
-        <CanvasSubtitle line={activeSubtitleLine} {currentTime} />
-      {/if}
+      <div class="picture-area" style={pictureAreaStyle} bind:this={pictureAreaEl}>
+        {#if activeSubtitleLine}
+          <CanvasSubtitle line={activeSubtitleLine} {currentTime} />
+        {/if}
 
-      {#each visibleOverlays as overlay (overlay.id)}
-        <CanvasOverlay
-          {overlay}
-          selected={overlay.id === selectedItemId}
-          containerEl={viewportEl}
-          onSelect={() => onSelectItem?.(overlay.id)}
-          onUpdate={handleOverlayUpdate}
-        />
-      {/each}
+        {#each visibleOverlays as overlay (overlay.id)}
+          <CanvasOverlay
+            {overlay}
+            selected={overlay.id === selectedItemId}
+            containerEl={pictureAreaEl}
+            onSelect={() => onSelectItem?.(overlay.id)}
+            onUpdate={handleOverlayUpdate}
+          />
+        {/each}
+      </div>
 
       {#if edits.viewport.fillMode === 'crop'}
         <FocusPicker
@@ -159,6 +181,20 @@
     max-width: 100%;
     container-type: size;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .placement-stage {
+    position: absolute;
+    inset: 0;
+  }
+
+  .picture-area {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .picture-area > :global(*) {
+    pointer-events: auto;
   }
 
   .canvas-video {

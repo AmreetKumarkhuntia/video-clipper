@@ -1,17 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { buildFilterGraph } from '../../src/lib/services/video/clipper/editor/filterGraphBuilder.js';
-import type { ClipEdits } from '../../src/lib/types/clipEdit.js';
+import type { ClipEdits, Viewport } from '../../src/lib/types/clipEdit.js';
+
+const DEFAULT_VIEWPORT: Viewport = {
+  preset: '9:16',
+  focus: { xCenter: 0.5, yCenter: 0.5 },
+  fillMode: 'crop',
+  crop: { top: 0, right: 0, bottom: 0, left: 0 },
+  placement: { offsetX: 0, offsetY: 0, scale: 1 },
+};
 
 function makeEdits(overrides: Partial<ClipEdits> = {}): ClipEdits {
   return {
     clipId: 'clip-abc',
     schemaVersion: 1,
     trim: { startSec: 0, endSec: 18 },
-    viewport: {
-      preset: '9:16',
-      focus: { xCenter: 0.5, yCenter: 0.5 },
-      fillMode: 'crop',
-    },
+    viewport: DEFAULT_VIEWPORT,
     subtitles: [],
     overlays: [],
     updatedAt: new Date().toISOString(),
@@ -19,77 +23,142 @@ function makeEdits(overrides: Partial<ClipEdits> = {}): ClipEdits {
   };
 }
 
+function viewport(partial: Partial<Viewport>): Viewport {
+  return { ...DEFAULT_VIEWPORT, ...partial };
+}
+
 const SRC_1080P = { width: 1920, height: 1080, fps: 30 };
 
 describe('buildFilterGraph', () => {
-  describe('crop mode', () => {
-    it('filterComplex contains crop filter', () => {
+  describe('crop mode (no freeform crop)', () => {
+    it('scales to cover output and crops to output dims', () => {
       const { filterComplex } = buildFilterGraph(makeEdits(), SRC_1080P, null);
-      expect(filterComplex).toContain('crop=');
-    });
-
-    it('centers crop when focus is 0.5/0.5 on 1920x1080 source for 9:16 (1080x1920 output)', () => {
-      const { filterComplex } = buildFilterGraph(makeEdits(), SRC_1080P, null);
-      // 9:16 output is 1080x1920; source is 1920x1080
-      // cropX = clamp(0, 1920-1080, round(0.5*1920 - 1080/2)) = clamp(0,840, 420) = 420
-      // cropY = clamp(0, 1080-1920, ...) => since 1080 < 1920, max is negative, clamps to 0
-      expect(filterComplex).toContain('crop=1080:1920:420:0');
-    });
-
-    it('clamps crop X to valid range', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.0, yCenter: 0.5 }, fillMode: 'crop' },
-      });
-      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
-      expect(filterComplex).toContain(':0:');
-    });
-
-    it('uses 9:16 output resolution 1080x1920', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'crop' },
-      });
-      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      expect(filterComplex).toContain('scale=1080:1920:force_original_aspect_ratio=increase');
       expect(filterComplex).toContain('crop=1080:1920');
     });
 
-    it('uses 16:9 output resolution 1920x1080', () => {
+    it('uses focus center to position the crop window', () => {
+      const { filterComplex } = buildFilterGraph(makeEdits(), SRC_1080P, null);
+      expect(filterComplex).toContain('(iw-1080)*0.5');
+      expect(filterComplex).toContain('(ih-1920)*0.5');
+    });
+
+    it('clamps focus to [0,1]', () => {
       const edits = makeEdits({
-        viewport: { preset: '16:9', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'crop' },
+        viewport: viewport({ focus: { xCenter: -0.5, yCenter: 1.5 } }),
       });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
-      expect(filterComplex).toContain('crop=1920:1080');
+      expect(filterComplex).toContain('(iw-1080)*0');
+      expect(filterComplex).toContain('(ih-1920)*1');
+    });
+
+    it('uses 16:9 output resolution 1920x1080', () => {
+      const edits = makeEdits({ viewport: viewport({ preset: '16:9' }) });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      expect(filterComplex).toContain('scale=1920:1080:force_original_aspect_ratio=increase');
     });
 
     it('uses 1:1 output resolution 1080x1080', () => {
+      const edits = makeEdits({ viewport: viewport({ preset: '1:1' }) });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      expect(filterComplex).toContain('scale=1080:1080:force_original_aspect_ratio=increase');
+    });
+  });
+
+  describe('freeform crop (mask edges, no zoom)', () => {
+    it('does not emit a source-dim crop filter when any edge is non-zero', () => {
       const edits = makeEdits({
-        viewport: { preset: '1:1', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'crop' },
+        viewport: viewport({ crop: { top: 0.1, right: 0, bottom: 0.1, left: 0 } }),
       });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
-      expect(filterComplex).toContain('crop=1080:1080');
+      // The freeform crop must NOT touch the source — i.e. the source's full width (1920)
+      // should never appear as the W argument of a crop filter.
+      expect(filterComplex).not.toMatch(/crop=1920:/);
+    });
+
+    it('emits an output-dim crop + pad pair to paint black bars on cropped edges', () => {
+      const edits = makeEdits({
+        viewport: viewport({ crop: { top: 0.1, right: 0, bottom: 0.1, left: 0 } }),
+      });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      // 9:16 output is 1080x1920. ih = round(1920 * 0.8) = 1536; cy = round(1920*0.1) = 192.
+      expect(filterComplex).toContain('crop=1080:1536:0:192');
+      expect(filterComplex).toContain('pad=1080:1920:0:192:black');
+    });
+
+    it('skips the crop+pad pair entirely at default (fast-path)', () => {
+      const { filterComplex } = buildFilterGraph(makeEdits(), SRC_1080P, null);
+      // No black-bar pad after the fit stage when crop is default.
+      expect(filterComplex).not.toContain(':black');
+    });
+
+    it('still honors focus when freeform crop is non-default', () => {
+      const edits = makeEdits({
+        viewport: viewport({
+          crop: { top: 0.1, right: 0, bottom: 0.1, left: 0 },
+          focus: { xCenter: 0.25, yCenter: 0.75 },
+        }),
+      });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      // The fit-stage focus expression must still be present — crop and focus are orthogonal.
+      expect(filterComplex).toContain('(iw-1080)*0.25');
+      expect(filterComplex).toContain('(ih-1920)*0.75');
+    });
+  });
+
+  describe('placement', () => {
+    it('skips placement filters at identity', () => {
+      const { filterComplex } = buildFilterGraph(makeEdits(), SRC_1080P, null);
+      expect(filterComplex).not.toContain('scale=2160');
+      expect(filterComplex).not.toContain('scale=540');
+    });
+
+    it('scale > 1 emits an upscale and crop-back-to-output', () => {
+      const edits = makeEdits({
+        viewport: viewport({ placement: { offsetX: 0, offsetY: 0, scale: 2 } }),
+      });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      expect(filterComplex).toContain('scale=2160:3840');
+      expect(filterComplex).toMatch(/crop=1080:1920:\d+:\d+/);
+    });
+
+    it('scale < 1 emits a downscale and a pad with black background', () => {
+      const edits = makeEdits({
+        viewport: viewport({ placement: { offsetX: 0, offsetY: 0, scale: 0.5 } }),
+      });
+      const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
+      expect(filterComplex).toContain('scale=540:960');
+      expect(filterComplex).toMatch(/pad=1080:1920:\d+:\d+:black/);
+    });
+
+    it('offset shifts the crop window for scale > 1', () => {
+      const eCentered = makeEdits({
+        viewport: viewport({ placement: { offsetX: 0, offsetY: 0, scale: 2 } }),
+      });
+      const eShifted = makeEdits({
+        viewport: viewport({ placement: { offsetX: 0.1, offsetY: 0, scale: 2 } }),
+      });
+      const a = buildFilterGraph(eCentered, SRC_1080P, null).filterComplex;
+      const b = buildFilterGraph(eShifted, SRC_1080P, null).filterComplex;
+      expect(a).not.toBe(b);
     });
   });
 
   describe('pad-blur mode', () => {
     it('contains boxblur filter', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'pad-blur' },
-      });
+      const edits = makeEdits({ viewport: viewport({ fillMode: 'pad-blur' }) });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
       expect(filterComplex).toContain('boxblur=20');
     });
 
     it('contains overlay filter', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'pad-blur' },
-      });
+      const edits = makeEdits({ viewport: viewport({ fillMode: 'pad-blur' }) });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
       expect(filterComplex).toContain('overlay=');
     });
 
     it('uses semicolons to separate filter branches', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'pad-blur' },
-      });
+      const edits = makeEdits({ viewport: viewport({ fillMode: 'pad-blur' }) });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
       expect(filterComplex.split(';').length).toBeGreaterThanOrEqual(2);
     });
@@ -97,9 +166,7 @@ describe('buildFilterGraph', () => {
 
   describe('pad-black mode', () => {
     it('contains pad filter with black color', () => {
-      const edits = makeEdits({
-        viewport: { preset: '9:16', focus: { xCenter: 0.5, yCenter: 0.5 }, fillMode: 'pad-black' },
-      });
+      const edits = makeEdits({ viewport: viewport({ fillMode: 'pad-black' }) });
       const { filterComplex } = buildFilterGraph(edits, SRC_1080P, null);
       expect(filterComplex).toContain('pad=');
       expect(filterComplex).toContain(':black');

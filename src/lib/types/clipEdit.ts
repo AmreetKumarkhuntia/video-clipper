@@ -9,12 +9,37 @@ export const CropFocusSchema = z.object({
 });
 export type CropFocus = z.infer<typeof CropFocusSchema>;
 
+export const CropRectSchema = z.object({
+  top: z.number().min(0).max(0.45).default(0),
+  right: z.number().min(0).max(0.45).default(0),
+  bottom: z.number().min(0).max(0.45).default(0),
+  left: z.number().min(0).max(0.45).default(0),
+});
+export type CropRect = z.infer<typeof CropRectSchema>;
+
+export const PlacementSchema = z.object({
+  offsetX: z.number().min(-0.5).max(0.5).default(0),
+  offsetY: z.number().min(-0.5).max(0.5).default(0),
+  scale: z.number().min(0.25).max(4).default(1),
+});
+export type Placement = z.infer<typeof PlacementSchema>;
+
 export const ViewportSchema = z.object({
   preset: ViewportPresetSchema.default('9:16'),
   focus: CropFocusSchema,
   fillMode: z.enum(['crop', 'pad-blur', 'pad-black']).default('crop'),
+  crop: CropRectSchema.default({ top: 0, right: 0, bottom: 0, left: 0 }),
+  placement: PlacementSchema.default({ offsetX: 0, offsetY: 0, scale: 1 }),
 });
 export type Viewport = z.infer<typeof ViewportSchema>;
+
+export function isDefaultCrop(crop: CropRect): boolean {
+  return crop.top === 0 && crop.right === 0 && crop.bottom === 0 && crop.left === 0;
+}
+
+export function isPlacementIdentity(placement: Placement): boolean {
+  return placement.offsetX === 0 && placement.offsetY === 0 && placement.scale === 1;
+}
 
 export const TrimSchema = z.object({
   startSec: z.number().nonnegative().default(0),

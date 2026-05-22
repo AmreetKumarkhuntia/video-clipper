@@ -10,6 +10,8 @@ import type {
   Position,
   SubtitleLine,
   TextOverlay,
+  CropRect,
+  Placement,
 } from '@lib/types/clipEdit.js';
 import type { PublishDraftItem, PublishDraftItemEvent, UploadArtifact } from './publish.js';
 import type { UploadQueueItem } from './upload.js';
@@ -461,6 +463,16 @@ export interface FocusPickerProps {
   focus: { xCenter: number; yCenter: number };
   containerEl: HTMLElement | null;
   onchange: (focus: { xCenter: number; yCenter: number }) => void;
+}
+
+export interface ClipEditorCropPanelProps {
+  crop: CropRect;
+  onchange: (crop: CropRect) => void;
+}
+
+export interface ClipEditorPlacementPanelProps {
+  placement: Placement;
+  onchange: (placement: Placement) => void;
 }
 
 export type TimelineSegmentKind = 'sub' | 'overlay' | 'trim';
