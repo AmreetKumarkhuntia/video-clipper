@@ -1,6 +1,8 @@
-import type { SubtitleLine } from '@lib/types/clipEdit.js';
+import type { CropRect, SubtitleLine } from '@lib/types/clipEdit.js';
 import { resolveRenderedFontSize } from '@lib/utils/textScale.js';
 import { escapeAss } from './textEscape.js';
+
+const ZERO_CROP: CropRect = { top: 0, right: 0, bottom: 0, left: 0 };
 
 function cssToAssColor(hex: string): string {
   const h = hex.replace('#', '');
@@ -26,23 +28,38 @@ function alignToAssCode(align: 'left' | 'center' | 'right'): number {
 }
 
 /**
- * Canvas uses `width: 90%` centered, so the text block has 5% margins on each side.
- * Mirror those margins in ASS so left/right aligned text matches the canvas anchor.
+ * Canvas uses `width: 90%` centered inside the inner picture area (the rect inside the crop
+ * bars), so the text block has 5% margins on each side of the inner area. Mirror that in ASS
+ * by shifting margins by `crop.left/right` and adding a 5%-of-inner inset for left/right align.
  */
 function alignMargins(
   align: 'left' | 'center' | 'right',
   outputWidth: number,
+  crop: CropRect,
 ): { marginL: number; marginR: number } {
-  const margin = Math.round(0.05 * outputWidth);
-  if (align === 'left') return { marginL: margin, marginR: 0 };
-  if (align === 'right') return { marginL: 0, marginR: margin };
-  return { marginL: 0, marginR: 0 };
+  const innerW = outputWidth * (1 - crop.left - crop.right);
+  const baseL = Math.round(crop.left * outputWidth);
+  const baseR = Math.round(crop.right * outputWidth);
+  const inset = Math.round(0.05 * innerW);
+  if (align === 'left') return { marginL: baseL + inset, marginR: baseR };
+  if (align === 'right') return { marginL: baseL, marginR: baseR + inset };
+  return { marginL: baseL, marginR: baseR };
+}
+
+/**
+ * Vertical margin in ASS (PlayResY pixels) for a subtitle whose `yCenter` is expressed in
+ * inner-picture coordinates (0 = top of picture area, 1 = bottom). Equivalent to the canvas's
+ * `bottom: (1-yCenter)*100%` measured against the inner picture container.
+ */
+function verticalMargin(yCenter: number, outputHeight: number, crop: CropRect): number {
+  return Math.round(outputHeight * (crop.bottom + (1 - yCenter) * (1 - crop.top - crop.bottom)));
 }
 
 export function buildAss(
   subtitles: SubtitleLine[],
   output: { width: number; height: number },
   trimStartSec: number = 0,
+  crop: CropRect = ZERO_CROP,
 ): string {
   if (subtitles.length === 0) {
     return (
@@ -57,10 +74,10 @@ export function buildAss(
     const oc = sc.outlineColor ? cssToAssColor(sc.outlineColor) : '&H00000000';
     const bc = sc.bgColor ? cssToAssColor(sc.bgColor) : '&H00000000';
     const b = sc.weight >= 600 ? -1 : 0;
-    const marginV = Math.round((1 - sub.position.yCenter) * output.height);
+    const marginV = verticalMargin(sub.position.yCenter, output.height, crop);
     const renderedSize = resolveRenderedFontSize(sc.fontSize, output);
     const alignment = alignToAssCode(sc.align);
-    const { marginL, marginR } = alignMargins(sc.align, output.width);
+    const { marginL, marginR } = alignMargins(sc.align, output.width, crop);
     // BorderStyle=3 renders an opaque background box; Outline field becomes box padding.
     // BorderStyle=1 renders text outline (normal mode).
     const borderStyle = sc.bgColor ? 3 : 1;
@@ -71,7 +88,9 @@ export function buildAss(
   // Each subtitle may produce multiple dialogue events (one per word window + gaps)
   // so that exactly the currently-playing word is shown in highlightColor and all
   // others revert to style.color — matching the canvas activeWordIndex behaviour.
-  const dialogueLines = subtitles.flatMap((sub) => buildWordEvents(sub, output, trimStartSec));
+  const dialogueLines = subtitles.flatMap((sub) =>
+    buildWordEvents(sub, output, trimStartSec, crop),
+  );
 
   const lines = [
     buildHeader(output),
@@ -117,9 +136,10 @@ function buildWordEvents(
   sub: SubtitleLine,
   output: { width: number; height: number },
   trimStartSec: number,
+  crop: CropRect,
 ): string[] {
-  const marginV = Math.round((1 - sub.position.yCenter) * output.height);
-  const { marginL, marginR } = alignMargins(sub.style.align, output.width);
+  const marginV = verticalMargin(sub.position.yCenter, output.height, crop);
+  const { marginL, marginR } = alignMargins(sub.style.align, output.width, crop);
 
   // Shift subtitle window into the output (trimmed) timeline.
   // Clamp the start to ≥ 0 — a subtitle that began before the trim start

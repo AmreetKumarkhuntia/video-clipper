@@ -1,14 +1,21 @@
-import type { TextOverlay } from '@lib/types/clipEdit.js';
+import type { CropRect, TextOverlay } from '@lib/types/clipEdit.js';
 import { resolveRenderedFontSize } from '@lib/utils/textScale.js';
 import { escapeDrawtext } from './textEscape.js';
+
+const ZERO_CROP: CropRect = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function buildDrawtext(
   overlay: TextOverlay,
   output: { width: number; height: number },
   trimStartSec: number = 0,
+  crop: CropRect = ZERO_CROP,
 ): string {
-  const xPx = Math.round(overlay.position.xCenter * output.width);
-  const yPx = Math.round(overlay.position.yCenter * output.height);
+  // Map xCenter/yCenter from inner-picture coordinates to output pixel coordinates, so the
+  // overlay anchors to the visible picture rect (not the full output frame).
+  const innerX = crop.left + overlay.position.xCenter * (1 - crop.left - crop.right);
+  const innerY = crop.top + overlay.position.yCenter * (1 - crop.top - crop.bottom);
+  const xPx = Math.round(innerX * output.width);
+  const yPx = Math.round(innerY * output.height);
   const renderedSize = resolveRenderedFontSize(overlay.style.fontSize, output);
 
   // Mirror the canvas transform: translate(-50%, -50%) for center, (0, -50%) for left,

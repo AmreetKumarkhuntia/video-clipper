@@ -45,7 +45,7 @@ export async function renderClipWithEdits(
 ): Promise<string> {
   configureFfmpeg(cfg);
 
-  await probeVideo(inputPath);
+  const srcMeta = await probeVideo(inputPath);
 
   const { w: oW, h: oH } = RESOLUTIONS[edits.viewport.preset];
 
@@ -54,15 +54,16 @@ export async function renderClipWithEdits(
     const tmpDir = join(cfg.outputDir, 'web', 'clip-edits', 'tmp');
     await fs.mkdir(tmpDir, { recursive: true });
     assPath = join(tmpDir, `${edits.clipId}.ass`);
-    const assContent = buildAss(edits.subtitles, { width: oW, height: oH }, edits.trim.startSec);
+    const assContent = buildAss(
+      edits.subtitles,
+      { width: oW, height: oH },
+      edits.trim.startSec,
+      edits.viewport.crop,
+    );
     await fs.writeFile(assPath, assContent, 'utf-8');
   }
 
-  const { filterComplex, mapLabel } = buildFilterGraph(
-    edits,
-    { width: oW, height: oH, fps: 30 },
-    assPath,
-  );
+  const { filterComplex, mapLabel } = buildFilterGraph(edits, srcMeta, assPath);
 
   return new Promise<string>((resolve, reject) => {
     ffmpeg(inputPath)

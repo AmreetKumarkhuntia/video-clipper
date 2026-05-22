@@ -122,4 +122,38 @@ describe('buildDrawtext', () => {
     const result = buildDrawtext(makeOverlay({ text: "time:00's" }), OUTPUT);
     expect(result).toContain("time\\:00\\'s");
   });
+
+  describe('crop-aware positioning', () => {
+    it('maps xCenter/yCenter to the full frame when crop is default', () => {
+      const result = buildDrawtext(makeOverlay(), OUTPUT);
+      // xCenter=0.5 → 540 px; yCenter=0.5 → 960 px.
+      expect(result).toContain('540-tw/2');
+      expect(result).toContain('960-th/2');
+    });
+
+    it('maps xCenter/yCenter into the inner picture rect when crop is set', () => {
+      const result = buildDrawtext(makeOverlay(), OUTPUT, 0, {
+        top: 0.1,
+        right: 0.1,
+        bottom: 0.1,
+        left: 0.1,
+      });
+      // Inner rect spans [108..972] horizontally and [192..1728] vertically.
+      // xCenter=0.5 → 108 + 0.5*864 = 540 (unchanged, symmetric crop).
+      // yCenter=0.5 → 192 + 0.5*1536 = 960 (unchanged).
+      // To verify the math actually engages, use an asymmetric crop:
+      const r2 = buildDrawtext(makeOverlay(), OUTPUT, 0, {
+        top: 0.2,
+        right: 0,
+        bottom: 0,
+        left: 0.1,
+      });
+      // xCenter=0.5 → 108 + 0.5*(1080-108-0) = 108 + 486 = 594.
+      // yCenter=0.5 → 384 + 0.5*(1920-384-0) = 384 + 768 = 1152.
+      expect(r2).toContain('594-tw/2');
+      expect(r2).toContain('1152-th/2');
+      // Sanity: the symmetric-crop result coincides with the no-crop result for center anchor.
+      expect(result).toContain('540-tw/2');
+    });
+  });
 });
