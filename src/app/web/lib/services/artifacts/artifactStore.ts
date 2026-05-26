@@ -1,5 +1,4 @@
-import { randomUUID } from 'crypto';
-import type { ClipPlan } from '@app/web/types/analysis.js';
+import type { ClipPlan } from '@lib/types/analysis.js';
 import type { PublishDraft, UploadArtifact } from '@app/web/types/publish.js';
 import {
   saveAnalysisToDb,
@@ -14,10 +13,9 @@ import {
   upsertUploadArtifact,
   listUploadArtifactsByAnalysisId as listUploadsFromDb,
 } from '@lib/services/db/repos/uploadArtifactsRepo.js';
+import { createArtifactId } from '@lib/orchestration/analysisOrchestrator.js';
 
-export function createArtifactId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-}
+export { createArtifactId };
 
 export async function saveAnalysis(plan: ClipPlan, optionsHash: string): Promise<ClipPlan> {
   saveAnalysisToDb(plan, optionsHash);

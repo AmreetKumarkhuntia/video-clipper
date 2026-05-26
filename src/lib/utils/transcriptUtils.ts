@@ -1,4 +1,4 @@
-import type { ClipCandidate } from '@app/web/types/analysis.js';
+import type { ClipCandidate } from '@lib/types/analysis.js';
 import type { RankedSegment, TranscriptLine } from '@lib/types/index.js';
 
 export function toClipCandidate(
