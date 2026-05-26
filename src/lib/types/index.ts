@@ -105,6 +105,37 @@ export type {
 export type { ChannelInput, ChunkInsert, SegmentationInsert, UpsertClipInput } from './db.js';
 
 export type {
+  CommandHandler,
+  AnalyzeArgs,
+  ClipArgs,
+  CandidatesArgs,
+  LibraryArgs,
+  ChannelArgs,
+  ConfigArgs,
+} from './command.js';
+
+export {
+  TranscriptBundleSchema,
+  ClipCandidateSchema,
+  AnalysisOptionsSchema,
+  CreateAnalysisRequestSchema,
+  ClipPlanSchema,
+  ClipSelectionSchema,
+  CreateClipsRequestSchema,
+  ClipArtifactSchema,
+} from './analysis.js';
+export type {
+  TranscriptBundle,
+  ClipCandidate,
+  AnalysisOptions,
+  CreateAnalysisRequest,
+  ClipPlan,
+  ClipSelection,
+  CreateClipsRequest,
+  ClipArtifact,
+} from './analysis.js';
+
+export type {
   YtDlpCookies,
   DownloaderConfig,
   AudioDownloadConfig,

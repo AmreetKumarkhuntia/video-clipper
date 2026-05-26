@@ -19,6 +19,7 @@ import type { SlicerConfig } from '@lib/services/audio/processor/slicer.js';
 import type { AnalyzerChainConfig } from '@lib/services/audio/analyzer/index.js';
 import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
+import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/prompts.js';
 import type { CliArgs, PipelineResult } from '@lib/types/index.js';
 
 async function outputResult(
@@ -208,7 +209,7 @@ export async function runPipeline(args: CliArgs, requestId: string): Promise<voi
         chunkOverlapSec: config.CHUNK_OVERLAP_SEC,
         model,
         maxRetries: config.LLM_MAX_RETRIES,
-        systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+        systemPrompt: config.LLM_SYSTEM_PROMPT ?? DEFAULT_ANALYSIS_SYSTEM_PROMPT,
         llmModel: config.LLM_MODEL,
         requestId,
         callbacks,
@@ -306,18 +307,3 @@ export async function runPipeline(args: CliArgs, requestId: string): Promise<voi
     await cache.close();
   }
 }
-
-const DEFAULT_SYSTEM_PROMPT = `You are an expert video editor analyzing a YouTube transcript segment.
-
-Identify if this segment contains a potentially interesting moment worth clipping.
-
-Interesting moments include:
-- surprising insights or revelations
-- strong or controversial opinions
-- humor or entertaining storytelling
-- emotional moments
-- key explanations of important concepts
-- "aha" moments or turning points
-
-If audio events are listed in the segment, treat them as strong positive signals —
-they indicate high-action or high-energy moments that are often clip-worthy.`;

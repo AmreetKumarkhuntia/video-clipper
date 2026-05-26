@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../client.js';
 import { clips } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
-import type { ClipArtifact } from '@app/web/types/analysis.js';
+import type { ClipArtifact } from '@lib/types/analysis.js';
 import type { UpsertClipInput } from '@lib/types/db.js';
 
 function rowToArtifact(row: typeof clips.$inferSelect): ClipArtifact {

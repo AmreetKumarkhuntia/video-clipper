@@ -1,52 +1,62 @@
 #!/usr/bin/env node
-import { log, generateRequestId } from '@lib/utils/logger.js';
-import { formatConfig } from '@lib/utils/format.js';
-import { config } from '@lib/config/index.js';
-import { parseArgs, printUsage } from './args.js';
-import { runPipeline } from './pipeline/runner.js';
+import { generateRequestId, log } from '@lib/utils/logger.js';
+import { runMigrations } from '@lib/services/db/migrate.js';
+import { commands } from './commands/index.js';
 
-const cliRequestId = generateRequestId();
-const args = parseArgs(process.argv);
+runMigrations();
 
-if (args.help) {
-  printUsage();
-  process.exit(0);
+const requestId = generateRequestId();
+const subcommand = process.argv[2];
+
+function isUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://') || value.startsWith('youtu');
 }
 
-if (!args.url) {
-  log.error('main', 'No YouTube URL provided.', cliRequestId);
-  printUsage();
-  process.exit(1);
-}
+function printHelp(): void {
+  console.log(
+    `
+video-clipper — Analyze YouTube videos and generate clips
 
-if (args.localVideo && !args.clip) {
-  log.error('main', '--local-video requires --clip flag', cliRequestId);
-  printUsage();
-  process.exit(1);
-}
+Usage: video-clipper <command> [options]
 
-if (args.localVideo && args.downloadSections) {
-  log.warn(
-    'main',
-    '--download-sections is ignored when using --local-video (clipping all segments from --top-n)',
-    cliRequestId,
+Commands:
+  analyze <url>          Analyze a YouTube video and find clip candidates
+  clip <analysis-id>     Generate video clips from an analysis
+  candidates <id>        List clip candidates for a saved analysis
+  library                Browse saved analyses and generated clips
+  channel <handle/url>   Resolve a YouTube channel and list videos
+  config [key] [value]   View or set configuration values
+  run <url>              One-shot pipeline: analyze + clip (legacy)
+
+Run "video-clipper <command> --help" for command-specific options.
+`.trim(),
   );
 }
 
-log.info(
-  'main',
-  `Starting video-clipper (model: ${config.LLM_MODEL})` +
-    (args.clip ? ' [--clip enabled]' : '') +
-    (args.localVideo ? ` [--local-video: ${args.localVideo}]` : '') +
-    (args.downloadSections !== undefined && args.downloadSections !== 'all'
-      ? ` [--download-sections: ${args.downloadSections}]`
-      : '') +
-    (args.videoPath ? ` [--video-path: ${args.videoPath}]` : ''),
-  cliRequestId,
-);
-log.info('main', `Config: ${formatConfig(config)}`, cliRequestId);
+async function main(): Promise<void> {
+  if (!subcommand || subcommand === '--help' || subcommand === '-h') {
+    printHelp();
+    return;
+  }
 
-runPipeline(args, cliRequestId).catch((err) => {
-  log.error('main', err instanceof Error ? err.message : String(err), cliRequestId);
+  // Backward compat: bare URL routes to the `run` command
+  if (isUrl(subcommand)) {
+    const handler = commands.get('run')!;
+    await handler.run(process.argv.slice(2), requestId);
+    return;
+  }
+
+  const handler = commands.get(subcommand);
+  if (!handler) {
+    log.error('main', `Unknown command: ${subcommand}`, requestId);
+    printHelp();
+    process.exit(1);
+  }
+
+  await handler.run(process.argv.slice(3), requestId);
+}
+
+main().catch((err) => {
+  log.error('main', err instanceof Error ? err.message : String(err), requestId);
   process.exit(1);
 });
