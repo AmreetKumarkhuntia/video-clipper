@@ -31,4 +31,5 @@ export interface AudioDownloadConfig extends YtDlpCookies {
 
 export interface TranscriptChainConfig extends YtDlpCookies {
   whisperModel: string;
+  languageCode?: string;
 }

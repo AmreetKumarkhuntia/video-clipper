@@ -75,6 +75,7 @@ export interface YouTubeCaptionTrack {
   baseUrl: string;
   kind?: string;
   languageCode: string;
+  name?: { simpleText?: string };
 }
 
 export interface YouTubePlayerResponse {

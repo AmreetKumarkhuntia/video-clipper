@@ -16,7 +16,11 @@ import { TranscriptBundleSchema } from '@lib/types/analysis.js';
 import type { TranscriptBundle } from '@lib/types/analysis.js';
 import type { Config } from '@lib/types/config.js';
 
-async function getTranscriptBundle(videoId: string, cfg: Config): Promise<TranscriptBundle> {
+async function getTranscriptBundle(
+  videoId: string,
+  cfg: Config,
+  languageCode?: string,
+): Promise<TranscriptBundle> {
   const cookies: YtDlpCookies = {
     cookiesFromBrowser: cfg.YT_DLP_COOKIES_FROM_BROWSER,
     cookiesFile: cfg.YT_DLP_COOKIES_FILE,
@@ -27,6 +31,7 @@ async function getTranscriptBundle(videoId: string, cfg: Config): Promise<Transc
   const transcriptChainConfig: TranscriptChainConfig = {
     ...cookies,
     whisperModel: cfg.AUDIO_WHISPER_MODEL,
+    languageCode,
   };
 
   const detector = new TranscriptDetector(
@@ -49,8 +54,9 @@ async function getTranscriptBundle(videoId: string, cfg: Config): Promise<Transc
 export async function loadOrFetchTranscript(
   videoId: string,
   cfg: Config,
+  languageCode?: string,
 ): Promise<TranscriptBundle> {
-  const stored = findTranscriptLines(videoId);
+  const stored = !languageCode ? findTranscriptLines(videoId) : null;
   if (stored) {
     const microBlocks = buildMicroBlocks(stored.lines, cfg.MICRO_BLOCK_SEC);
     const chunks = buildLLMChunks(microBlocks, cfg.CHUNK_LENGTH_SEC, cfg.CHUNK_OVERLAP_SEC);
@@ -63,7 +69,7 @@ export async function loadOrFetchTranscript(
     });
   }
 
-  const transcript = await getTranscriptBundle(videoId, cfg);
+  const transcript = await getTranscriptBundle(videoId, cfg, languageCode);
   saveTranscript(videoId, transcript.lines, transcript.fetchedAt);
   const microBlocks = buildMicroBlocks(transcript.lines, cfg.MICRO_BLOCK_SEC);
   const chunks = buildLLMChunks(microBlocks, cfg.CHUNK_LENGTH_SEC, cfg.CHUNK_OVERLAP_SEC);

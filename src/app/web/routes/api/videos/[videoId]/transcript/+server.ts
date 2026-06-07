@@ -12,7 +12,7 @@ import {
 import { log } from '@lib/utils/logger.js';
 import { TranscriptParamsSchema } from '@app/web/types/analysis.js';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals, url }) => {
   const reqDone = log.request('GET', '/api/videos/[videoId]/transcript', locals.requestId, {
     videoId: params.videoId,
   });
@@ -23,8 +23,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     return jsonError(400, 'Invalid transcript request.', zodErrorDetail(parsed.error));
   }
 
+  const languageCode = url.searchParams.get('lang') ?? undefined;
+
   try {
-    const bundle = await loadOrFetchTranscript(parsed.data.videoId, locals.config);
+    const bundle = await loadOrFetchTranscript(parsed.data.videoId, locals.config, languageCode);
     reqDone(200);
     return jsonOk(bundle);
   } catch (error) {
