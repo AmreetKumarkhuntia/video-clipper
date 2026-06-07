@@ -21,7 +21,12 @@ export const GROUP_CONFIG: Record<string, GroupConfig> = {
       {
         h3: 'System prompts',
         meta: 'leave blank to use the built-in defaults',
-        fields: ['LLM_SYSTEM_PROMPT', 'PUBLISH_METADATA_SYSTEM_PROMPT'],
+        fields: [
+          'LLM_SYSTEM_PROMPT',
+          'LLM_QA_SYSTEM_PROMPT',
+          'PUBLISH_METADATA_SYSTEM_PROMPT',
+          'SUBTITLE_PLAN_SYSTEM_PROMPT',
+        ],
       },
     ],
   },
@@ -92,6 +97,12 @@ export const GROUP_CONFIG: Record<string, GroupConfig> = {
           'YT_DEFAULT_CONTAINS_SYNTHETIC_MEDIA',
           'YT_DEFAULT_IS_SHORT',
         ],
+      },
+      {
+        h3: 'Publishing schedule',
+        meta: 'automatic scheduled publishing for queued clips',
+        fields: ['YT_SCHEDULE_ENABLED', 'YT_SCHEDULE_INTERVAL_MIN'],
+        layout: 'two',
       },
     ],
   },
@@ -202,7 +213,7 @@ export const GROUP_CONFIG: Record<string, GroupConfig> = {
       },
       {
         h3: 'Behaviour',
-        fields: ['DUMP_OUTPUTS', 'CLIP_CONCURRENCY'],
+        fields: ['DUMP_OUTPUTS', 'CLIP_CONCURRENCY', 'LOG_COLOR'],
       },
     ],
   },

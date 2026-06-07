@@ -35,6 +35,10 @@ export const QaAnswerSchema = z.object({
 });
 export type QaAnswer = z.infer<typeof QaAnswerSchema>;
 
+export type QaTextSegment =
+  | { type: 'text'; value: string }
+  | { type: 'cite'; label: string; timeSec: number };
+
 export interface QaStreamCallbacks {
   onStarted?: () => void;
   onProgress?: (text: string) => void;

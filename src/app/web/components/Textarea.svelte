@@ -10,8 +10,10 @@
     monospace = false,
     error = false,
     class: extraClass = '',
+    el = $bindable<HTMLTextAreaElement | undefined>(undefined),
     oninput,
     onchange,
+    onkeydown,
   }: TextareaProps = $props();
 
   const classes = $derived(
@@ -46,5 +48,7 @@
   class={classes}
   oninput={handleInput}
   onchange={handleChange}
+  {onkeydown}
   bind:value
+  bind:this={el}
 ></textarea>

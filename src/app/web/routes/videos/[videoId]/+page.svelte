@@ -541,7 +541,9 @@
       <VideoQaPanel
         {videoId}
         transcriptReady={transcript !== null}
-        onSeek={(s) => (seekToSec = s)}
+        onSeek={(s) => {
+          seekToSec = s;
+        }}
       />
 
       {#if transcriptRows.length > 0}
@@ -583,7 +585,7 @@
 
   .analyze-layout {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 7fr 3fr;
     gap: 24px;
     align-items: start;
   }
