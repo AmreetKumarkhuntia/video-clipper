@@ -538,23 +538,21 @@
         onStop={stopAnalysis}
       />
 
-      {#if transcriptRows.length > 0}
-        <div style="margin-top: 20px">
-          <TranscriptPanel
-            lines={transcriptRows}
-            chunkCount={transcript?.chunks.length ?? 0}
-            highlightRanges={candidateRanges}
-            {activeRange}
-            onClear={clearTranscript}
-          />
-        </div>
-      {/if}
-
       <VideoQaPanel
         {videoId}
         transcriptReady={transcript !== null}
         onSeek={(s) => (seekToSec = s)}
       />
+
+      {#if transcriptRows.length > 0}
+        <TranscriptPanel
+          lines={transcriptRows}
+          chunkCount={transcript?.chunks.length ?? 0}
+          highlightRanges={candidateRanges}
+          {activeRange}
+          onClear={clearTranscript}
+        />
+      {/if}
     </div>
   </div>
 {/if}
@@ -600,7 +598,7 @@
   .analyze-side {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 16px;
     min-width: 0;
   }
 
