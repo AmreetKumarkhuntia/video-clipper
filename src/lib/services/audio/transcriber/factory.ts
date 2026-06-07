@@ -58,7 +58,7 @@ export function createTranscriptChain(
   return names.map((name) => {
     switch (name) {
       case 'ytdlp':
-        return new YtDlpTranscriptAnalyzer(chainConfig);
+        return new YtDlpTranscriptAnalyzer(chainConfig, chainConfig.languageCode);
       case 'whisper':
         return new WhisperTranscriptAnalyzer(chainConfig.whisperModel);
       case 'gemini':

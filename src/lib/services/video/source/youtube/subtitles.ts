@@ -117,13 +117,37 @@ export function extractInitialPlayerResponse(html: string): YouTubePlayerRespons
 }
 
 export function pickEnglishCaptionTrack(tracks: YouTubeCaptionTrack[]): YouTubeCaptionTrack | null {
-  const englishTracks = tracks.filter((track) => isEnglishLanguage(track.languageCode));
+  return pickCaptionTrack(tracks, undefined);
+}
 
-  if (englishTracks.length === 0) {
-    return null;
-  }
+export function pickCaptionTrack(
+  tracks: YouTubeCaptionTrack[],
+  languageCode: string | undefined,
+): YouTubeCaptionTrack | null {
+  const matched = tracks.filter((track) =>
+    languageCode
+      ? track.languageCode.toLowerCase().startsWith(languageCode.toLowerCase())
+      : isEnglishLanguage(track.languageCode),
+  );
+  if (matched.length === 0) return null;
+  return matched.sort((a, b) => (b.kind !== 'asr' ? 1 : 0) - (a.kind !== 'asr' ? 1 : 0))[0];
+}
 
-  return englishTracks.sort((left, right) => captionTrackScore(right) - captionTrackScore(left))[0];
+export async function fetchAvailableCaptionTracks(videoId: string): Promise<YouTubeCaptionTrack[]> {
+  const watchUrl = new URL(WATCH_PAGE_URL);
+  watchUrl.searchParams.set('v', videoId);
+  watchUrl.searchParams.set('hl', 'en');
+  const res = await fetch(watchUrl, { headers: { 'accept-language': ACCEPT_LANGUAGE_HEADER } });
+  if (!res.ok) return [];
+  const html = await res.text();
+  const playerResponse = extractInitialPlayerResponse(html);
+  const tracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+  const seen = new Set<string>();
+  return tracks.filter((t) => {
+    if (seen.has(t.languageCode)) return false;
+    seen.add(t.languageCode);
+    return true;
+  });
 }
 
 export function rankSubtitleFiles(files: string[]): string[] {
@@ -243,7 +267,10 @@ function buildCaptionTrackUrl(baseUrl: string): string {
   return url.toString();
 }
 
-async function fetchTranscriptFromYouTube(videoId: string): Promise<TranscriptLine[] | null> {
+async function fetchTranscriptFromYouTube(
+  videoId: string,
+  languageCode?: string,
+): Promise<TranscriptLine[] | null> {
   const watchUrl = new URL(WATCH_PAGE_URL);
   watchUrl.searchParams.set('v', videoId);
   watchUrl.searchParams.set('hl', 'en');
@@ -272,7 +299,7 @@ async function fetchTranscriptFromYouTube(videoId: string): Promise<TranscriptLi
   }
 
   const tracks = playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
-  const track = pickEnglishCaptionTrack(tracks);
+  const track = pickCaptionTrack(tracks, languageCode);
 
   if (!track) {
     return null;
@@ -324,8 +351,10 @@ async function fetchTranscriptViaYtDlp(
   videoId: string,
   cookies: YtDlpCookies,
   directFetchError: Error | null,
+  languageCode?: string,
 ): Promise<TranscriptLine[]> {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vc-vtt-'));
+  const subLangs = `${languageCode ?? 'en'}.*,-live_chat`;
 
   try {
     const args = [
@@ -334,7 +363,7 @@ async function fetchTranscriptViaYtDlp(
       '--sub-format',
       'vtt',
       '--sub-langs',
-      'en.*,-live_chat',
+      subLangs,
       // mhtml is the format YouTube exposes when the TV-client n-challenge JS
       // solver fails (Deno bug). Selecting it explicitly keeps yt-dlp from
       // bailing out with "Requested format is not available" before it writes
@@ -408,11 +437,15 @@ async function fetchTranscriptViaYtDlp(
  * Cookie config (YT_DLP_COOKIES_FROM_BROWSER / YT_DLP_COOKIES_FILE) is only
  * used for the yt-dlp fallback path.
  */
-async function fetchTranscript(videoId: string, cookies: YtDlpCookies): Promise<TranscriptLine[]> {
+async function fetchTranscript(
+  videoId: string,
+  cookies: YtDlpCookies,
+  languageCode?: string,
+): Promise<TranscriptLine[]> {
   let directFetchError: Error | null = null;
 
   try {
-    const directLines = await fetchTranscriptFromYouTube(videoId);
+    const directLines = await fetchTranscriptFromYouTube(videoId, languageCode);
 
     if (directLines) {
       log.info(
@@ -429,7 +462,7 @@ async function fetchTranscript(videoId: string, cookies: YtDlpCookies): Promise<
     );
   }
 
-  return fetchTranscriptViaYtDlp(videoId, cookies, directFetchError);
+  return fetchTranscriptViaYtDlp(videoId, cookies, directFetchError, languageCode);
 }
 
 /**
@@ -442,11 +475,14 @@ async function fetchTranscript(videoId: string, cookies: YtDlpCookies): Promise<
 export class YtDlpTranscriptAnalyzer extends TranscriptAnalyzer {
   readonly source = 'ytdlp' as const;
 
-  constructor(private readonly cookies: YtDlpCookies = {}) {
+  constructor(
+    private readonly cookies: YtDlpCookies = {},
+    private readonly languageCode?: string,
+  ) {
     super();
   }
 
   async detect(videoId: string, _audioPath: string | null): Promise<TranscriptLine[]> {
-    return fetchTranscript(videoId, this.cookies);
+    return fetchTranscript(videoId, this.cookies, this.languageCode);
   }
 }

@@ -41,6 +41,7 @@
   import VideoQaPanel from '@web/widgets/video/analysis/VideoQaPanel.svelte';
   import Skeleton from '@web/components/Skeleton.svelte';
   import ConfirmDialog from '@web/components/ConfirmDialog.svelte';
+  import TranscriptLanguagePicker from '@web/components/TranscriptLanguagePicker.svelte';
 
   let plan = $state<ClipPlan | null>(null);
   let streamingCandidates = $state<ClipCandidate[]>([]);
@@ -63,6 +64,7 @@
     onconfirm: () => Promise<void>;
   } | null>(null);
   let seekToSec = $state<number | undefined>(undefined);
+  let showLanguagePicker = $state(false);
 
   let videoId = $derived($page.params.videoId);
 
@@ -111,8 +113,13 @@
     if (videoId) void loadVideo();
   });
 
-  async function loadTranscript(): Promise<void> {
-    const cached = get(videoStore)[videoId]?.transcript;
+  function openLanguagePicker(): void {
+    showLanguagePicker = true;
+  }
+
+  async function loadTranscript(languageCode?: string): Promise<void> {
+    showLanguagePicker = false;
+    const cached = !languageCode ? get(videoStore)[videoId]?.transcript : null;
     if (cached) {
       transcript = cached;
       return;
@@ -121,7 +128,10 @@
     isLoadingTranscript = true;
     errorMessage = '';
     try {
-      const result = await apiFetch<TranscriptBundle>(`/api/videos/${videoId}/transcript`);
+      const url = languageCode
+        ? `/api/videos/${videoId}/transcript?lang=${encodeURIComponent(languageCode)}`
+        : `/api/videos/${videoId}/transcript`;
+      const result = await apiFetch<TranscriptBundle>(url);
       setTranscript(videoId, result);
       transcript = result;
     } catch (error) {
@@ -533,7 +543,7 @@
         {isLoadingTranscript}
         {isAnalyzing}
         errorMessage={errorMessage && video ? errorMessage : ''}
-        onLoadTranscript={loadTranscript}
+        onLoadTranscript={openLanguagePicker}
         onPlanClips={planClips}
         onStop={stopAnalysis}
       />
@@ -557,6 +567,14 @@
       {/if}
     </div>
   </div>
+{/if}
+
+{#if showLanguagePicker}
+  <TranscriptLanguagePicker
+    {videoId}
+    onSelect={(lang) => void loadTranscript(lang)}
+    onCancel={() => (showLanguagePicker = false)}
+  />
 {/if}
 
 {#if confirmPending}

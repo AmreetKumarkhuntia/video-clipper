@@ -64,3 +64,9 @@ export const TranscriptParamsSchema = z.object({
   videoId: z.string().min(1),
 });
 export type TranscriptParams = z.infer<typeof TranscriptParamsSchema>;
+
+export interface TranscriptLanguage {
+  languageCode: string;
+  label: string;
+  isAsr: boolean;
+}

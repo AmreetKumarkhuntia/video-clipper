@@ -169,6 +169,12 @@ export interface SectionHeaderProps {
   class?: string;
 }
 
+export interface TranscriptLanguagePickerProps {
+  videoId: string;
+  onSelect: (languageCode: string) => void;
+  onCancel: () => void;
+}
+
 export interface ToastProps {
   toast: Toast;
   ondismiss?: (id: string) => void;
