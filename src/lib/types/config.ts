@@ -60,6 +60,7 @@ export const ConfigSchema = z
     LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
     CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
     LLM_SYSTEM_PROMPT: z.string().optional(),
+    LLM_QA_SYSTEM_PROMPT: z.string().optional(),
     PUBLISH_METADATA_SYSTEM_PROMPT: z.string().optional(),
     SUBTITLE_PLAN_SYSTEM_PROMPT: z.string().optional(),
     AUDIO_GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
@@ -204,6 +205,7 @@ export const CONFIG_GROUPS = [
       'LLM_MAX_RETRIES',
       'LLM_CONCURRENCY',
       'LLM_SYSTEM_PROMPT',
+      'LLM_QA_SYSTEM_PROMPT',
       'PUBLISH_METADATA_SYSTEM_PROMPT',
       'SUBTITLE_PLAN_SYSTEM_PROMPT',
     ],
@@ -368,6 +370,10 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   LLM_CONCURRENCY: { description: 'Max parallel LLM calls', widget: 'number' },
   LLM_SYSTEM_PROMPT: {
     description: 'Override the transcript analysis system prompt (leave blank to use the default)',
+    widget: 'textarea',
+  },
+  LLM_QA_SYSTEM_PROMPT: {
+    description: 'Override the video Q&A system prompt (leave blank to use the default)',
     widget: 'textarea',
   },
   PUBLISH_METADATA_SYSTEM_PROMPT: {

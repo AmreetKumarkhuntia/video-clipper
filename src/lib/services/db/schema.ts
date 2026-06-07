@@ -116,7 +116,19 @@ export const captionPresets = sqliteTable('caption_presets', {
   updatedAt: integer('updated_at').notNull(),
 });
 
-// One row per generated clip. MP4 files still live on disk under outputs/web/clips/;
+// One row per Q&A message per video. Persists the multi-turn chat history for ask-about-video.
+export const qaMessages = sqliteTable(
+  'qa_messages',
+  {
+    id: text('id').primaryKey(), // nanoid / uuid
+    videoId: text('video_id').notNull(),
+    role: text('role').notNull(), // 'user' | 'assistant'
+    content: text('content').notNull(),
+    citations: text('citations').notNull().default('[]'), // JSON: QaCitation[]
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('qa_messages_video_id_idx').on(t.videoId)],
+);
 // this table is the source of truth for clip metadata, edits payload, and render-path bookkeeping.
 // segmentationId is nullable so a clip remains queryable after its source segmentation row is
 // replaced (segmentations get delete-then-inserted on re-runs). segmentRank is denormalised for
