@@ -234,10 +234,6 @@
 </Card>
 
 <style>
-  .qa-panel {
-    margin-top: 20px;
-  }
-
   .qa-panel__head {
     display: flex;
     align-items: flex-start;
@@ -256,7 +252,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 360px;
+    max-height: 240px;
     overflow-y: auto;
     padding: 4px 0 8px;
     scroll-behavior: smooth;
