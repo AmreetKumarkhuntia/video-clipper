@@ -5,6 +5,7 @@ import { libraryCommand } from './library.js';
 import { channelCommand } from './channel.js';
 import { configCommand } from './config.js';
 import { runCommand } from './run.js';
+import { askCommand } from './ask.js';
 import type { CommandHandler } from '@lib/types/command.js';
 
 export const commands: Map<string, CommandHandler> = new Map([
@@ -15,4 +16,5 @@ export const commands: Map<string, CommandHandler> = new Map([
   ['channel', channelCommand],
   ['config', configCommand],
   ['run', runCommand],
+  ['ask', askCommand],
 ]);

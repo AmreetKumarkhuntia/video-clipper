@@ -64,6 +64,13 @@
       "when": 1779275365610,
       "tag": "0008_caption_presets",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1780575479880,
+      "tag": "0009_bent_sasquatch",
+      "breakpoints": true
     }
   ]
 }

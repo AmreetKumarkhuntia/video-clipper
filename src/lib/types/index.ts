@@ -112,6 +112,7 @@ export type {
   LibraryArgs,
   ChannelArgs,
   ConfigArgs,
+  AskArgs,
 } from './command.js';
 
 export {
@@ -141,6 +142,22 @@ export type {
   AudioDownloadConfig,
   TranscriptChainConfig,
 } from './downloader.js';
+
+export {
+  QaCitationSchema,
+  QaRoleSchema,
+  QaMessageSchema,
+  QaRequestSchema,
+  QaAnswerSchema,
+} from './qa.js';
+export type {
+  QaCitation,
+  QaRole,
+  QaMessage,
+  QaRequest,
+  QaAnswer,
+  QaStreamCallbacks,
+} from './qa.js';
 
 export {
   ViewportPresetSchema,

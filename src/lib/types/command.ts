@@ -52,3 +52,10 @@ export interface ConfigArgs {
   reset: boolean;
   help: boolean;
 }
+
+export interface AskArgs {
+  url?: string;
+  question?: string;
+  reset: boolean;
+  help: boolean;
+}

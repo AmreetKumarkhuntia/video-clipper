@@ -38,6 +38,7 @@
   import SegmentPreview from '@web/widgets/video/analysis/SegmentPreview.svelte';
   import TranscriptPanel from '@web/widgets/video/analysis/TranscriptPanel.svelte';
   import VideoDetailsRail from '@web/widgets/video/analysis/VideoDetailsRail.svelte';
+  import VideoQaPanel from '@web/widgets/video/analysis/VideoQaPanel.svelte';
   import Skeleton from '@web/components/Skeleton.svelte';
   import ConfirmDialog from '@web/components/ConfirmDialog.svelte';
 
@@ -548,6 +549,12 @@
           />
         </div>
       {/if}
+
+      <VideoQaPanel
+        {videoId}
+        transcriptReady={transcript !== null}
+        onSeek={(s) => (seekToSec = s)}
+      />
     </div>
   </div>
 {/if}

@@ -532,3 +532,9 @@ export interface UserPresetChipProps {
   onEdit: (preset: UserCaptionPreset) => void;
   onDelete: (id: string) => void;
 }
+
+export interface VideoQaPanelProps {
+  videoId: string;
+  transcriptReady: boolean;
+  onSeek: (timeSec: number) => void;
+}
