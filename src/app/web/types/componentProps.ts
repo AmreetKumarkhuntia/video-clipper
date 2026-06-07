@@ -156,8 +156,17 @@ export interface TextareaProps {
   monospace?: boolean;
   error?: boolean;
   class?: string;
+  el?: HTMLTextAreaElement | undefined;
   oninput?: (value: string) => void;
   onchange?: (value: string) => void;
+  onkeydown?: (e: KeyboardEvent) => void;
+}
+
+export interface SectionHeaderProps {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  class?: string;
 }
 
 export interface ToastProps {
