@@ -1,3 +1,23 @@
+# [1.12.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.11.0...v1.12.0) (2026-06-09)
+
+
+### Bug Fixes
+
+* **analysis:** restore clipcard thumb full width by adding align-items stretch ([594a498](https://github.com/AmreetKumarkhuntia/video-clipper/commit/594a498a63e74a4d4d9d776064a58260a838da52))
+* **video-qa:** move Q&A panel above transcript in sidebar ([9f8737c](https://github.com/AmreetKumarkhuntia/video-clipper/commit/9f8737ce16d6f735e665b140e0d276fbeab0daa0))
+
+
+### Features
+
+* **analysis:** add ConfirmDialog, re-refine action, and noSegmentCache option ([b948e17](https://github.com/AmreetKumarkhuntia/video-clipper/commit/b948e177e5e13edc003b3d27df79795d8b019b02))
+* **cli:** add subcommand-based CLI with shared DB orchestration ([cbb1c98](https://github.com/AmreetKumarkhuntia/video-clipper/commit/cbb1c98f69e6a589b30303aaf75cd2abff2c7a3d))
+* **clip-editor:** add freeform crop bars + placement displacement to viewport ([8eefacb](https://github.com/AmreetKumarkhuntia/video-clipper/commit/8eefacbcb7162df5e65d0acb77acf166b812016e))
+* **components:** add Skeleton shared component ([55c1399](https://github.com/AmreetKumarkhuntia/video-clipper/commit/55c139984d2282d19c27f1e0de896a58249e812d))
+* **components:** add Tabs shared component ([bd13faa](https://github.com/AmreetKumarkhuntia/video-clipper/commit/bd13faa014737c594b2fc07ff3e11e07d6afc562))
+* **components:** add ToggleRow shared component ([ee6f90e](https://github.com/AmreetKumarkhuntia/video-clipper/commit/ee6f90e88192c9d93e9e2855786afed8792f5f26))
+* **transcript:** language picker modal for transcript fetch ([47332c6](https://github.com/AmreetKumarkhuntia/video-clipper/commit/47332c626d7901ed1fab9190f4770adf124fc691))
+* **video-qa:** add video Q&A feature for CLI and web ([8f8cf98](https://github.com/AmreetKumarkhuntia/video-clipper/commit/8f8cf986056727b994338e818d83f171de77c7a9))
+
 # [1.11.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.10.0...v1.11.0) (2026-05-21)
 
 
