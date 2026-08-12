@@ -1,6 +1,6 @@
 # Remove File-Based Clip Artifacts; Persist Clips in SQLite
 
-> **Status: TODO** — no code written yet. Companion to [remove-analysis-file-cache.md](./remove-analysis-file-cache.md), same pattern, scoped to the clip layer.
+> **Status: DONE** — all steps implemented. Companion to [remove-analysis-file-cache.md](./remove-analysis-file-cache.md), same pattern, scoped to the clip layer.
 
 ## Context (why)
 
@@ -218,7 +218,7 @@ export function deleteClipsByAnalysisId(analysisId: string, keepIds: string[] = 
 Notes:
 
 - The `segmentId` in the wire shape is derived from the row id (`clip-<videoId>-<segmentId>`) to keep the existing `ClipArtifact` shape unchanged for the frontend. The frontend reads `clip.segmentId`; no UI change needed.
-- The `editsPath: 'db'` sentinel keeps the `clip.editsPath ?? null` checks in `+page.svelte` and `ClipEditor.svelte` truthy. **TODO (Step 7):** prefer reshaping `ClipArtifact` to drop `editsPath` entirely and replace UI checks with `hasEdits: boolean`, but do that in a follow-up so this step doesn't fan out.
+- The `editsPath: 'db'` sentinel has been removed. `ClipArtifact` now uses `hasEdits: boolean` (default false) instead — see Step 7.
 
 ### Step 3: Rewrite `clipService.generateWebClips` to write to DB
 

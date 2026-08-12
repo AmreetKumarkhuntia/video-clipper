@@ -1,6 +1,6 @@
 # Remove File-Based Caching from Analysis Layer; DB-First at /analysis Endpoint
 
-> **Status: PARTIAL — codebase does NOT compile.** A previous agent began this refactor and got partway through step 1 of 7 before being asked to hand off. The next agent must finish steps 1.5–8 to restore the build. See "Current state" below for exactly what was already changed.
+> **Status: DONE** — all steps shipped; `tsc --project tsconfig.test.json` is clean. Verified against the code: `CacheBackend` retains only transcript/audio methods (`src/lib/types/cache.ts`), the manifest layer is gone, `DELETE /api/cache/videos/[videoId]/analysis` clears DB chunk analysis via `clearChunkAnalysis`, and `/api/analysis/transcript` is DB-first through `analysisOrchestrator`. The remaining `CacheBackend` usage in `src/app/cli/pipeline/runner.ts` is deliberate — audio/transcript caching was explicitly out of scope. Kept for historical context. Companion to [remove-clip-file-cache.md](./remove-clip-file-cache.md), same pattern, scoped to the analysis layer.
 
 ## Context (why)
 
@@ -47,15 +47,15 @@ The previous agent edited these files. Confirm with `git diff` before touching a
   - `analyze()` calls `this.transcriptDetector.detect(opts.videoId, opts.audioPath)` (no cache).
   - `analyze()` calls `analyzeChunks(...)` with the new 5-arg signature.
 
-### NOT done — broken right now ❌
+### Was broken at handoff — since fixed ✅
 
-`LLMAnalyzer.refine()` still calls the OLD `refineSegments(rankedSegments, microBlocks, opts.maxParallel, this.cache, opts.noCache, refineOpts)`. **`this.cache` no longer exists and `refineSegments` no longer accepts those args** → type error. This must be fixed as the first thing the next agent does (see Step 1.5).
+`LLMAnalyzer.refine()` used to call the OLD `refineSegments(rankedSegments, microBlocks, opts.maxParallel, this.cache, opts.noCache, refineOpts)`, which no longer type-checked once `this.cache` was removed. Step 1.5 resolved this: `src/lib/services/analysis/llm/LLMAnalyzer.ts:98` now calls the 4-arg `refineSegments(rankedSegments, microBlocks, opts.maxParallel, refineOpts)`.
 
-Everything else listed in the steps below is untouched.
+Every step below has since been implemented — see the status note at the top.
 
 ---
 
-## Plan — pick up here
+## Plan — as implemented
 
 ### Step 1.5: Finish LLMAnalyzer.refine()
 
