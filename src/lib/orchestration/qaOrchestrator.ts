@@ -1,13 +1,8 @@
 import { randomUUID } from 'crypto';
 import { Model } from '@lib/services/modelFactory/index.js';
-import { answerQuestion } from '@lib/services/analysis/qa/index.js';
+import { answerQuestion, DEFAULT_QA_SYSTEM_PROMPT } from '@lib/services/analysis/index.js';
 import { loadOrFetchTranscript } from './transcriptOrchestrator.js';
-import {
-  findQaMessages,
-  insertQaMessage,
-  clearQaMessages,
-} from '@lib/services/db/repos/qaMessagesRepo.js';
-import { DEFAULT_QA_SYSTEM_PROMPT } from '@lib/services/analysis/prompts.js';
+import { findQaMessages, insertQaMessage, clearQaMessages } from '@lib/services/db/index.js';
 import type { QaRequest, QaAnswer, QaMessage, QaStreamCallbacks } from '@lib/types/qa.js';
 import type { Config } from '@lib/types/config.js';
 

@@ -1,4 +1,4 @@
-import { getAnalysisFromDb } from '@lib/services/db/repos/analysesRepo.js';
+import { getAnalysisFromDb } from '@lib/services/db/index.js';
 import { generateClipsForAnalysis } from '@lib/orchestration/clipOrchestrator.js';
 import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';

@@ -7,10 +7,10 @@ import {
   upsertClip,
   listClipsByAnalysisId,
   deleteClipsByAnalysisId,
-} from '@lib/services/db/repos/clipsRepo.js';
+} from '@lib/services/db/index.js';
 import type { ClipArtifact, CreateClipsRequest } from '@lib/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
-import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
+import type { YtDlpCookies } from '@lib/types/downloader.js';
 import type { Config } from '@lib/types/config.js';
 import { log } from '@lib/utils/logger.js';
 

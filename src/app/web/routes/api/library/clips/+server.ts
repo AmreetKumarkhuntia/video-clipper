@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { listClips, listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
+import { listClips, listClipsByAnalysisId } from '@lib/services/db/index.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 import { ListClipsQuerySchema } from '@app/web/types/analysis.js';

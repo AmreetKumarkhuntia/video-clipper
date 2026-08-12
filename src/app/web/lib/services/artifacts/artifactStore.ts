@@ -4,15 +4,11 @@ import {
   saveAnalysisToDb,
   getAnalysisFromDb,
   listAnalysesFromDb,
-} from '@lib/services/db/repos/analysesRepo.js';
-import {
   upsertPublishDraft,
   getPublishDraftByAnalysisId,
-} from '@lib/services/db/repos/publishDraftsRepo.js';
-import {
   upsertUploadArtifact,
   listUploadArtifactsByAnalysisId as listUploadsFromDb,
-} from '@lib/services/db/repos/uploadArtifactsRepo.js';
+} from '@lib/services/db/index.js';
 import { createArtifactId } from '@lib/orchestration/analysisOrchestrator.js';
 
 export { createArtifactId };

@@ -1,6 +1,5 @@
-import { parseUrl } from '@lib/services/video/source/youtube/parser.js';
-import { extractMetadata } from '@lib/services/video/source/youtube/metadata.js';
-import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
+import { parseUrl, extractMetadata } from '@lib/services/video/index.js';
+import type { YtDlpCookies } from '@lib/types/downloader.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
 import type { VideoResolverResult } from '@lib/types/index.js';

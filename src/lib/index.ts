@@ -83,39 +83,42 @@ export { Cache, createCacheBackend } from './services/cache/index.js';
 export type { CacheBackend } from './types/cache.js';
 
 // ── Video Services ──
-export { parseUrl } from './services/video/source/youtube/parser.js';
-export { extractMetadata } from './services/video/source/youtube/metadata.js';
-export { downloadVideo } from './services/video/source/youtube/downloader.js';
-export { generateClips, organizeClips } from './services/video/clipper/index.js';
 export {
+  parseUrl,
+  extractMetadata,
+  downloadVideo,
+  generateClips,
+  organizeClips,
   GoogleYouTubeCatalogService,
   parseChannelInput,
   parseYouTubeDuration,
-} from './services/video/source/youtube/catalog.js';
+} from './services/video/index.js';
 export type { YouTubeCatalogService } from './types/youtube.js';
 
 // ── Audio Services ──
-export { downloadAudio } from './services/audio/source/youtube.js';
-export { sliceAudio } from './services/audio/processor/slicer.js';
-export { EventDetector } from './services/audio/processor/detector.js';
 export {
+  downloadAudio,
+  sliceAudio,
+  EventDetector,
   TranscriptAnalyzer,
   createTranscriptChain,
   parseTranscriptProviderChain,
-} from './services/audio/transcriber/index.js';
-export {
   AudioAnalyzer,
   createAnalyzerChain,
   parseProviderChain,
-} from './services/audio/analyzer/index.js';
+} from './services/audio/index.js';
 
 // ── Analysis Services ──
-export { analyzeChunks } from './services/analysis/llm/index.js';
-export { LLMAnalyzer } from './services/analysis/llm/LLMAnalyzer.js';
-export { refineSegments } from './services/analysis/refiner/index.js';
-export { mergeSignals, rankSegments } from './services/analysis/ranker/index.js';
-export { buildMicroBlocks, buildLLMChunks } from './services/analysis/transcript/chunker/index.js';
-export { TranscriptDetector } from './services/analysis/transcript/detector.js';
+export {
+  analyzeChunks,
+  LLMAnalyzer,
+  refineSegments,
+  mergeSignals,
+  rankSegments,
+  buildMicroBlocks,
+  buildLLMChunks,
+  TranscriptDetector,
+} from './services/analysis/index.js';
 
 // ── Shared Pipeline Stages ──
 export { analyzeSegments, refineRankedSegments } from './pipeline/stages/segmentAnalyzer.js';

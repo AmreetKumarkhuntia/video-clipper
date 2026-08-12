@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { ServerLoadEvent } from '@sveltejs/kit';
 import { getAnalysis, getPublishDraft } from '@app/web/lib/services/artifacts/artifactStore.js';
-import { listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
+import { listClipsByAnalysisId } from '@lib/services/db/index.js';
 import { getYouTubeAuthStatus } from '@app/web/lib/services/youtube/uploadAuth.js';
 
 export async function load({

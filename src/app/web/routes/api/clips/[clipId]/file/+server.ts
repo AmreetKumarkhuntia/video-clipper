@@ -3,7 +3,7 @@ import { stat } from 'fs/promises';
 import { Readable } from 'stream';
 import type { RequestHandler } from '@sveltejs/kit';
 import { ClipParamsSchema, FileVariantSchema } from '@app/web/types/analysis.js';
-import { getClip } from '@lib/services/db/repos/clipsRepo.js';
+import { getClip } from '@lib/services/db/index.js';
 import { jsonError, zodErrorDetail } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 

@@ -1,17 +1,17 @@
-import { TranscriptDetector } from '@lib/services/analysis/transcript/detector.js';
-import { createTranscriptChain } from '@lib/services/audio/transcriber/index.js';
-import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
-import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
 import {
+  TranscriptDetector,
   buildMicroBlocks,
   buildLLMChunks,
-} from '@lib/services/analysis/transcript/chunker/index.js';
+} from '@lib/services/analysis/index.js';
+import { createTranscriptChain } from '@lib/services/audio/index.js';
+import type { TranscriptChainConfig, YtDlpCookies } from '@lib/types/downloader.js';
 import {
   findTranscriptLines,
   saveTranscript,
   clearTranscript,
-} from '@lib/services/db/repos/videosRepo.js';
-import { upsertChunks, deleteChunks } from '@lib/services/db/repos/chunksRepo.js';
+  upsertChunks,
+  deleteChunks,
+} from '@lib/services/db/index.js';
 import { TranscriptBundleSchema } from '@lib/types/analysis.js';
 import type { TranscriptBundle } from '@lib/types/analysis.js';
 import type { Config } from '@lib/types/config.js';

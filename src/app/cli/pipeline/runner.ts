@@ -11,15 +11,16 @@ import { analyzeSegments, refineRankedSegments } from '@lib/pipeline/stages/segm
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
-import { downloadAudio } from '@lib/services/audio/source/youtube.js';
-import type { AudioDownloadConfig } from '@lib/services/audio/source/youtube.js';
-import type { ClipperConfig } from '@lib/services/video/clipper/index.js';
-import type { DownloaderConfig } from '@lib/services/video/source/youtube/downloader.js';
-import type { SlicerConfig } from '@lib/services/audio/processor/slicer.js';
-import type { AnalyzerChainConfig } from '@lib/services/audio/analyzer/index.js';
-import type { YtDlpCookies } from '@lib/services/video/source/youtube/metadata.js';
-import type { TranscriptChainConfig } from '@lib/services/audio/transcriber/index.js';
-import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/prompts.js';
+import { downloadAudio } from '@lib/services/audio/index.js';
+import type {
+  AudioDownloadConfig,
+  DownloaderConfig,
+  YtDlpCookies,
+  TranscriptChainConfig,
+} from '@lib/types/downloader.js';
+import type { ClipperConfig } from '@lib/types/video.js';
+import type { SlicerConfig, AnalyzerChainConfig } from '@lib/types/audio.js';
+import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/index.js';
 import type { CliArgs, PipelineResult } from '@lib/types/index.js';
 
 async function outputResult(

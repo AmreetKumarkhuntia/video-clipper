@@ -1,12 +1,13 @@
 import { promises as fs } from 'fs';
 import pLimit from 'p-limit';
-import { downloadAudio } from '@lib/services/audio/source/youtube.js';
+import {
+  downloadAudio,
+  createAnalyzerChain,
+  EventDetector,
+  sliceAudio,
+} from '@lib/services/audio/index.js';
 import type { AudioDownloadConfig } from '@lib/types/downloader.js';
-import { createAnalyzerChain } from '@lib/services/audio/analyzer/index.js';
-import type { AnalyzerChainConfig } from '@lib/types/audio.js';
-import { EventDetector } from '@lib/services/audio/processor/detector.js';
-import { sliceAudio } from '@lib/services/audio/processor/slicer.js';
-import type { SlicerConfig } from '@lib/types/audio.js';
+import type { AnalyzerChainConfig, SlicerConfig } from '@lib/types/audio.js';
 import { buildWindows } from '@lib/utils/chunker.js';
 import { log } from '@lib/utils/logger.js';
 import type { Cache } from '@lib/services/cache/index.js';

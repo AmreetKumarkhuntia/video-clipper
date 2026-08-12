@@ -1,10 +1,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
 import { TextStyleSchema, PositionSchema } from '@lib/types/clipEdit.js';
-import {
-  listCaptionPresets,
-  createCaptionPreset,
-} from '@lib/services/db/repos/captionPresetsRepo.js';
+import { listCaptionPresets, createCaptionPreset } from '@lib/services/db/index.js';
 import {
   errorMessage,
   jsonError,

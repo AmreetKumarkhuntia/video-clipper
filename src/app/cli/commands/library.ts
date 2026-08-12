@@ -1,5 +1,4 @@
-import { listAnalysesFromDb } from '@lib/services/db/repos/analysesRepo.js';
-import { listClips, listClipsByVideoId } from '@lib/services/db/repos/clipsRepo.js';
+import { listAnalysesFromDb, listClips, listClipsByVideoId } from '@lib/services/db/index.js';
 import { printAnalysesList, printClipsList } from '../output/formatter.js';
 import type { CommandHandler, LibraryArgs } from '@lib/types/command.js';
 

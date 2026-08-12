@@ -1,18 +1,19 @@
 import { randomUUID } from 'crypto';
 import { Model } from '@lib/services/modelFactory/index.js';
-import { analyzeChunks } from '@lib/services/analysis/llm/index.js';
+import { analyzeChunks } from '@lib/services/analysis/index.js';
 import { refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { loadOrFetchTranscript } from './transcriptOrchestrator.js';
-import { findChunks, setChunkAnalysisByRange } from '@lib/services/db/repos/chunksRepo.js';
 import {
+  findChunks,
+  setChunkAnalysisByRange,
   findSegmentations,
   upsertSegmentations,
   clearSegmentations,
   insertSegmentation,
   markSegmentationsComplete,
-} from '@lib/services/db/repos/segmentationsRepo.js';
-import { saveAnalysisToDb } from '@lib/services/db/repos/analysesRepo.js';
+  saveAnalysisToDb,
+} from '@lib/services/db/index.js';
 import { ClipPlanSchema } from '@lib/types/analysis.js';
 import type { ClipPlan, CreateAnalysisRequest } from '@lib/types/analysis.js';
 import {
@@ -23,7 +24,7 @@ import {
   type StreamCallbacks,
 } from '@lib/types/index.js';
 import { toClipCandidate } from '@lib/utils/transcriptUtils.js';
-import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/prompts.js';
+import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/index.js';
 import type { Config } from '@lib/types/config.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 

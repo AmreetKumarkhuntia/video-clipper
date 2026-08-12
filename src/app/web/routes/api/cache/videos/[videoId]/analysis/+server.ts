@@ -1,7 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
-import { clearChunkAnalysis } from '@lib/services/db/repos/chunksRepo.js';
-import { clearSegmentations } from '@lib/services/db/repos/segmentationsRepo.js';
+import { clearChunkAnalysis, clearSegmentations } from '@lib/services/db/index.js';
 import { log } from '@lib/utils/logger.js';
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
