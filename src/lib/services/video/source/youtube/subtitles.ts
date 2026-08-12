@@ -5,7 +5,6 @@ import path from 'node:path';
 import { log } from '@lib/utils/logger.js';
 import { retryAsync } from '@lib/utils/retryAsync.js';
 import type { TranscriptLine } from '@lib/types/transcript.js';
-import { TranscriptAnalyzer } from '../../../audio/transcriber/base.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
 import type { YouTubeCaptionTrack, YouTubePlayerResponse } from '@lib/types/youtube.js';
 
@@ -437,7 +436,7 @@ async function fetchTranscriptViaYtDlp(
  * Cookie config (YT_DLP_COOKIES_FROM_BROWSER / YT_DLP_COOKIES_FILE) is only
  * used for the yt-dlp fallback path.
  */
-async function fetchTranscript(
+export async function fetchTranscript(
   videoId: string,
   cookies: YtDlpCookies,
   languageCode?: string,
@@ -463,26 +462,4 @@ async function fetchTranscript(
   }
 
   return fetchTranscriptViaYtDlp(videoId, cookies, directFetchError, languageCode);
-}
-
-/**
- * Fetches the YouTube transcript from YouTube caption tracks first, then
- * falls back to yt-dlp subtitle extraction when needed.
- *
- * This is the default transcript provider. It does not use the audio file —
- * the `audioPath` parameter is accepted but ignored.
- */
-export class YtDlpTranscriptAnalyzer extends TranscriptAnalyzer {
-  readonly source = 'ytdlp' as const;
-
-  constructor(
-    private readonly cookies: YtDlpCookies = {},
-    private readonly languageCode?: string,
-  ) {
-    super();
-  }
-
-  async detect(videoId: string, _audioPath: string | null): Promise<TranscriptLine[]> {
-    return fetchTranscript(videoId, this.cookies, this.languageCode);
-  }
 }

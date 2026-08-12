@@ -12,7 +12,7 @@ import type { TranscriptChainConfig } from '../src/lib/services/audio/transcribe
 import { GeminiAudioAnalyzer } from '../src/lib/services/audio/analyzer/gemini.js';
 import { WhisperAudioAnalyzer } from '../src/lib/services/audio/analyzer/whisper.js';
 import { YAMNetAudioAnalyzer } from '../src/lib/services/audio/analyzer/yamnet.js';
-import { YtDlpTranscriptAnalyzer } from '../src/lib/services/video/source/youtube/subtitles.js';
+import { YtDlpTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/ytdlp.js';
 import { WhisperTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/whisper.js';
 import { GeminiTranscriptAnalyzer } from '../src/lib/services/audio/transcriber/gemini.js';
 
