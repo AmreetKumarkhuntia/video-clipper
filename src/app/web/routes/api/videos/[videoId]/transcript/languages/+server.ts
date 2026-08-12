@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { fetchAvailableCaptionTracks } from '@lib/services/video/source/youtube/subtitles.js';
+import { fetchAvailableCaptionTracks } from '@lib/services/video/index.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { generateRequestId, log } from '@lib/utils/logger.js';
-import { runMigrations } from '@lib/services/db/migrate.js';
+import { runMigrations } from '@lib/services/db/index.js';
 import { commands } from './commands/index.js';
 
 runMigrations();

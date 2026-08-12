@@ -1,4 +1,4 @@
-import { getAnalysisFromDb } from '@lib/services/db/repos/analysesRepo.js';
+import { getAnalysisFromDb } from '@lib/services/db/index.js';
 import { log } from '@lib/utils/logger.js';
 import { printCandidates } from '../output/formatter.js';
 import type { CommandHandler, CandidatesArgs } from '@lib/types/command.js';

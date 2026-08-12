@@ -1,5 +1,5 @@
 import { getWebServerConfig } from '@app/web/lib/services/config/webConfig.js';
-import { GoogleYouTubeCatalogService } from '@lib/services/video/source/youtube/catalog.js';
+import { GoogleYouTubeCatalogService } from '@lib/services/video/index.js';
 import type { YouTubeCatalogService } from '@lib/types/youtube.js';
 
 export function createYouTubeCatalogService(): YouTubeCatalogService {

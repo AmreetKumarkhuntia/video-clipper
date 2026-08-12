@@ -1,7 +1,5 @@
-import { LLMAnalyzer } from '@lib/services/analysis/llm/LLMAnalyzer.js';
-import { TranscriptDetector } from '@lib/services/analysis/transcript/detector.js';
-import { createTranscriptChain } from '@lib/services/audio/transcriber/index.js';
-import { refineSegments } from '@lib/services/analysis/refiner/index.js';
+import { LLMAnalyzer, TranscriptDetector, refineSegments } from '@lib/services/analysis/index.js';
+import { createTranscriptChain } from '@lib/services/audio/index.js';
 import { log } from '@lib/utils/logger.js';
 import type {
   AudioEvent,

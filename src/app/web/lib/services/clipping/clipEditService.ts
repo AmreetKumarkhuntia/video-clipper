@@ -3,13 +3,8 @@ import { ClipEditsSchema } from '@lib/types/clipEdit.js';
 import type { ClipEdits } from '@lib/types/clipEdit.js';
 import type { ClipArtifact } from '@app/web/types/analysis.js';
 import type { ClipperConfig } from '@lib/types/video.js';
-import {
-  getClip,
-  getClipRow,
-  setClipEdits,
-  setClipRender,
-} from '@lib/services/db/repos/clipsRepo.js';
-import { renderClipWithEdits } from '@lib/services/video/clipper/editor/renderer.js';
+import { getClip, getClipRow, setClipEdits, setClipRender } from '@lib/services/db/index.js';
+import { renderClipWithEdits } from '@lib/services/video/index.js';
 
 /**
  * Compute a structural hash of ClipEdits, excluding `updatedAt` so that

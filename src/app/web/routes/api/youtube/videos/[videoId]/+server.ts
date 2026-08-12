@@ -8,8 +8,7 @@ import {
 } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 import { VideoParamsSchema } from '@app/web/types/youtube.js';
-import { upsertChannel } from '@lib/services/db/repos/channelsRepo.js';
-import { upsertVideo } from '@lib/services/db/repos/videosRepo.js';
+import { upsertChannel, upsertVideo } from '@lib/services/db/index.js';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   const reqDone = log.request('GET', '/api/youtube/videos/[videoId]', locals.requestId, {

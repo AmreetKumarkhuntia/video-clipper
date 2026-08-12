@@ -1,4 +1,4 @@
-import { GoogleYouTubeCatalogService } from '@lib/services/video/source/youtube/catalog.js';
+import { GoogleYouTubeCatalogService } from '@lib/services/video/index.js';
 import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';

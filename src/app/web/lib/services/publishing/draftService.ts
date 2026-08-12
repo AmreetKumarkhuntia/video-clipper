@@ -4,7 +4,7 @@ import {
   getPublishDraft,
   savePublishDraft,
 } from '@app/web/lib/services/artifacts/artifactStore.js';
-import { listClipsByAnalysisId } from '@lib/services/db/repos/clipsRepo.js';
+import { listClipsByAnalysisId } from '@lib/services/db/index.js';
 import type { ClipArtifact, ClipPlan } from '@app/web/types/analysis.js';
 import {
   PublishDraftSchema,

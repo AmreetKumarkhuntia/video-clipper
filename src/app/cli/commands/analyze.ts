@@ -1,7 +1,6 @@
-import { parseUrl } from '@lib/services/video/source/youtube/parser.js';
-import { extractMetadata } from '@lib/services/video/source/youtube/metadata.js';
+import { parseUrl, extractMetadata } from '@lib/services/video/index.js';
 import { runAnalysis } from '@lib/orchestration/analysisOrchestrator.js';
-import { upsertVideo } from '@lib/services/db/repos/videosRepo.js';
+import { upsertVideo } from '@lib/services/db/index.js';
 import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';

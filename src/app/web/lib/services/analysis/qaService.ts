@@ -1,5 +1,5 @@
 import { answerVideoQuestion } from '@lib/orchestration/qaOrchestrator.js';
-import { findQaMessages, clearQaMessages } from '@lib/services/db/repos/qaMessagesRepo.js';
+import { findQaMessages, clearQaMessages } from '@lib/services/db/index.js';
 import type { QaRequest, QaAnswer, QaMessage } from '@lib/types/qa.js';
 import type { Config } from '@lib/types/config.js';
 import type { QaStreamCallbacks } from '@app/web/types/qa.js';

@@ -13,7 +13,8 @@ export {
   parseYouTubeDuration,
 } from './source/youtube/catalog.js';
 export type { YouTubeCatalogService } from '@lib/types/youtube.js';
-export { generateClips, organizeClips } from './clipper/index.js';
+export { generateClips, organizeClips, remuxClips, configureFfmpeg } from './clipper/index.js';
+export { renderClipWithEdits } from './clipper/editor/renderer.js';
 export { VideoMetadataSchema, PipelineResultSchema } from '@lib/types/video.js';
 export type {
   VideoMetadata,
