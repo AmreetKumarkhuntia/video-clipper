@@ -11,6 +11,7 @@ import {
 import { createOpenAI } from '@ai-sdk/openai';
 import type { z } from 'zod';
 import type {
+  Model as ModelContract,
   ModelOpts,
   ModelGenerateTextOpts,
   ModelStreamTextOpts,
@@ -22,7 +23,7 @@ import type {
 } from '@lib/types/modelFactory.js';
 import { resolveLanguageModel } from './providers.js';
 
-export class Model {
+export class Model implements ModelContract {
   private readonly lm: LanguageModel;
 
   constructor(opts: ModelOpts) {

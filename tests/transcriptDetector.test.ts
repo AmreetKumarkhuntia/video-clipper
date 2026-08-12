@@ -37,7 +37,7 @@ describe('TranscriptDetector', () => {
   describe('constructor', () => {
     it('throws when chain is empty', () => {
       expect(() => makeDetector([])).toThrow(
-        'TranscriptDetector requires at least one TranscriptAnalyzer',
+        'TranscriptDetector requires at least one TranscriptProvider',
       );
     });
   });

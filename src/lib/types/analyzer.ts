@@ -1,7 +1,7 @@
 import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
 import type { AudioEvent } from './audio.js';
 import type { ChunkEvaluation, RankedSegment } from './segment.js';
-import type { Model } from '@lib/services/modelFactory/index.js';
+import type { Model } from './modelFactory.js';
 
 export interface LLMAnalyzerResult {
   lines: TranscriptLine[];

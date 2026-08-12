@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { TranscriptLine } from '@lib/types/transcript.js';
 import type { QaMessage, QaAnswer, QaCitation, QaStreamCallbacks } from '@lib/types/qa.js';
-import type { Model } from '@lib/services/modelFactory/index.js';
+import type { Model } from '@lib/types/modelFactory.js';
 
 export function buildTranscriptContext(lines: TranscriptLine[]): string {
   return lines.map((l) => `[${l.start.toFixed(1)}s] ${l.text}`).join('\n');
