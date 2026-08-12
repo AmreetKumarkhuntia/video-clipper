@@ -2,8 +2,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '../client.js';
 import { uploadArtifacts } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
-import { UploadArtifactStatusSchema, PublishPrivacyStatusSchema } from '@app/web/types/publish.js';
-import type { UploadArtifact } from '@app/web/types/publish.js';
+import { UploadArtifactStatusSchema, PublishPrivacyStatusSchema } from '@lib/types/publish.js';
+import type { UploadArtifact } from '@lib/types/publish.js';
 
 function rowToArtifact(row: typeof uploadArtifacts.$inferSelect): UploadArtifact {
   return {
