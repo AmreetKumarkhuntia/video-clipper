@@ -4,6 +4,7 @@ export { sliceAudio } from './processor/slicer.js';
 export { EventDetector } from './processor/detector.js';
 export {
   TranscriptAnalyzer,
+  YtDlpTranscriptAnalyzer,
   createTranscriptChain,
   parseTranscriptProviderChain,
 } from './transcriber/index.js';

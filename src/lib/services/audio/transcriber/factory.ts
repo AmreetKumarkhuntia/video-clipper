@@ -1,6 +1,6 @@
 import { log } from '@lib/utils/logger.js';
 import { TranscriptAnalyzer } from './base.js';
-import { YtDlpTranscriptAnalyzer } from '../../video/source/youtube/subtitles.js';
+import { YtDlpTranscriptAnalyzer } from './ytdlp.js';
 import type { TranscriptChainConfig } from '@lib/types/downloader.js';
 import { WhisperTranscriptAnalyzer } from './whisper.js';
 import { GeminiTranscriptAnalyzer } from './gemini.js';

@@ -2,7 +2,7 @@ export type { VideoSource } from '@lib/types/video.js';
 export { parseUrl } from './youtube/parser.js';
 export { extractMetadata } from './youtube/metadata.js';
 export { downloadVideo } from './youtube/downloader.js';
-export { parseVtt, YtDlpTranscriptAnalyzer } from './youtube/subtitles.js';
+export { parseVtt, fetchTranscript, fetchAvailableCaptionTracks } from './youtube/subtitles.js';
 export {
   GoogleYouTubeCatalogService,
   parseChannelInput,
