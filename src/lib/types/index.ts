@@ -171,6 +171,59 @@ export {
   TextOverlaySchema,
   ClipEditsSchema,
 } from './clipEdit.js';
+
+export {
+  PublishPrivacyStatusSchema,
+  PublishLicenseSchema,
+  YOUTUBE_CATEGORIES,
+  PublishDraftItemSchema,
+  PublishDraftSchema,
+  SavePublishDraftRequestSchema,
+  GeneratePublishMetadataRequestSchema,
+  GeneratedPublishMetadataSchema,
+  YouTubeChannelSchema,
+  YouTubeAuthStateSchema,
+  SaveYouTubeManualAuthRequestSchema,
+  YouTubeAuthStatusSchema,
+  UploadArtifactStatusSchema,
+  UploadArtifactSchema,
+  CreateUploadsRequestSchema,
+  PublishMetadataSchema,
+  CachedMetadataSchema,
+} from './publish.js';
+export type {
+  PublishPrivacyStatus,
+  PublishLicense,
+  PublishDraftItem,
+  PublishDraft,
+  SavePublishDraftRequest,
+  GeneratePublishMetadataRequest,
+  GeneratedPublishMetadata,
+  YouTubeChannel,
+  YouTubeAuthState,
+  SaveYouTubeManualAuthRequest,
+  YouTubeAuthStatus,
+  UploadArtifactStatus,
+  UploadArtifact,
+  CreateUploadsRequest,
+  MetadataGenerationContext,
+  OAuthCookieState,
+  CachedMetadata,
+  UploadDraftClipsCallbacks,
+} from './publish.js';
+
+export {
+  PlannedWordSchema,
+  PlannedSubtitleLineSchema,
+  PlanSubtitlesResultSchema,
+  PlanSubtitlesRequestSchema,
+} from './subtitlePlan.js';
+export type {
+  PlannedWord,
+  PlannedSubtitleLine,
+  PlanSubtitlesRequest,
+  PlanSubtitlesResult,
+} from './subtitlePlan.js';
 export type {
   ViewportPreset,
   CropFocus,

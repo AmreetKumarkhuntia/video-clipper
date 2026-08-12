@@ -24,8 +24,4 @@ export type UploadStreamEventName =
   | 'upload_complete'
   | 'error';
 
-export interface UploadDraftClipsCallbacks {
-  onUploadStarted?: (item: import('./publish.js').PublishDraftItem) => void;
-  onUploadFinished?: (upload: UploadArtifact) => void;
-  onUploadFailed?: (upload: UploadArtifact) => void;
-}
+export type { UploadDraftClipsCallbacks } from '@lib/types/publish.js';

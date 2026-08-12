@@ -2,8 +2,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '../client.js';
 import { publishDrafts } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
-import { PublishDraftItemSchema } from '@app/web/types/publish.js';
-import type { PublishDraft } from '@app/web/types/publish.js';
+import { PublishDraftItemSchema } from '@lib/types/publish.js';
+import type { PublishDraft } from '@lib/types/publish.js';
 
 function rowToDraft(row: typeof publishDrafts.$inferSelect): PublishDraft {
   return {
