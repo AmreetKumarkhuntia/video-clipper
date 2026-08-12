@@ -1,7 +1,7 @@
 import { analyzeChunks } from './index.js';
 import { refineSegments } from '../refiner/index.js';
 import { log } from '@lib/utils/logger.js';
-import type { Model } from '@lib/services/modelFactory/index.js';
+import type { Model } from '@lib/types/modelFactory.js';
 import type { TranscriptDetector } from '../transcript/detector.js';
 import type {
   MicroBlock,

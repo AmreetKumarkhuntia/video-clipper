@@ -1,17 +1,21 @@
 import { buildMicroBlocks, buildLLMChunks } from './chunker/index.js';
 import { log } from '@lib/utils/logger.js';
-import type { TranscriptAnalyzer } from '../../audio/transcriber/base.js';
-import type { TranscriptLine, MicroBlock, LLMChunk } from '@lib/types/transcript.js';
+import type {
+  TranscriptLine,
+  MicroBlock,
+  LLMChunk,
+  TranscriptProvider,
+} from '@lib/types/transcript.js';
 import type { TranscriptDetectorResult } from '@lib/types/analyzer.js';
 
 /**
  * Top-level transcript detector.
  *
- * Holds an ordered chain of TranscriptAnalyzer instances and walks the chain
- * on each `detect()` call: the first analyzer that succeeds wins. If an
- * analyzer throws, the error is logged and the next analyzer in the chain is
+ * Holds an ordered chain of TranscriptProvider instances and walks the chain
+ * on each `detect()` call: the first provider that succeeds wins. If a
+ * provider throws, the error is logged and the next provider in the chain is
  * tried. If the entire chain is exhausted without success the error from the
- * last analyzer is re-thrown.
+ * last provider is re-thrown.
  *
  * After obtaining raw transcript lines the detector groups them into
  * micro-blocks and builds overlapping LLM analysis chunks — keeping the full
@@ -20,23 +24,20 @@ import type { TranscriptDetectorResult } from '@lib/types/analyzer.js';
  * The chain is built once at startup via `createTranscriptChain(config.TRANSCRIPT_PROVIDER)`
  * and injected here, keeping provider-selection logic out of this class.
  *
- * Results are cached via the injected Cache instance so that repeat runs skip
- * the network round-trip to yt-dlp / Whisper.
- *
  * @example
- *   const chain    = createTranscriptChain('ytdlp,whisper');
- *   const detector = new TranscriptDetector(chain);
- *   const { lines, microBlocks, chunks } = await detector.detect(videoId, audioPath, cache);
+ *   const chain    = createTranscriptChain('ytdlp,whisper', chainConfig);
+ *   const detector = new TranscriptDetector(chain, microBlockSec, chunkLengthSec, chunkOverlapSec);
+ *   const { lines, microBlocks, chunks } = await detector.detect(videoId, audioPath);
  */
 export class TranscriptDetector {
   constructor(
-    private readonly chain: TranscriptAnalyzer[],
+    private readonly chain: TranscriptProvider[],
     private readonly microBlockSec: number,
     private readonly chunkLengthSec: number,
     private readonly chunkOverlapSec: number,
   ) {
     if (chain.length === 0) {
-      throw new Error('TranscriptDetector requires at least one TranscriptAnalyzer in the chain.');
+      throw new Error('TranscriptDetector requires at least one TranscriptProvider in the chain.');
     }
   }
 

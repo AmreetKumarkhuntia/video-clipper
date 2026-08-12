@@ -2,7 +2,7 @@ import type { VideoMetadata } from './video.js';
 import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
 import type { ChunkEvaluation } from './segment.js';
 import type { LLMAnalyzerResult, StreamCallbacks } from './analyzer.js';
-import type { Model } from '@lib/services/modelFactory/index.js';
+import type { Model } from './modelFactory.js';
 import type { TranscriptChainConfig, DownloaderConfig, AudioDownloadConfig } from './downloader.js';
 import type { ClipperConfig } from './video.js';
 import type { AnalyzerChainConfig, SlicerConfig } from './audio.js';
