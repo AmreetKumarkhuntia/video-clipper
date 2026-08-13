@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { RankedSegmentSchema, ChunkEvaluationSchema } from './segment.js';
 import type { YtDlpCookies } from './downloader.js';
 import type { TranscriptLine } from './transcript.js';
 
@@ -9,15 +8,6 @@ export const VideoMetadataSchema = z.object({
   duration: z.number(), // seconds
 });
 export type VideoMetadata = z.infer<typeof VideoMetadataSchema>;
-
-export const PipelineResultSchema = z.object({
-  video_id: z.string().length(11),
-  title: z.string(),
-  duration: z.number(), // seconds
-  chunk_evaluations: z.array(ChunkEvaluationSchema),
-  segments: z.array(RankedSegmentSchema),
-});
-export type PipelineResult = z.infer<typeof PipelineResultSchema>;
 
 export type DownloadMode = 'all' | 'segments';
 

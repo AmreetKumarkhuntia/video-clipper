@@ -64,10 +64,9 @@ export type {
   SlicerConfig,
 } from './audio.js';
 
-export { VideoMetadataSchema, PipelineResultSchema } from './video.js';
+export { VideoMetadataSchema } from './video.js';
 export type {
   VideoMetadata,
-  PipelineResult,
   DownloadMode,
   DownloadResultAll,
   DownloadResultSegments,
