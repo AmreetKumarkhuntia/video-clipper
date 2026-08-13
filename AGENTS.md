@@ -35,48 +35,44 @@ Same-directory imports (`./foo.js`) stay relative. All `.js` extensions are requ
 ```
 src/
   lib/                        # Core library — source of truth
-    index.ts                  # Public API barrel (re-exports shared code only)
-    types/                    # Shared types (13 files)
-      index.ts, config.ts, transcript.ts, segment.ts, audio.ts,
-      video.ts, cli.ts, pipeline.ts, analyzer.ts, downloader.ts,
-      cache.ts, factory.ts, youtube.ts
-    config/                   # Shared config
-      env.ts                  # zod-validated env — import this, never read process.env
-      index.ts                # re-exports config
-    utils/                    # Shared utilities
-      logger.ts, format.ts, paths.ts, pythonBin.ts, chunker.ts,
-      modelFactory.ts, cacheBackend.ts, cache.ts, cacheFactory.ts,
-      fileCacheBackend.ts, mongoCacheBackend.ts
-    services/                 # Core services (shared: CLI + web)
-      urlParser/
-      metadataExtractor/
-      chunkBuilder/
-      llmAnalyzer/
-      segmentRanker/
-      clipRefiner/
-      transcriptDetector/
-      transcriptAnalyzers/
-      audioDownloader/
-      audioAnalyzers/
-      eventDetector/
-      videoDownloader/
-      clipGenerator/
-      youtube/
-    pipeline/stages/          # Shared pipeline stages (used by both CLI and web)
+    index.ts                  # Public API barrel (types, utils, services, orchestration)
+    types/                    # ALL shared types + zod schemas — a LEAF module
+      index.ts, config.ts, transcript.ts, segment.ts, audio.ts, video.ts,
+      cli.ts, command.ts, pipeline.ts, analyzer.ts, downloader.ts, factory.ts,
+      youtube.ts, analysis.ts, qa.ts, clipEdit.ts, publish.ts, subtitlePlan.ts,
+      db.ts, modelFactory.ts
+    config/                   # Config machinery (env schema loading, file store, registry)
+      env.ts                  # zod-validated env — apps import this, never process.env
+      fileStore.ts, registry.ts, index.ts
+    utils/                    # Shared leaf utilities
+      logger.ts, format.ts, paths.ts, pythonBin.ts, chunker.ts, ids.ts,
+      retryAsync.ts, textScale.ts, transcriptUtils.ts
+    services/                 # Independent services — one barrel each (index.ts)
+      modelFactory/           # Model/AudioModel/defineTool over the Vercel AI SDK
+      video/                  # source/youtube (parser, metadata, downloader,
+                              #   subtitles, catalog) + clipper (ffmpeg, editor)
+      audio/                  # source, processor (slicer, detector),
+                              #   analyzer (gemini/whisper/yamnet),
+                              #   transcriber (ytdlp/whisper/gemini)
+      analysis/               # llm, ranker, refiner, transcript (detector/chunker),
+                              #   qa, subtitlePlanner, prompts
+      publish/                # oauth, authStore, uploadClient, metadata(+cache), prompts
+      db/                     # drizzle client (lazy), migrate, repos/ (one per table)
+    orchestration/            # The ONLY layer that touches services/db. Shared by
+                              # CLI + web: transcript / analysis / clip / qa /
+                              # publish / clipEdit orchestrators
+    pipeline/stages/          # Stateless shared stages
       segmentAnalyzer.ts      # LLM analysis + transcript detection
       segmentSelector.ts      # Segment ranking + selection
       clipExporter.ts         # Video download + clip generation
 
   app/
     cli/                      # CLI application
-      index.ts                # CLI entrypoint (shebang)
-      args.ts                 # parseArgs + printUsage
-      pipeline/
-        runner.ts             # Full CLI pipeline orchestration
-        dumper.ts             # Transcript/analysis JSON dumps
-        stages/
-          videoResolver.ts    # CLI-only: URL parsing + yt-dlp metadata
-          audioProcessor.ts   # CLI-only: audio download + event detection
+      index.ts                # CLI entrypoint (shebang, runs migrations)
+      args.ts                 # parseArgs + printUsage for the run command
+      commands/               # Subcommands: run, analyze, clip, candidates,
+                              #   library, channel, ask, config
+      output/                 # formatter + progress rendering
 
     web/                      # Web application (SvelteKit)
       app.html                # SvelteKit HTML template
@@ -102,12 +98,13 @@ src/
         index.ts              # app name etc.
         api.ts                # readApiError(), apiFetch<T>()
         format.ts             # formatDuration(), formatTime()
-        services/             # Web server logic
-          analysis/           # Analysis orchestration for web
-          clipping/           # Clip generation for web
-          artifacts/          # File persistence for web
-          youtube/            # YouTube API factory for web
-          config/             # Web-specific config adapter
+        services/             # Thin web glue over lib orchestrators/services
+          analysis/           # SSE adapters for analysis/transcript/qa
+          clipping/           # Pass-through to clipOrchestrator
+          artifacts/          # Read wrappers over db repos
+          publishing/         # Upload SSE event serialization
+          youtube/            # Catalog factory + OAuth cookie constants
+          config/             # Web config adapter (toYouTubeOAuthConfig etc.)
           http/               # SvelteKit HTTP response helpers
       routes/                 # SvelteKit file-based routing
       types/                  # Web-only types
@@ -130,14 +127,30 @@ src/lib/  ──imports──>  (external packages only)
 - **CLI code** (`src/app/cli/`) never imports from `src/app/web/`
 - **Web code** (`src/app/web/`) imports from `src/lib/` and internal web modules
 - **Library code** (`src/lib/`) never imports from `src/app/`
-- **Web types** (`src/app/web/types/`) are separate from shared types (`src/lib/types/`)
+- **Web types** (`src/app/web/types/`) are separate from shared types (`src/lib/types/`);
+  domain types shared with lib live in `src/lib/types/` and are re-exported by web type files
+
+### Service boundaries (enforced by `tests/serviceBoundaries.test.ts`)
+
+- `src/lib/types/` is a **leaf**: it imports nothing from `@lib/*` or `@app/*`
+- From outside a service, import only its barrel: `@lib/services/<svc>/index.js`
+  (deep paths — alias or relative — fail the architecture test). Types always
+  come from `@lib/types/*`. Intra-service imports stay relative.
+- Cross-service edges are limited to `* → modelFactory` (anything may build on
+  the models lib) and `audio → video` (the ytdlp transcriber consumes the video
+  service's caption fetching as a library)
+- Only `src/lib/orchestration/` touches `services/db`
+- `services/`, `orchestration/`, and `pipeline/` never import `@lib/config` —
+  config is injected: apps read the config singleton and pass full `Config` to
+  orchestrators, which destructure into narrow per-service config objects
+  (`DownloaderConfig`, `ClipperConfig`, `YouTubeOAuthClientConfig`, …)
 
 ## Code Rules
 
 - All code in TypeScript — no plain `.js` files
 - Every function must have explicit input/output types; avoid `any`
 - Use `zod` for all external data validation (LLM output, env vars, API responses)
-- Never read `process.env` directly — always import from `@lib/config/index.js`
+- Never read `process.env` directly — always import from `@lib/config/index.js` (app layer only; lib services receive config as typed parameters)
 - Never hardcode API keys, model names, thresholds, or directory paths — all come from config
 - Use `async/await` — no raw `.then()` chains
 - Use `Promise.allSettled` for parallel LLM calls so one failure doesn't abort the rest
@@ -156,7 +169,7 @@ Every `interface` and `type` declaration lives in `src/lib/types/` (shared/serve
 
 - Use `generateObject` (not `generateText`) for all LLM calls that return structured data
 - Define a `zod` schema for every LLM response before writing the prompt
-- Keep prompts in the same file as the function that uses them
+- Default system prompts live in the owning service's `prompts.ts` (`analysis/prompts.ts`, `publish/prompts.ts`); call-site prompt _construction_ stays with the function that uses it
 - Do not retry on malformed JSON — `generateObject` handles structured output natively
 - On any LLM call failure, catch and log, then continue — never crash the pipeline
 
@@ -166,7 +179,8 @@ Each service module in `src/lib/services/` should:
 
 - Export a single main function named after the module (e.g. `parseUrl`, `buildChunks`)
 - Accept typed inputs and return typed outputs (no `any`)
-- Not import from other modules except `@lib/config/*`, `@lib/types/*`, and `@lib/utils/*` unless there is a clear dependency
+- Import only `@lib/types/*`, `@lib/utils/*`, and same-service files (relative) — never `@lib/config`; cross-service imports only on the allowed edges via the target's barrel
+- Re-export its public surface from the service's `index.ts` barrel — that barrel is the only entry point outside consumers may use
 
 ## Transcript Notes
 

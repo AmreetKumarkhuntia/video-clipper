@@ -133,13 +133,27 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 ## Programmatic API
 
 ```typescript
-import { runPipeline, parseArgs, config } from '@thunderkiller/video-clipper';
+import {
+  config,
+  runMigrations,
+  runAnalysis,
+  generateClipsForAnalysis,
+} from '@thunderkiller/video-clipper';
 
-const args = parseArgs(process.argv);
-await runPipeline(args);
+runMigrations();
+
+const plan = await runAnalysis(
+  { videoId, title, durationSec, options: { noCache: false, noSegmentCache: false, refine: true } },
+  config,
+);
+
+const clips = await generateClipsForAnalysis(
+  { videoId: plan.videoId, analysisId: plan.id, segments: plan.candidates },
+  config,
+);
 ```
 
-All public types and Zod schemas are exported from the package root. See [src/lib.ts](src/lib.ts) for the full surface.
+Services (video source, audio, analysis, publish, db) and the orchestration layer are all exported from the package root, along with every public type and Zod schema. See [src/lib/index.ts](src/lib/index.ts) for the full surface. (The legacy `runPipeline`/`parseArgs` exports were removed — use the `video-clipper run` CLI command or the orchestrators shown above.)
 
 ## Contributing
 

@@ -1,6 +1,6 @@
 # Services-Independence Refactor
 
-> **Status: IN PROGRESS** — Phase 0 (this doc). Tick phases as they land; each phase is one commit and independently green.
+> **Status: DONE** — all phases landed (each as one commit, independently green: tsc + 253 vitest tests + svelte-check). Extras beyond the original plan: a constants-consolidation pass (duplicated default prompts, OAuth cookie names, sanitizeLogValue) and removal of the dead `PipelineResult` type. The architecture rules below are enforced by `tests/serviceBoundaries.test.ts`.
 
 ## Context (why)
 
@@ -68,7 +68,7 @@ Rules the architecture test (Phase 4) encodes:
 
 ## Phases
 
-### ☐ Phase 1 — make `src/lib/types/` a true leaf
+### ☑ Phase 1 — make `src/lib/types/` a true leaf
 
 - `types/modelFactory.ts`: add `export interface Model` mirroring the class (`generateText`/`streamText`/`generateJSON`/`streamJSON`; return types via `ReturnType<typeof generateText>` etc. — file already imports from `ai`).
 - `services/modelFactory/model.ts`: `export class Model implements ModelContract` (aliased type import). Fallback if generics fight: drop `implements`, rely on structural typing.
@@ -78,7 +78,7 @@ Rules the architecture test (Phase 4) encodes:
 
 Commit: `refactor(types): make lib types a leaf module`
 
-### ☐ Phase 2 — break audio ⇄ video cycle (yt exemplar complete)
+### ☑ Phase 2 — break audio ⇄ video cycle (yt exemplar complete)
 
 - Create `services/audio/transcriber/ytdlp.ts`: move `YtDlpTranscriptAnalyzer` verbatim; extends `./base.js`; calls `fetchTranscript` from `@lib/services/video/index.js`.
 - `subtitles.ts`: delete the audio import + class; **export** `fetchTranscript` (currently private).
@@ -89,7 +89,7 @@ Commit: `refactor(types): make lib types a leaf module`
 
 Commit: `refactor(audio-transcriber): move ytdlp analyzer into audio service to break audio-video cycle`
 
-### ☐ Phase 3 — move publish + subtitle-plan types to lib
+### ☑ Phase 3 — move publish + subtitle-plan types to lib
 
 - Create `src/lib/types/publish.ts`: move lib-grade contents of `web/types/publish.ts` (PublishDraft/Item, UploadArtifact(+Status), PublishPrivacyStatus, YOUTUBE_CATEGORIES, GeneratedPublishMetadata, YouTubeChannel/AuthState/AuthStatus, OAuthCookieState, CachedMetadata, all schemas) + `UploadDraftClipsCallbacks` from `web/types/upload.ts`.
 - `web/types/publish.ts` keeps web-only types (PublishDraftItemEvent, UploadQueueStatus, ListUploadsQuerySchema, DraftParamsSchema) and re-exports the moved ones from lib (pattern: `web/types/analysis.ts`) — web consumers need zero edits.
@@ -99,7 +99,7 @@ Commit: `refactor(audio-transcriber): move ytdlp analyzer into audio service to 
 
 Commit: `refactor(types): move publish and subtitle-plan domain types from web to lib`
 
-### ☐ Phase 4 — barrel convention + consumer rewrites + enforcement
+### ☑ Phase 4 — barrel convention + consumer rewrites + enforcement
 
 - Create `services/db/index.ts` barrel (runMigrations + all repo functions; do NOT export `db`/client).
 - Complete barrels vs real call sites: video adds `remuxClips`, `renderClipWithEdits`; analysis adds `answerQuestion` (qa) + prompts.
@@ -108,7 +108,7 @@ Commit: `refactor(types): move publish and subtitle-plan domain types from web t
 
 Commit: `refactor(services): route all service imports through service barrels and enforce boundaries`
 
-### ☐ Phase 5a — publish stack moves to lib
+### ☑ Phase 5a — publish stack moves to lib
 
 - `utils/paths.ts`: add `getUserConfigDir()`; `config/fileStore.ts` reuses it.
 - `types/publish.ts`: add `YouTubeOAuthClientConfig { clientId?, clientSecret?, redirectUri? }`.
@@ -119,7 +119,7 @@ Commit: `refactor(services): route all service imports through service barrels a
 
 Commit: `refactor(publish): move publish services and orchestration into lib`
 
-### ☐ Phase 5b — clip-edit orchestrator + subtitle planner
+### ☑ Phase 5b — clip-edit orchestrator + subtitle planner
 
 - Create `orchestration/clipEditOrchestrator.ts` (from web clipEditService: computeEditsHash/loadClipEdits/saveClipEdits/renderEditedClip; renderer via video barrel, clips via db barrel).
 - Create `services/analysis/subtitlePlanner.ts` (from web subtitlePlanService; export via analysis barrel).
@@ -127,7 +127,7 @@ Commit: `refactor(publish): move publish services and orchestration into lib`
 
 Commit: `refactor(clip-edit): move clip edit orchestration and subtitle planner into lib`
 
-### ☐ Phase 6 — db lazy init + migration path
+### ☑ Phase 6 — db lazy init + migration path
 
 - `db/client.ts`: `initDb(path?)` / `getDb()` lazy; keep `export const db` as a `Proxy` delegating to `getDb()` (binds methods) — zero repo churn; existing `vi.mock('...client.js', ...)` in tests keeps working.
 - `utils/paths.ts`: fix `PACKAGE_ROOT` to 3 levels up (currently 2 — latent bug: resolves to `src/`/`dist/`, breaking `scriptPath()` for the Python scripts too).
@@ -136,7 +136,7 @@ Commit: `refactor(clip-edit): move clip edit orchestration and subtitle planner 
 
 Commit: `refactor(db): lazy database initialization and package-root migration path`
 
-### ☐ Phase 7 — `run` consolidation + cache deletion (BREAKING; only behavior-changing phase)
+### ☑ Phase 7 — `run` consolidation + cache deletion (BREAKING; only behavior-changing phase)
 
 - `types/analysis.ts`: `CreateClipsRequestSchema` gains optional `options { localVideo?, videoPath?, downloadSections? }`; `clipOrchestrator.ts` threads them into `exportClips`; `commands/clip.ts` passes its already-parsed flags (fixes existing dead flags).
 - Rewrite `commands/run.ts` (self-contained): parseUrl/extractMetadata → max-duration guard → upsertVideo → `runAnalysis` → optional `--output-json` (now a ClipPlan) → if `--clip`, `generateClipsForAnalysis` with options → summaries. `--no-audio`/`--game-profile` → deprecation warn, ignored.
@@ -146,7 +146,7 @@ Commit: `refactor(db): lazy database initialization and package-root migration p
 
 Commit: `feat(run)!: consolidate run command onto shared orchestration and remove cache service`
 
-### ☐ Phase 8 — truthful public barrel + docs
+### ☑ Phase 8 — truthful public barrel + docs
 
 - Rewrite `src/lib/index.ts`: source from service barrels; add orchestration layer, qa, publish, clipEdit, db API (`runMigrations`/`initDb`/`getDb`/repos), `YtDlpTranscriptAnalyzer`, caption/transcript fns, `renderClipWithEdits`, `planSubtitles`.
 - `README.md`: replace fictional `runPipeline/parseArgs` example with the real API; fix dead `src/lib.ts` link.
