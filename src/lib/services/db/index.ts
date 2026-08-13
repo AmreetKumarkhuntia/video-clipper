@@ -5,6 +5,7 @@
  * (`client.js`) is internal — consumers never receive the raw handle.
  */
 export { runMigrations } from './migrate.js';
+export { initDb, getDb } from './client.js';
 
 export { clearDatabase } from './repos/adminRepo.js';
 export {

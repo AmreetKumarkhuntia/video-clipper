@@ -46,6 +46,7 @@
   },
   "files": [
     "dist",
+    "drizzle",
     "scripts",
     "requirements.txt"
   ],
