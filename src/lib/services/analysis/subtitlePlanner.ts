@@ -6,7 +6,7 @@ import {
   type PlannedSubtitleLine,
   type PlanSubtitlesRequest,
   type PlanSubtitlesResult,
-} from '@app/web/types/subtitlePlan.js';
+} from '@lib/types/subtitlePlan.js';
 
 const DEFAULT_SUBTITLE_PLAN_SYSTEM_PROMPT = `You are an expert subtitle editor. You receive a list of subtitle lines from auto-captions, each with startSec, endSec, text, and per-word timings.
 

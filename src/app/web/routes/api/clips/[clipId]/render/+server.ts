@@ -1,7 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import type { ClipperConfig } from '@lib/types/video.js';
 import { ClipParamsSchema } from '@app/web/types/analysis.js';
-import { renderEditedClip } from '@app/web/lib/services/clipping/clipEditService.js';
+import { renderEditedClip } from '@lib/orchestration/clipEditOrchestrator.js';
 import {
   errorMessage,
   jsonError,

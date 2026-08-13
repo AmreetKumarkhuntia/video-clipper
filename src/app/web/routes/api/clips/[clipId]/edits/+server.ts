@@ -1,7 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { ClipEditsSchema } from '@lib/types/clipEdit.js';
 import { ClipParamsSchema } from '@app/web/types/analysis.js';
-import { loadClipEdits, saveClipEdits } from '@app/web/lib/services/clipping/clipEditService.js';
+import { loadClipEdits, saveClipEdits } from '@lib/orchestration/clipEditOrchestrator.js';
 import {
   errorMessage,
   jsonError,

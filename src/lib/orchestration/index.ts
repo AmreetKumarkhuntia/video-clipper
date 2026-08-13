@@ -8,3 +8,9 @@ export {
   savePublishDraftFromRequest,
   uploadDraftClips,
 } from './publishOrchestrator.js';
+export {
+  computeEditsHash,
+  loadClipEdits,
+  saveClipEdits,
+  renderEditedClip,
+} from './clipEditOrchestrator.js';
