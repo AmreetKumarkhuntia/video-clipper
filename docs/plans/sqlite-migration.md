@@ -105,7 +105,7 @@ Each step migrates a small set of endpoints + the tables they touch. After each 
 7. **Clips + edits** — `POST /api/clips`, `GET/PUT /api/clips/[clipId]/edits`, `POST /api/clips/[clipId]/render`, `GET /api/clips/[clipId]/file`, `GET /api/library/clips`, `POST /api/clips/[clipId]/subtitles/plan` → `clip_artifacts` + `clip_edits`. mp4s stay on disk.
 8. **Publish drafts** — `GET/POST /api/publish/drafts`, `GET /api/publish/drafts/[analysisId]`, `POST /api/publish/drafts/generate`, `POST /api/publish/thumbnails` → `publish_drafts` + `publish_draft_items`.
 9. **Uploads** — `POST /api/youtube/uploads` → `upload_artifacts`.
-10. **Audio events + cache teardown** — promote audio events to `audio_events`; delete `src/lib/services/cache/` entirely; drop `CACHE_BACKEND` env.
+10. **Audio events + cache teardown** — ✅ DONE (services-refactor Phase 7): `src/lib/services/cache/` deleted, `CACHE_BACKEND`/`MONGODB_*`/`CACHE_TTL_SECONDS` env removed, the legacy CLI runner (its only consumer) consolidated onto orchestration. Audio-events DB promotion was dropped along with run's audio detection — audio analyzers remain available programmatically with no persistence.
 11. **Cleanup** — remove `outputs/web/` and `outputs/cache/` write paths from code. Keep `outputs/clips/`, `outputs/thumbnails/`, `downloads/` (filesystem assets).
 
 ## Out of scope
