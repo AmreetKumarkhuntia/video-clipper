@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import type { PublishDraftItem } from '@lib/types/publish.js';
 import { log } from '@lib/utils/logger.js';
+import { sanitizeLogValue } from '@lib/utils/format.js';
 
 const YOUTUBE_UPLOAD_URL =
   'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=multipart';
@@ -215,8 +216,4 @@ function tryParseJson(text: string): unknown {
 
 function summarizeResponseText(text: string): string {
   return sanitizeLogValue(text).slice(0, 240);
-}
-
-function sanitizeLogValue(value: string): string {
-  return value.replace(/\s+/g, ' ').trim();
 }

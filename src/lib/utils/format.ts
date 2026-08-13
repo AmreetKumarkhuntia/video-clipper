@@ -26,6 +26,11 @@ export function formatConfig(cfg: Config): string {
  * Converts a duration in seconds to HH:MM:SS string.
  * e.g. 3723 → "01:02:03"
  */
+/** Collapses whitespace runs to single spaces — keeps multi-line error text on one log line. */
+export function sanitizeLogValue(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
 export function formatSeconds(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);

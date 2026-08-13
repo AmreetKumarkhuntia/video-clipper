@@ -3,11 +3,13 @@ import { redirect } from '@sveltejs/kit';
 import type { Cookies, RequestHandler } from '@sveltejs/kit';
 import { buildYouTubeOAuthAuthorizationUrl } from '@lib/services/publish/index.js';
 import { toYouTubeOAuthConfig } from '@app/web/lib/services/config/webConfig.js';
+import {
+  OAUTH_STATE_COOKIE,
+  OAUTH_VERIFIER_COOKIE,
+  OAUTH_RETURN_TO_COOKIE,
+  toBase64Url,
+} from '@app/web/lib/services/youtube/oauthCookies.js';
 import { log } from '@lib/utils/logger.js';
-
-const OAUTH_STATE_COOKIE = 'yt_oauth_state';
-const OAUTH_VERIFIER_COOKIE = 'yt_oauth_verifier';
-const OAUTH_RETURN_TO_COOKIE = 'yt_oauth_return_to';
 
 export const GET: RequestHandler = async ({ url, cookies, locals }) => {
   const reqDone = log.request('GET', '/api/youtube/auth/start', locals.requestId);
@@ -46,8 +48,4 @@ function setOAuthCookie(cookies: Cookies, name: string, value: string): void {
     secure: false,
     maxAge: 60 * 10,
   });
-}
-
-function toBase64Url(buffer: Buffer): string {
-  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }

@@ -12,26 +12,10 @@ import type {
   StreamCallbacks,
 } from '@lib/types/index.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
+import { DEFAULT_ANALYSIS_TOOL_SYSTEM_PROMPT } from '../prompts.js';
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_JITTER_MS = 500;
-
-const DEFAULT_SYSTEM_PROMPT = `You are an expert video editor analyzing a YouTube transcript segment.
-
-Identify if this segment contains a potentially interesting moment worth clipping.
-
-Interesting moments include:
-- surprising insights or revelations
-- strong or controversial opinions
-- humor or entertaining storytelling
-- emotional moments
-- key explanations of important concepts
-- "aha" moments or turning points
-
-If audio events are listed in the segment, treat them as strong positive signals —
-they indicate high-action or high-energy moments that are often clip-worthy.
-
-After analyzing the segment, call the report_analysis tool with your findings.`;
 
 function toSuccessEvaluation(
   chunk: LLMChunk,
@@ -147,7 +131,7 @@ async function analyzeChunk(
         chunk,
         chunkLines,
         chunkAudioEvents,
-        opts.systemPrompt !== DEFAULT_SYSTEM_PROMPT,
+        opts.systemPrompt !== DEFAULT_ANALYSIS_TOOL_SYSTEM_PROMPT,
       );
 
       const result = opts.model.streamText({
