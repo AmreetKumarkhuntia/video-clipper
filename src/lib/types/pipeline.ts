@@ -1,11 +1,7 @@
-import type { VideoMetadata } from './video.js';
-import type { TranscriptLine, MicroBlock, LLMChunk } from './transcript.js';
-import type { ChunkEvaluation } from './segment.js';
 import type { LLMAnalyzerResult, StreamCallbacks } from './analyzer.js';
 import type { Model } from './modelFactory.js';
-import type { TranscriptChainConfig, DownloaderConfig, AudioDownloadConfig } from './downloader.js';
+import type { TranscriptChainConfig, DownloaderConfig } from './downloader.js';
 import type { ClipperConfig } from './video.js';
-import type { AnalyzerChainConfig, SlicerConfig } from './audio.js';
 
 /** A half-open time window [start, end) in seconds. Returned by `buildWindows`. */
 export interface ChunkWindow {
@@ -13,19 +9,6 @@ export interface ChunkWindow {
   start: number;
   /** End of the window in seconds (exclusive upper bound). */
   end: number;
-}
-
-export interface VideoResolverResult {
-  videoId: string;
-  metadata: VideoMetadata;
-}
-
-export interface AudioProcessorOpts {
-  noAudio: boolean;
-  gameProfile: string;
-  maxParallel: number;
-  /** Pre-downloaded audio WAV path. When provided, skips the downloadAudio call. */
-  audioPath?: string | null;
 }
 
 export interface SegmentAnalyzerOpts {
@@ -78,15 +61,4 @@ export interface ClipExporterConfig {
   downloader: DownloaderConfig;
   clipper: ClipperConfig;
   downloadSectionsMode: 'all' | number | undefined;
-}
-
-export interface AudioProcessorConfig {
-  audioEnabled: boolean;
-  audioProvider: string;
-  chunkLengthSec: number;
-  chunkOverlapSec: number;
-  outputDir: string;
-  audioDownloadConfig: AudioDownloadConfig;
-  slicerConfig: SlicerConfig;
-  analyzerChainConfig: AnalyzerChainConfig;
 }

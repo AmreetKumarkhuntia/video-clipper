@@ -19,7 +19,9 @@ export async function generateClipsForAnalysis(
   cfg: Config,
   requestId?: string,
 ): Promise<ClipArtifact[]> {
-  const downloadMode = cfg.PARTIAL_DOWNLOAD_ENABLED ? input.segments.length : 'all';
+  const downloadMode =
+    input.options?.downloadSections ??
+    (cfg.PARTIAL_DOWNLOAD_ENABLED ? input.segments.length : 'all');
   log.info(
     'generateClips',
     `[clips] [request] | analysisId=${input.analysisId} videoId=${input.videoId} segments=${input.segments.length} downloadSections=${downloadMode} concurrency=${cfg.CLIP_CONCURRENCY}`,
@@ -63,7 +65,9 @@ export async function generateClipsForAnalysis(
     input.videoId,
     segments,
     {
-      downloadSections: cfg.PARTIAL_DOWNLOAD_ENABLED ? segments.length : 'all',
+      localVideo: input.options?.localVideo,
+      videoPath: input.options?.videoPath,
+      downloadSections: downloadMode,
       clipConcurrency: cfg.CLIP_CONCURRENCY,
     },
     exporterConfig,

@@ -24,17 +24,12 @@ export type { CliArgs } from './cli.js';
 
 export type {
   ChunkWindow,
-  VideoResolverResult,
-  AudioProcessorOpts,
   SegmentAnalyzerOpts,
   SegmentAnalyzerResult,
   SegmentSelectorOpts,
   ClipExporterOpts,
   ClipExporterConfig,
-  AudioProcessorConfig,
 } from './pipeline.js';
-
-export type { CacheBackend, CacheDocument } from './cache.js';
 
 export type { TranscriptProviderName, AudioProviderName } from './factory.js';
 

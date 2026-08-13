@@ -154,11 +154,11 @@ export function parseArgs(argv: string[]): CliArgs {
 export function printUsage(): void {
   console.log(
     `
-Usage: npm run start -- <youtube-url> [options]
-       npx tsx src/index.ts <youtube-url> [options]
+Usage: video-clipper run <youtube-url> [options]
+       npm run start -- run <youtube-url> [options]
 
 Note: when invoking via npm run, use -- to pass flags to the script:
-  npm run start -- <url> --max-chunks 3
+  npm run start -- run <url> --max-chunks 3
 
 Arguments:
   <youtube-url>           YouTube video URL (required)
@@ -166,31 +166,28 @@ Arguments:
 Options:
   --clip                  Download video and generate mp4 clips for each segment
   --download-sections <mode>  yt-dlp download mode: 'all' (full video) or N (top N segments only, e.g. 1, 2, 3...) (default: ${config.DOWNLOAD_SECTIONS_MODE})
-  --local-video <path>    Path to local video file (skips yt-dlp download, requires --clip)
+  --local-video <path>    Path to local video file (skips yt-dlp download; implies --clip)
   --video-path <path>     Custom output directory for downloaded videos and clips (overrides DOWNLOAD_DIR/OUTPUT_DIR)
   --threshold <n>         Minimum score to keep a segment (default: ${config.SCORE_THRESHOLD})
   --top-n <n>             Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
   --max-duration <s>      Abort if video is longer than <s> seconds
   --max-chunks <n>        Limit the number of transcript chunks sent to the LLM (useful for testing/cost control)
   --max-parallel <n>      Max number of LLM calls to run in parallel (default: LLM_CONCURRENCY env, or 3)
-  --output-json <path>    Write output JSON to file instead of stdout
-  --no-cache              Bypass all caches and force a fresh run (transcript + chunk LLM results)
-  --no-audio             Disable audio event detection (transcript-only mode)
-  --game-profile <type>   Game profile: valorant, fps, boss_fight, general (default: ${config.GAME_PROFILE})
+  --output-json <path>    Write the analysis ClipPlan JSON to a file
+  --no-cache              Re-analyze all chunks, ignoring cached LLM results (transcript is reused from the library DB)
+  --no-audio              Deprecated — ignored (run no longer performs audio event detection)
+  --game-profile <type>   Deprecated — ignored
   --help, -h              Show this help message
 
+Results are persisted to the library database: re-run "video-clipper clip <analysis-id>"
+or "video-clipper library" to reuse them.
+
 Examples:
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ
-  npm run start -- https://youtu.be/dQw4w9WgXcQ --clip
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections all
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 3
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 5 --video-path ./my-clips
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --local-video ./downloads/dQw4w9WgXcQ.mp4
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --local-video /path/to/video.mp4 --top-n 5
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --top-n 5
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --output-json results.json
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-chunks 3
-  npm run start -- https://youtube.com/watch?v=dQw4w9WgXcQ --max-parallel 5
+  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ
+  video-clipper run https://youtu.be/dQw4w9WgXcQ --clip
+  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 3
+  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --local-video /path/to/video.mp4 --top-n 5
+  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --output-json results.json
 `.trim(),
   );
 }

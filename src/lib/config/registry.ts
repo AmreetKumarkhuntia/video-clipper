@@ -63,8 +63,6 @@ const FIELD_CONSTRAINTS: Record<
   FFMPEG_PRESET: {
     options: ['ultrafast', 'superfast', 'veryfast', 'fast', 'medium', 'slow', 'slower'],
   },
-  CACHE_BACKEND: { options: ['file', 'mongodb'] },
-  CACHE_TTL_SECONDS: { min: 0 },
   TIMESTAMP_OFFSET_SECONDS: {},
   YT_DEFAULT_CATEGORY_ID: {
     options: [

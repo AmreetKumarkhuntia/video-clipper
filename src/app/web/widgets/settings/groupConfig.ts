@@ -213,29 +213,7 @@ export const GROUP_CONFIG: Record<string, GroupConfig> = {
       },
       {
         h3: 'Behaviour',
-        fields: ['DUMP_OUTPUTS', 'CLIP_CONCURRENCY', 'LOG_COLOR'],
-      },
-    ],
-  },
-
-  cache: {
-    icon: 'database',
-    subtitle: 'Cache backend for transcript and LLM analysis results.',
-    sections: [
-      {
-        h3: 'Backend',
-        fields: ['CACHE_BACKEND'],
-      },
-      {
-        h3: 'MongoDB',
-        meta: 'only used when backend is set to mongodb',
-        fields: ['MONGODB_URI', 'MONGODB_DATABASE'],
-        layout: 'two',
-      },
-      {
-        h3: 'TTL',
-        meta: 'how long cached results are kept',
-        fields: ['CACHE_TTL_SECONDS'],
+        fields: ['CLIP_CONCURRENCY', 'LOG_COLOR'],
       },
     ],
   },
