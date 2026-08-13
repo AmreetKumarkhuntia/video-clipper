@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { loadAndRefreshPublishDraft } from '@app/web/lib/services/publishing/draftService.js';
+import { loadAndRefreshPublishDraft } from '@lib/orchestration/publishOrchestrator.js';
 import {
   errorMessage,
   jsonError,

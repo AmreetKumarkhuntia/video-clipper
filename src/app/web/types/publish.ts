@@ -38,6 +38,7 @@ export type {
   MetadataGenerationContext,
   OAuthCookieState,
   CachedMetadata,
+  YouTubeOAuthClientConfig,
 } from '@lib/types/publish.js';
 
 export interface PublishDraftItemEvent {

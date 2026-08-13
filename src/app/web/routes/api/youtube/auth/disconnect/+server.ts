@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { disconnectYouTubeAuth } from '@app/web/lib/services/youtube/uploadAuth.js';
+import { disconnectYouTubeAuth } from '@lib/services/publish/index.js';
 import { errorMessage, jsonError, jsonOk } from '@app/web/lib/services/http/responses.js';
 import { log } from '@lib/utils/logger.js';
 

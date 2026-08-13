@@ -6,14 +6,10 @@ import {
   type YouTubeAuthState,
   type YouTubeAuthStatus,
   type YouTubeChannel,
+  type YouTubeOAuthClientConfig,
   type OAuthCookieState,
-} from '@app/web/types/publish.js';
-import {
-  clearYouTubeAuthState,
-  loadYouTubeAuthState,
-  saveYouTubeAuthState,
-} from '@app/web/lib/services/youtube/authStore.js';
-import { config } from '@lib/config/index.js';
+} from '@lib/types/publish.js';
+import { clearYouTubeAuthState, loadYouTubeAuthState, saveYouTubeAuthState } from './authStore.js';
 import { log } from '@lib/utils/logger.js';
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -25,9 +21,11 @@ const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/youtube.readonly',
 ].join(' ');
 
-export async function getYouTubeAuthStatus(): Promise<YouTubeAuthStatus> {
+export async function getYouTubeAuthStatus(
+  oauth: YouTubeOAuthClientConfig,
+): Promise<YouTubeAuthStatus> {
   const auth = await loadYouTubeAuthState();
-  const oauthConfigured = isOAuthConfigured();
+  const oauthConfigured = isOAuthConfigured(oauth);
 
   if (!auth) {
     return YouTubeAuthStatusSchema.parse({ connected: false, oauthConfigured });
@@ -46,6 +44,7 @@ export async function getYouTubeAuthStatus(): Promise<YouTubeAuthStatus> {
 
 export async function saveManualYouTubeAuth(
   input: SaveYouTubeManualAuthRequest,
+  oauth: YouTubeOAuthClientConfig,
 ): Promise<YouTubeAuthStatus> {
   const channel = await fetchOwnedChannel(input.accessToken);
 
@@ -61,39 +60,43 @@ export async function saveManualYouTubeAuth(
   });
 
   await saveYouTubeAuthState(state);
-  return getYouTubeAuthStatus();
+  return getYouTubeAuthStatus(oauth);
 }
 
 export async function disconnectYouTubeAuth(): Promise<void> {
   await clearYouTubeAuthState();
 }
 
-export function buildYouTubeOAuthAuthorizationUrl(oauth: OAuthCookieState): string {
-  if (!isOAuthConfigured()) {
+export function buildYouTubeOAuthAuthorizationUrl(
+  cookieState: OAuthCookieState,
+  oauth: YouTubeOAuthClientConfig,
+): string {
+  if (!isOAuthConfigured(oauth)) {
     throw new Error(
       'Configure YOUTUBE_OAUTH_CLIENT_ID, YOUTUBE_OAUTH_CLIENT_SECRET, and YOUTUBE_OAUTH_REDIRECT_URI before connecting YouTube.',
     );
   }
 
   const url = new URL(GOOGLE_AUTH_BASE_URL);
-  url.searchParams.set('client_id', config.YOUTUBE_OAUTH_CLIENT_ID!);
-  url.searchParams.set('redirect_uri', config.YOUTUBE_OAUTH_REDIRECT_URI!);
+  url.searchParams.set('client_id', oauth.clientId!);
+  url.searchParams.set('redirect_uri', oauth.redirectUri!);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', GOOGLE_OAUTH_SCOPES);
   url.searchParams.set('access_type', 'offline');
   url.searchParams.set('include_granted_scopes', 'true');
   url.searchParams.set('prompt', 'consent');
-  url.searchParams.set('state', oauth.state);
-  url.searchParams.set('code_challenge', createCodeChallenge(oauth.codeVerifier));
+  url.searchParams.set('state', cookieState.state);
+  url.searchParams.set('code_challenge', createCodeChallenge(cookieState.codeVerifier));
   url.searchParams.set('code_challenge_method', 'S256');
   return url.toString();
 }
 
 export async function completeYouTubeOAuthCallback(
   code: string,
-  oauth: OAuthCookieState,
+  cookieState: OAuthCookieState,
+  oauth: YouTubeOAuthClientConfig,
 ): Promise<YouTubeAuthStatus> {
-  if (!isOAuthConfigured()) {
+  if (!isOAuthConfigured(oauth)) {
     throw new Error(
       'Configure YOUTUBE_OAUTH_CLIENT_ID, YOUTUBE_OAUTH_CLIENT_SECRET, and YOUTUBE_OAUTH_REDIRECT_URI before connecting YouTube.',
     );
@@ -102,11 +105,11 @@ export async function completeYouTubeOAuthCallback(
   const existing = await loadYouTubeAuthState();
   const body = new URLSearchParams({
     code,
-    client_id: config.YOUTUBE_OAUTH_CLIENT_ID!,
-    client_secret: config.YOUTUBE_OAUTH_CLIENT_SECRET!,
-    redirect_uri: config.YOUTUBE_OAUTH_REDIRECT_URI!,
+    client_id: oauth.clientId!,
+    client_secret: oauth.clientSecret!,
+    redirect_uri: oauth.redirectUri!,
     grant_type: 'authorization_code',
-    code_verifier: oauth.codeVerifier,
+    code_verifier: cookieState.codeVerifier,
   });
 
   const res = await fetch(GOOGLE_TOKEN_URL, {
@@ -142,10 +145,13 @@ export async function completeYouTubeOAuthCallback(
     }),
   );
 
-  return getYouTubeAuthStatus();
+  return getYouTubeAuthStatus(oauth);
 }
 
-export async function getAuthorizedYouTubeAuthState(requestId?: string): Promise<YouTubeAuthState> {
+export async function getAuthorizedYouTubeAuthState(
+  oauth: YouTubeOAuthClientConfig,
+  requestId?: string,
+): Promise<YouTubeAuthState> {
   const auth = await loadYouTubeAuthState();
 
   if (!auth) {
@@ -162,19 +168,16 @@ export async function getAuthorizedYouTubeAuthState(requestId?: string): Promise
     hasRefreshToken: Boolean(auth.refreshToken),
   });
 
-  return ensureFreshAccessToken(auth, requestId);
+  return ensureFreshAccessToken(auth, oauth, requestId);
 }
 
-export function isOAuthConfigured(): boolean {
-  return Boolean(
-    config.YOUTUBE_OAUTH_CLIENT_ID?.trim() &&
-    config.YOUTUBE_OAUTH_CLIENT_SECRET?.trim() &&
-    config.YOUTUBE_OAUTH_REDIRECT_URI?.trim(),
-  );
+export function isOAuthConfigured(oauth: YouTubeOAuthClientConfig): boolean {
+  return Boolean(oauth.clientId?.trim() && oauth.clientSecret?.trim() && oauth.redirectUri?.trim());
 }
 
 async function ensureFreshAccessToken(
   auth: YouTubeAuthState,
+  oauth: YouTubeOAuthClientConfig,
   requestId?: string,
 ): Promise<YouTubeAuthState> {
   if (!isExpiredOrMissing(auth.expiryDate)) {
@@ -186,7 +189,7 @@ async function ensureFreshAccessToken(
     return auth;
   }
 
-  const credentials = resolveOAuthClientCredentials(auth);
+  const credentials = resolveOAuthClientCredentials(auth, oauth);
 
   if (!auth.refreshToken || !credentials) {
     log.warn('ensureFreshAccessToken', 'refresh skipped', requestId, {
@@ -319,9 +322,10 @@ function toBase64Url(buffer: Buffer): string {
 
 function resolveOAuthClientCredentials(
   auth: YouTubeAuthState,
+  oauth: YouTubeOAuthClientConfig,
 ): { clientId: string; clientSecret: string } | null {
-  const clientId = auth.clientId ?? config.YOUTUBE_OAUTH_CLIENT_ID;
-  const clientSecret = auth.clientSecret ?? config.YOUTUBE_OAUTH_CLIENT_SECRET;
+  const clientId = auth.clientId ?? oauth.clientId;
+  const clientSecret = auth.clientSecret ?? oauth.clientSecret;
 
   if (!clientId?.trim() || !clientSecret?.trim()) {
     return null;

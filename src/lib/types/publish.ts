@@ -182,6 +182,17 @@ export const CachedMetadataSchema = z.object({
 });
 export type CachedMetadata = z.infer<typeof CachedMetadataSchema>;
 
+/**
+ * OAuth client credentials for the YouTube upload flow, assembled by the
+ * calling app (web/CLI) from its config and injected into the publish
+ * service — the service itself never reads global config.
+ */
+export interface YouTubeOAuthClientConfig {
+  clientId?: string;
+  clientSecret?: string;
+  redirectUri?: string;
+}
+
 export interface UploadDraftClipsCallbacks {
   onUploadStarted?: (item: PublishDraftItem) => void;
   onUploadFinished?: (upload: UploadArtifact) => void;

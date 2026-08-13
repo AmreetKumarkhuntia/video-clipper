@@ -1,12 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
+import { getUserConfigDir } from '@lib/utils/paths.js';
 
-const CONFIG_DIR_NAME = 'video-clipper';
 const CONFIG_FILE_NAME = 'config.json';
 
 export function getConfigDir(): string {
-  return path.join(os.homedir(), '.config', CONFIG_DIR_NAME);
+  return getUserConfigDir();
 }
 
 export function getConfigFilePath(): string {

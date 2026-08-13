@@ -1,12 +1,12 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { getConfigDir } from '@lib/config/fileStore.js';
-import { YouTubeAuthStateSchema, type YouTubeAuthState } from '@app/web/types/publish.js';
+import { getUserConfigDir } from '@lib/utils/paths.js';
+import { YouTubeAuthStateSchema, type YouTubeAuthState } from '@lib/types/publish.js';
 
 const YOUTUBE_AUTH_FILE_NAME = 'youtube-auth.json';
 
 function getYouTubeAuthFilePath(): string {
-  return join(getConfigDir(), YOUTUBE_AUTH_FILE_NAME);
+  return join(getUserConfigDir(), YOUTUBE_AUTH_FILE_NAME);
 }
 
 export async function loadYouTubeAuthState(): Promise<YouTubeAuthState | null> {
@@ -22,7 +22,7 @@ export async function loadYouTubeAuthState(): Promise<YouTubeAuthState | null> {
 }
 
 export async function saveYouTubeAuthState(state: YouTubeAuthState): Promise<YouTubeAuthState> {
-  const dir = getConfigDir();
+  const dir = getUserConfigDir();
   const filePath = getYouTubeAuthFilePath();
   const tmpPath = `${filePath}.tmp`;
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
-import { savePublishDraftFromRequest } from '@app/web/lib/services/publishing/draftService.js';
+import { savePublishDraftFromRequest } from '@lib/orchestration/publishOrchestrator.js';
 import {
   errorMessage,
   jsonError,

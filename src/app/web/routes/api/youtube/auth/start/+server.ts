@@ -1,7 +1,8 @@
 import { randomBytes } from 'crypto';
 import { redirect } from '@sveltejs/kit';
 import type { Cookies, RequestHandler } from '@sveltejs/kit';
-import { buildYouTubeOAuthAuthorizationUrl } from '@app/web/lib/services/youtube/uploadAuth.js';
+import { buildYouTubeOAuthAuthorizationUrl } from '@lib/services/publish/index.js';
+import { toYouTubeOAuthConfig } from '@app/web/lib/services/config/webConfig.js';
 import { log } from '@lib/utils/logger.js';
 
 const OAUTH_STATE_COOKIE = 'yt_oauth_state';
@@ -18,11 +19,14 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
   setOAuthCookie(cookies, OAUTH_VERIFIER_COOKIE, codeVerifier);
   setOAuthCookie(cookies, OAUTH_RETURN_TO_COOKIE, returnTo);
 
-  const authUrl = buildYouTubeOAuthAuthorizationUrl({
-    state,
-    codeVerifier,
-    returnTo,
-  });
+  const authUrl = buildYouTubeOAuthAuthorizationUrl(
+    {
+      state,
+      codeVerifier,
+      returnTo,
+    },
+    toYouTubeOAuthConfig(locals.config),
+  );
 
   reqDone(302);
   throw redirect(302, authUrl);

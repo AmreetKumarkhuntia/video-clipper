@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
-import { generatePublishMetadata } from '@app/web/lib/services/publishing/metadataService.js';
+import { generatePublishMetadata, loadYouTubeAuthState } from '@lib/services/publish/index.js';
 import type { MetadataGenerationContext } from '@app/web/types/publish.js';
-import { loadYouTubeAuthState } from '@app/web/lib/services/youtube/authStore.js';
 import {
   errorMessage,
   jsonError,

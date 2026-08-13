@@ -209,6 +209,7 @@ export type {
   MetadataGenerationContext,
   OAuthCookieState,
   CachedMetadata,
+  YouTubeOAuthClientConfig,
   UploadDraftClipsCallbacks,
 } from './publish.js';
 
