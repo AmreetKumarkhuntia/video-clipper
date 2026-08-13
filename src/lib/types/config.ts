@@ -55,7 +55,6 @@ export const ConfigSchema = z
     DOWNLOAD_DIR: z.string().default('downloads/'),
     OUTPUT_DIR: z.string().default('outputs/'),
     CACHE_DIR: z.string().default('outputs/cache'),
-    DUMP_OUTPUTS: z.coerce.boolean().default(true),
     MAX_CHUNKS: z.coerce.number().min(1).optional(),
     LLM_CONCURRENCY: z.coerce.number().min(1).default(3),
     CLIP_CONCURRENCY: z.coerce.number().min(1).default(1),
@@ -131,10 +130,6 @@ export const ConfigSchema = z
     YT_DLP_SLEEP_REQUESTS: z.coerce.number().int().min(0).max(30).default(0),
 
     // ---- Cache backend -------------------------------------------------------
-    CACHE_BACKEND: z.enum(['file', 'mongodb']).default('file'),
-    MONGODB_URI: z.string().optional(),
-    MONGODB_DATABASE: z.string().default('video-clipper-cache'),
-    CACHE_TTL_SECONDS: z.coerce.number().min(0).default(0),
 
     // ---- YouTube publish defaults --------------------------------------------
     YT_DEFAULT_CATEGORY_ID: z.string().default('22'),
@@ -181,14 +176,6 @@ export const ConfigSchema = z
         path: ['YT_DLP_COOKIES_FROM_BROWSER'],
         message:
           'Cannot set both YT_DLP_COOKIES_FROM_BROWSER and YT_DLP_COOKIES_FILE. Use only one.',
-      });
-    }
-
-    if (data.CACHE_BACKEND === 'mongodb' && (!data.MONGODB_URI || data.MONGODB_URI.trim() === '')) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['MONGODB_URI'],
-        message: 'MONGODB_URI is required when CACHE_BACKEND is "mongodb"',
       });
     }
   });
@@ -295,19 +282,7 @@ export const CONFIG_GROUPS = [
   {
     id: 'output',
     label: 'Output',
-    fields: [
-      'DOWNLOAD_DIR',
-      'OUTPUT_DIR',
-      'CACHE_DIR',
-      'DUMP_OUTPUTS',
-      'CLIP_CONCURRENCY',
-      'LOG_COLOR',
-    ],
-  },
-  {
-    id: 'cache',
-    label: 'Cache',
-    fields: ['CACHE_BACKEND', 'MONGODB_URI', 'MONGODB_DATABASE', 'CACHE_TTL_SECONDS'],
+    fields: ['DOWNLOAD_DIR', 'OUTPUT_DIR', 'CACHE_DIR', 'CLIP_CONCURRENCY', 'LOG_COLOR'],
   },
 ] as const;
 
@@ -524,23 +499,11 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   DOWNLOAD_DIR: { description: 'yt-dlp output directory', widget: 'text' },
   OUTPUT_DIR: { description: 'Clips, dumps, artifacts directory', widget: 'text' },
   CACHE_DIR: { description: 'File-based cache directory', widget: 'text' },
-  DUMP_OUTPUTS: {
-    description: 'Write transcript + analysis JSON files after each run',
-    widget: 'toggle',
-  },
   CLIP_CONCURRENCY: { description: 'Max parallel clip generation operations', widget: 'number' },
   LOG_COLOR: {
     description: 'Enable ANSI color in log output (set LOG_COLOR=false to disable)',
     widget: 'toggle',
   },
-  CACHE_BACKEND: { description: 'Cache storage backend', widget: 'select' },
-  MONGODB_URI: {
-    description: 'MongoDB connection URI (required if backend=mongodb)',
-    widget: 'text',
-    secret: true,
-  },
-  MONGODB_DATABASE: { description: 'MongoDB database name', widget: 'text' },
-  CACHE_TTL_SECONDS: { description: 'Cache TTL in seconds (0 = no expiry)', widget: 'number' },
   YT_DEFAULT_CATEGORY_ID: {
     description:
       'Default YouTube category ID for new publish drafts (e.g. 22=People & Blogs, 27=Education, 28=Science & Technology)',

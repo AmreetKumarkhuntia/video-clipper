@@ -73,6 +73,16 @@ export const CreateClipsRequestSchema = z.object({
   videoId: z.string().min(1),
   analysisId: z.string().optional(),
   segments: z.array(ClipSelectionSchema).min(1),
+  options: z
+    .object({
+      /** Path to a pre-existing local video file — skips yt-dlp download. */
+      localVideo: z.string().optional(),
+      /** Custom output/download directory override. */
+      videoPath: z.string().optional(),
+      /** 'all' for the full video, or N to download only the top-N segments. */
+      downloadSections: z.union([z.literal('all'), z.number().int().positive()]).optional(),
+    })
+    .optional(),
 });
 export type CreateClipsRequest = z.infer<typeof CreateClipsRequestSchema>;
 

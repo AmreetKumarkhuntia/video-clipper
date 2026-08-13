@@ -21,7 +21,6 @@ vi.mock('../src/config/index.js', () => ({
     DOWNLOAD_DIR: 'downloads/',
     OUTPUT_DIR: 'outputs/',
     CACHE_DIR: 'outputs/cache',
-    DUMP_OUTPUTS: false,
     MAX_CHUNKS: undefined,
     LLM_CONCURRENCY: 3,
     CLIP_CONCURRENCY: 1,
@@ -44,9 +43,5 @@ vi.mock('../src/config/index.js', () => ({
     GAME_PROFILE: 'general' as const,
     YT_DLP_COOKIES_FROM_BROWSER: undefined,
     YT_DLP_COOKIES_FILE: undefined,
-    CACHE_BACKEND: 'file' as const,
-    MONGODB_URI: undefined,
-    MONGODB_DATABASE: 'video-clipper-cache',
-    CACHE_TTL_SECONDS: 0,
   },
 }));

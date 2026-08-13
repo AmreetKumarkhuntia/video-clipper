@@ -96,6 +96,11 @@ Options:
       source: c.source,
       audioEvent: c.audioEvent,
     })),
+    options: {
+      localVideo: args.localVideo,
+      videoPath: args.videoPath,
+      downloadSections: args.downloadSections,
+    },
   };
 
   const clips = await generateClipsForAnalysis(input, config, requestId);
