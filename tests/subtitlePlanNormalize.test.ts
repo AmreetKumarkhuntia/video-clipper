@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeWordTimings } from '../src/app/web/lib/services/subtitles/subtitlePlanService.js';
+import { normalizeWordTimings } from '../src/lib/services/analysis/subtitlePlanner.js';
 import type { PlannedSubtitleLine } from '../src/app/web/types/subtitlePlan.js';
 
 function makeLine(overrides: Partial<PlannedSubtitleLine> = {}): PlannedSubtitleLine {

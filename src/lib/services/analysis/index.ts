@@ -3,6 +3,7 @@ export { LLMAnalyzer } from './llm/LLMAnalyzer.js';
 export { refineSegments } from './refiner/index.js';
 export { mergeSignals, rankSegments } from './ranker/index.js';
 export { answerQuestion } from './qa/index.js';
+export { planSubtitles, normalizeWordTimings } from './subtitlePlanner.js';
 export { DEFAULT_ANALYSIS_SYSTEM_PROMPT, DEFAULT_QA_SYSTEM_PROMPT } from './prompts.js';
 export {
   AnalyzedSegmentSchema,

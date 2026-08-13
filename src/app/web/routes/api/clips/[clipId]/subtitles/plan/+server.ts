@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
-import { planSubtitles } from '@app/web/lib/services/subtitles/subtitlePlanService.js';
+import { planSubtitles } from '@lib/services/analysis/index.js';
 import { PlanSubtitlesRequestSchema } from '@app/web/types/subtitlePlan.js';
 import {
   errorMessage,
