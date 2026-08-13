@@ -15,10 +15,9 @@ export {
 export type { YouTubeCatalogService } from '@lib/types/youtube.js';
 export { generateClips, organizeClips, remuxClips, configureFfmpeg } from './clipper/index.js';
 export { renderClipWithEdits } from './clipper/editor/renderer.js';
-export { VideoMetadataSchema, PipelineResultSchema } from '@lib/types/video.js';
+export { VideoMetadataSchema } from '@lib/types/video.js';
 export type {
   VideoMetadata,
-  PipelineResult,
   DownloadMode,
   DownloadResultAll,
   DownloadResultSegments,
