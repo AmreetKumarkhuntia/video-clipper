@@ -1,7 +1,18 @@
 import { config } from '@lib/config/index.js';
+import type { Config } from '@lib/types/config.js';
+import type { YouTubeOAuthClientConfig } from '@lib/types/publish.js';
 import type { WebServerConfig } from '@app/web/types/web.js';
 
 export type { WebServerConfig };
+
+/** Assembles the OAuth client config the publish service expects from full Config. */
+export function toYouTubeOAuthConfig(cfg: Config): YouTubeOAuthClientConfig {
+  return {
+    clientId: cfg.YOUTUBE_OAUTH_CLIENT_ID,
+    clientSecret: cfg.YOUTUBE_OAUTH_CLIENT_SECRET,
+    redirectUri: cfg.YOUTUBE_OAUTH_REDIRECT_URI,
+  };
+}
 
 export function getWebServerConfig(): WebServerConfig {
   return {

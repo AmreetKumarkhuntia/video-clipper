@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
-import { saveManualYouTubeAuth } from '@app/web/lib/services/youtube/uploadAuth.js';
+import { saveManualYouTubeAuth } from '@lib/services/publish/index.js';
+import { toYouTubeOAuthConfig } from '@app/web/lib/services/config/webConfig.js';
 import {
   errorMessage,
   jsonError,
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async (event) => {
 
   try {
     const input = await parseJsonBody(event, SaveYouTubeManualAuthRequestSchema);
-    const status = await saveManualYouTubeAuth(input);
+    const status = await saveManualYouTubeAuth(input, toYouTubeOAuthConfig(event.locals.config));
     reqDone(200);
     return jsonOk(status);
   } catch (error) {

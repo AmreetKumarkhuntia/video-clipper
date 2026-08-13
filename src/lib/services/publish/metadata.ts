@@ -4,16 +4,13 @@ import { log } from '@lib/utils/logger.js';
 import {
   YOUTUBE_CATEGORIES,
   GeneratedPublishMetadataSchema,
+  PublishMetadataSchema,
   type GeneratedPublishMetadata,
   type PublishDraftItem,
   type MetadataGenerationContext,
-} from '@app/web/types/publish.js';
+} from '@lib/types/publish.js';
 import type { Config } from '@lib/types/config.js';
 import { readMetadataCache, writeMetadataCache } from './metadataCache.js';
-
-export type { MetadataGenerationContext } from '@app/web/types/publish.js';
-
-import { PublishMetadataSchema } from '@app/web/types/publish.js';
 
 const CATEGORY_LIST = Object.entries(YOUTUBE_CATEGORIES)
   .map(([id, label]) => `${id}=${label}`)

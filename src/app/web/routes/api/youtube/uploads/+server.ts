@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from '@sveltejs/kit';
-import { listUploadArtifactsByAnalysisId } from '@app/web/lib/services/artifacts/artifactStore.js';
-import { uploadDraftClips } from '@app/web/lib/services/publishing/uploadService.js';
+import { listUploadArtifactsByAnalysisId } from '@lib/services/db/index.js';
+import { uploadDraftClips } from '@lib/orchestration/publishOrchestrator.js';
 import {
   logEmittedUploadEvent,
   serializeUploadSSE,
@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
   }
 
   try {
-    const uploads = await listUploadArtifactsByAnalysisId(parsed.data.analysisId);
+    const uploads = listUploadArtifactsByAnalysisId(parsed.data.analysisId);
     reqDone(200);
     return jsonOk({ uploads });
   } catch (error) {

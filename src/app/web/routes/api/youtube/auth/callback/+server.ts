@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { Cookies, RequestHandler } from '@sveltejs/kit';
-import { completeYouTubeOAuthCallback } from '@app/web/lib/services/youtube/uploadAuth.js';
+import { completeYouTubeOAuthCallback } from '@lib/services/publish/index.js';
+import { toYouTubeOAuthConfig } from '@app/web/lib/services/config/webConfig.js';
 import { log } from '@lib/utils/logger.js';
 
 const OAUTH_STATE_COOKIE = 'yt_oauth_state';
@@ -29,11 +30,15 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
   }
 
   try {
-    await completeYouTubeOAuthCallback(code, {
-      state,
-      codeVerifier,
-      returnTo,
-    });
+    await completeYouTubeOAuthCallback(
+      code,
+      {
+        state,
+        codeVerifier,
+        returnTo,
+      },
+      toYouTubeOAuthConfig(locals.config),
+    );
     reqDone(302);
     throw redirect(302, returnTo);
   } catch (error) {

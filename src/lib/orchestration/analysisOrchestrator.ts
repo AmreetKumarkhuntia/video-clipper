@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
 import { Model } from '@lib/services/modelFactory/index.js';
+import { createArtifactId } from '@lib/utils/ids.js';
 import { analyzeChunks } from '@lib/services/analysis/index.js';
 import { refineRankedSegments } from '@lib/pipeline/stages/segmentAnalyzer.js';
 import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
@@ -28,9 +28,7 @@ import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/index.js'
 import type { Config } from '@lib/types/config.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
-export function createArtifactId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-}
+export { createArtifactId };
 
 function buildAnalysisSystemPrompt(
   base: string,

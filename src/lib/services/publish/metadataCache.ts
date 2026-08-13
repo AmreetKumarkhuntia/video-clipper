@@ -3,8 +3,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { log } from '@lib/utils/logger.js';
 
-import { CachedMetadataSchema } from '@app/web/types/publish.js';
-import type { CachedMetadata } from '@app/web/types/publish.js';
+import { CachedMetadataSchema } from '@lib/types/publish.js';
+import type { CachedMetadata } from '@lib/types/publish.js';
 
 function cacheKey(systemPrompt: string, prompt: string): string {
   return createHash('sha256').update(`${systemPrompt}\n---\n${prompt}`).digest('hex');
