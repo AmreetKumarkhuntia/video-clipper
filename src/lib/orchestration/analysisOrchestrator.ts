@@ -24,7 +24,7 @@ import {
   type StreamCallbacks,
 } from '@lib/types/index.js';
 import { toClipCandidate } from '@lib/utils/transcriptUtils.js';
-import { DEFAULT_ANALYSIS_SYSTEM_PROMPT } from '@lib/services/analysis/index.js';
+import { DEFAULT_ANALYSIS_TOOL_SYSTEM_PROMPT } from '@lib/services/analysis/index.js';
 import type { Config } from '@lib/types/config.js';
 import type { AnalyzeChunksOpts } from '@lib/types/analyzer.js';
 
@@ -68,10 +68,6 @@ function computeOptionsHash(opts: {
 
 const DEFAULT_LLM_CONCURRENCY = 3;
 
-const DEFAULT_SYSTEM_PROMPT =
-  DEFAULT_ANALYSIS_SYSTEM_PROMPT +
-  '\n\nAfter analyzing the segment, call the report_analysis tool with your findings.';
-
 export async function runAnalysis(
   input: CreateAnalysisRequest,
   cfg: Config,
@@ -95,7 +91,7 @@ export async function runAnalysis(
     },
   });
 
-  const basePrompt = cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT;
+  const basePrompt = cfg.LLM_SYSTEM_PROMPT ?? DEFAULT_ANALYSIS_TOOL_SYSTEM_PROMPT;
   const systemPrompt = cfg.LLM_SYSTEM_PROMPT
     ? basePrompt
     : buildAnalysisSystemPrompt(basePrompt, input.title, input.channelTitle, input.description);

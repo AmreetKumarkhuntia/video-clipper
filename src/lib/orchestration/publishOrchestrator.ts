@@ -27,6 +27,7 @@ import type { ClipArtifact, ClipPlan } from '@lib/types/analysis.js';
 import type { Config } from '@lib/types/config.js';
 import { createArtifactId } from '@lib/utils/ids.js';
 import { log } from '@lib/utils/logger.js';
+import { sanitizeLogValue } from '@lib/utils/format.js';
 
 export async function buildPublishDraft(
   analysisId: string,
@@ -283,7 +284,7 @@ async function uploadSingleClip(
       clipArtifactId: item.clipArtifactId,
       file: item.filename,
       elapsedMs: Date.now() - startedAt,
-      error: message.replace(/\s+/g, ' ').trim(),
+      error: sanitizeLogValue(message),
     });
     const artifact = UploadArtifactSchema.parse({
       id: createArtifactId(`upload-${videoId}`),

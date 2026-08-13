@@ -8,18 +8,7 @@ import {
   type PlanSubtitlesResult,
 } from '@lib/types/subtitlePlan.js';
 
-const DEFAULT_SUBTITLE_PLAN_SYSTEM_PROMPT = `You are an expert subtitle editor. You receive a list of subtitle lines from auto-captions, each with startSec, endSec, text, and per-word timings.
-
-Return a corrected version that:
-1. Regroups text into readable lines (≤ ~7 words or ~42 chars, no mid-clause splits, no orphan words).
-2. Fixes spacing, punctuation, capitalization, and removes artifacts like [Music], >>, --.
-3. Corrects obvious misspellings, especially proper nouns. Never invent facts.
-4. Adjusts each line's startSec/endSec and per-word timings for readability. Words must be in order and non-overlapping within a line. Each word's endSec must be strictly greater than its startSec; do not collapse multiple words to the same instant.
-
-Constraints:
-- Total span (first startSec … last endSec) must stay within [0, durationSec].
-- Preserve the original meaning. Do not translate. Do not add lines not in the source.
-- Always populate the words array with one entry per word in text.`;
+import { DEFAULT_SUBTITLE_PLAN_SYSTEM_PROMPT } from './prompts.js';
 
 export async function planSubtitles(
   req: PlanSubtitlesRequest,

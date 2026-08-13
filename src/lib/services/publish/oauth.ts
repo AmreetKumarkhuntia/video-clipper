@@ -11,6 +11,7 @@ import {
 } from '@lib/types/publish.js';
 import { clearYouTubeAuthState, loadYouTubeAuthState, saveYouTubeAuthState } from './authStore.js';
 import { log } from '@lib/utils/logger.js';
+import { sanitizeLogValue } from '@lib/utils/format.js';
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_AUTH_BASE_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -301,10 +302,6 @@ async function fetchOwnedChannel(accessToken: string): Promise<YouTubeChannel> {
       item.snippet.thumbnails?.medium?.url ||
       item.snippet.thumbnails?.default?.url,
   };
-}
-
-function sanitizeLogValue(value: string): string {
-  return value.replace(/\s+/g, ' ').trim();
 }
 
 function isExpiredOrMissing(expiryDate: number | undefined): boolean {
