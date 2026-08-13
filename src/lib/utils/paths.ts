@@ -3,13 +3,19 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 
 /**
- * Absolute path to the package root, resolved from the compiled output location.
+ * Absolute path to the package root, resolved from this module's location.
  *
- * At runtime (from `dist/utils/paths.js`), going up two levels lands at the
- * package root where `scripts/` is co-located. This works whether the package
- * is run from source (via tsx) or from a global/local npm install.
+ * This file lives three levels below the root in both layouts —
+ * `src/lib/utils/` when run from source (via tsx) and `dist/lib/utils/`
+ * when run from the compiled output — so going up three levels lands at
+ * the package root where `scripts/` and `drizzle/` are co-located.
  */
-export const PACKAGE_ROOT: string = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+export const PACKAGE_ROOT: string = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+);
 
 /**
  * Returns the absolute path to a bundled Python script in the `scripts/`
