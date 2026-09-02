@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import type { ClipEdits } from '@lib/types/clipEdit.js';
 import type { ClipperConfig } from '@lib/types/video.js';
-import { configureFfmpeg } from '@lib/services/video/clipper/index.js';
+import { configureFfmpeg } from '../index.js';
 import { buildAss } from './subtitleBuilder.js';
 import { buildFilterGraph } from './filterGraphBuilder.js';
 

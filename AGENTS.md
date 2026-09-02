@@ -58,7 +58,7 @@ src/
                               #   qa, subtitlePlanner, prompts
       publish/                # oauth, authStore, uploadClient, metadata(+cache), prompts
       db/                     # drizzle client (lazy), migrate, repos/ (one per table)
-    orchestration/            # The ONLY layer that touches services/db. Shared by
+    orchestration/            # The only lib layer that touches services/db. Shared by
                               # CLI + web: transcript / analysis / clip / qa /
                               # publish / clipEdit orchestrators
     pipeline/stages/          # Stateless shared stages
@@ -139,7 +139,7 @@ src/lib/  ──imports──>  (external packages only)
 - Cross-service edges are limited to `* → modelFactory` (anything may build on
   the models lib) and `audio → video` (the ytdlp transcriber consumes the video
   service's caption fetching as a library)
-- Only `src/lib/orchestration/` touches `services/db`
+- Within `src/lib/`, only `orchestration/` (and the public barrel `index.ts`) imports `services/db`; app code (`hooks.server.ts`, CLI commands, web artifact reads) may use the db barrel directly
 - `services/`, `orchestration/`, and `pipeline/` never import `@lib/config` —
   config is injected: apps read the config singleton and pass full `Config` to
   orchestrators, which destructure into narrow per-service config objects
