@@ -14,7 +14,7 @@ The yt service is the partially-done exemplar. Already landed:
 
 Decisions made with the user:
 
-- **Consolidate the legacy CLI `run` pipeline** (`src/app/cli/pipeline/runner.ts`) onto shared orchestration and **delete `services/cache`** — finishes [sqlite-migration.md](./sqlite-migration.md) step 10.
+- **Consolidate the legacy CLI `run` pipeline** (`src/app/cli/pipeline/runner.ts`) onto shared orchestration and **delete `services/cache`** — finishes [sqlite-migration.md](../sqlite-migration.md) step 10.
 - **No npm subpath exports** for now (deferred; boundaries first).
 - Logger singleton stays as-is (out of scope).
 - Types stay centralized in `src/lib/types/` / `src/app/web/types/` (hook-enforced; per-service co-located types were deliberately reversed in `51aca58` — do not re-attempt).
@@ -151,7 +151,7 @@ Commit: `feat(run)!: consolidate run command onto shared orchestration and remov
 - Rewrite `src/lib/index.ts`: source from service barrels; add orchestration layer, qa, publish, clipEdit, db API (`runMigrations`/`initDb`/`getDb`/repos), `YtDlpTranscriptAnalyzer`, caption/transcript fns, `renderClipWithEdits`, `planSubtitles`.
 - `README.md`: replace fictional `runPipeline/parseArgs` example with the real API; fix dead `src/lib.ts` link.
 - `AGENTS.md`: replace stale pre-`9e7ab6f` structure block with the real tree; document dependency rules (types leaf, only orchestration touches db, allowed edges, barrel convention, config DI rule superseding the old "services may import @lib/config" line); mention `tests/serviceBoundaries.test.ts`.
-- Tick [sqlite-migration.md](./sqlite-migration.md) step 10 + this doc's statuses.
+- Tick [sqlite-migration.md](../sqlite-migration.md) step 10 + this doc's statuses.
 
 Commits: `refactor(lib): export the real programmatic api from the public barrel` → `docs(agents): sync project structure, boundaries, and import conventions`
 

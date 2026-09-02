@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Architecture test enforcing the service-boundary rules from
- * docs/plans/services-refactor.md:
+ * docs/plans/archive/services-refactor.md:
  *
  *  1. `src/lib/types/` is a leaf — no `@lib/*` or `@app/*` imports.
  *  2. Nothing under `src/lib/` imports `@app/*`.

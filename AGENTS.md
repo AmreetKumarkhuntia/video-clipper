@@ -4,7 +4,7 @@
 
 TypeScript CLI + Web app that analyzes YouTube transcripts with an LLM to find interesting moments and optionally cut video clips.
 
-See `docs/plan.md` for the full architecture.
+The _Project Structure_ section below is the architecture reference. `docs/README.md` indexes the user guides, design assets, and plans (active in `docs/plans/`, shipped in `docs/plans/archive/`).
 
 ## Stack
 

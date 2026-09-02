@@ -1,6 +1,5 @@
-Here's the full updated build plan in markdown:
+> **Archived** — the original v2 build plan. The pipeline it describes (including audio event detection in `run`) has since been replaced; the current architecture is the _Project Structure_ section of `AGENTS.md`.
 
-```markdown
 # YouTube Clip Finder — Build Plan v2.0
 
 ### with Audio Event Detection
@@ -21,6 +20,7 @@ Here's the full updated build plan in markdown:
 ## 1. System Architecture
 
 The v2 pipeline adds audio event detection as a parallel signal alongside transcript analysis. Both signals feed into the merger before ranking.
+
 ```
 
 User Input (YouTube URL)
@@ -57,28 +57,28 @@ Module 8 — Video Downloader
 ▼
 Module 9 — Clip Generator (optional)
 
-````
+```
 
 ---
 
 ## 2. Module Status Overview
 
-| # | Module | Status |
-|---|--------|--------|
-| 1 | URL Parser | ✅ Done |
-| 2 | Video Metadata Extractor | ✅ Done |
-| 3 | Transcript Fetcher + Micro-block Grouper | ✅ Done |
-| 3a | Direct YouTube caption fetch (primary) | ✅ Done |
-| 3a | yt-dlp subtitle fallback with `--format mhtml` (secondary) | ✅ Done |
-| 3b | Audio Downloader (yt-dlp audio-only) | 🆕 New |
-| 3c | Audio Event Detector (Gemini primary + YAMNet fallback) | 🆕 New |
-| 4 | LLM Chunk Builder | ✅ Done |
-| 5 | LLM Segment Analyzer | ✅ Done |
-| 5b | Signal Merger (transcript + audio events) | 🆕 New |
-| 6 | Segment Ranking | ⚡ Upgrade |
-| 7 | Clip Refinement Pass | ✅ Done |
-| 8 | Video Downloader | ✅ Done |
-| 9 | Clip Generator (ffmpeg) | ✅ Done |
+| #   | Module                                                     | Status     |
+| --- | ---------------------------------------------------------- | ---------- |
+| 1   | URL Parser                                                 | ✅ Done    |
+| 2   | Video Metadata Extractor                                   | ✅ Done    |
+| 3   | Transcript Fetcher + Micro-block Grouper                   | ✅ Done    |
+| 3a  | Direct YouTube caption fetch (primary)                     | ✅ Done    |
+| 3a  | yt-dlp subtitle fallback with `--format mhtml` (secondary) | ✅ Done    |
+| 3b  | Audio Downloader (yt-dlp audio-only)                       | 🆕 New     |
+| 3c  | Audio Event Detector (Gemini primary + YAMNet fallback)    | 🆕 New     |
+| 4   | LLM Chunk Builder                                          | ✅ Done    |
+| 5   | LLM Segment Analyzer                                       | ✅ Done    |
+| 5b  | Signal Merger (transcript + audio events)                  | 🆕 New     |
+| 6   | Segment Ranking                                            | ⚡ Upgrade |
+| 7   | Clip Refinement Pass                                       | ✅ Done    |
+| 8   | Video Downloader                                           | ✅ Done    |
+| 9   | Clip Generator (ffmpeg)                                    | ✅ Done    |
 
 ---
 
@@ -109,16 +109,20 @@ export async function downloadAudio(videoId: string, outputDir: string): Promise
 
   await execa('yt-dlp', [
     '-x',
-    '--audio-format', 'wav',
-    '--audio-quality', '0',
-    '--postprocessor-args', '-ar 16000 -ac 1',  // 16kHz mono for YAMNet
-    '-o', outputPath,
+    '--audio-format',
+    'wav',
+    '--audio-quality',
+    '0',
+    '--postprocessor-args',
+    '-ar 16000 -ac 1', // 16kHz mono for YAMNet
+    '-o',
+    outputPath,
     `https://youtube.com/watch?v=${videoId}`,
   ]);
 
   return outputPath;
 }
-````
+```
 
 ---
 
