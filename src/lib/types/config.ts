@@ -497,8 +497,8 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     widget: 'number',
   },
   DOWNLOAD_DIR: { description: 'yt-dlp output directory', widget: 'text' },
-  OUTPUT_DIR: { description: 'Clips, dumps, artifacts directory', widget: 'text' },
-  CACHE_DIR: { description: 'File-based cache directory', widget: 'text' },
+  OUTPUT_DIR: { description: 'Clips and artifacts directory', widget: 'text' },
+  CACHE_DIR: { description: 'Publish metadata cache directory', widget: 'text' },
   CLIP_CONCURRENCY: { description: 'Max parallel clip generation operations', widget: 'number' },
   LOG_COLOR: {
     description: 'Enable ANSI color in log output (set LOG_COLOR=false to disable)',

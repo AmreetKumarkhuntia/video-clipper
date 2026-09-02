@@ -4,14 +4,16 @@
 > **Reference files:** all bundle source is checked into [./design-reference/](./design-reference/) — read those alongside this doc.
 > **Last updated:** 2026-05-06
 
-**Phased delivery:** the implementation work is split across four phases. This doc holds context, decisions, and references; each phase has its own file with steps, files-to-touch, and verification.
+> **Status: DONE** — all four phases shipped. The per-phase step docs (`design-phase-1..4.md`) were removed in `ef0c3d9` after completion; recover one with `git show ef0c3d9^:docs/plans/design-phase-<n>.md`.
 
-| Phase | Scope                                                                | File                                     |
-| ----- | -------------------------------------------------------------------- | ---------------------------------------- |
-| 1     | Foundation: vendor design system, app shell, theme toggle, icons     | [design-phase-1.md](./design-phase-1.md) |
-| 2     | 5-stage stepper + landing/channel/video-layout reskin                | [design-phase-2.md](./design-phase-2.md) |
-| 3     | Video workflow routes (Analyze · Clip · Connect · Prepare · Publish) | [design-phase-3.md](./design-phase-3.md) |
-| 4     | Settings reskin + component refactor + token rename                  | [design-phase-4.md](./design-phase-4.md) |
+**Phased delivery:** the implementation work was split across four phases. This doc holds context, decisions, and references.
+
+| Phase | Scope                                                                | Status     |
+| ----- | -------------------------------------------------------------------- | ---------- |
+| 1     | Foundation: vendor design system, app shell, theme toggle, icons     | ✅ shipped |
+| 2     | 5-stage stepper + landing/channel/video-layout reskin                | ✅ shipped |
+| 3     | Video workflow routes (Analyze · Clip · Connect · Prepare · Publish) | ✅ shipped |
+| 4     | Settings reskin + component refactor + token rename                  | ✅ shipped |
 
 ---
 
@@ -106,14 +108,14 @@ Everything checked into [./design-reference/](./design-reference/) — files use
 
 ## 4. Implementation phases
 
-The work is split across four phase docs. Each phase is self-contained: goal, steps, files touched, verification, done criteria. Read them in order — each later phase depends on the earlier ones.
+The work was split across four phases, each with its own doc (goal, steps, files touched, verification, done criteria). All four have shipped; the phase docs were removed in `ef0c3d9` — see the status note at the top of this doc to recover them.
 
-| Phase | Covers (legacy step numbers) | Scope                                                               | File                                     |
-| ----- | ---------------------------- | ------------------------------------------------------------------- | ---------------------------------------- |
-| 1     | 4.1, 4.2, 4.6                | Foundation: vendor design system, app shell + theme toggle, icons   | [design-phase-1.md](./design-phase-1.md) |
-| 2     | 4.3, 4.4 (rows 1–3)          | 5-stage stepper + landing/channel/video-layout reskin               | [design-phase-2.md](./design-phase-2.md) |
-| 3     | 4.4 (rows 4–7)               | Video workflow routes: Analyze · Clip · Connect · Prepare · Publish | [design-phase-3.md](./design-phase-3.md) |
-| 4     | 4.4 (row 8), 4.5             | Settings reskin + component refactor + `--c-*` → `--vc-*` rename    | [design-phase-4.md](./design-phase-4.md) |
+| Phase | Covers (legacy step numbers) | Scope                                                               | Status     |
+| ----- | ---------------------------- | ------------------------------------------------------------------- | ---------- |
+| 1     | 4.1, 4.2, 4.6                | Foundation: vendor design system, app shell + theme toggle, icons   | ✅ shipped |
+| 2     | 4.3, 4.4 (rows 1–3)          | 5-stage stepper + landing/channel/video-layout reskin               | ✅ shipped |
+| 3     | 4.4 (rows 4–7)               | Video workflow routes: Analyze · Clip · Connect · Prepare · Publish | ✅ shipped |
+| 4     | 4.4 (row 8), 4.5             | Settings reskin + component refactor + `--c-*` → `--vc-*` rename    | ✅ shipped |
 
 Cross-phase rules that apply throughout:
 

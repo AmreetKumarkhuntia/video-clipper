@@ -96,9 +96,8 @@ cp .env.example .env
 | Variable       | Default         | Description                                          |
 | -------------- | --------------- | ---------------------------------------------------- |
 | `DOWNLOAD_DIR` | `downloads/`    | Where to store downloaded videos                     |
-| `OUTPUT_DIR`   | `outputs/`      | Where to store generated clips, audio, and dumps     |
-| `CACHE_DIR`    | `outputs/cache` | Where to store transcript and LLM result cache       |
-| `DUMP_OUTPUTS` | `true`          | Write transcript/analysis JSON dumps to `OUTPUT_DIR` |
+| `OUTPUT_DIR`   | `outputs/`      | Where to store generated clips, audio, and artifacts |
+| `CACHE_DIR`    | `outputs/cache` | Publish metadata cache (LLM-generated titles etc.)   |
 
 ### YouTube / yt-dlp Authentication
 

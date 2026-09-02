@@ -4,7 +4,7 @@ Handoff from Claude Design (`video-clipper` project, 2 chat sessions).
 
 ## Source files
 
-`docs/plans/design-reference/video-clipper/` — contains the extracted design bundle:
+`docs/plans/design-reference/` — contains the extracted design bundle:
 
 - `chats/` — full conversation transcripts (intent lives here)
 - `project/ds/` — tokens.css, components.css, fonts.css (design system)
