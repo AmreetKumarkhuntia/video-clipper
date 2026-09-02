@@ -45,12 +45,6 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --output-json analysis.json
 video-clipper https://youtube.com/watch?v=VIDEO_ID --max-chunks 3
 ```
 
-### Skip audio detection (transcript-only mode)
-
-```bash
-video-clipper https://youtube.com/watch?v=VIDEO_ID --no-audio
-```
-
 ### Combine env overrides with flags
 
 ```bash
@@ -59,19 +53,17 @@ FFMPEG_PRESET=slow TIMESTAMP_OFFSET_SECONDS=-3 \
   video-clipper https://youtube.com/watch?v=VIDEO_ID --clip --threshold 8
 ```
 
-## Caching
+## Persistence and re-runs
 
-The CLI caches both transcript fetches and LLM chunk results in `CACHE_DIR` (`outputs/cache` by default). This makes re-runs fast — no redundant API calls.
+There is no separate file cache. Everything the CLI produces — video metadata, transcripts, per-chunk LLM results, analyses, and clips — is stored in the local SQLite library database that the web app shares. Re-running `run` or `analyze` on a video reuses the stored transcript and any chunk results that already exist, so repeat runs are fast and cheap. Browse what is stored with `video-clipper library`.
 
-- **Transcript cache** — keyed by video ID and provider. Reused on every subsequent run.
-- **LLM chunk cache** — keyed by video ID, chunk window, and model. Each successful chunk analysis is cached individually so partial runs pick up where they left off.
-- **Audio event cache** — keyed by video ID, game profile, and audio provider chain.
-
-To bypass the cache and force a fresh run:
+To ignore stored chunk results and re-analyze every chunk (the transcript is still reused):
 
 ```bash
 video-clipper https://youtube.com/watch?v=VIDEO_ID --no-cache
 ```
+
+`CACHE_DIR` (`outputs/cache` by default) is now used only by the publish flow, to cache LLM-generated publish metadata per clip.
 
 ## Working with Pre-Downloaded Videos
 

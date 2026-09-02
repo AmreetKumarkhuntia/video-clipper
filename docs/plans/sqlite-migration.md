@@ -1,5 +1,7 @@
 # SQLite Migration — Persistence Refactor
 
+> **Status: PARTIAL (9 of 11)** — steps 1 and 4–10 shipped; steps 2 (YouTube auth → DB), 3 (user config → DB) and 11 (`metadataCache` still writes under `CACHE_DIR`) remain. The shipped schema diverged from the sketch below: `chunks` + `segmentations` replace `chunk_evaluations`/`clip_candidates`, a single `clips` table merges `clip_artifacts` + `clip_edits`, `publish_drafts` stores its items as JSON instead of `publish_draft_items`, transcripts are inlined on the `videos` row, and there is no `transcripts` or `audio_events` table.
+
 Move every persistent entity from JSON files / filesystem cache to a single SQLite database accessed via Drizzle ORM. Refactor is per-endpoint, driven by the `/migrate-endpoint-to-sqlite` skill.
 
 ## Why
@@ -96,17 +98,17 @@ user_config (key PK, value JSON)
 
 Each step migrates a small set of endpoints + the tables they touch. After each step: dev server runs, the flow works end-to-end against the new DB, old JSON code paths are deleted.
 
-1. **Foundation (no endpoints)** — add `better-sqlite3`, `drizzle-orm`, `drizzle-kit`; write `client.ts`, `schema.ts`, initial migration, `migrate.ts`. Wire migration into `src/app/web/hooks.server.ts`.
-2. **YouTube auth** — `GET/POST /api/youtube/auth/{status,start,callback,manual,disconnect}` → `youtube_auth`; replace `authStore.ts`.
-3. **User config** — `GET/POST /api/config` → `user_config`; replace `fileStore.ts`. Registry stays as code.
-4. **Channels + Videos** — `GET /api/youtube/channels/resolve`, `GET /api/youtube/channels/[channelId]/videos`, `GET /api/youtube/videos/[videoId]` → upsert into `channels` / `videos` on first view.
-5. **Transcripts** — `GET /api/youtube/videos/[videoId]/transcript`, `DELETE /api/cache/videos/[videoId]/transcript` → `transcripts`.
-6. **Analyses + chunks + candidates** — `POST /api/analysis/transcript`, `GET /api/library/analyses`, `GET /api/library/analyses/[analysisId]`, `DELETE /api/cache/videos/[videoId]/analysis` → `analyses` + `chunk_evaluations` + `clip_candidates`. Chunk reuse becomes `SELECT … WHERE chunk_hash = ?`.
-7. **Clips + edits** — `POST /api/clips`, `GET/PUT /api/clips/[clipId]/edits`, `POST /api/clips/[clipId]/render`, `GET /api/clips/[clipId]/file`, `GET /api/library/clips`, `POST /api/clips/[clipId]/subtitles/plan` → `clip_artifacts` + `clip_edits`. mp4s stay on disk.
-8. **Publish drafts** — `GET/POST /api/publish/drafts`, `GET /api/publish/drafts/[analysisId]`, `POST /api/publish/drafts/generate`, `POST /api/publish/thumbnails` → `publish_drafts` + `publish_draft_items`.
-9. **Uploads** — `POST /api/youtube/uploads` → `upload_artifacts`.
+1. **Foundation (no endpoints)** — ✅ DONE — add `better-sqlite3`, `drizzle-orm`, `drizzle-kit`; write `client.ts`, `schema.ts`, initial migration, `migrate.ts`. Wire migration into `src/app/web/hooks.server.ts`.
+2. **YouTube auth** — ⬜ NOT STARTED (`src/lib/services/publish/authStore.ts` still reads/writes `youtube-auth.json` in the user config dir) — `GET/POST /api/youtube/auth/{status,start,callback,manual,disconnect}` → `youtube_auth`; replace `authStore.ts`.
+3. **User config** — ⬜ NOT STARTED (`src/lib/config/fileStore.ts` still reads/writes `config.json`) — `GET/POST /api/config` → `user_config`; replace `fileStore.ts`. Registry stays as code.
+4. **Channels + Videos** — ✅ DONE — `GET /api/youtube/channels/resolve`, `GET /api/youtube/channels/[channelId]/videos`, `GET /api/youtube/videos/[videoId]` → upsert into `channels` / `videos` on first view.
+5. **Transcripts** — ✅ DONE (stored inline on the `videos` row; no separate `transcripts` table) — `GET /api/youtube/videos/[videoId]/transcript`, `DELETE /api/cache/videos/[videoId]/transcript` → `transcripts`.
+6. **Analyses + chunks + candidates** — ✅ DONE (as `analyses` + `chunks` + `segmentations`) — `POST /api/analysis/transcript`, `GET /api/library/analyses`, `GET /api/library/analyses/[analysisId]`, `DELETE /api/cache/videos/[videoId]/analysis` → `analyses` + `chunk_evaluations` + `clip_candidates`. Chunk reuse becomes `SELECT … WHERE chunk_hash = ?`.
+7. **Clips + edits** — ✅ DONE (single `clips` table holds artifact + edits) — `POST /api/clips`, `GET/PUT /api/clips/[clipId]/edits`, `POST /api/clips/[clipId]/render`, `GET /api/clips/[clipId]/file`, `GET /api/library/clips`, `POST /api/clips/[clipId]/subtitles/plan` → `clip_artifacts` + `clip_edits`. mp4s stay on disk.
+8. **Publish drafts** — ✅ DONE (`publish_drafts` with items as JSON; no `publish_draft_items`) — `GET/POST /api/publish/drafts`, `GET /api/publish/drafts/[analysisId]`, `POST /api/publish/drafts/generate`, `POST /api/publish/thumbnails` → `publish_drafts` + `publish_draft_items`.
+9. **Uploads** — ✅ DONE — `POST /api/youtube/uploads` → `upload_artifacts`.
 10. **Audio events + cache teardown** — ✅ DONE (services-refactor Phase 7): `src/lib/services/cache/` deleted, `CACHE_BACKEND`/`MONGODB_*`/`CACHE_TTL_SECONDS` env removed, the legacy CLI runner (its only consumer) consolidated onto orchestration. Audio-events DB promotion was dropped along with run's audio detection — audio analyzers remain available programmatically with no persistence.
-11. **Cleanup** — remove `outputs/web/` and `outputs/cache/` write paths from code. Keep `outputs/clips/`, `outputs/thumbnails/`, `downloads/` (filesystem assets).
+11. **Cleanup** — ◐ PARTIAL (`outputs/web/` writes are gone; `src/lib/services/publish/metadataCache.ts` still writes JSON under `CACHE_DIR` = `outputs/cache`) — remove `outputs/web/` and `outputs/cache/` write paths from code. Keep `outputs/clips/`, `outputs/thumbnails/`, `downloads/` (filesystem assets).
 
 ## Out of scope
 

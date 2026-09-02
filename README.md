@@ -96,10 +96,10 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 | `--max-duration <s>`       | Abort if video is longer than N seconds                                  |
 | `--max-chunks <n>`         | Limit number of transcript chunks sent to LLM                            |
 | `--max-parallel <n>`       | Max parallel LLM calls                                                   |
-| `--no-audio`               | Disable audio event detection (transcript-only mode)                     |
-| `--game-profile <profile>` | Audio event profile: `valorant`, `fps`, `boss_fight`, `general`          |
+| `--no-audio`               | Deprecated — ignored (`run` no longer performs audio event detection)    |
+| `--game-profile <profile>` | Deprecated — ignored                                                     |
 | `--output-json <path>`     | Write output JSON to file instead of stdout                              |
-| `--no-cache`               | Bypass all caches and force a fresh run                                  |
+| `--no-cache`               | Re-analyze every chunk, ignoring stored LLM results (transcript reused)  |
 | `--help, -h`               | Show help message                                                        |
 
 ## Output
