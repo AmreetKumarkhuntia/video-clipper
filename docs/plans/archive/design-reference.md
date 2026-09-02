@@ -4,7 +4,7 @@ Handoff from Claude Design (`video-clipper` project, 2 chat sessions).
 
 ## Source files
 
-`docs/plans/design-reference/` — contains the extracted design bundle:
+`docs/design/reference/` — contains the extracted design bundle:
 
 - `chats/` — full conversation transcripts (intent lives here)
 - `project/ds/` — tokens.css, components.css, fonts.css (design system)
@@ -57,7 +57,7 @@ Handoff from Claude Design (`video-clipper` project, 2 chat sessions).
 
 ### 3. Clip editor modal — design-system rebuild
 
-**Doc**: see `docs/plans/clip-editor-redesign.md` for the full design + companion checklist.
+**Doc**: see `docs/plans/archive/clip-editor-redesign.md` for the full design + companion checklist.
 
 **CSS port**: `src/app/web/style/screens.css` now carries the `ce-*` block from the design bundle (presets, swatches, words, slider rows, mono inputs, playback bar, sub-actions, position helpers, timeline tracks/segments/cursor). Screen-prototype-only classes (`ce-root`, `ce-topbar*`, `ce-stepper*`, `ce-stage`, `ce-output`, `ce-frame*`, `ce-caption-over`, `ce-game-subs`, `ce-body`/`ce-left`/`ce-center`/`ce-right`) were intentionally omitted because the real modal supplies its own framing.
 

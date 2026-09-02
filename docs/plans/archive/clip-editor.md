@@ -1,6 +1,7 @@
 # Clip Editor — Design Doc
 
-> **Status:** design only, no code yet
+> **Archived** — the editor described here has shipped (see `src/app/web/widgets/video/clip-editor/`); kept as the original design rationale.
+> **Status at time of writing:** design only, no code yet
 > **Last updated:** 2026-05-10
 > **Owner:** TBD
 
@@ -12,8 +13,8 @@ A real video editor surface for short-form clips, opened from the Clips tab on `
 
 ### Today
 
-- The analysis route ([+page.svelte](../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte)) lists clip candidates and lets the user **select / deselect** them.
-- **Clip selected** posts to [`/api/clips`](../../src/app/web/routes/api/clips/+server.ts), which calls `generateWebClips` → `exportClips` → `cutClip` ([clipper/index.ts](../../src/lib/services/video/clipper/index.ts) line 28). This re-encodes the requested ranges with libx264 + aac and writes plain mp4s.
+- The analysis route ([+page.svelte](../../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte)) lists clip candidates and lets the user **select / deselect** them.
+- **Clip selected** posts to [`/api/clips`](../../../src/app/web/routes/api/clips/+server.ts), which calls `generateWebClips` → `exportClips` → `cutClip` ([clipper/index.ts](../../../src/lib/services/video/clipper/index.ts) line 28). This re-encodes the requested ranges with libx264 + aac and writes plain mp4s.
 - After that, the user can move on to **Connect / Prepare / Publish**. There is no surface to add captions, banners, or change framing; what the AI selected is what gets uploaded.
 
 ### What the user asked for
@@ -36,7 +37,7 @@ A real video editor surface for short-form clips, opened from the Clips tab on `
 - Background music, audio ducking, mute/volume.
 - Transitions, multi-clip splicing, B-roll cutaways.
 - Color grading / filters.
-- True word-level STT — we **interpolate** word timing across the existing transcript line. A "Re-time with Whisper" follow-up is a one-line dispatch since [whisper.ts](../../src/lib/services/audio/transcriber/whisper.ts) already exists.
+- True word-level STT — we **interpolate** word timing across the existing transcript line. A "Re-time with Whisper" follow-up is a one-line dispatch since [whisper.ts](../../../src/lib/services/audio/transcriber/whisper.ts) already exists.
 - Auto speaker tracking for reframing.
 
 ---
@@ -90,7 +91,7 @@ The plain `cutClip()` keeps working unchanged for the original clip; the rendere
 
 ## 3. Edit Decision List (EDL) schema
 
-All shared types live under `src/lib/types/` per the **"Types location (hard rule)"** in [AGENTS.md](../../AGENTS.md#types-location-hard-rule). Add `src/lib/types/clipEdit.ts` and re-export from `src/lib/types/index.ts`.
+All shared types live under `src/lib/types/` per the **"Types location (hard rule)"** in [AGENTS.md](../../../AGENTS.md#types-location-hard-rule). Add `src/lib/types/clipEdit.ts` and re-export from `src/lib/types/index.ts`.
 
 ```ts
 import { z } from 'zod';
@@ -172,7 +173,7 @@ export const ClipEditsSchema = z.object({
 export type ClipEdits = z.infer<typeof ClipEditsSchema>;
 ```
 
-`ClipArtifactSchema` in [analysis.ts](../../src/app/web/types/analysis.ts) gains:
+`ClipArtifactSchema` in [analysis.ts](../../../src/app/web/types/analysis.ts) gains:
 
 ```ts
 editsPath: z.string().optional(),    // outputs/web/clip-edits/{clipId}.json
@@ -234,7 +235,7 @@ ffmpeg consumes this via `subtitles=path/to/file.ass`. Reference: [ASS format gu
 renderClipWithEdits(inputPath: string, edits: ClipEdits, outputPath: string, cfg: ClipperConfig): Promise<string>
 ```
 
-1. Reuse `configureFfmpeg(cfg)` from [clipper/index.ts](../../src/lib/services/video/clipper/index.ts) line 12.
+1. Reuse `configureFfmpeg(cfg)` from [clipper/index.ts](../../../src/lib/services/video/clipper/index.ts) line 12.
 2. `ffprobe` the input → resolution + fps.
 3. Write ASS to `outputs/web/clip-edits/tmp/{clipId}.ass` (sanitised text already inside).
 4. `buildFilterGraph(...)` → `{ filterComplex, mapLabel }`.
@@ -254,19 +255,19 @@ renderClipWithEdits(inputPath: string, edits: ClipEdits, outputPath: string, cfg
 - `saveClipEdits(outputDir, edits)` — validates with `ClipEditsSchema`, writes JSON, calls `updateClipArtifactPaths(...)` to set `editsPath`.
 - `renderEditedClip(outputDir, cfg, clipId)` — loads edits + artifact, computes `{base}_edited.mp4`, calls `renderClipWithEdits`, sets `editedPath` on the artifact.
 
-**Modify** [artifactStore.ts](../../src/app/web/lib/services/artifacts/artifactStore.ts):
+**Modify** [artifactStore.ts](../../../src/app/web/lib/services/artifacts/artifactStore.ts):
 
 - Accept `'clip-edits'` in the `kind` union of `ensureArtifactDir`.
 - `getClipArtifact(outputDir, clipId)` — single-record reader (mirrors the existing `getAnalysis`).
 - `updateClipArtifactPaths(outputDir, clipId, patch: { editsPath?: string; editedPath?: string })` — small JSON patch + write.
 
-Mirror config wiring from [clipService.ts](../../src/app/web/lib/services/clipping/clipService.ts) for `ClipperConfig`.
+Mirror config wiring from [clipService.ts](../../../src/app/web/lib/services/clipping/clipService.ts) for `ClipperConfig`.
 
 ---
 
 ## 7. Server: HTTP routes
 
-All under `src/app/web/routes/api/clips/[clipId]/…/+server.ts`. Use `jsonOk`, `jsonError`, `parseJsonBody` from [responses.ts](../../src/app/web/lib/services/http/responses.ts).
+All under `src/app/web/routes/api/clips/[clipId]/…/+server.ts`. Use `jsonOk`, `jsonError`, `parseJsonBody` from [responses.ts](../../../src/app/web/lib/services/http/responses.ts).
 
 | Path                            | Method | Purpose                                                                                                                                                                                    |
 | ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -282,7 +283,7 @@ All under `src/app/web/routes/api/clips/[clipId]/…/+server.ts`. Use `jsonOk`, 
 
 ### 8.1 Mount point
 
-[+page.svelte](../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte) gets an **Edit** button on each card in the Clips block (currently lines 209–226). Click opens a full-viewport `ClipEditor.svelte` modal with:
+[+page.svelte](../../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte) gets an **Edit** button on each card in the Clips block (currently lines 209–226). Click opens a full-viewport `ClipEditor.svelte` modal with:
 
 ```ts
 { clip: ClipArtifact, candidate: ClipCandidate | null, videoId: string }
@@ -332,10 +333,10 @@ let activeWords = $derived(activeWordsAt(currentTime, edits.subtitles));
 
 ### 8.4 Sub-widgets
 
-Each gets a `Props` interface declared in [componentProps.ts](../../src/app/web/types/componentProps.ts) per the existing convention.
+Each gets a `Props` interface declared in [componentProps.ts](../../../src/app/web/types/componentProps.ts) per the existing convention.
 
 - **`ClipEditorCanvas.svelte`** — renders the `<video>`, the active subtitle line as a positioned `<div>` (active word gets `style.highlightColor`), every visible overlay/sticker as a positioned `<div>` (mousedown → drag-to-reposition writes back to `edits`), and a viewport mask outlining the chosen aspect (transparent rect + dark surround). Position math uses `getBoundingClientRect` to convert pixels → normalised `[0..1]` so the EDL stays resolution-independent.
-- **`ClipEditorTimeline.svelte`** — multi-lane zoomable timeline. Reuses head + minimap + `handleWheel` + `zoomToSegment` patterns from existing [ClipTimeline.svelte](../../src/app/web/widgets/video/ClipTimeline.svelte). Lanes: `subtitles`, `overlays`, `stickers`, `viewport` (single trim bar). Items render as `<button>`s with left/right resize handles; click → `selectedItemId`; drag-body → time shift; drag-edge → resize.
+- **`ClipEditorTimeline.svelte`** — multi-lane zoomable timeline. Reuses head + minimap + `handleWheel` + `zoomToSegment` patterns from existing [ClipTimeline.svelte](../../../src/app/web/widgets/video/analysis/ClipTimeline.svelte). Lanes: `subtitles`, `overlays`, `stickers`, `viewport` (single trim bar). Items render as `<button>`s with left/right resize handles; click → `selectedItemId`; drag-body → time shift; drag-edge → resize.
 - **`ClipEditorPropertiesPanel.svelte`** — switches forms by `selectedItem.kind`. The subtitle form has a **word grid**: each word is a chip; tap toggles `WordTokenSchema.highlight`.
 - **`ClipEditorTemplates.svelte`** — five static caption presets defined in `src/app/web/lib/captionTemplates.ts`: `Bold White`, `Yellow Pop`, `Subtle`, `Hooked`, `Karaoke`. Selecting one applies its `TextStyleSchema` + default `position` to all subtitles (or to the selected one).
 - **`ClipEditorViewportControls.svelte`** — radio buttons for `9:16 / 1:1 / 16:9`, segmented control for `crop / pad-blur / pad-black`, and a "drag focus on canvas" hint. The actual focus drag is owned by `ClipEditorCanvas` and writes to `edits.viewport.focus`.
@@ -409,12 +410,12 @@ outputs/web/
 
 ### Reuse (no changes)
 
-- `configureFfmpeg`, `ClipperConfig` — [clipper/index.ts](../../src/lib/services/video/clipper/index.ts) line 12.
-- `apiFetch`, `readApiError` — [api.ts](../../src/app/web/lib/api.ts).
-- `jsonOk`, `jsonError`, `parseJsonBody` — [responses.ts](../../src/app/web/lib/services/http/responses.ts).
-- `formatTime` — [format.ts](../../src/app/web/lib/format.ts).
-- `Card`, `Button`, `InputText`, `Select`, `Slider`, `Textarea`, `Toggle`, `Icon` — [components/](../../src/app/web/components).
-- Existing zoom/wheel patterns — [ClipTimeline.svelte](../../src/app/web/widgets/video/ClipTimeline.svelte).
+- `configureFfmpeg`, `ClipperConfig` — [clipper/index.ts](../../../src/lib/services/video/clipper/index.ts) line 12.
+- `apiFetch`, `readApiError` — [api.ts](../../../src/app/web/lib/api.ts).
+- `jsonOk`, `jsonError`, `parseJsonBody` — [responses.ts](../../../src/app/web/lib/services/http/responses.ts).
+- `formatTime` — [format.ts](../../../src/app/web/lib/format.ts).
+- `Card`, `Button`, `InputText`, `Select`, `Slider`, `Textarea`, `Toggle`, `Icon` — [components/](../../../src/app/web/components).
+- Existing zoom/wheel patterns — [ClipTimeline.svelte](../../../src/app/web/widgets/video/analysis/ClipTimeline.svelte).
 
 ---
 
@@ -449,7 +450,7 @@ Each phase is an independently shippable commit.
 
 ### Phase 4 — Edit button + polish
 
-- Edit button on the Clips tab in [+page.svelte](../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte).
+- Edit button on the Clips tab in [+page.svelte](../../../src/app/web/routes/videos/%5BvideoId%5D/analysis/%5BanalysisId%5D/+page.svelte).
 - "Edited" badge driven by `editedPath`.
 - Empty/error states; cancel-with-dirty-warning.
 - Playwright smoke under `temp/`.
@@ -458,7 +459,7 @@ Each phase is an independently shippable commit.
 
 ## 12. v1.5 follow-ups (call out, not in scope)
 
-- **Re-time with Whisper** — re-transcribe `editedPath` audio via [whisper.ts](../../src/lib/services/audio/transcriber/whisper.ts) for true word-level timestamps; replace interpolated word timings on selected lines.
+- **Re-time with Whisper** — re-transcribe `editedPath` audio via [whisper.ts](../../../src/lib/services/audio/transcriber/whisper.ts) for true word-level timestamps; replace interpolated word timings on selected lines.
 - **Filmstrip thumbnails** — single ffmpeg `select=…,tile=10x1` sprite served by `/api/clips/:id/filmstrip`, used as the timeline lane background.
 - **Background music** — second audio input + `amix` filter, ducking via `sidechaincompress`.
 - **Auto-reframe** — face/active-speaker detection to drive `viewport.focus` automatically. Out of scope without a vision pipeline.

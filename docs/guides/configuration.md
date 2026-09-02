@@ -194,7 +194,7 @@ OPENROUTER_API_KEY=sk-or-...
 LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ```
 
-See [docs/free-models.md](free-models.md) for a curated list of free models that work well with this tool.
+See [docs/guides/free-models.md](free-models.md) for a curated list of free models that work well with this tool.
 
 ## Custom OpenAI-Compatible Endpoint
 

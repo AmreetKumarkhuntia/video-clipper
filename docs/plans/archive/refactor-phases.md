@@ -85,12 +85,12 @@ Stage 6  ──► exportClips      (optional, --clip)
 
 **Files changed / created:**
 
-| File                     | Change                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `src/index.ts`           | Replaced 574-line god-function with ~40-line entrypoint delegating to `runPipeline()` |
-| `tests/chunker.test.ts`  | 14 unit tests for `buildWindows` (edge cases, overlaps, clipping)                     |
-| `tests/cache.test.ts`    | 16 unit tests for `Cache` class (round-trips, misses, disabled mode, corrupt data)    |
-| `docs/refactorPhases.md` | This file                                                                             |
+| File                                    | Change                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| `src/index.ts`                          | Replaced 574-line god-function with ~40-line entrypoint delegating to `runPipeline()` |
+| `tests/chunker.test.ts`                 | 14 unit tests for `buildWindows` (edge cases, overlaps, clipping)                     |
+| `tests/cache.test.ts`                   | 16 unit tests for `Cache` class (round-trips, misses, disabled mode, corrupt data)    |
+| `docs/plans/archive/refactor-phases.md` | This file                                                                             |
 
 **`src/index.ts` now:**
 
