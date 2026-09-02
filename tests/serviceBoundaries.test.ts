@@ -15,6 +15,8 @@ import { fileURLToPath } from 'node:url';
  *     — config is injected by the apps.
  *  5. Cross-service imports are limited to the documented edges:
  *     `audio → video` and `* → modelFactory`.
+ *  6. Within `src/lib/`, only `orchestration/` (and the public barrel
+ *     `index.ts`) imports `services/db` — app code may use the db barrel.
  */
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src');
@@ -138,6 +140,25 @@ describe('service boundaries', () => {
         if (!crossServiceAllowed(ownService, targetService)) {
           violations.push(`${rel(file)} (${ownService} -> ${targetService}) ${spec}`);
         }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it('within src/lib, only orchestration and the public barrel import services/db', () => {
+    const libDir = path.join(SRC, 'lib') + path.sep;
+    const dbDir = path.join(SERVICES_DIR, 'db') + path.sep;
+    const allowed = [
+      path.join(SRC, 'lib', 'orchestration') + path.sep,
+      path.join(SRC, 'lib', 'index.ts'),
+    ];
+    const violations: string[] = [];
+    for (const file of files) {
+      if (!file.startsWith(libDir) || file.startsWith(dbDir)) continue;
+      if (allowed.some((a) => file === a || file.startsWith(a))) continue;
+      for (const spec of importSpecifiers(file)) {
+        const resolved = resolveSpecifier(file, spec);
+        if (resolved && resolved.startsWith(dbDir)) violations.push(`${rel(file)} -> ${spec}`);
       }
     }
     expect(violations).toEqual([]);
