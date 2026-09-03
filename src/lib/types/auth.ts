@@ -1,0 +1,148 @@
+import { z } from 'zod';
+
+/**
+ * Identity and session contracts for the hosted product.
+ *
+ * A customer signs in with Google and is linked 1:1 to the YouTube channel that
+ * account owns. Google OAuth mechanics live in `@lib/utils/googleOAuth.js`; the
+ * database side lives in `@lib/orchestration/authOrchestrator.js`.
+ */
+
+// ── Google OAuth ─────────────────────────────────────────────────────────────
+
+/** Client credentials for the sign-in flow. Injected by the app layer, never read from config here. */
+export interface GoogleOAuthClientConfig {
+  clientId?: string;
+  clientSecret?: string;
+  redirectUri?: string;
+}
+
+/** Per-request handshake values round-tripped through cookies. */
+export interface GoogleOAuthHandshake {
+  state: string;
+  codeVerifier: string;
+  returnTo: string;
+}
+
+export const GoogleTokenResponseSchema = z.object({
+  access_token: z.string().min(1),
+  refresh_token: z.string().optional(),
+  expires_in: z.number().optional(),
+  scope: z.string().optional(),
+  token_type: z.string().optional(),
+});
+export type GoogleTokenResponse = z.infer<typeof GoogleTokenResponseSchema>;
+
+/** Subset of the OpenID userinfo response we depend on. `sub` is the stable account id. */
+export const GoogleUserInfoSchema = z.object({
+  sub: z.string().min(1),
+  email: z.string().optional(),
+  name: z.string().optional(),
+  picture: z.string().optional(),
+});
+export type GoogleUserInfo = z.infer<typeof GoogleUserInfoSchema>;
+
+/** The channel the signed-in account owns, from `channels?part=snippet,contentDetails&mine=true`. */
+export interface OwnedYouTubeChannel {
+  channelId: string;
+  title: string;
+  thumbnailUrl?: string;
+  uploadsPlaylistId?: string;
+}
+
+// ── Customer, session, tokens ────────────────────────────────────────────────
+
+export interface Customer {
+  id: string;
+  email?: string;
+  name?: string;
+  avatarUrl?: string;
+  /** The linked YouTube channel. Null only for a customer whose link has not completed. */
+  channelId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerInput {
+  email?: string;
+  name?: string;
+  avatarUrl?: string;
+  channelId?: string;
+}
+
+/** Sign-in methods we support. A new one is a new value, not a schema change. */
+export type AuthProvider = 'google';
+
+/** One linked login. `providerAccountId` is the provider's own stable id. */
+export interface AuthIdentity {
+  id: string;
+  customerId: string;
+  provider: AuthProvider;
+  providerAccountId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthIdentityInput {
+  customerId: string;
+  provider: AuthProvider;
+  providerAccountId: string;
+}
+
+/** A session row. `id` is the sha256 of the token; the raw token only ever lives in the cookie. */
+export interface SessionRecord {
+  id: string;
+  customerId: string;
+  expiresAt: number;
+  createdAt: number;
+}
+
+/** What a successful sign-in hands back to the route that must set the cookie. */
+export interface SignInResult {
+  customer: Customer;
+  /** Raw session token — set as the cookie value, never persisted or logged. */
+  token: string;
+  expiresAt: number;
+}
+
+/** Per-customer Google tokens. Replaces the single-file store for the sign-in flow. */
+export interface YouTubeAuthInput {
+  customerId: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  scope?: string;
+  channelId?: string;
+}
+
+export interface YouTubeAuthRecord extends YouTubeAuthInput {
+  connectedAt: string;
+  updatedAt: string;
+}
+
+// ── Library ──────────────────────────────────────────────────────────────────
+
+/** One customer's claim on a video. Ownership lives here, never on the shared `videos` row. */
+export interface LibraryVideoInput {
+  customerId: string;
+  videoId: string;
+}
+
+export interface LibraryVideoPage {
+  videos: LibraryVideoEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** A saved video joined to its catalog row, shaped for the library grid. */
+export interface LibraryVideoEntry {
+  videoId: string;
+  title: string;
+  channelId: string;
+  channelTitle: string;
+  publishedAt: string;
+  durationSec: number;
+  thumbnailUrl?: string;
+  savedAt: string;
+}

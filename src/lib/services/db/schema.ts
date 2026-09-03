@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // Stable channel identity only — dynamic stats fetched from YouTube API on demand
 export const channels = sqliteTable('channels', {
@@ -20,6 +20,7 @@ export const videos = sqliteTable('videos', {
   publishedAt: text('published_at').notNull().default(''),
   durationSec: real('duration_sec').notNull().default(0),
   tags: text('tags').notNull().default('[]'), // JSON: string[]
+  thumbnailUrl: text('thumbnail_url'), // best available YouTube thumbnail | null
   transcriptLines: text('transcript_lines'), // JSON: TranscriptLine[] | null
   transcriptFetchedAt: text('transcript_fetched_at'), // ISO timestamp | null
   createdAt: integer('created_at').notNull(),
@@ -151,3 +152,80 @@ export const clips = sqliteTable('clips', {
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
+
+// Who someone is. Deliberately carries no auth columns: a sign-in method is a
+// separate concern, so adding one later is a new auth_identities row, not a
+// migration of this table.
+// The 1:1 channel link is enforced in authOrchestrator, not by a UNIQUE constraint,
+// so the error message is ours rather than SQLite's.
+export const customers = sqliteTable('customers', {
+  id: text('id').primaryKey(),
+  email: text('email'), // display and contact only — never an identity key
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  channelId: text('channel_id'), // FK to channels.id; null only mid-link
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+// How someone signs in. One row per linked login, so a customer can hold several.
+// `provider_account_id` is the provider's own stable id — Google's `sub` today.
+// It is used rather than email because an email can change hands, which would
+// silently move someone's library to a stranger.
+export const authIdentities = sqliteTable(
+  'auth_identities',
+  {
+    id: text('id').primaryKey(),
+    customerId: text('customer_id').notNull(),
+    provider: text('provider').notNull(), // 'google' today; a value, not a schema decision
+    providerAccountId: text('provider_account_id').notNull(),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    index('auth_identities_customer_id_idx').on(t.customerId),
+    uniqueIndex('auth_identities_provider_account_uq').on(t.provider, t.providerAccountId),
+  ],
+);
+
+// Login sessions. `id` is sha256(token) — the raw token lives only in the cookie and is never stored.
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(),
+    customerId: text('customer_id').notNull(),
+    expiresAt: integer('expires_at').notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('sessions_customer_id_idx').on(t.customerId)],
+);
+
+// Per-customer Google tokens, captured at sign-in. Separate from the single-file publish auth store.
+export const youtubeAuth = sqliteTable('youtube_auth', {
+  customerId: text('customer_id').primaryKey(),
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token'), // Google returns this only on first consent — never overwrite with null
+  expiryDate: integer('expiry_date'),
+  scope: text('scope'),
+  channelId: text('channel_id'),
+  connectedAt: integer('connected_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+// A customer's claim on a video. Ownership lives here, never as a column on the shared `videos` catalog,
+// which is keyed by YouTube video id and written by the CLI too.
+export const libraryVideos = sqliteTable(
+  'library_videos',
+  {
+    id: text('id').primaryKey(),
+    customerId: text('customer_id').notNull(),
+    videoId: text('video_id').notNull(),
+    savedAt: integer('saved_at').notNull(),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    index('library_videos_customer_saved_idx').on(t.customerId, t.savedAt),
+    uniqueIndex('library_videos_customer_video_uq').on(t.customerId, t.videoId),
+  ],
+);

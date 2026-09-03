@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../client.js';
 import { videos } from '../schema.js';
@@ -18,6 +18,7 @@ export function upsertVideo(
     | 'publishedAt'
     | 'durationSec'
     | 'tags'
+    | 'thumbnail'
   >,
 ): void {
   const done = log.dbCalled('upsertVideo', undefined, { id: video.id, channelId: video.channelId });
@@ -32,6 +33,7 @@ export function upsertVideo(
       publishedAt: video.publishedAt,
       durationSec: video.durationSec,
       tags: JSON.stringify(video.tags),
+      thumbnailUrl: video.thumbnail?.url ?? null,
       createdAt: ts,
       updatedAt: ts,
     })
@@ -44,6 +46,7 @@ export function upsertVideo(
         publishedAt: video.publishedAt,
         durationSec: video.durationSec,
         tags: JSON.stringify(video.tags),
+        thumbnailUrl: video.thumbnail?.url ?? null,
         updatedAt: ts,
       },
     })
@@ -102,4 +105,16 @@ export function clearTranscript(videoId: string): boolean {
     .run();
   done({ cleared: true });
   return true;
+}
+
+/** Batch catalog lookup, used to hydrate a page of saved video ids in one query. */
+export function findVideosByIds(videoIds: string[]): (typeof videos.$inferSelect)[] {
+  const done = log.dbCalled('findVideosByIds', undefined, { count: videoIds.length });
+  if (videoIds.length === 0) {
+    done({ found: 0 });
+    return [];
+  }
+  const rows = db.select().from(videos).where(inArray(videos.id, videoIds)).all();
+  done({ found: rows.length });
+  return rows;
 }

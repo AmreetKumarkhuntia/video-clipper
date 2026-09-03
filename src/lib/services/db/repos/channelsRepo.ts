@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { db } from '../client.js';
 import { channels } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
@@ -26,4 +27,12 @@ export function upsertChannel(channel: ChannelInput): void {
     })
     .run();
   done({ id: channel.id });
+}
+
+/** Reads a channel's stored identity. Lets the app show the linked channel without an API call. */
+export function findChannel(channelId: string): typeof channels.$inferSelect | null {
+  const done = log.dbCalled('findChannel', undefined, { channelId });
+  const row = db.select().from(channels).where(eq(channels.id, channelId)).get() ?? null;
+  done({ found: row !== null });
+  return row;
 }
