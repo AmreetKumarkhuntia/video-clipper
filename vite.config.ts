@@ -1,7 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-const API_ORIGIN = process.env.API_ORIGIN ?? 'http://localhost:5003';
+const API_ORIGIN = process.env.API_ORIGIN ?? 'http://localhost:5051';
 
 // Aliases come from svelte.config.js via the sveltekit() plugin; declaring them
 // again here would be a second copy to keep in step.
