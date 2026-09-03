@@ -108,11 +108,11 @@ cp .env.example .env
 
 ### YouTube Upload OAuth
 
-| Variable                      | Default | Description                                                                                     |
-| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `YOUTUBE_OAUTH_CLIENT_ID`     | —       | Google OAuth client ID for YouTube uploads                                                      |
-| `YOUTUBE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for YouTube uploads                                                  |
-| `YOUTUBE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/youtube/auth/callback` |
+| Variable                      | Default | Description                                                                                                 |
+| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| `YOUTUBE_OAUTH_CLIENT_ID`     | —       | Google OAuth client ID for YouTube uploads                                                                  |
+| `YOUTUBE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for YouTube uploads                                                              |
+| `YOUTUBE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/youtube/connection/oauth/callback` |
 
 These are app-level defaults. The web Settings page can override them, but if you leave those
 fields empty the app falls back to the values from `.env` automatically.

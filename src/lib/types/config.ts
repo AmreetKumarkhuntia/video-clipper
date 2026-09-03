@@ -393,7 +393,7 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   YOUTUBE_OAUTH_REDIRECT_URI: {
     description: 'Google OAuth redirect URI for YouTube uploads',
     widget: 'text',
-    placeholder: 'http://localhost:5002/api/youtube/auth/callback',
+    placeholder: 'http://localhost:5002/api/youtube/connection/oauth/callback',
   },
   YT_DLP_COOKIES_FROM_BROWSER: {
     description: 'Browser profile for cookies (e.g. chrome:Profile 1)',
