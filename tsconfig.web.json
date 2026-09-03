@@ -7,16 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "@lib/*": ["src/lib/*"],
-      "@app/cli/*": ["src/app/cli/*"],
-      "@app/web/*": ["src/app/web/*"],
-      "@web/lib/*": ["src/app/web/lib/*"],
-      "@web/components/*": ["src/app/web/components/*"],
-      "@web/widgets/*": ["src/app/web/widgets/*"]
-    }
+    "strict": true
   },
   "include": [
     "src/**/*.d.ts",
