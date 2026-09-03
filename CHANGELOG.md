@@ -1,3 +1,25 @@
+# [2.0.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.12.0...v2.0.0) (2026-09-03)
+
+
+* feat(run)!: consolidate run command onto shared orchestration and remove cache service ([848cec1](https://github.com/AmreetKumarkhuntia/video-clipper/commit/848cec125fc4234874887a97cb7f943c5fce080e))
+
+
+### BREAKING CHANGES
+
+* the run command no longer performs audio event
+detection; --no-audio and --game-profile are ignored no-ops (audio
+services remain available programmatically). --no-cache now matches
+analyze semantics: transcripts are reused from the library DB and only
+chunk/segment LLM results are recomputed. --output-json now writes the
+persisted ClipPlan (candidates[]) instead of the legacy PipelineResult
+(segments[]). The CACHE_BACKEND/MONGODB_URI/MONGODB_DATABASE/
+CACHE_TTL_SECONDS/DUMP_OUTPUTS env vars are removed and ignored if
+set. Cache, createCacheBackend, and CacheBackend are removed from the
+package's public API. Upside: run results now persist to the library
+database and are reusable via the library and clip commands.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
 # [1.12.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.11.0...v1.12.0) (2026-06-09)
 
 
