@@ -184,6 +184,31 @@ Re-authenticate: open Chrome, sign in to YouTube in a fresh private/incognito wi
 
 Alternatively, export a static `cookies.txt` file and use `YT_DLP_COOKIES_FILE` — this is more stable than `--cookies-from-browser` for automation.
 
+## Reading config in code: flat or grouped
+
+The environment is flat, and that stays the operator's contract — the names in the tables above are
+what you put in `.env`, and what `PATCH /api/settings` takes. How the code reads them is a separate
+choice, and both shapes are available.
+
+```ts
+import { getConfig, getGroupedConfig, groupConfig } from '@lib/config/index.js';
+
+getConfig().GOOGLE_OAUTH_CLIENT_ID; // flat — the env name, one key
+getGroupedConfig().GOOGLE.OAUTH_CLIENT_ID; // grouped — the whole Google set in one object
+groupConfig(cfg).YT_DLP; // every yt-dlp option, ready to pass on
+```
+
+Grouping earns its keep where a caller wants a whole set rather than one value — the OAuth clients in
+`api/services/appConfig.ts`, or the ten `YT_DLP_*` options. For a single value the flat read is
+shorter and just as clear.
+
+Groups are **derived**, never declared twice. `ConfigGroup<'GOOGLE'>` is computed from `Config` by
+stripping the prefix, so adding `GOOGLE_ANYTHING` to the schema makes `GOOGLE.ANYTHING` appear with
+nothing else to update, and renaming a key cannot leave a stale group entry behind. The prefixes that
+become groups are `CONFIG_GROUP_PREFIXES` in `types/config.ts`; longest match wins, so `YT_DLP_QUIET`
+lands in `YT_DLP` rather than a shorter `YT` group. A key matching no prefix — `SCORE_THRESHOLD`,
+`OUTPUT_DIR` — stays on flat `Config` only.
+
 ## FFmpeg Preset Guide
 
 Clips are re-encoded with `libx264` + `aac` to ensure audio/video sync. Use `FFMPEG_PRESET` to trade speed for quality:

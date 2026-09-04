@@ -192,6 +192,48 @@ export const ConfigSchema = z
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+/**
+ * The same values, grouped.
+ *
+ * The environment is flat because the environment is flat — that is the
+ * operator's contract and it does not change. The shape we hand the rest of the
+ * app is ours to choose, and grouping puts what belongs together in one place:
+ * `cfg.GOOGLE` is the whole Google credential set, not four names that happen
+ * to share a prefix.
+ *
+ * The group members are *derived* from `Config` by stripping the prefix, so a
+ * key added to the schema appears in its group with no second declaration to
+ * keep in step, and a key renamed cannot leave a stale entry behind.
+ */
+export type ConfigGroup<P extends string> = {
+  [K in Extract<keyof Config, `${P}_${string}`> as K extends `${P}_${infer Rest}`
+    ? Rest
+    : never]: Config[K];
+};
+
+/**
+ * Prefixes that become groups. Longest match wins at runtime, so `YT_DLP_QUIET`
+ * lands in `YT_DLP` and never in a shorter `YT` group.
+ */
+export const CONFIG_GROUP_PREFIXES = [
+  'GOOGLE',
+  'YOUTUBE',
+  'LLM',
+  'AUDIO',
+  'CHUNK',
+  'CUSTOM_OPENAI',
+  'YT_DLP',
+  'YT_DEFAULT',
+  'YT_SCHEDULE',
+] as const;
+
+export type ConfigGroupPrefix = (typeof CONFIG_GROUP_PREFIXES)[number];
+
+/** `Config`, grouped by prefix. Ungrouped keys stay where they are, on `Config`. */
+export type GroupedConfig = {
+  [P in ConfigGroupPrefix]: ConfigGroup<P>;
+};
+
 export const CONFIG_GROUPS = [
   {
     id: 'llm',

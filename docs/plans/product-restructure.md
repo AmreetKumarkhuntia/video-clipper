@@ -262,9 +262,9 @@ development machine. Override with `API_PORT` and `API_ORIGIN`.
 
 ### From the PR #36 review
 
-The draft review on PR #36 held five design items, sharing one theme: **the provider-independence rule
-was applied to `auth_identities` and then stopped there.** `google_sub` was the first instance, not the
-only one. Three are now done; two are not, for reasons worth writing down.
+The draft review on PR #36 held six design items. Most share one theme: **the provider-independence
+rule was applied to `auth_identities` and then stopped there.** `google_sub` was the first instance,
+not the only one. Four are now done; two are not, for reasons worth writing down.
 
 | What                                                                                        | Where it stands                                                             |
 | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -272,6 +272,7 @@ only one. Three are now done; two are not, for reasons worth writing down.
 | `customers.channel_id` is a YouTube concept on a provider-neutral table                     | done — the column is gone; `Customer.channelId` is derived via the identity |
 | `youtube_auth` should be a generic auth table keyed by `type` with a `metadata` blob        | done — folded into `auth_identities`, which now carries tokens and metadata |
 | `library_videos.video_id` should be a url, which survives a change of provider              | **not done** — see below                                                    |
+| Config should read as `GOOGLE: { … }`, not four keys sharing a prefix                       | done — `groupConfig(cfg)`, groups derived from the flat schema              |
 | Sessions should be our own JWT issued after OAuth succeeds                                  | **not done** — see below                                                    |
 
 #### Why the video id is still an id
