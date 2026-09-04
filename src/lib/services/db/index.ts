@@ -22,7 +22,12 @@ export {
   deleteCaptionPreset,
 } from './repos/captionPresetsRepo.js';
 export { upsertChannel, findChannel } from './repos/channelsRepo.js';
-export { findCustomerIdByIdentity, linkIdentity } from './repos/authIdentitiesRepo.js';
+export {
+  findCustomerIdByIdentity,
+  findIdentity,
+  linkIdentity,
+  unlinkIdentity,
+} from './repos/authIdentitiesRepo.js';
 export {
   findCustomerById,
   findCustomerByChannelId,
@@ -82,5 +87,3 @@ export {
   findSavedVideoIds,
   listLibraryVideos,
 } from './repos/libraryVideosRepo.js';
-
-export { findYouTubeAuth, upsertYouTubeAuth, deleteYouTubeAuth } from './repos/youtubeAuthRepo.js';

@@ -36,12 +36,12 @@ vi.mock('../src/lib/utils/googleOAuth.js', async (importOriginal) => {
   };
 });
 
-const { completeGoogleLogin, resolveSession, signOut, startGoogleLogin } =
-  await import('../src/lib/orchestration/authOrchestrator.js');
+const { oauthProvider, resolveSession, signOut } =
+  await import('../src/lib/orchestration/auth/index.js');
 const { hashSessionToken } = await import('../src/lib/utils/sessionToken.js');
-const { findYouTubeAuth } = await import('../src/lib/services/db/repos/youtubeAuthRepo.js');
+const { findIdentity } = await import('../src/lib/services/db/repos/authIdentitiesRepo.js');
 
-/** The lifetime the app would pass in; the orchestrator no longer owns it. */
+/** The lifetime the app would pass in; the provider no longer owns it. */
 const SESSION = { sessionTtlMs: 30 * 24 * 60 * 60 * 1000 };
 
 const OAUTH = {
@@ -51,23 +51,23 @@ const OAUTH = {
 };
 const HANDSHAKE = { state: 's', codeVerifier: 'v', returnTo: '/' };
 
+const google = () => oauthProvider('google', OAUTH);
+
 function customerCount(): number {
   return (sqlite.prepare('SELECT COUNT(*) AS n FROM customers').get() as { n: number }).n;
 }
 
 beforeEach(() => {
-  sqlite.exec(
-    'DELETE FROM sessions; DELETE FROM youtube_auth; DELETE FROM auth_identities; DELETE FROM customers;',
-  );
+  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
   googleState.sub = 'sub-a';
   googleState.channel = { channelId: 'UC_a', title: 'Channel A' };
   googleState.refreshToken = 'refresh-1';
 });
 
-describe('startGoogleLogin', () => {
+describe('startLogin', () => {
   it('mints a fresh handshake and an auth url carrying its state', () => {
-    const first = startGoogleLogin(OAUTH, '/browse');
-    const second = startGoogleLogin(OAUTH, '/browse');
+    const first = google().startLogin('/browse');
+    const second = google().startLogin('/browse');
 
     expect(first.handshake.state).not.toBe(second.handshake.state);
     expect(first.handshake.returnTo).toBe('/browse');
@@ -76,9 +76,9 @@ describe('startGoogleLogin', () => {
   });
 });
 
-describe('completeGoogleLogin', () => {
+describe('completeLogin', () => {
   it('creates the customer, links the channel, stores tokens, and opens a session', async () => {
-    const result = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const result = await google().completeLogin('code', HANDSHAKE, SESSION);
 
     expect(result.customer.channelId).toBe('UC_a');
     expect(result.customer.email).toBe('a@example.com');
@@ -89,12 +89,22 @@ describe('completeGoogleLogin', () => {
       .get() as { provider: string; sub: string };
     expect(identity).toEqual({ provider: 'google', sub: 'sub-a' });
     expect(result.expiresAt).toBeGreaterThan(Date.now());
-    expect(findYouTubeAuth(result.customer.id)?.refreshToken).toBe('refresh-1');
+    expect(findIdentity(result.customer.id, 'google')?.refreshToken).toBe('refresh-1');
     expect(resolveSession(result.token)?.id).toBe(result.customer.id);
   });
 
+  it('keeps the channel and the tokens on the identity, not on the customer', async () => {
+    const result = await google().completeLogin('code', HANDSHAKE, SESSION);
+    const identity = findIdentity(result.customer.id, 'google');
+
+    expect(identity?.channelId).toBe('UC_a');
+    expect(identity?.accessToken).toBe('access-1');
+    // `Customer.channelId` is read back through the identity, so both agree.
+    expect(result.customer.channelId).toBe(identity?.channelId);
+  });
+
   it('registers the linked channel so its title is available without an api call', async () => {
-    await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    await google().completeLogin('code', HANDSHAKE, SESSION);
     const row = sqlite.prepare('SELECT title FROM channels WHERE id = ?').get('UC_a') as
       | { title: string }
       | undefined;
@@ -102,29 +112,29 @@ describe('completeGoogleLogin', () => {
   });
 
   it('signing in again reuses the customer and keeps the first refresh token', async () => {
-    const first = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const first = await google().completeLogin('code', HANDSHAKE, SESSION);
     googleState.refreshToken = undefined;
-    const second = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const second = await google().completeLogin('code', HANDSHAKE, SESSION);
 
     expect(second.customer.id).toBe(first.customer.id);
     expect(customerCount()).toBe(1);
-    expect(findYouTubeAuth(second.customer.id)?.refreshToken).toBe('refresh-1');
+    expect(findIdentity(second.customer.id, 'google')?.refreshToken).toBe('refresh-1');
     expect(second.token).not.toBe(first.token);
   });
 
   it('rejects an account with no channel and writes nothing', async () => {
     googleState.channel = null;
-    await expect(completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION)).rejects.toThrow(
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
       /no YouTube channel/,
     );
     expect(customerCount()).toBe(0);
   });
 
   it('rejects a channel already claimed by another account, leaving the first intact', async () => {
-    const first = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const first = await google().completeLogin('code', HANDSHAKE, SESSION);
     googleState.sub = 'sub-b';
 
-    await expect(completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION)).rejects.toThrow(
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
       /already linked to another account/,
     );
     expect(customerCount()).toBe(1);
@@ -132,11 +142,11 @@ describe('completeGoogleLogin', () => {
   });
 
   it('rejects an account whose channel has changed', async () => {
-    await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    await google().completeLogin('code', HANDSHAKE, SESSION);
     googleState.channel = { channelId: 'UC_other', title: 'Other Channel' };
 
-    await expect(completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION)).rejects.toThrow(
-      /already linked to a different YouTube channel/,
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
+      /already linked to a different channel/,
     );
     expect(customerCount()).toBe(1);
   });
@@ -149,7 +159,7 @@ describe('resolveSession and signOut', () => {
   });
 
   it('stores only the hash of the token', async () => {
-    const { token } = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const { token } = await google().completeLogin('code', HANDSHAKE, SESSION);
     const stored = sqlite.prepare('SELECT id FROM sessions').all() as { id: string }[];
 
     expect(stored[0]?.id).toBe(hashSessionToken(token));
@@ -157,7 +167,7 @@ describe('resolveSession and signOut', () => {
   });
 
   it('signing out invalidates the session', async () => {
-    const { token } = await completeGoogleLogin('code', HANDSHAKE, OAUTH, SESSION);
+    const { token } = await google().completeLogin('code', HANDSHAKE, SESSION);
     signOut(token);
     expect(resolveSession(token)).toBeNull();
   });

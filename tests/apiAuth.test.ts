@@ -3,13 +3,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createApp } from '../src/app/api/app.js';
-import { startGoogleLogin } from '../src/lib/orchestration/authOrchestrator.js';
+import { oauthProvider } from '../src/lib/orchestration/auth/index.js';
 import { hashSessionToken } from '../src/lib/utils/sessionToken.js';
 import { SESSION_COOKIE_NAME } from '../src/lib/types/api.js';
 import {
   createCustomer,
+  findCustomerById,
   initDb,
   insertSession,
+  linkIdentity,
   runMigrations,
   saveLibraryVideo,
   upsertChannel,
@@ -47,7 +49,15 @@ beforeAll(() => {
   runMigrations();
 
   upsertChannel({ id: CHANNEL_ID, title: 'Test Channel' });
-  customer = createCustomer({ email: 'owner@example.com', name: 'Owner', channelId: CHANNEL_ID });
+  customer = createCustomer({ email: 'owner@example.com', name: 'Owner' });
+  // The channel arrives with the identity, so link one rather than setting a column.
+  linkIdentity({
+    customerId: customer.id,
+    provider: 'google',
+    providerAccountId: 'sub-owner',
+    channelId: CHANNEL_ID,
+  });
+  customer = findCustomerById(customer.id)!;
   insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
 });
 
@@ -217,7 +227,7 @@ describe('sign-in redirects', () => {
   // The branch the route above catches, exercised directly so it is covered on
   // a machine that does have credentials set.
   it('refuses to start with no client credentials', () => {
-    expect(() => startGoogleLogin({}, '/')).toThrow();
+    expect(() => oauthProvider('google', {}).startLogin('/')).toThrow();
   });
 
   it('refuses a callback whose state does not match the cookie', async () => {

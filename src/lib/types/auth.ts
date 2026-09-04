@@ -17,12 +17,20 @@ export interface GoogleOAuthClientConfig {
   redirectUri?: string;
 }
 
-/** Per-request handshake values round-tripped through cookies. */
-export interface GoogleOAuthHandshake {
+/**
+ * Per-request handshake values round-tripped through cookies.
+ *
+ * PKCE is not Google's — every OAuth provider we would add uses the same three
+ * values, so this is the provider-independent name. `GoogleOAuthHandshake` is
+ * kept as an alias because the Google adapter reads better with it.
+ */
+export interface OAuthHandshake {
   state: string;
   codeVerifier: string;
   returnTo: string;
 }
+
+export type GoogleOAuthHandshake = OAuthHandshake;
 
 export const GoogleTokenResponseSchema = z.object({
   access_token: z.string().min(1),
@@ -50,6 +58,51 @@ export interface OwnedYouTubeChannel {
   uploadsPlaylistId?: string;
 }
 
+// ── The provider contract ────────────────────────────────────────────────────
+
+/** Where to send the user, and what the route must persist to verify the return trip. */
+export interface OAuthLoginStart {
+  authUrl: string;
+  handshake: OAuthHandshake;
+}
+
+/**
+ * The creator account on the provider — a YouTube channel, a Twitch channel.
+ *
+ * Null for a provider that has no such concept, which is why nothing downstream
+ * may assume one exists.
+ */
+export interface ProviderChannel {
+  id: string;
+  title: string;
+}
+
+/** Tokens as the provider issued them, normalised away from its wire shape. */
+export interface ProviderTokens {
+  accessToken: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  scope?: string;
+}
+
+/**
+ * One provider's account after normalisation.
+ *
+ * The shared sign-in pipeline works only in these terms, so adding a provider
+ * means writing a mapper, not touching the pipeline.
+ */
+export interface ProviderAccount {
+  /** The provider's own stable id for the account — Google's `sub`. */
+  accountId: string;
+  email?: string;
+  name?: string;
+  avatarUrl?: string;
+  channel: ProviderChannel | null;
+  tokens: ProviderTokens;
+  /** Anything provider-specific worth keeping, stored as JSON on the identity row. */
+  metadata?: Record<string, unknown>;
+}
+
 // ── Customer, session, tokens ────────────────────────────────────────────────
 
 export interface Customer {
@@ -57,17 +110,21 @@ export interface Customer {
   email?: string;
   name?: string;
   avatarUrl?: string;
-  /** The linked YouTube channel. Null only for a customer whose link has not completed. */
+  /**
+   * The linked channel, read from the identity that provided it — there is no
+   * such column on `customers`. Absent until a link completes, and for any
+   * provider that has no channel concept.
+   */
   channelId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+/** Profile only. A channel is linked through the identity, never set here. */
 export interface CustomerInput {
   email?: string;
   name?: string;
   avatarUrl?: string;
-  channelId?: string;
 }
 
 /** Sign-in methods we support. A new one is a new value, not a schema change. */
@@ -83,10 +140,27 @@ export interface AuthIdentity {
   updatedAt: string;
 }
 
+/** A linked login plus what that provider handed us: tokens, channel, extras. */
+export interface AuthIdentityRecord extends AuthIdentity {
+  accessToken?: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  scope?: string;
+  /** The creator account on the provider. Absent when it has no such concept. */
+  channelId?: string;
+  metadata: Record<string, unknown>;
+}
+
 export interface AuthIdentityInput {
   customerId: string;
   provider: AuthProvider;
   providerAccountId: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  scope?: string;
+  channelId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /** A session row. `id` is the sha256 of the token; the raw token only ever lives in the cookie. */

@@ -1,4 +1,4 @@
-import { resolveSession } from '@lib/orchestration/authOrchestrator.js';
+import { resolveSession } from '@lib/orchestration/auth/index.js';
 import { readSessionToken } from '../http/sessionCookies.js';
 import { HttpError, jsonError } from '../http/responses.js';
 import type { Context, MiddlewareHandler } from 'hono';
