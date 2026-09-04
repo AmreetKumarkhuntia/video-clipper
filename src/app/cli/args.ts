@@ -1,5 +1,5 @@
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
+import { describeSetting } from './client/settings.js';
 import type { CliArgs } from '@lib/types/index.js';
 
 export type { CliArgs };
@@ -151,7 +151,13 @@ export function parseArgs(argv: string[]): CliArgs {
 // Usage text
 // ---------------------------------------------------------------------------
 
-export function printUsage(): void {
+/**
+ * The defaults quoted here are the backend's, not this machine's, so the caller
+ * passes what it read from `/api/settings`. Called with nothing — an unknown
+ * flag, where there is no backend answer in hand — each one prints "unknown"
+ * rather than a stale local guess.
+ */
+export function printUsage(values: Record<string, unknown> = {}): void {
   console.log(
     `
 Usage: video-clipper run <youtube-url> [options]
@@ -165,11 +171,11 @@ Arguments:
 
 Options:
   --clip                  Download video and generate mp4 clips for each segment
-  --download-sections <mode>  yt-dlp download mode: 'all' (full video) or N (top N segments only, e.g. 1, 2, 3...) (default: ${config.DOWNLOAD_SECTIONS_MODE})
+  --download-sections <mode>  yt-dlp download mode: 'all' (full video) or N (top N segments only, e.g. 1, 2, 3...) (default: ${describeSetting(values, 'DOWNLOAD_SECTIONS_MODE')})
   --local-video <path>    Path to local video file (skips yt-dlp download; implies --clip)
   --video-path <path>     Custom output directory for downloaded videos and clips (overrides DOWNLOAD_DIR/OUTPUT_DIR)
-  --threshold <n>         Minimum score to keep a segment (default: ${config.SCORE_THRESHOLD})
-  --top-n <n>             Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
+  --threshold <n>         Minimum score to keep a segment (default: ${describeSetting(values, 'SCORE_THRESHOLD')})
+  --top-n <n>             Maximum number of segments to return (default: ${describeSetting(values, 'TOP_N_SEGMENTS')})
   --max-duration <s>      Abort if video is longer than <s> seconds
   --max-chunks <n>        Limit the number of transcript chunks sent to the LLM (useful for testing/cost control)
   --max-parallel <n>      Max number of LLM calls to run in parallel (default: LLM_CONCURRENCY env, or 3)

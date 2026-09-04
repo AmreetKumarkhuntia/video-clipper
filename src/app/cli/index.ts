@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 import { generateRequestId, log } from '@lib/utils/logger.js';
-import { runMigrations } from '@lib/services/db/index.js';
 import { commands } from './commands/index.js';
+import { setClientRequestId } from './client/index.js';
 
-runMigrations();
+// No runMigrations here any more. The backend owns the database and is the only
+// process that opens or migrates it, which is what actually ends two writers
+// contending on one SQLite file — reaching the API from the commands is not
+// enough while the entry point still opens it on every invocation.
 
 const requestId = generateRequestId();
+// Share the id with the backend so both sides' logs line up.
+setClientRequestId(requestId);
 const subcommand = process.argv[2];
 
 function isUrl(value: string): boolean {

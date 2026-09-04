@@ -1,12 +1,12 @@
-import { parseUrl, extractMetadata } from '@lib/services/video/index.js';
-import { answerVideoQuestion } from '@lib/orchestration/qaOrchestrator.js';
-import { findQaMessages, clearQaMessages, upsertVideo } from '@lib/services/db/index.js';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
-import type { YtDlpCookies } from '@lib/types/downloader.js';
+import { tryParseVideoId } from '@lib/utils/youtubeUrl.js';
+import { QaAnswerSchema } from '@lib/types/qa.js';
+import { apiBaseUrl, apiGet, apiSend, apiStream } from '../client/index.js';
+import { backendSettings, describeSetting } from '../client/settings.js';
 import type { CommandHandler, AskArgs } from '@lib/types/command.js';
-import type { QaMessage } from '@lib/types/qa.js';
+import type { QaAnswer, QaMessage } from '@lib/types/qa.js';
+import type { VideoDetails } from '@lib/types/youtube.js';
 
 function formatTimeSec(sec: number): string {
   const h = Math.floor(sec / 3600);
@@ -14,6 +14,34 @@ function formatTimeSec(sec: number): string {
   const s = Math.floor(sec % 60);
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function qaPath(videoId: string): string {
+  return `/api/videos/${encodeURIComponent(videoId)}/qa`;
+}
+
+function describeDuration(durationSec: number): string {
+  return durationSec > 0 ? formatSeconds(durationSec) : 'duration unknown';
+}
+
+function progressText(data: unknown): string {
+  const text = (data as { text?: unknown } | null)?.text;
+  return typeof text === 'string' ? text : '';
+}
+
+function streamErrorMessage(data: unknown): string {
+  const message = (data as { message?: unknown } | null)?.message;
+  return typeof message === 'string' ? message : 'The backend reported an unknown Q&A failure.';
+}
+
+/**
+ * Which model answers is the backend's choice now, so the CLI has to ask.
+ * Tolerant on purpose: this only decorates a log line, and letting a settings
+ * hiccup abort the question would be a worse trade than printing "unknown".
+ * A backend that is genuinely down still fails loudly on the /api/qa call.
+ */
+async function currentModelName(): Promise<string> {
+  return describeSetting(await backendSettings(), 'LLM_MODEL');
 }
 
 function parseAskArgs(argv: string[]): AskArgs {
@@ -49,6 +77,8 @@ Options:
 
 Each invocation appends to the persisted conversation thread. Consecutive
 calls form a multi-turn chat. Use --reset to start a fresh conversation.
+
+The thread lives in the backend at ${apiBaseUrl()}.
 `.trim(),
     );
     return;
@@ -68,80 +98,70 @@ calls form a multi-turn chat. Use --reset to start a fresh conversation.
     process.exit(1);
   }
 
-  const cookies: YtDlpCookies = {
-    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
-    cookiesFile: config.YT_DLP_COOKIES_FILE,
-    quiet: config.YT_DLP_QUIET,
-    retryCount: config.YT_DLP_RETRY_COUNT,
-  };
-
-  let videoId: string;
-  try {
-    videoId = parseUrl(args.url);
-  } catch {
+  const videoId = tryParseVideoId(args.url);
+  if (!videoId) {
     throw new Error(`Invalid YouTube URL: ${args.url}`);
   }
 
   log.info('ask', `Fetching metadata for ${videoId}...`, requestId);
-  const metadata = await extractMetadata(videoId, cookies);
-  log.info(
-    'ask',
-    `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
-    requestId,
-  );
 
-  upsertVideo({
-    id: videoId,
-    channelId: '',
-    title: metadata.title,
-    description: '',
-    channelTitle: '',
-    publishedAt: '',
-    durationSec: metadata.duration,
-    tags: [],
-  });
+  // This read write-throughs the channel and video catalog rows on the backend,
+  // which is what the command's own upsertVideo call used to be for.
+  const video = await apiGet<VideoDetails>(`/api/youtube/videos/${encodeURIComponent(videoId)}`);
+  log.info('ask', `Video: "${video.title}" (${describeDuration(video.durationSec)})`, requestId);
 
   if (args.reset) {
-    clearQaMessages(videoId);
+    await apiSend<unknown>(qaPath(videoId), 'DELETE');
     log.info('ask', 'Conversation history cleared.', requestId);
   }
 
-  const history: QaMessage[] = findQaMessages(videoId);
+  const history = await apiGet<QaMessage[]>(qaPath(videoId));
   if (history.length > 0) {
     log.info('ask', `Continuing conversation (${history.length} previous messages)`, requestId);
   }
 
-  const abortController = new AbortController();
+  // apiStream takes no AbortSignal, so Ctrl-C can only stop this end of the
+  // conversation: the backend still finishes the model call it started.
+  let aborted = false;
   process.on('SIGINT', () => {
+    aborted = true;
     log.warn('ask', 'Received SIGINT — aborting...', requestId);
-    abortController.abort();
   });
 
-  log.info('ask', `Asking (model: ${config.LLM_MODEL})...`, requestId);
+  const model = await currentModelName();
+  log.info('ask', `Asking (model: ${model})...`, requestId);
   process.stdout.write('\n');
 
-  const answer = await answerVideoQuestion(
-    {
-      videoId,
-      question: args.question,
-      history,
-      title: metadata.title,
-    },
-    config,
-    {
-      onStarted: () => {
-        // nothing
-      },
-      onProgress: (text) => {
-        process.stdout.write(text);
-      },
-      onComplete: () => {
-        process.stdout.write('\n');
-      },
-    },
-    requestId,
-    abortController.signal,
-  );
+  let answer: QaAnswer | null = null;
+
+  const stream = apiStream('/api/qa', 'POST', {
+    videoId,
+    question: args.question,
+    history,
+    title: video.title,
+  });
+
+  for await (const { event, data } of stream) {
+    if (aborted) break;
+
+    if (event === 'qa_progress') {
+      process.stdout.write(progressText(data));
+    } else if (event === 'qa_complete') {
+      answer = QaAnswerSchema.parse((data as { answer?: unknown } | null)?.answer);
+      process.stdout.write('\n');
+    } else if (event === 'error') {
+      // Raised verbatim: the backend already phrased this for a human.
+      throw new Error(streamErrorMessage(data));
+    }
+  }
+
+  if (aborted) {
+    process.exit(130);
+  }
+
+  if (!answer) {
+    throw new Error('The backend closed the Q&A stream before sending an answer.');
+  }
 
   if (answer.citations.length > 0) {
     console.log('\nTimestamps cited:');

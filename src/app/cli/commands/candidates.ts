@@ -1,6 +1,7 @@
-import { getAnalysisFromDb } from '@lib/services/db/index.js';
 import { log } from '@lib/utils/logger.js';
+import { apiGet, isNotFound } from '../client/index.js';
 import { printCandidates } from '../output/formatter.js';
+import type { ClipPlan } from '@lib/types/analysis.js';
 import type { CommandHandler, CandidatesArgs } from '@lib/types/command.js';
 
 function parseCandidatesArgs(argv: string[]): CandidatesArgs {
@@ -19,6 +20,13 @@ function parseCandidatesArgs(argv: string[]): CandidatesArgs {
 
   return result;
 }
+
+/**
+ * The client reports the backend's message but not its status code, so a missing
+ * analysis can only be told apart from a real failure by that message. Anything
+ * else — an unreachable backend, a rejected id — keeps its own wording and its
+ * own exit path rather than being mislabelled "not found".
+ */
 
 async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseCandidatesArgs(argv);
@@ -43,8 +51,11 @@ Options:
     process.exit(1);
   }
 
-  const plan = getAnalysisFromDb(args.analysisId);
-  if (!plan) {
+  let plan: ClipPlan;
+  try {
+    plan = await apiGet<ClipPlan>(`/api/analyses/${encodeURIComponent(args.analysisId)}`);
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
     log.error('candidates', `Analysis not found: ${args.analysisId}`, requestId);
     console.log('Run "video-clipper library" to see available analyses.');
     process.exit(1);

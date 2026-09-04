@@ -1,5 +1,6 @@
-import { listAnalysesFromDb, listClips, listClipsByVideoId } from '@lib/services/db/index.js';
+import { apiGet } from '../client/index.js';
 import { printAnalysesList, printClipsList } from '../output/formatter.js';
+import type { ClipArtifact, ClipPlan } from '@lib/types/analysis.js';
 import type { CommandHandler, LibraryArgs } from '@lib/types/command.js';
 
 function parseLibraryArgs(argv: string[]): LibraryArgs {
@@ -23,6 +24,17 @@ function parseLibraryArgs(argv: string[]): LibraryArgs {
   return result;
 }
 
+/**
+ * `GET /api/clips` only filters by `analysisId`, so `--video-id` is narrowed
+ * here rather than pushed to the server. The backend hands back the same
+ * newest-first ordering the old `listClipsByVideoId` used, and filtering keeps
+ * that order, so the table is byte-identical to the in-process version.
+ */
+async function fetchClips(videoId: string | undefined): Promise<ClipArtifact[]> {
+  const { clips } = await apiGet<{ clips: ClipArtifact[] }>('/api/clips');
+  return videoId ? clips.filter((clip) => clip.videoId === videoId) : clips;
+}
+
 async function run(argv: string[], _requestId: string): Promise<void> {
   const args = parseLibraryArgs(argv);
 
@@ -43,14 +55,14 @@ Options:
   }
 
   if (args.mode === 'clips') {
-    const clipList = args.videoId ? listClipsByVideoId(args.videoId) : listClips();
+    const clipList = await fetchClips(args.videoId);
     if (args.json) {
       console.log(JSON.stringify(clipList, null, 2));
     } else {
       printClipsList(clipList);
     }
   } else {
-    const analyses = listAnalysesFromDb();
+    const { analyses } = await apiGet<{ analyses: ClipPlan[] }>('/api/analyses');
     if (args.json) {
       console.log(JSON.stringify(analyses, null, 2));
     } else {

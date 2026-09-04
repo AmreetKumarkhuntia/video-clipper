@@ -20,6 +20,8 @@ import { fileURLToPath } from 'node:url';
  *  7. The web app holds no domain logic: it may import `@lib/types/*` and
  *     `@lib/utils/*`, never services, orchestration, pipeline, or config.
  *  8. The apps do not reach into each other. `api`, `web` and `cli` are peers.
+ *  9. The CLI is an HTTP client: it never opens the database, runs an
+ *     orchestrator or a pipeline, or reads the process config.
  */
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src');
@@ -177,6 +179,28 @@ describe('service boundaries', () => {
     const violations: string[] = [];
     for (const file of files) {
       if (!file.startsWith(webDir)) continue;
+      for (const spec of importSpecifiers(file)) {
+        if (forbidden.some((prefix) => spec === prefix || spec.startsWith(`${prefix}/`))) {
+          violations.push(`${rel(file)} -> ${spec}`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  /**
+   * The CLI talks to the backend. Local media work — yt-dlp and ffmpeg against
+   * files on this machine — may stay in-process, which is why `@lib/services`
+   * is not banned wholesale; opening the database is what put two writers on
+   * one SQLite file, and running an orchestrator locally is what made the
+   * backend's config irrelevant to what the CLI actually did.
+   */
+  it('the CLI never opens the database or runs orchestration', () => {
+    const cliDir = path.join(SRC, 'app', 'cli') + path.sep;
+    const forbidden = ['@lib/services/db', '@lib/orchestration', '@lib/pipeline', '@lib/config'];
+    const violations: string[] = [];
+    for (const file of files) {
+      if (!file.startsWith(cliDir)) continue;
       for (const spec of importSpecifiers(file)) {
         if (forbidden.some((prefix) => spec === prefix || spec.startsWith(`${prefix}/`))) {
           violations.push(`${rel(file)} -> ${spec}`);
