@@ -18,6 +18,11 @@ export function toGoogleOAuthConfig(cfg: Config): GoogleOAuthClientConfig {
   };
 }
 
+/** Session lifetime, in the milliseconds the orchestrator works in. */
+export function sessionTtlMs(cfg: Config): number {
+  return cfg.SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+}
+
 /** Assembles the OAuth client config the publish service expects from full Config. */
 export function toYouTubeOAuthConfig(cfg: Config): YouTubeOAuthClientConfig {
   return {

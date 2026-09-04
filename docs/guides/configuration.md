@@ -116,6 +116,7 @@ sign-in button reports that they are unset.
 | `GOOGLE_OAUTH_CLIENT_ID`     | —       | Google OAuth client ID for customer sign-in                                                    |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for customer sign-in                                                |
 | `GOOGLE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/auth/google/callback` |
+| `SESSION_TTL_DAYS`           | `30`    | How many days a sign-in stays valid                                                            |
 
 The redirect URI points at the **frontend's** origin, not the backend's: the browser reaches the
 backend through the frontend's `/api` proxy, so that is the address Google must send it back to. It

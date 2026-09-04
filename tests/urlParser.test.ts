@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrl } from '../src/lib/services/video/source/youtube/parser.js';
+import { parseVideoId as parseUrl } from '../src/lib/utils/youtubeUrl.js';
 
 describe('parseUrl', () => {
   describe('valid URLs', () => {

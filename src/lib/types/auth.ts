@@ -105,6 +105,18 @@ export interface SignInResult {
   expiresAt: number;
 }
 
+/**
+ * What the caller must supply to complete a sign-in.
+ *
+ * `sessionTtlMs` is passed in rather than read here: nothing under
+ * `src/lib/orchestration` imports the config, so lifetime policy arrives from
+ * the app that owns configuration.
+ */
+export interface CompleteLoginOptions {
+  sessionTtlMs: number;
+  requestId?: string;
+}
+
 /** Per-customer Google tokens. Replaces the single-file store for the sign-in flow. */
 export interface YouTubeAuthInput {
   customerId: string;

@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createApp } from '../src/app/api/app.js';
-import { hashSessionToken, startGoogleLogin } from '../src/lib/orchestration/authOrchestrator.js';
+import { startGoogleLogin } from '../src/lib/orchestration/authOrchestrator.js';
+import { hashSessionToken } from '../src/lib/utils/sessionToken.js';
 import { SESSION_COOKIE_NAME } from '../src/lib/types/api.js';
 import {
   createCustomer,

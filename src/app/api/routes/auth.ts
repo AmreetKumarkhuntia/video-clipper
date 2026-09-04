@@ -5,7 +5,7 @@ import {
   signOut,
   startGoogleLogin,
 } from '@lib/orchestration/authOrchestrator.js';
-import { toGoogleOAuthConfig } from '../services/appConfig.js';
+import { toGoogleOAuthConfig, sessionTtlMs } from '../services/appConfig.js';
 import {
   clearHandshakeCookies,
   clearSessionCookie,
@@ -71,7 +71,7 @@ authRoutes.get('/google/callback', async (c) => {
       code,
       { state, codeVerifier: handshake.codeVerifier, returnTo: handshake.returnTo },
       toGoogleOAuthConfig(c.get('config')),
-      c.get('requestId'),
+      { sessionTtlMs: sessionTtlMs(c.get('config')), requestId: c.get('requestId') },
     );
     setSessionCookie(c, result.token, result.expiresAt);
     log.info('api.auth', 'signed in', c.get('requestId'), { customerId: result.customer.id });

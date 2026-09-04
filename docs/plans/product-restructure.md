@@ -254,3 +254,22 @@ default is blocked on CLI authentication, and should land with it.
 
 Note: the backend listens on **5051**, not 5003, because another process holds 5003 on the
 development machine. Override with `API_PORT` and `API_ORIGIN`.
+
+### From the PR #36 review
+
+Five items from the draft review on PR #36 are design changes rather than fixes, and they share one
+theme: **the provider-independence rule was applied to `auth_identities` and then stopped there.**
+`google_sub` was the first instance, not the only one.
+
+| What                                                                                        | Where it stands                                                                    |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| An OAuth base with per-provider children — `authOrch/base`, `authOrch/google`, later twitch | `authOrchestrator.ts` is one Google-specific file importing `googleOAuth` directly |
+| `customers.channel_id` is a YouTube concept on a provider-neutral table                     | still on `customers` (`schema.ts:166`); a twitch account has no channel id         |
+| `youtube_auth` should be a generic auth table keyed by `type` with a `metadata` blob        | half done — `auth_identities` exists, but `youtube_auth` remains YouTube-named     |
+| `library_videos.video_id` should be a url, which survives a change of provider              | still a bare YouTube video id                                                      |
+| Sessions should be our own JWT issued after OAuth succeeds                                  | currently an opaque random token, sha256-hashed in `sessions`                      |
+
+The first four are one migration and one refactor, and are best done together. The fifth is a genuine
+fork, not a cleanup: opaque tokens are revocable server-side by deleting a row, which is what `signOut`
+relies on today; a JWT is not, and would need either a short expiry or a revocation list to match. It
+should be decided on its own terms rather than folded into the others.

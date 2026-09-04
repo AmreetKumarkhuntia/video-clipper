@@ -1,5 +1,5 @@
-import { createHash, randomBytes } from 'node:crypto';
 import { log } from '@lib/utils/logger.js';
+import { createSessionToken, hashSessionToken } from '@lib/utils/sessionToken.js';
 import {
   buildGoogleAuthUrl,
   createCodeVerifier,
@@ -8,7 +8,6 @@ import {
   expiryFromExpiresIn,
   fetchGoogleUserInfo,
   fetchOwnedYouTubeChannel,
-  toBase64Url,
 } from '@lib/utils/googleOAuth.js';
 import {
   findCustomerById,
@@ -24,6 +23,7 @@ import {
   upsertYouTubeAuth,
 } from '@lib/services/db/index.js';
 import type {
+  CompleteLoginOptions,
   Customer,
   GoogleOAuthClientConfig,
   GoogleOAuthHandshake,
@@ -36,13 +36,6 @@ import type {
  * The only layer allowed to combine the Google OAuth helpers with the database,
  * so every route goes through here rather than talking to repos directly.
  */
-
-const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, fixed — no sliding renewal
-
-/** The session cookie carries the raw token; only this hash is ever stored or logged. */
-export function hashSessionToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
-}
 
 /** Mints the handshake values the start route stores in cookies, and the URL to send the user to. */
 export function startGoogleLogin(
@@ -72,8 +65,9 @@ export async function completeGoogleLogin(
   code: string,
   handshake: GoogleOAuthHandshake,
   oauth: GoogleOAuthClientConfig,
-  requestId?: string,
+  options: CompleteLoginOptions,
 ): Promise<SignInResult> {
+  const { sessionTtlMs, requestId } = options;
   const tokens = await exchangeGoogleCode(code, handshake.codeVerifier, oauth);
   const [profile, channel] = await Promise.all([
     fetchGoogleUserInfo(tokens.access_token),
@@ -134,8 +128,8 @@ export async function completeGoogleLogin(
     channelId: channel.channelId,
   });
 
-  const token = toBase64Url(randomBytes(32));
-  const expiresAt = Date.now() + SESSION_TTL_MS;
+  const token = createSessionToken();
+  const expiresAt = Date.now() + sessionTtlMs;
   insertSession(hashSessionToken(token), customer.id, expiresAt);
 
   return { customer, token, expiresAt };

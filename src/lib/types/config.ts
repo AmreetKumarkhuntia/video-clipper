@@ -51,6 +51,10 @@ export const ConfigSchema = z
     GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
     GOOGLE_OAUTH_REDIRECT_URI: z.string().url().optional(),
 
+    // How long a sign-in lasts. Fixed per session — there is no sliding renewal,
+    // so this is the whole of the session lifetime policy.
+    SESSION_TTL_DAYS: z.coerce.number().min(1).default(30),
+
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
     CHUNK_LENGTH_SEC: z.coerce.number().min(10).default(120),
@@ -222,7 +226,12 @@ export const CONFIG_GROUPS = [
   {
     id: 'auth',
     label: 'Sign-in',
-    fields: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET', 'GOOGLE_OAUTH_REDIRECT_URI'],
+    fields: [
+      'GOOGLE_OAUTH_CLIENT_ID',
+      'GOOGLE_OAUTH_CLIENT_SECRET',
+      'GOOGLE_OAUTH_REDIRECT_URI',
+      'SESSION_TTL_DAYS',
+    ],
   },
   {
     id: 'youtube',
@@ -404,6 +413,10 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     description: 'Google OAuth redirect URI for customer sign-in',
     widget: 'text',
     placeholder: 'http://localhost:5002/api/auth/google/callback',
+  },
+  SESSION_TTL_DAYS: {
+    description: 'How many days a sign-in stays valid',
+    widget: 'number',
   },
   YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
   YOUTUBE_OAUTH_CLIENT_ID: {
