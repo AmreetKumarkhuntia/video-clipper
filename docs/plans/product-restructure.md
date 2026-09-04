@@ -54,8 +54,13 @@ auth_identities  id PK · customer_id · provider · provider_account_id · crea
 | `drizzle/0010_*.sql`                          | regenerated — the commits are being reset, so no second migration                                              |
 
 **Deliberately unchanged.** `utils/googleOAuth.ts` and the `Google*` types stay Google-named; they _are_
-the Google adapter. `youtube_auth` stays, because a connected channel is this product's domain, not an
-authentication method. The rule is narrow: **identity tables must not name a provider; adapters should.**
+the Google adapter. The rule is narrow: **identity tables must not name a provider; adapters should.**
+
+> **Superseded by the PR #36 review.** This section originally kept `youtube_auth`, on the grounds that
+> a connected channel is domain rather than authentication. The review disagreed, and it was right: the
+> table held tokens keyed by a provider's name. Tokens, channel and provider-specific metadata are all
+> columns on `auth_identities` now, `customers.channel_id` is gone, and `authOrchestrator.ts` has split
+> into `orchestration/auth/{base,google}.ts`. See [From the PR #36 review](#from-the-pr-36-review).
 
 ## Fix 2 — three apps
 
@@ -257,19 +262,40 @@ development machine. Override with `API_PORT` and `API_ORIGIN`.
 
 ### From the PR #36 review
 
-Five items from the draft review on PR #36 are design changes rather than fixes, and they share one
-theme: **the provider-independence rule was applied to `auth_identities` and then stopped there.**
-`google_sub` was the first instance, not the only one.
+The draft review on PR #36 held five design items, sharing one theme: **the provider-independence rule
+was applied to `auth_identities` and then stopped there.** `google_sub` was the first instance, not the
+only one. Three are now done; two are not, for reasons worth writing down.
 
-| What                                                                                        | Where it stands                                                                    |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| An OAuth base with per-provider children — `authOrch/base`, `authOrch/google`, later twitch | `authOrchestrator.ts` is one Google-specific file importing `googleOAuth` directly |
-| `customers.channel_id` is a YouTube concept on a provider-neutral table                     | still on `customers` (`schema.ts:166`); a twitch account has no channel id         |
-| `youtube_auth` should be a generic auth table keyed by `type` with a `metadata` blob        | half done — `auth_identities` exists, but `youtube_auth` remains YouTube-named     |
-| `library_videos.video_id` should be a url, which survives a change of provider              | still a bare YouTube video id                                                      |
-| Sessions should be our own JWT issued after OAuth succeeds                                  | currently an opaque random token, sha256-hashed in `sessions`                      |
+| What                                                                                        | Where it stands                                                             |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| An OAuth base with per-provider children — `authOrch/base`, `authOrch/google`, later twitch | done — `orchestration/auth/{base,google}.ts`                                |
+| `customers.channel_id` is a YouTube concept on a provider-neutral table                     | done — the column is gone; `Customer.channelId` is derived via the identity |
+| `youtube_auth` should be a generic auth table keyed by `type` with a `metadata` blob        | done — folded into `auth_identities`, which now carries tokens and metadata |
+| `library_videos.video_id` should be a url, which survives a change of provider              | **not done** — see below                                                    |
+| Sessions should be our own JWT issued after OAuth succeeds                                  | **not done** — see below                                                    |
 
-The first four are one migration and one refactor, and are best done together. The fifth is a genuine
-fork, not a cleanup: opaque tokens are revocable server-side by deleting a row, which is what `signOut`
-relies on today; a JWT is not, and would need either a short expiry or a revocation list to match. It
-should be decided on its own terms rather than folded into the others.
+#### Why the video id is still an id
+
+`video_id` is not local to `library_videos`. It is the join key for `chunks`, `segmentations`,
+`analyses`, `clips`, `qa_messages`, `publish_drafts` and `upload_artifacts`, all of which key off
+`videos.id`. Changing it in one table alone would break the join to the catalog; changing it everywhere
+is a migration of the whole schema and every repo that reads it.
+
+The comment is right about the direction. The shape it wants is a provider-qualified catalog —
+`videos` gaining `provider` and `url`, with the id becoming meaningful only within a provider. That is
+its own piece of work, and it should land before there is a second provider rather than alongside one.
+
+#### Why sessions are still opaque tokens
+
+This is a fork, not a cleanup. Sign-out today deletes a row, and the session dies on the next request.
+A JWT verified from its signature alone cannot be revoked, so the same sign-out would leave a valid
+token in the wild until it expired.
+
+Having both means a short-lived access JWT (~15 min) plus the current opaque token as a refresh
+credential: two cookies, silent re-issue in the session middleware, and a signing secret in config.
+That is a real feature, and on a single-node SQLite backend it buys nothing today — the DB lookup it
+avoids is one indexed point read on the same machine. It also has to be settled together with CLI
+authentication, which is already deferred above and would consume the same tokens.
+
+Worth doing when the backend stops being local. Not worth hand-rolling HS256 to get there early:
+`src/lib` is framework-free, so Hono's `hono/jwt` helper is not available to it.

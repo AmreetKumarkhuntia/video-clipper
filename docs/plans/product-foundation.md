@@ -2,7 +2,11 @@
 
 > **Status: PARTIAL** — decided 2026-09-02; D1, D4, D5, D6 confirmed with the user, and D5 verified against the YouTube Data API reference (no media download endpoint; `captions.download` is owner-only, `youtube.force-ssl`, 200 quota units).
 >
-> Phase 1's data model shipped in `8c9a5c6` — `customers`, `auth_identities`, `sessions`, `library_videos`, their repos, and `authOrchestrator`. It landed with a correction to what is written below: **identity tables never name a provider**, so sign-in lives in `auth_identities`, not a column on `customers`. The routes and pages on top of it are tracked in [product-restructure.md](./product-restructure.md); Phases 0, 2, 3, 4 and 5 are untouched.
+> Phase 1's data model shipped in `8c9a5c6` — `customers`, `auth_identities`, `sessions`, `library_videos` and their repos. It landed with a correction to what is written below: **identity tables never name a provider**, so sign-in lives in `auth_identities`, not a column on `customers`.
+>
+> The PR #36 review then carried that rule further, so two more things below are out of date. There is **no `youtube_auth` table** — tokens, the linked channel and provider-specific metadata are columns on `auth_identities`, so a second provider needs no second table. And there is **no `customers.channel_id`**, unique or otherwise; the 1:1 link is enforced in `orchestration/auth/base.ts` so the error message is ours. Sign-in itself is `orchestration/auth/{base,google}.ts` — a provider base class with one child per provider.
+>
+> The routes and pages on top of it are tracked in [product-restructure.md](./product-restructure.md); Phases 0, 2, 3, 4 and 5 are untouched.
 
 ## Context (why)
 
