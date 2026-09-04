@@ -106,7 +106,28 @@ cp .env.example .env
 | `YT_DLP_COOKIES_FROM_BROWSER` | —       | Extract cookies from browser: `chrome`, `firefox`, `safari`, `brave`, `edge`, `opera`, `chromium` |
 | `YT_DLP_COOKIES_FILE`         | —       | Path to a Netscape-format cookies file for yt-dlp authentication                                  |
 
+### Sign-in OAuth
+
+Without these, the app runs but nobody can get past `/login` — every page redirects there, and the
+sign-in button reports that they are unset.
+
+| Variable                     | Default | Description                                                                                    |
+| ---------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `GOOGLE_OAUTH_CLIENT_ID`     | —       | Google OAuth client ID for customer sign-in                                                    |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for customer sign-in                                                |
+| `GOOGLE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/auth/google/callback` |
+
+The redirect URI points at the **frontend's** origin, not the backend's: the browser reaches the
+backend through the frontend's `/api` proxy, so that is the address Google must send it back to. It
+has to match the Cloud console entry byte for byte, port included.
+
+Which scopes this asks for, and why publishing asks separately, is in
+[google-oauth-scopes.md](./google-oauth-scopes.md).
+
 ### YouTube Upload OAuth
+
+A separate client from sign-in above, because publishing needs the upload scope and sign-in
+deliberately does not ask for it.
 
 | Variable                      | Default | Description                                                                                                 |
 | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
@@ -117,13 +138,8 @@ cp .env.example .env
 These are app-level defaults. The web Settings page can override them, but if you leave those
 fields empty the app falls back to the values from `.env` automatically.
 
-For the current manual-token publish flow:
-
-- You can paste only an access token for short-lived testing.
-- If you also paste a refresh token, the app can keep the session alive after access-token expiry.
-- If `YOUTUBE_OAUTH_CLIENT_ID` and `YOUTUBE_OAUTH_CLIENT_SECRET` are already set in `.env` (or in
-  Settings), you do not need to paste them again in the Publish page unless you want to override
-  the defaults for that connection.
+Publishing connects over OAuth only. Pasting a token by hand was a prototype workaround and the
+route is gone; if the fields above are unset, the Connect button says so instead of offering one.
 
 > `YT_DLP_COOKIES_FROM_BROWSER` and `YT_DLP_COOKIES_FILE` are mutually exclusive.
 

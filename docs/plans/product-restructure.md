@@ -225,23 +225,32 @@ pnpm web:dev     # frontend on :5002, proxying /api
 | 9   | `test(boundaries)` three-app rules                          | ✅ `ddb7b0e`, CLI rule in `523f1c0`            |
 | 10  | `docs` structure and deployment                             | ✅ `ddb7b0e` — deployment still deferred       |
 | 11  | `feat(auth)` provider-independent identity                  | ✅ `8c9a5c6`                                   |
-| 12+ | `feat(auth)`, `feat(library)` onboarding rebuilt            | ⬜ in progress — see below                     |
+| 12  | `feat(api)` sign-in, channel and library routes             | ✅ `698c3c3`                                   |
+| 13  | `feat(web)` login, library, browse, topbar                  | ✅ `4dea2ca`                                   |
 
-### What step 12+ still owes
+### Shipped in 12 and 13
 
-The lib half of onboarding is done: `customers`, `auth_identities`, `sessions`, `library_videos`,
-their repos and `authOrchestrator`. Nothing above lib reaches it yet.
+Sign in with Google, land on your library, browse your channel's uploads, add and remove videos,
+sign out. `GET /api/me`, `/api/auth/google/{start,callback}`, `POST /api/auth/signout`,
+`GET /api/channel{,/videos}`, and library membership on `/api/videos`.
 
-| Layer   | Missing                                                                                         |
-| ------- | ----------------------------------------------------------------------------------------------- |
-| backend | `routes/auth.ts` (`GET /api/me`, `/api/auth/google/{start,callback}`, `POST /api/auth/signout`) |
-| backend | `routes/channel.ts` (`GET /api/channel`, `GET /api/channel/videos`)                             |
-| backend | `middleware/session.ts` and `http/sessionCookies.ts` — no session is resolved anywhere yet      |
-| backend | library routes: paged `GET /api/videos`, `POST`/`DELETE /api/videos/:id` membership             |
-| web     | `/login`, `/browse`, the library landing page, the root `+layout.server.ts` guard               |
-| web     | `LibraryVideoCard`, `ChannelCard`, the topbar channel chip and sign-out                         |
+### One correction to this plan
 
-Behaviour for all of these is on `reference/customer-onboarding-prototype`; the layout is not.
+The plan says guarding inverts: the backend denies by default and a route opts out. It does not, yet.
+The CLI has no way to sign in — that was already listed under Deferred — so denying by default would
+break every command that moved onto HTTP in `523f1c0`. Session resolution runs on every request; the
+routes that reach into one customer's data guard themselves with `requireCustomer`. Inverting the
+default is blocked on CLI authentication, and should land with it.
+
+### Still open
+
+| Area               | What                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| tenancy            | analyses, clips and drafts are still global — a customer's library is scoped, its work is not |
+| `youtube_auth`     | written at sign-in, but publish still reads the single-file store                             |
+| private uploads    | browse lists the public uploads playlist; using the customer's own token would show the rest  |
+| `DELETE /api/db`   | gone from the backend, but nothing replaced it for local development                          |
+| CLI authentication | see the correction above                                                                      |
 
 Note: the backend listens on **5051**, not 5003, because another process holds 5003 on the
 development machine. Override with `API_PORT` and `API_ORIGIN`.
