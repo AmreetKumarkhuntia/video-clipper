@@ -35,6 +35,21 @@ export const ListVideosParamsSchema = z.object({
 });
 export type ListVideosParams = z.infer<typeof ListVideosParamsSchema>;
 
+export const ChannelVideosQuerySchema = z.object({
+  pageToken: z.string().optional(),
+});
+export type ChannelVideosQuery = z.infer<typeof ChannelVideosQuerySchema>;
+
+/**
+ * Library paging. Capped at 100 so one call cannot ask the database for an
+ * unbounded join, and defaulted so the common call passes nothing.
+ */
+export const LibraryQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(24),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export type LibraryQuery = z.infer<typeof LibraryQuerySchema>;
+
 export const VideoParamsSchema = z.object({
   videoId: z.string().min(1),
 });
