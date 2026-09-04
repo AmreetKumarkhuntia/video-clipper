@@ -2,7 +2,7 @@
 
 ## Project
 
-TypeScript CLI + Web app that analyzes YouTube transcripts with an LLM to find interesting moments and optionally cut video clips.
+Three apps over one TypeScript library: a SvelteKit frontend, a Hono backend that owns state and orchestration, and a CLI. Analyzes YouTube transcripts with an LLM to find interesting moments and cut video clips.
 
 The _Project Structure_ section below is the architecture reference. `docs/README.md` indexes the user guides, design assets, and plans (active in `docs/plans/`, shipped in `docs/plans/archive/`).
 
@@ -20,15 +20,20 @@ The _Project Structure_ section below is the architecture reference. `docs/READM
 
 ## Path Aliases
 
-Only 3 aliases — everything flows through `@lib`:
+Four aliases. Everything shared flows through `@lib`; each app has its own.
 
 | Alias        | Resolves To     | Purpose                                                               |
 | ------------ | --------------- | --------------------------------------------------------------------- |
 | `@lib/*`     | `src/lib/*`     | Core library (types, config, utils, services, shared pipeline stages) |
+| `@app/api/*` | `src/app/api/*` | Backend HTTP app                                                      |
 | `@app/cli/*` | `src/app/cli/*` | CLI application                                                       |
 | `@app/web/*` | `src/app/web/*` | Web application (SvelteKit)                                           |
 
 Same-directory imports (`./foo.js`) stay relative. All `.js` extensions are required (NodeNext).
+
+The JS-side tooling (Vite, SvelteKit, Vitest) reads these from `aliases.js` at the repo root;
+`tsconfig.json` keeps its own `paths` because TypeScript cannot read JS config. Those two must stay
+in step — they used to live in five files and had already drifted.
 
 ## Project Structure
 
@@ -67,8 +72,20 @@ src/
       clipExporter.ts         # Video download + clip generation
 
   app/
-    cli/                      # CLI application
-      index.ts                # CLI entrypoint (shebang, runs migrations)
+    api/                      # Backend — the only process that owns the db and reads config
+      index.ts                # entry: migrations, then listen on API_PORT
+      app.ts                  # Hono instance, middleware, route mounting
+      context.ts              # typed request context (requestId, config, customer?)
+      middleware/             # requestContext (id + config + logging) · session (resolves the
+                              #   cookie; requireCustomer guards) · errorEnvelope (onError)
+      routes/                 # one file per resource: auth, channel, analyses, clips, videos,
+                              #   qa, youtube, connection, publish, captionPresets, settings
+      http/                   # responses (incl. HttpError) · sse/ · sessionCookies · oauthCookies
+      services/               # appConfig, catalogFactory, artifactStore
+
+    cli/                      # CLI application — HTTP client + local media work
+      client/                 # apiGet / apiSend / apiStream · settings · analysisStream
+      index.ts                # CLI entrypoint (shebang; the backend owns migrations)
       args.ts                 # parseArgs + printUsage for the run command
       commands/               # Subcommands: run, analyze, clip, candidates,
                               #   library, channel, ask, config
@@ -89,6 +106,7 @@ src/
       widgets/                # Domain/feature-specific components (not generically reusable)
         ChannelCard.svelte    # channel thumbnail + title + link
         VideoCard.svelte      # video thumbnail + duration + title
+        LibraryVideoCard.svelte # upload card with Add / Added + Remove
         CandidateCard.svelte  # clip candidate with checkbox + score
         AnalysisProgress.svelte
         publish/              # Publish-flow widgets
@@ -98,15 +116,13 @@ src/
         index.ts              # app name etc.
         api.ts                # readApiError(), apiFetch<T>()
         format.ts             # formatDuration(), formatTime()
-        services/             # Thin web glue over lib orchestrators/services
-          analysis/           # SSE adapters for analysis/transcript/qa
-          clipping/           # Pass-through to clipOrchestrator
-          artifacts/          # Read wrappers over db repos
-          publishing/         # Upload SSE event serialization
-          youtube/            # Catalog factory + OAuth cookie constants
-          config/             # Web config adapter (toYouTubeOAuthConfig etc.)
-          http/               # SvelteKit HTTP response helpers
+        server/backend.ts     # server-side fetch that forwards the session cookie
+        activity/ stores/     # analysis activity log · toast, theme, config, video
+        *Stream.ts            # browser SSE clients for analysis, qa, upload
       routes/                 # SvelteKit file-based routing
+        +layout.server.ts     # the page guard: asks /api/me, redirects to /login
+        +page.server.ts       # the library, paged from GET /api/videos
+        login/ browse/        # sign in · the channel's uploads
       types/                  # Web-only types
         analysis.ts           # TranscriptBundle, ClipPlan, ClipArtifact, etc.
         web.ts                # ApiError
@@ -118,32 +134,49 @@ outputs/                      # ffmpeg clip output, caches, dumps (gitignored)
 
 ## Architectural Boundaries
 
+Three apps over one library. The library holds the domain logic; the apps are thin.
+
 ```
-app/cli/  ──imports──>  src/lib/
-app/web/  ──imports──>  src/lib/  +  app/web/ (internal)
-src/lib/  ──imports──>  (external packages only)
+app/web/  ──HTTP──>  app/api/  ──imports──>  src/lib/  ──>  (external packages only)
+app/cli/  ──HTTP──>  app/api/
 ```
 
-- **CLI code** (`src/app/cli/`) never imports from `src/app/web/`
-- **Web code** (`src/app/web/`) imports from `src/lib/` and internal web modules
-- **Library code** (`src/lib/`) never imports from `src/app/`
-- **Web types** (`src/app/web/types/`) are separate from shared types (`src/lib/types/`);
-  domain types shared with lib live in `src/lib/types/` and are re-exported by web type files
+- **`src/lib/`** is the domain: services, orchestration, pipeline, types, config, utils. It never
+  imports from `src/app/`.
+- **`app/api/`** is the only process that owns the database and reads config. It is a thin HTTP shell
+  over `src/lib/`.
+- **`app/web/`** is a frontend. It holds **no domain logic** and opens no database. It may import
+  `@lib/types/*` and `@lib/utils/*`; importing services, orchestration, pipeline or config fails the
+  architecture test.
+- **`app/cli/`** talks to the backend over HTTP for anything stateful. Local media work — yt-dlp and
+  ffmpeg acting on the user's own files — stays in-process, because it needs the user's disk.
+- **The three apps never import each other.** Anything two of them need belongs in `src/lib/`, which
+  is why the HTTP contract lives in `src/lib/types/api.ts`.
 
-### Service boundaries (enforced by `tests/serviceBoundaries.test.ts`)
+Same-origin is deliberate: the browser calls relative `/api/...` URLs and Vite proxies them to the
+backend, so cookies, OAuth redirects and the existing fetch calls need no cross-origin handling.
+Server-side page loads are the exception and call the backend directly, forwarding the session cookie
+via `src/app/web/lib/server/backend.ts`.
+
+### Running it
+
+```bash
+pnpm api:dev     # backend, API_PORT (5051 by default)
+pnpm web:dev     # frontend on 5002, proxying /api
+```
+
+### Boundaries enforced by `tests/serviceBoundaries.test.ts`
 
 - `src/lib/types/` is a **leaf**: it imports nothing from `@lib/*` or `@app/*`
 - From outside a service, import only its barrel: `@lib/services/<svc>/index.js`
-  (deep paths — alias or relative — fail the architecture test). Types always
-  come from `@lib/types/*`. Intra-service imports stay relative.
-- Cross-service edges are limited to `* → modelFactory` (anything may build on
-  the models lib) and `audio → video` (the ytdlp transcriber consumes the video
-  service's caption fetching as a library)
-- Within `src/lib/`, only `orchestration/` (and the public barrel `index.ts`) imports `services/db`; app code (`hooks.server.ts`, CLI commands, web artifact reads) may use the db barrel directly
-- `services/`, `orchestration/`, and `pipeline/` never import `@lib/config` —
-  config is injected: apps read the config singleton and pass full `Config` to
-  orchestrators, which destructure into narrow per-service config objects
-  (`DownloaderConfig`, `ClipperConfig`, `YouTubeOAuthClientConfig`, …)
+  (deep paths — alias or relative — fail the test). Types always come from `@lib/types/*`.
+  Intra-service imports stay relative.
+- Cross-service edges are limited to `* → modelFactory` and `audio → video`
+- Within `src/lib/`, only `orchestration/` and the public barrel import `services/db`
+- `services/`, `orchestration/` and `pipeline/` never import `@lib/config` — config is injected by
+  the app layer, which is what lets the backend own it exclusively
+- The web app never imports lib domain logic
+- The apps never import each other
 
 ## Code Rules
 

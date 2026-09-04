@@ -41,15 +41,11 @@ export interface GroupConfig {
   sections: SectionConfig[];
 }
 
-export interface ConfigApiResponse {
-  registry: import('@lib/types/config.js').ConfigRegistryResponse;
-  values: Record<string, unknown>;
-}
-
-export interface ConfigUpdateResponse {
-  success: boolean;
-  warnings: string[];
-  values: Record<string, unknown>;
-}
+// The settings contract is shared with the backend and the CLI, so it lives in
+// @lib/types/api.js; these names stay so existing web callers keep working.
+export type {
+  SettingsResponse as ConfigApiResponse,
+  SettingsUpdateResponse as ConfigUpdateResponse,
+} from '@lib/types/api.js';
 
 export const ConfigUpdateSchema = z.record(z.string(), z.unknown());

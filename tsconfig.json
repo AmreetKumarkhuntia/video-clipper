@@ -3,7 +3,6 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
@@ -16,12 +15,14 @@
     "baseUrl": ".",
     "paths": {
       "@lib/*": ["src/lib/*"],
+      "@app/api/*": ["src/app/api/*"],
       "@app/cli/*": ["src/app/cli/*"],
       "@app/web/*": ["src/app/web/*"],
       "@web/lib/*": ["src/app/web/lib/*"],
       "@web/components/*": ["src/app/web/components/*"],
       "@web/widgets/*": ["src/app/web/widgets/*"]
-    }
+    },
+    "noEmit": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

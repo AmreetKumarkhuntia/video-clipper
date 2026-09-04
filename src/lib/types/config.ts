@@ -45,6 +45,16 @@ export const ConfigSchema = z
     YOUTUBE_OAUTH_CLIENT_SECRET: z.string().optional(),
     YOUTUBE_OAUTH_REDIRECT_URI: z.string().url().optional(),
 
+    // Sign-in is a separate OAuth client from publishing: the consent screens ask
+    // for different scopes, and an operator may run one without the other.
+    GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
+    GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_OAUTH_REDIRECT_URI: z.string().url().optional(),
+
+    // How long a sign-in lasts. Fixed per session — there is no sliding renewal,
+    // so this is the whole of the session lifetime policy.
+    SESSION_TTL_DAYS: z.coerce.number().min(1).default(30),
+
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
     CHUNK_LENGTH_SEC: z.coerce.number().min(10).default(120),
@@ -182,6 +192,48 @@ export const ConfigSchema = z
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+/**
+ * The same values, grouped.
+ *
+ * The environment is flat because the environment is flat — that is the
+ * operator's contract and it does not change. The shape we hand the rest of the
+ * app is ours to choose, and grouping puts what belongs together in one place:
+ * `cfg.GOOGLE` is the whole Google credential set, not four names that happen
+ * to share a prefix.
+ *
+ * The group members are *derived* from `Config` by stripping the prefix, so a
+ * key added to the schema appears in its group with no second declaration to
+ * keep in step, and a key renamed cannot leave a stale entry behind.
+ */
+export type ConfigGroup<P extends string> = {
+  [K in Extract<keyof Config, `${P}_${string}`> as K extends `${P}_${infer Rest}`
+    ? Rest
+    : never]: Config[K];
+};
+
+/**
+ * Prefixes that become groups. Longest match wins at runtime, so `YT_DLP_QUIET`
+ * lands in `YT_DLP` and never in a shorter `YT` group.
+ */
+export const CONFIG_GROUP_PREFIXES = [
+  'GOOGLE',
+  'YOUTUBE',
+  'LLM',
+  'AUDIO',
+  'CHUNK',
+  'CUSTOM_OPENAI',
+  'YT_DLP',
+  'YT_DEFAULT',
+  'YT_SCHEDULE',
+] as const;
+
+export type ConfigGroupPrefix = (typeof CONFIG_GROUP_PREFIXES)[number];
+
+/** `Config`, grouped by prefix. Ungrouped keys stay where they are, on `Config`. */
+export type GroupedConfig = {
+  [P in ConfigGroupPrefix]: ConfigGroup<P>;
+};
+
 export const CONFIG_GROUPS = [
   {
     id: 'llm',
@@ -211,6 +263,16 @@ export const CONFIG_GROUPS = [
       'OPENROUTER_API_KEY',
       'CUSTOM_OPENAI_API_KEY',
       'CUSTOM_OPENAI_BASE_URL',
+    ],
+  },
+  {
+    id: 'auth',
+    label: 'Sign-in',
+    fields: [
+      'GOOGLE_OAUTH_CLIENT_ID',
+      'GOOGLE_OAUTH_CLIENT_SECRET',
+      'GOOGLE_OAUTH_REDIRECT_URI',
+      'SESSION_TTL_DAYS',
     ],
   },
   {
@@ -379,6 +441,25 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     secret: true,
   },
   CUSTOM_OPENAI_BASE_URL: { description: 'Custom OpenAI-compatible base URL', widget: 'text' },
+  GOOGLE_OAUTH_CLIENT_ID: {
+    description: 'Google OAuth client ID for customer sign-in',
+    widget: 'text',
+    secret: true,
+  },
+  GOOGLE_OAUTH_CLIENT_SECRET: {
+    description: 'Google OAuth client secret for customer sign-in',
+    widget: 'text',
+    secret: true,
+  },
+  GOOGLE_OAUTH_REDIRECT_URI: {
+    description: 'Google OAuth redirect URI for customer sign-in',
+    widget: 'text',
+    placeholder: 'http://localhost:5002/api/auth/google/callback',
+  },
+  SESSION_TTL_DAYS: {
+    description: 'How many days a sign-in stays valid',
+    widget: 'number',
+  },
   YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
   YOUTUBE_OAUTH_CLIENT_ID: {
     description: 'Google OAuth client ID for YouTube uploads',
@@ -393,7 +474,7 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   YOUTUBE_OAUTH_REDIRECT_URI: {
     description: 'Google OAuth redirect URI for YouTube uploads',
     widget: 'text',
-    placeholder: 'http://localhost:5002/api/youtube/auth/callback',
+    placeholder: 'http://localhost:5002/api/youtube/connection/oauth/callback',
   },
   YT_DLP_COOKIES_FROM_BROWSER: {
     description: 'Browser profile for cookies (e.g. chrome:Profile 1)',
@@ -548,3 +629,9 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     widget: 'number',
   },
 };
+
+/** Backend server settings. Read from the environment at boot, not from ConfigSchema. */
+export interface ApiServerOptions {
+  port: number;
+  host: string;
+}

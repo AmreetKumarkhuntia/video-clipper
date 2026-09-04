@@ -1,102 +1,106 @@
 <script lang="ts">
-  import type { ChannelSummary } from '@lib/types/index.js';
-  import { apiFetch } from '@web/lib/api.js';
-  import Icon from '@web/components/Icon.svelte';
-  import ChannelCard from '@web/widgets/ChannelCard.svelte';
+  import { goto, invalidateAll } from '$app/navigation';
   import Button from '@web/components/Button.svelte';
-  import InputText from '@web/components/InputText.svelte';
+  import Icon from '@web/components/Icon.svelte';
+  import Pagination from '@web/components/Pagination.svelte';
+  import SectionHeader from '@web/components/SectionHeader.svelte';
+  import LibraryVideoCard from '@web/widgets/LibraryVideoCard.svelte';
+  import { apiFetch } from '@web/lib/api.js';
+  import { showToast } from '@web/lib/stores/toast.js';
+  import type { LibraryMembershipResponse } from '@lib/types/api.js';
+  import type { LibraryVideoEntry } from '@lib/types/auth.js';
+  import type { VideoSummary } from '@lib/types/youtube.js';
 
-  let channelInput = '';
-  let isLoading = false;
-  let errorMessage = '';
-  let resolvedChannel: ChannelSummary | null = null;
+  let { data } = $props();
 
-  async function resolveChannel(): Promise<void> {
-    errorMessage = '';
-    resolvedChannel = null;
+  let busyId = $state('');
 
-    if (channelInput.trim() === '') {
-      errorMessage = 'Enter a channel handle, ID, or URL.';
-      return;
-    }
+  let hasPrev = $derived(data.page > 1);
+  let hasNext = $derived(data.page * data.pageSize < data.total);
+  let rangeStart = $derived(data.total === 0 ? 0 : (data.page - 1) * data.pageSize + 1);
+  let rangeEnd = $derived(Math.min(data.page * data.pageSize, data.total));
 
-    isLoading = true;
+  /** The card takes a catalog summary; a saved row carries the same fields. */
+  function toSummary(entry: LibraryVideoEntry): VideoSummary {
+    return {
+      id: entry.videoId,
+      channelId: entry.channelId,
+      channelTitle: entry.channelTitle,
+      title: entry.title,
+      description: '',
+      publishedAt: entry.publishedAt,
+      durationSec: entry.durationSec,
+      ...(entry.thumbnailUrl ? { thumbnail: { url: entry.thumbnailUrl } } : {}),
+    };
+  }
+
+  async function remove(videoId: string): Promise<void> {
+    busyId = videoId;
     try {
-      resolvedChannel = await apiFetch<ChannelSummary>(
-        `/api/youtube/channels/resolve?input=${encodeURIComponent(channelInput.trim())}`,
-      );
+      await apiFetch<LibraryMembershipResponse>(`/api/videos/${encodeURIComponent(videoId)}`, {
+        method: 'DELETE',
+      });
+      // The list came from a server load, so the page has to re-ask rather than
+      // splice locally — the row that fills the gap lives on the next page.
+      await invalidateAll();
+      showToast('success', 'Removed from your videos');
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : String(error);
+      showToast('error', error instanceof Error ? error.message : String(error));
     } finally {
-      isLoading = false;
+      busyId = '';
     }
+  }
+
+  function goToPage(next: number): void {
+    void goto(next === 1 ? '/' : `/?page=${next}`, { noScroll: true });
   }
 </script>
 
-<div class="start-page">
-  <div class="main--empty">
+<svelte:head><title>My videos · Video Clipper</title></svelte:head>
+
+<main class="main">
+  {#if data.total === 0}
     <div class="empty">
-      <div class="empty__glyph">
-        <Icon name="youtube" size={48} />
+      <div class="empty__glyph"><Icon name="video" size={28} /></div>
+      <h1 class="empty__title">No videos yet</h1>
+      <p class="empty__lede">
+        Add videos from your channel and they will show up here, ready to analyse and clip.
+      </p>
+      <div class="library__cta">
+        <Button variant="primary" href="/browse">Browse your channel</Button>
       </div>
-
-      <p class="empty__lede">Find strong clip moments without leaving your transcript workflow.</p>
-
-      <form class="empty__url" on:submit|preventDefault={resolveChannel}>
-        <div style="flex:1">
-          <InputText size="lg" bind:value={channelInput} placeholder="@handle, channel ID, or URL">
-            {#snippet icon()}<Icon name="search" />{/snippet}
-          </InputText>
-        </div>
-        <Button variant="primary" size="lg" type="submit" disabled={isLoading}>
-          {isLoading ? 'Resolving…' : 'Open channel'}
-        </Button>
-      </form>
-
-      {#if errorMessage}
-        <p class="error-chip">{errorMessage}</p>
-      {/if}
-
-      <div class="empty__hints">
-        <span class="empty__hint"><Icon name="youtube" size={13} /> YouTube channels</span>
-        <span class="empty__hint"><Icon name="video" size={13} /> Any public video</span>
-        <span class="empty__hint"><Icon name="sparkles" size={13} /> AI clip analysis</span>
-      </div>
-
-      {#if resolvedChannel}
-        <div class="result-wrap">
-          <ChannelCard channel={resolvedChannel} />
-        </div>
-      {/if}
     </div>
-  </div>
-</div>
+  {:else}
+    <SectionHeader
+      eyebrow="Library"
+      title="My videos"
+      subtitle={`Showing ${rangeStart}–${rangeEnd} of ${data.total}`}
+    />
+
+    <section class="clipgrid">
+      {#each data.videos as entry (entry.videoId)}
+        <LibraryVideoCard
+          video={toSummary(entry)}
+          saved
+          busy={busyId === entry.videoId}
+          onremove={remove}
+        />
+      {/each}
+    </section>
+
+    {#if hasPrev || hasNext}
+      <Pagination
+        {hasPrev}
+        {hasNext}
+        onprev={() => goToPage(data.page - 1)}
+        onnext={() => goToPage(data.page + 1)}
+      />
+    {/if}
+  {/if}
+</main>
 
 <style>
-  .start-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: calc(100vh - 57px);
-    padding: 0 24px 48px;
-  }
-
-  .main--empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    width: 100%;
-  }
-
-  .error-chip {
-    margin: -8px 0 16px;
-    font-size: var(--vc-text-13);
-    color: var(--vc-error);
-  }
-
-  .result-wrap {
-    width: 100%;
-    margin-top: 8px;
+  .library__cta {
+    margin-top: 18px;
   }
 </style>

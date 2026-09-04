@@ -6,6 +6,8 @@ import {
   type SetConfigResult,
 } from '@lib/types/config.js';
 import { loadUserConfig, saveUserConfig } from '@lib/config/fileStore.js';
+import { groupConfig } from '@lib/config/groups.js';
+import type { GroupedConfig } from '@lib/types/config.js';
 
 function loadConfig(): Config {
   const envSource: Record<string, unknown> = { ...process.env };
@@ -37,6 +39,11 @@ let _config: Config = loadConfig();
 
 export function getConfig(): Config {
   return _config;
+}
+
+/** The current config, grouped by prefix. Rebuilt per call, so it follows `setConfigValues`. */
+export function getGroupedConfig(): GroupedConfig {
+  return groupConfig(_config);
 }
 
 export const config: Config = new Proxy({} as Config, {

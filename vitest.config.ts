@@ -1,16 +1,9 @@
-import path from 'node:path';
 import { defineConfig } from 'vitest/config';
+import { aliases } from './aliases.js';
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@lib': path.resolve('./src/lib'),
-      '@app/cli': path.resolve('./src/app/cli'),
-      '@app/web': path.resolve('./src/app/web'),
-    },
-  },
+  resolve: { alias: aliases },
   test: {
     include: ['tests/**/*.test.ts'],
-    setupFiles: ['tests/setup.ts'],
   },
 });

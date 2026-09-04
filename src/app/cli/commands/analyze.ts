@@ -1,14 +1,14 @@
-import { parseUrl, extractMetadata } from '@lib/services/video/index.js';
-import { runAnalysis } from '@lib/orchestration/analysisOrchestrator.js';
-import { upsertVideo } from '@lib/services/db/index.js';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
+import { tryParseVideoId } from '@lib/utils/youtubeUrl.js';
+import { apiBaseUrl, apiGet } from '../client/index.js';
+import { streamAnalysis } from '../client/analysisStream.js';
+import { backendSettings, describeSetting, numberSetting } from '../client/settings.js';
 import { printAnalysisSummary } from '../output/formatter.js';
 import { createAnalysisCallbacks } from '../output/progress.js';
-import type { YtDlpCookies } from '@lib/types/downloader.js';
 import type { CreateAnalysisRequest } from '@lib/types/analysis.js';
 import type { CommandHandler, AnalyzeArgs } from '@lib/types/command.js';
+import type { VideoDetails } from '@lib/types/youtube.js';
 
 function parseAnalyzeArgs(argv: string[]): AnalyzeArgs {
   const result: AnalyzeArgs = { noCache: false, noRefine: false, help: false };
@@ -43,19 +43,22 @@ async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseAnalyzeArgs(argv);
 
   if (args.help) {
+    const values = await backendSettings();
     console.log(
       `
 Usage: video-clipper analyze <youtube-url> [options]
 
 Options:
-  --threshold <n>     Minimum score to keep a segment (default: ${config.SCORE_THRESHOLD})
-  --top-n <n>         Maximum number of segments to return (default: ${config.TOP_N_SEGMENTS})
+  --threshold <n>     Minimum score to keep a segment (default: ${describeSetting(values, 'SCORE_THRESHOLD')})
+  --top-n <n>         Maximum number of segments to return (default: ${describeSetting(values, 'TOP_N_SEGMENTS')})
   --max-chunks <n>    Limit transcript chunks sent to LLM
-  --max-parallel <n>  Max parallel LLM calls (default: ${config.LLM_CONCURRENCY})
+  --max-parallel <n>  Max parallel LLM calls (default: ${describeSetting(values, 'LLM_CONCURRENCY')})
   --max-duration <s>  Abort if video exceeds <s> seconds
   --no-cache          Bypass all caches
   --no-refine         Skip segment refinement (LLM pass 2)
   --help, -h          Show this help
+
+Analysis runs on the backend at ${apiBaseUrl()}, where these defaults live.
 `.trim(),
     );
     return;
@@ -66,50 +69,35 @@ Options:
     process.exit(1);
   }
 
-  const cookies: YtDlpCookies = {
-    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
-    cookiesFile: config.YT_DLP_COOKIES_FILE,
-    quiet: config.YT_DLP_QUIET,
-    retryCount: config.YT_DLP_RETRY_COUNT,
-  };
-
-  let videoId: string;
-  try {
-    videoId = parseUrl(args.url);
-  } catch {
+  const videoId = tryParseVideoId(args.url);
+  if (!videoId) {
     throw new Error(`Invalid YouTube URL: ${args.url}`);
   }
 
   log.info('analyze', `Fetching metadata for ${videoId}...`, requestId);
-  const metadata = await extractMetadata(videoId, cookies);
+
+  // This read write-throughs the channel and video catalog rows on the backend,
+  // which is what the command's own upsertVideo call used to be for.
+  const video = await apiGet<VideoDetails>(`/api/youtube/videos/${encodeURIComponent(videoId)}`);
   log.info(
     'analyze',
-    `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
+    `Video: "${video.title}" (${video.durationSec > 0 ? formatSeconds(video.durationSec) : 'duration unknown'})`,
     requestId,
   );
 
-  if (args.maxDuration && metadata.duration > 0 && metadata.duration > args.maxDuration) {
+  // Still checked here rather than server-side: the point is to refuse before
+  // spending anything, and the CLI already knows the duration.
+  if (args.maxDuration && video.durationSec > 0 && video.durationSec > args.maxDuration) {
     throw new Error(
       `Video duration exceeds --max-duration limit. ` +
-        `(${formatSeconds(metadata.duration)} > ${formatSeconds(args.maxDuration)})`,
+        `(${formatSeconds(video.durationSec)} > ${formatSeconds(args.maxDuration)})`,
     );
   }
 
-  upsertVideo({
-    id: videoId,
-    channelId: '',
-    title: metadata.title,
-    description: '',
-    channelTitle: '',
-    publishedAt: '',
-    durationSec: metadata.duration,
-    tags: [],
-  });
-
   const input: CreateAnalysisRequest = {
     videoId,
-    title: metadata.title,
-    durationSec: metadata.duration,
+    title: video.title,
+    durationSec: video.durationSec,
     options: {
       maxChunks: args.maxChunks,
       maxParallel: args.maxParallel,
@@ -121,17 +109,33 @@ Options:
     },
   };
 
-  const abortController = new AbortController();
+  // apiStream takes no AbortSignal, so Ctrl-C stops reading and leaves. Dropping
+  // the connection is what cancels the run: the route hands the request's signal
+  // to the orchestrator, so the LLM work stops server-side too.
+  let aborted = false;
   process.on('SIGINT', () => {
+    aborted = true;
     log.warn('analyze', 'Received SIGINT — aborting...', requestId);
-    abortController.abort();
   });
 
-  const chunkCount = args.maxChunks ?? config.MAX_CHUNKS ?? 0;
+  const values = await backendSettings();
+  const chunkCount = args.maxChunks ?? numberSetting(values, 'MAX_CHUNKS') ?? 0;
   const callbacks = createAnalysisCallbacks(chunkCount, requestId);
 
-  log.info('analyze', `Starting analysis (model: ${config.LLM_MODEL})...`, requestId);
-  const plan = await runAnalysis(input, config, callbacks, requestId, abortController.signal);
+  log.info(
+    'analyze',
+    `Starting analysis (model: ${describeSetting(values, 'LLM_MODEL')})...`,
+    requestId,
+  );
+  const plan = await streamAnalysis(input, callbacks, () => aborted);
+
+  if (aborted) {
+    process.exit(130);
+  }
+
+  if (!plan) {
+    throw new Error('The backend closed the analysis stream before sending a plan.');
+  }
 
   printAnalysisSummary(plan);
 }

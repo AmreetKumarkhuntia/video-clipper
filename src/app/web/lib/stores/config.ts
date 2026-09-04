@@ -42,8 +42,8 @@ async function postDirtyFields(): Promise<void> {
   if (Object.keys(payload).length === 0) return;
 
   try {
-    const res = await fetch('/api/config', {
-      method: 'POST',
+    const res = await fetch('/api/settings', {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -63,7 +63,7 @@ async function postDirtyFields(): Promise<void> {
 }
 
 export async function initConfig(): Promise<void> {
-  const { registry, values } = await apiFetch<ConfigApiResponse>('/api/config');
+  const { registry, values } = await apiFetch<ConfigApiResponse>('/api/settings');
   configRegistry.set(registry);
   configValues.set(values);
   configLoaded.set(true);

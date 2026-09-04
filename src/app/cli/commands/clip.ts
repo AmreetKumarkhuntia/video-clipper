@@ -1,10 +1,8 @@
-import { getAnalysisFromDb } from '@lib/services/db/index.js';
-import { generateClipsForAnalysis } from '@lib/orchestration/clipOrchestrator.js';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
+import { apiGet, apiSend } from '../client/index.js';
 import { printClipResults } from '../output/formatter.js';
 import type { CommandHandler, ClipArgs } from '@lib/types/command.js';
-import type { CreateClipsRequest } from '@lib/types/analysis.js';
+import type { ClipArtifact, ClipPlan, CreateClipsRequest } from '@lib/types/analysis.js';
 
 function parseClipArgs(argv: string[]): ClipArgs {
   const result: ClipArgs = { help: false };
@@ -60,12 +58,9 @@ Options:
     process.exit(1);
   }
 
-  const plan = getAnalysisFromDb(args.analysisId);
-  if (!plan) {
-    log.error('clip', `Analysis not found: ${args.analysisId}`, requestId);
-    console.log('Run "video-clipper library" to see available analyses.');
-    process.exit(1);
-  }
+  // A missing analysis is a 404 the client turns into a thrown message, so there
+  // is no null to test for — the entrypoint reports it and exits non-zero.
+  const plan = await apiGet<ClipPlan>(`/api/analyses/${encodeURIComponent(args.analysisId)}`);
 
   let candidates = plan.candidates;
   if (args.candidates) {
@@ -103,7 +98,12 @@ Options:
     },
   };
 
-  const clips = await generateClipsForAnalysis(input, config, requestId);
+  // Downloading and cutting stays on the backend rather than moving here: the
+  // clip rows it writes point at files the backend also serves to the web app,
+  // so cutting locally would produce library entries whose media it cannot read.
+  // The request is held open for the whole render, which is why there is no
+  // progress output — a plain response, not a stream.
+  const { clips } = await apiSend<{ clips: ClipArtifact[] }>('/api/clips', 'POST', input);
   printClipResults(clips);
 }
 

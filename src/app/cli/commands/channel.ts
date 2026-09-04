@@ -1,9 +1,9 @@
-import { GoogleYouTubeCatalogService } from '@lib/services/video/index.js';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
 import { formatSeconds } from '@lib/utils/format.js';
+import { apiBaseUrl, apiGet } from '../client/index.js';
 import { printTable } from '../output/formatter.js';
 import type { CommandHandler, ChannelArgs } from '@lib/types/command.js';
+import type { ChannelSummary, VideoPage } from '@lib/types/youtube.js';
 
 function parseChannelArgs(argv: string[]): ChannelArgs {
   const result: ChannelArgs = { json: false, help: false };
@@ -24,6 +24,17 @@ function parseChannelArgs(argv: string[]): ChannelArgs {
   return result;
 }
 
+/** A handle or URL carries `@`, `/` and `?`, so it is encoded rather than interpolated. */
+function resolveChannelPath(input: string): string {
+  return `/api/youtube/channels/resolve?${new URLSearchParams({ input }).toString()}`;
+}
+
+/** Page tokens are opaque base64-ish strings that routinely contain `=` and `-`. */
+function channelVideosPath(channelId: string, pageToken?: string): string {
+  const query = pageToken ? `?${new URLSearchParams({ pageToken }).toString()}` : '';
+  return `/api/youtube/channels/${encodeURIComponent(channelId)}/videos${query}`;
+}
+
 async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseChannelArgs(argv);
 
@@ -37,7 +48,7 @@ Options:
   --json                Output raw JSON
   --help, -h            Show this help
 
-Requires YOUTUBE_API_KEY to be set in config.
+Requires the backend at ${apiBaseUrl()} to have YOUTUBE_API_KEY configured.
 `.trim(),
     );
     return;
@@ -48,22 +59,13 @@ Requires YOUTUBE_API_KEY to be set in config.
     process.exit(1);
   }
 
-  if (!config.YOUTUBE_API_KEY) {
-    log.error(
-      'channel',
-      'YOUTUBE_API_KEY is required. Set it via: video-clipper config YOUTUBE_API_KEY <key>',
-      requestId,
-    );
-    process.exit(1);
-  }
-
-  const catalog = new GoogleYouTubeCatalogService(config.YOUTUBE_API_KEY);
-
+  // No key check here any more: the API key is the backend's, and only the
+  // backend can tell whether it holds one. Asking it is the check.
   log.info('channel', `Resolving channel: ${args.input}...`, requestId);
-  const channel = await catalog.resolveChannel(args.input);
+  const channel = await apiGet<ChannelSummary>(resolveChannelPath(args.input));
 
   if (args.json) {
-    const videos = await catalog.listChannelVideos(channel.id, args.pageToken);
+    const videos = await apiGet<VideoPage>(channelVideosPath(channel.id, args.pageToken));
     console.log(JSON.stringify({ channel, videos }, null, 2));
     return;
   }
@@ -81,7 +83,7 @@ Requires YOUTUBE_API_KEY to be set in config.
   console.log('');
 
   log.info('channel', 'Fetching videos...', requestId);
-  const page = await catalog.listChannelVideos(channel.id, args.pageToken);
+  const page = await apiGet<VideoPage>(channelVideosPath(channel.id, args.pageToken));
 
   if (page.videos.length === 0) {
     console.log('No videos found.');

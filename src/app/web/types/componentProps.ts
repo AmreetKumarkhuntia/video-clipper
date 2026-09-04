@@ -553,3 +553,13 @@ export interface VideoQaPanelProps {
   transcriptReady: boolean;
   onSeek: (timeSec: number) => void;
 }
+
+export interface LibraryVideoCardProps {
+  video: VideoSummary;
+  /** Defaults to `/videos/${video.id}`. */
+  href?: string;
+  saved?: boolean;
+  busy?: boolean;
+  onadd?: (videoId: string) => void;
+  onremove?: (videoId: string) => void;
+}

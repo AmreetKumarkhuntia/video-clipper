@@ -30,9 +30,9 @@
     try {
       const [draftData, authData, uploadData] = await Promise.all([
         apiFetch<{ draft: PublishDraft }>(`/api/publish/drafts/${analysisId}`),
-        apiFetch<YouTubeAuthStatus>('/api/youtube/auth/status'),
+        apiFetch<YouTubeAuthStatus>('/api/youtube/connection'),
         apiFetch<{ uploads: UploadArtifact[] }>(
-          `/api/youtube/uploads?analysisId=${encodeURIComponent(analysisId)}`,
+          `/api/publish/uploads?analysisId=${encodeURIComponent(analysisId)}`,
         ),
       ]);
       draft = draftData.draft;

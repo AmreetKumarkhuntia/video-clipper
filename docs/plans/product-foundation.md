@@ -1,6 +1,12 @@
 # Product Foundation — customers, channel link, jobs
 
-> **Status: DECIDED** — design only, nothing implemented. D1, D4, D5, D6 confirmed with the user on 2026-09-02; D5 verified against the YouTube Data API reference (no media download endpoint; `captions.download` is owner-only, `youtube.force-ssl`, 200 quota units).
+> **Status: PARTIAL** — decided 2026-09-02; D1, D4, D5, D6 confirmed with the user, and D5 verified against the YouTube Data API reference (no media download endpoint; `captions.download` is owner-only, `youtube.force-ssl`, 200 quota units).
+>
+> Phase 1's data model shipped in `8c9a5c6` — `customers`, `auth_identities`, `sessions`, `library_videos` and their repos. It landed with a correction to what is written below: **identity tables never name a provider**, so sign-in lives in `auth_identities`, not a column on `customers`.
+>
+> The PR #36 review then carried that rule further, so two more things below are out of date. There is **no `youtube_auth` table** — tokens, the linked channel and provider-specific metadata are columns on `auth_identities`, so a second provider needs no second table. And there is **no `customers.channel_id`**, unique or otherwise; the 1:1 link is enforced in `orchestration/auth/base.ts` so the error message is ours. Sign-in itself is `orchestration/auth/{base,google}.ts` — a provider base class with one child per provider.
+>
+> The routes and pages on top of it are tracked in [product-restructure.md](./product-restructure.md); Phases 0, 2, 3, 4 and 5 are untouched.
 
 ## Context (why)
 
@@ -97,10 +103,10 @@ Job types: `channel_sync`, `analyze_video`, `generate_clips`, `render_clip`, `pu
 
 ### Phase 1 — identity and tenancy
 
-- `customers` + `sessions` tables; Google sign-in via the existing PKCE flow with the wider scope set — today `oauth.ts` requests only `youtube.upload` + `youtube.readonly`; add `youtube.force-ssl` (required by `captions.download`); callback creates the customer, links the channel (1:1, unique), stores tokens in `youtube_auth`.
-- `src/hooks.server.ts`: resolve session → `locals.customer`; `requireCustomer()` guard for every route under `/` and `/api` except `/login` and the auth callback.
-- Every repo read/write scoped by `customer_id`; remove the global `DELETE /api/db`; `POST /api/config` admin-only.
-- Web `youtube/oauthCookies.ts` and the five `api/youtube/auth/*` routes become the sign-in routes.
+- ✅ `customers` + `sessions` tables (plus `auth_identities` and `library_videos`); Google sign-in via the existing PKCE flow with the wider scope set — today `oauth.ts` requests only `youtube.upload` + `youtube.readonly`; add `youtube.force-ssl` (required by `captions.download`); callback creates the customer, links the channel (1:1, unique), stores tokens in `youtube_auth`.
+- ⬜ Session resolution now belongs to the backend's `middleware/session.ts`, not `hooks.server.ts`: `requireCustomer()` guard for every route under `/` and `/api` except `/login` and the auth callback.
+- ⬜ Every repo read/write scoped by `customer_id`; remove the global `DELETE /api/db`; `POST /api/config` admin-only.
+- ⬜ The backend's `http/oauthCookies.ts` and `routes/connection.ts` gain the sign-in routes beside them.
 
 ### Phase 2 — jobs and worker
 

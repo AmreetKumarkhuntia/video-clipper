@@ -21,7 +21,19 @@ export {
   updateCaptionPreset,
   deleteCaptionPreset,
 } from './repos/captionPresetsRepo.js';
-export { upsertChannel } from './repos/channelsRepo.js';
+export { upsertChannel, findChannel } from './repos/channelsRepo.js';
+export {
+  findCustomerIdByIdentity,
+  findIdentity,
+  linkIdentity,
+  unlinkIdentity,
+} from './repos/authIdentitiesRepo.js';
+export {
+  findCustomerById,
+  findCustomerByChannelId,
+  createCustomer,
+  updateCustomerProfile,
+} from './repos/customersRepo.js';
 export {
   findChunks,
   upsertChunks,
@@ -55,9 +67,23 @@ export {
   listUploadArtifactsByAnalysisId,
 } from './repos/uploadArtifactsRepo.js';
 export {
+  insertSession,
+  findValidSession,
+  deleteSession,
+  deleteExpiredSessions,
+} from './repos/sessionsRepo.js';
+export {
   upsertVideo,
   findVideo,
+  findVideosByIds,
   saveTranscript,
   findTranscriptLines,
   clearTranscript,
 } from './repos/videosRepo.js';
+
+export {
+  saveLibraryVideo,
+  removeLibraryVideo,
+  findSavedVideoIds,
+  listLibraryVideos,
+} from './repos/libraryVideosRepo.js';
