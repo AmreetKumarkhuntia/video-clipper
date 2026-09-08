@@ -1,4 +1,6 @@
+import { timingSafeEqual } from 'node:crypto';
 import { resolveSession } from '@lib/orchestration/auth/index.js';
+import { hashSessionToken } from '@lib/utils/sessionToken.js';
 import { readSessionToken } from '../http/sessionCookies.js';
 import { HttpError, jsonError } from '../http/responses.js';
 import type { Context, MiddlewareHandler } from 'hono';
@@ -30,4 +32,30 @@ export function requireCustomer(c: Context<ApiEnv>): Customer {
   const customer = c.get('customer');
   if (!customer) throw new HttpError(jsonError(401, 'Sign in to continue.'));
   return customer;
+}
+
+/**
+ * Guard for operator-scoped routes — config writes today. A bearer token
+ * rather than a session, because the CLI has no way to sign in; RBAC on the
+ * session is the planned replacement, and it swaps out this one function.
+ * An unset token means locked, not open.
+ */
+export function requireOperator(c: Context<ApiEnv>): void {
+  const expected = c.get('config').OPERATOR_TOKEN;
+  if (!expected) {
+    throw new HttpError(
+      jsonError(403, 'Settings are locked. Set OPERATOR_TOKEN on the server to allow changes.'),
+    );
+  }
+  const header = c.req.header('authorization');
+  const presented = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : '';
+  // Hashing both sides first gives timingSafeEqual the equal-length buffers it
+  // requires, without leaking the token's length through an early return.
+  const match =
+    presented !== '' &&
+    timingSafeEqual(
+      Buffer.from(hashSessionToken(presented)),
+      Buffer.from(hashSessionToken(expected)),
+    );
+  if (!match) throw new HttpError(jsonError(401, 'Operator token required.'));
 }

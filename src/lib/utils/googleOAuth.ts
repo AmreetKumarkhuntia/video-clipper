@@ -70,8 +70,11 @@ function assertConfigured(oauth: GoogleOAuthClientConfig): void {
 }
 
 /**
- * `access_type=offline` with `prompt=consent` is what makes Google return a
- * refresh token. Without them a returning user yields an access token only.
+ * `access_type=offline` makes Google return a refresh token on the first
+ * consent; `linkIdentity` preserves it on every sign-in after that, so the
+ * consent screen is not forced again. `select_account` still shows the account
+ * chooser — the person has to pick the account that owns their channel, and
+ * silently reusing the wrong one would dead-end on the channel link rules.
  */
 export function buildGoogleAuthUrl(
   oauth: GoogleOAuthClientConfig,
@@ -87,7 +90,7 @@ export function buildGoogleAuthUrl(
     scope: scopes.join(' '),
     access_type: 'offline',
     include_granted_scopes: 'true',
-    prompt: 'consent',
+    prompt: 'select_account',
     state,
     code_challenge: createCodeChallenge(codeVerifier),
     code_challenge_method: 'S256',

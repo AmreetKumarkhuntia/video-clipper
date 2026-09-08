@@ -153,6 +153,29 @@ describe('identity tokens', () => {
     expect(findIdentity(customer.id, 'google')?.metadata).toEqual({ uploadsPlaylistId: 'UU_test' });
   });
 
+  // Google always sends a metadata object, empty or not, so replacing the blob
+  // wholesale would let a sign-in that saw no uploads playlist wipe a stored one.
+  it('keeps stored metadata when a later sign-in sends an empty object', () => {
+    const customer = createCustomer({});
+    const base = { customerId: customer.id, provider: 'google' as const, providerAccountId: 'm-1' };
+    linkIdentity({ ...base, metadata: { uploadsPlaylistId: 'UU_test' } });
+    linkIdentity({ ...base, metadata: {} });
+
+    expect(findIdentity(customer.id, 'google')?.metadata).toEqual({ uploadsPlaylistId: 'UU_test' });
+  });
+
+  it('merges metadata key by key rather than replacing the blob', () => {
+    const customer = createCustomer({});
+    const base = { customerId: customer.id, provider: 'google' as const, providerAccountId: 'm-2' };
+    linkIdentity({ ...base, metadata: { uploadsPlaylistId: 'UU_test' } });
+    linkIdentity({ ...base, metadata: { channelThumbnailUrl: 'https://img.example/t.jpg' } });
+
+    expect(findIdentity(customer.id, 'google')?.metadata).toEqual({
+      uploadsPlaylistId: 'UU_test',
+      channelThumbnailUrl: 'https://img.example/t.jpg',
+    });
+  });
+
   it('unlinks a login and the tokens it carried', () => {
     const customer = createCustomer({});
     linkIdentity({

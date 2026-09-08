@@ -117,6 +117,12 @@ sign-in button reports that they are unset.
 | `GOOGLE_OAUTH_CLIENT_SECRET` | —       | Google OAuth client secret for customer sign-in                                                |
 | `GOOGLE_OAUTH_REDIRECT_URI`  | —       | Redirect URI registered in Google Cloud, e.g. `http://localhost:5002/api/auth/google/callback` |
 | `SESSION_TTL_DAYS`           | `30`    | How many days a sign-in stays valid                                                            |
+| `OPERATOR_TOKEN`             | —       | Bearer token required to change settings over HTTP; unset means settings are locked            |
+
+`OPERATOR_TOKEN` gates `PATCH /api/settings`. The CLI sends it from its own environment; the web
+Settings page sends no token, so saving there answers 401 until role-based access control lands —
+deliberately, since a secret pasted into the browser is not worth building around an interim gate.
+Until then, change settings via the CLI or environment variables.
 
 The redirect URI points at the **frontend's** origin, not the backend's: the browser reaches the
 backend through the frontend's `/api` proxy, so that is the address Google must send it back to. It

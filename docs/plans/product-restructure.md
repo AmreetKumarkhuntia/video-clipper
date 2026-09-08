@@ -191,8 +191,33 @@ halves are reviewable.
   survives only because `src/lib` does not move.
 - **`dist/` is never cleaned** and still ships pre-refactor artifacts.
 
+## Review fixes (PR 36)
+
+The pre-merge review confirmed seven issues; the fixes and their reasoning:
+
+- **`sanitizeReturnTo` also blocks `/\` and control characters.** The WHATWG parser treats `\` as
+  `/`, so `/\evil.com` was an open redirect the `//` check missed; tab and newline are stripped by
+  URL parsers, so they could smuggle a second slash past a prefix check.
+- **`Secure` follows `x-forwarded-proto`, then the URL.** In production TLS terminates at a proxy
+  and Node sees plain http, so the URL alone would never mark the session cookie Secure.
+- **`PATCH /api/settings` is gated by `OPERATOR_TOKEN`** — a bearer token, not a session, because
+  the CLI has no sign-in. Unset means locked. This is the interim gate; RBAC on the session is the
+  agreed follow-up and replaces the single `requireOperator` guard. The web Settings page sends no
+  token and 401s on save until then — a paste-a-secret field was considered and dropped as not
+  worth building around an interim gate.
+- **500 responses no longer echo the error.** Internal messages (paths, SQL, upstream bodies) go to
+  the log; the client gets a generic message plus the request id.
+- **Expired-session sweep runs hourly** from the API entry point; the table no longer grows forever.
+- **`linkIdentity` merges metadata key by key.** Google always sends a metadata object, so `{}` was
+  clobbering a stored uploads playlist on re-sign-in.
+- **Sign-in uses `prompt=select_account`, not `consent`.** The refresh token from the first consent
+  is preserved on later sign-ins, so forcing the consent screen every time bought nothing.
+
 ## Deferred
 
+- **RBAC.** Replaces the `OPERATOR_TOKEN` gate with roles on the session (`requireRole`), and is the
+  natural home for the remaining review notes: session rotation on re-login, token encryption at
+  rest, mapping `/login?error=` to error codes, ordering for `linkedChannelId`.
 - **CLI authentication.** Fine while the backend is local; required the moment it is not.
 - **pnpm workspaces and separate manifests** — packaging, worth doing when the apps deploy separately.
 - **Deployment.** No Dockerfile or process config exists, and the backend needs ffmpeg, yt-dlp, Python
@@ -219,19 +244,22 @@ pnpm web:dev     # frontend on :5002, proxying /api
 
 ## Progress
 
+The PR's commit series was squashed before merge (22 → 7); the hashes below
+name the squashed commits that carry each step.
+
 | #   | Commit                                                      | State                                          |
 | --- | ----------------------------------------------------------- | ---------------------------------------------- |
-| 1   | `chore(build)` split the build per app, consolidate aliases | ✅ `9aa0396`                                   |
-| 2   | `feat(api)` backend skeleton                                | ✅ `ee2a669`                                   |
-| 3   | `refactor(api)` lift the shared helpers                     | ✅ `9187b33`                                   |
-| 4–6 | `feat(api)` routes by group                                 | ✅ `9187b33` — all nine groups mount           |
-| 7   | `refactor(web)` frontend only                               | ✅ `9187b33` — no `@lib` domain imports remain |
-| 8   | `refactor(cli)` talk to the backend                         | ✅ `523f1c0`                                   |
-| 9   | `test(boundaries)` three-app rules                          | ✅ `ddb7b0e`, CLI rule in `523f1c0`            |
-| 10  | `docs` structure and deployment                             | ✅ `ddb7b0e` — deployment still deferred       |
-| 11  | `feat(auth)` provider-independent identity                  | ✅ `8c9a5c6`                                   |
-| 12  | `feat(api)` sign-in, channel and library routes             | ✅ `698c3c3`                                   |
-| 13  | `feat(web)` login, library, browse, topbar                  | ✅ `4dea2ca`                                   |
+| 1   | `chore(build)` split the build per app, consolidate aliases | ✅ `2827b64`                                   |
+| 2   | `feat(api)` backend skeleton                                | ✅ `2827b64`                                   |
+| 3   | `refactor(api)` lift the shared helpers                     | ✅ `1d3da76`                                   |
+| 4–6 | `feat(api)` routes by group                                 | ✅ `1d3da76` — all nine groups mount           |
+| 7   | `refactor(web)` frontend only                               | ✅ `1d3da76` — no `@lib` domain imports remain |
+| 8   | `refactor(cli)` talk to the backend                         | ✅ `4a5261c`                                   |
+| 9   | `test(boundaries)` three-app rules                          | ✅ `1d3da76`, CLI rule in `4a5261c`            |
+| 10  | `docs` structure and deployment                             | ✅ `1d3da76` — deployment still deferred       |
+| 11  | `feat(auth)` provider-independent identity                  | ✅ `c615fa6`                                   |
+| 12  | `feat(api)` sign-in, channel and library routes             | ✅ `0c1f0d8`                                   |
+| 13  | `feat(web)` login, library, browse, topbar                  | ✅ `0c1f0d8`                                   |
 
 ### Shipped in 12 and 13
 

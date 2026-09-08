@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createApp } from '../src/app/api/app.js';
+import { sanitizeReturnTo } from '../src/app/api/http/sessionCookies.js';
 import { oauthProvider } from '../src/lib/orchestration/auth/index.js';
 import { hashSessionToken } from '../src/lib/utils/sessionToken.js';
 import { SESSION_COOKIE_NAME } from '../src/lib/types/api.js';
@@ -26,6 +27,15 @@ import type { Customer } from '../src/lib/types/auth.js';
  * tests write customers and sessions. `initDb` is called before anything
  * touches a repo, so the lazy handle opens on this file and not the default.
  */
+
+// Planted before the config module loads, so the start route is deterministically
+// configured and actually sets handshake cookies. `??=` keeps real credentials
+// when a developer's environment carries them.
+vi.hoisted(() => {
+  process.env.GOOGLE_OAUTH_CLIENT_ID ??= 'test-client-id';
+  process.env.GOOGLE_OAUTH_CLIENT_SECRET ??= 'test-client-secret';
+  process.env.GOOGLE_OAUTH_REDIRECT_URI ??= 'http://localhost:5002/api/auth/google/callback';
+});
 
 const CHANNEL_ID = 'UCtest_channel';
 const OTHER_CHANNEL_ID = 'UCsomeone_else';
@@ -244,5 +254,52 @@ describe('sign-in redirects', () => {
     const res = await app.request('/api/auth/google/callback?error=access_denied');
     expect(res.status).toBe(302);
     expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain('access_denied');
+  });
+});
+
+describe('sanitizeReturnTo', () => {
+  it('keeps ordinary same-origin paths', () => {
+    expect(sanitizeReturnTo('/dashboard')).toBe('/dashboard');
+    expect(sanitizeReturnTo('/videos/abc?tab=clips')).toBe('/videos/abc?tab=clips');
+  });
+
+  // The WHATWG parser treats `\` as `/`, so every one of these resolves
+  // protocol-relative and would land on evil.com after sign-in.
+  it('falls back to the root for anything protocol-relative', () => {
+    const hostile = ['//evil.com', '/\\evil.com', '/\\/evil.com', '\\evil.com', 'https://evil.com'];
+    for (const value of hostile) {
+      expect(sanitizeReturnTo(value), value).toBe('/');
+    }
+  });
+
+  it('rejects control characters, which URL parsers strip before resolving', () => {
+    expect(sanitizeReturnTo('/\t/evil.com')).toBe('/');
+    expect(sanitizeReturnTo('/\n/evil.com')).toBe('/');
+  });
+
+  it('falls back to the root when there is nothing to keep', () => {
+    expect(sanitizeReturnTo(undefined)).toBe('/');
+    expect(sanitizeReturnTo('')).toBe('/');
+    expect(sanitizeReturnTo('relative/path')).toBe('/');
+  });
+});
+
+describe('handshake cookie security', () => {
+  it('marks cookies Secure when TLS terminates at a proxy', async () => {
+    const res = await app.request('/api/auth/google/start', {
+      headers: { 'x-forwarded-proto': 'https' },
+    });
+    expect(res.status).toBe(302);
+
+    const cookies = res.headers.getSetCookie();
+    expect(cookies.length).toBeGreaterThan(0);
+    for (const cookie of cookies) expect(cookie).toContain('Secure');
+  });
+
+  it('leaves cookies plain over http, or the dev proxy could never return them', async () => {
+    const res = await app.request('/api/auth/google/start');
+    const cookies = res.headers.getSetCookie();
+    expect(cookies.length).toBeGreaterThan(0);
+    for (const cookie of cookies) expect(cookie).not.toContain('Secure');
   });
 });

@@ -78,9 +78,11 @@ export function findIdentity(
 /**
  * Idempotent: signing in again updates the same row rather than duplicating it.
  *
- * Two fields survive an update that omits them. A provider returns a refresh
- * token only on first consent, so a later sign-in must not blank it; and a
- * sign-in that cannot see the channel must not unlink it.
+ * Three fields survive an update that omits them. A provider returns a refresh
+ * token only on first consent, so a later sign-in must not blank it; a sign-in
+ * that cannot see the channel must not unlink it; and metadata merges key by
+ * key, so a sign-in where the provider omits one detail (say, the uploads
+ * playlist) keeps what an earlier sign-in stored.
  */
 export function linkIdentity(input: AuthIdentityInput): void {
   const done = log.dbCalled('linkIdentity', undefined, {
@@ -106,7 +108,10 @@ export function linkIdentity(input: AuthIdentityInput): void {
     expiryDate: input.expiryDate ?? null,
     scope: input.scope ?? null,
     channelId: input.channelId ?? existing?.channelId ?? null,
-    metadata: JSON.stringify(input.metadata ?? safeParse(existing?.metadata ?? '{}')),
+    metadata: JSON.stringify({
+      ...safeParse(existing?.metadata ?? '{}'),
+      ...(input.metadata ?? {}),
+    }),
     updatedAt: ts,
   };
 
