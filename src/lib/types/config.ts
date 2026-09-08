@@ -548,3 +548,9 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     widget: 'number',
   },
 };
+
+/** Backend server settings. Read from the environment at boot, not from ConfigSchema. */
+export interface ApiServerOptions {
+  port: number;
+  host: string;
+}

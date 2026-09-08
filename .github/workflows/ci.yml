@@ -38,5 +38,11 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Web type-check
+        run: pnpm web:check
+
       - name: Build
         run: pnpm build
+
+      - name: Web build
+        run: pnpm web:build
