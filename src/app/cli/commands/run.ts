@@ -1,23 +1,26 @@
 import { promises as fs } from 'fs';
-import { parseUrl, extractMetadata } from '@lib/services/video/index.js';
-import { runAnalysis } from '@lib/orchestration/analysisOrchestrator.js';
-import { generateClipsForAnalysis } from '@lib/orchestration/clipOrchestrator.js';
-import { upsertVideo } from '@lib/services/db/index.js';
-import { config } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
-import { formatConfig, formatSeconds } from '@lib/utils/format.js';
+import { formatSeconds } from '@lib/utils/format.js';
+import { tryParseVideoId } from '@lib/utils/youtubeUrl.js';
+import { apiBaseUrl, apiGet, apiSend } from '../client/index.js';
+import { streamAnalysis } from '../client/analysisStream.js';
+import { backendSettings, describeSetting, numberSetting } from '../client/settings.js';
 import { parseArgs, printUsage } from '../args.js';
 import { printAnalysisSummary, printClipResults } from '../output/formatter.js';
 import { createAnalysisCallbacks } from '../output/progress.js';
-import type { YtDlpCookies } from '@lib/types/downloader.js';
-import type { CreateAnalysisRequest, CreateClipsRequest } from '@lib/types/analysis.js';
+import type {
+  ClipArtifact,
+  CreateAnalysisRequest,
+  CreateClipsRequest,
+} from '@lib/types/analysis.js';
 import type { CommandHandler } from '@lib/types/command.js';
+import type { VideoDetails } from '@lib/types/youtube.js';
 
 async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseArgs(['_', '_', ...argv]);
 
   if (args.help) {
-    printUsage();
+    printUsage(await backendSettings());
     return;
   }
 
@@ -35,59 +38,46 @@ async function run(argv: string[], requestId: string): Promise<void> {
     );
   }
 
+  const videoId = tryParseVideoId(args.url);
+  if (!videoId) {
+    throw new Error(`Invalid YouTube URL: ${args.url}`);
+  }
+
+  // One read of the backend's settings serves the whole run: the model name in
+  // the banner, and the chunk count the progress bar sizes itself from.
+  const values = await backendSettings();
+
   log.info(
     'run',
-    `Starting video-clipper (model: ${config.LLM_MODEL})` +
+    `Starting video-clipper against ${apiBaseUrl()} (model: ${describeSetting(values, 'LLM_MODEL')})` +
       (args.clip ? ' [--clip enabled]' : '') +
       (args.localVideo ? ` [--local-video: ${args.localVideo}]` : ''),
     requestId,
   );
-  log.info('run', `Config: ${formatConfig(config)}`, requestId);
-
-  const cookies: YtDlpCookies = {
-    cookiesFromBrowser: config.YT_DLP_COOKIES_FROM_BROWSER,
-    cookiesFile: config.YT_DLP_COOKIES_FILE,
-    quiet: config.YT_DLP_QUIET,
-    retryCount: config.YT_DLP_RETRY_COUNT,
-  };
-
-  let videoId: string;
-  try {
-    videoId = parseUrl(args.url);
-  } catch {
-    throw new Error(`Invalid YouTube URL: ${args.url}`);
-  }
 
   log.info('run', `Fetching metadata for ${videoId}...`, requestId);
-  const metadata = await extractMetadata(videoId, cookies);
+
+  // Metadata comes from the backend rather than a local yt-dlp probe. That is
+  // what replaces the command's own upsertVideo: the read write-throughs the
+  // channel and video catalog rows, in the process that owns the database.
+  const video = await apiGet<VideoDetails>(`/api/youtube/videos/${encodeURIComponent(videoId)}`);
   log.info(
     'run',
-    `Video: "${metadata.title}" (${metadata.duration > 0 ? formatSeconds(metadata.duration) : 'duration unknown'})`,
+    `Video: "${video.title}" (${video.durationSec > 0 ? formatSeconds(video.durationSec) : 'duration unknown'})`,
     requestId,
   );
 
-  if (args.maxDuration && metadata.duration > 0 && metadata.duration > args.maxDuration) {
+  if (args.maxDuration && video.durationSec > 0 && video.durationSec > args.maxDuration) {
     throw new Error(
       `Video duration exceeds --max-duration limit. ` +
-        `(${formatSeconds(metadata.duration)} > ${formatSeconds(args.maxDuration)})`,
+        `(${formatSeconds(video.durationSec)} > ${formatSeconds(args.maxDuration)})`,
     );
   }
 
-  upsertVideo({
-    id: videoId,
-    channelId: '',
-    title: metadata.title,
-    description: '',
-    channelTitle: '',
-    publishedAt: '',
-    durationSec: metadata.duration,
-    tags: [],
-  });
-
   const analysisInput: CreateAnalysisRequest = {
     videoId,
-    title: metadata.title,
-    durationSec: metadata.duration,
+    title: video.title,
+    durationSec: video.durationSec,
     options: {
       maxChunks: args.maxChunks,
       maxParallel: args.maxParallel,
@@ -99,25 +89,33 @@ async function run(argv: string[], requestId: string): Promise<void> {
     },
   };
 
-  const abortController = new AbortController();
+  // Ctrl-C stops reading the stream and leaves. Dropping the connection is what
+  // cancels the run: the route hands the request's signal to the orchestrator,
+  // so the LLM work stops server-side too.
+  let aborted = false;
   process.on('SIGINT', () => {
+    aborted = true;
     log.warn('run', 'Received SIGINT — aborting...', requestId);
-    abortController.abort();
   });
 
-  const chunkCount = args.maxChunks ?? config.MAX_CHUNKS ?? 0;
+  const chunkCount = args.maxChunks ?? numberSetting(values, 'MAX_CHUNKS') ?? 0;
   const callbacks = createAnalysisCallbacks(chunkCount, requestId);
 
-  log.info('run', `Starting analysis (model: ${config.LLM_MODEL})...`, requestId);
-  const plan = await runAnalysis(
-    analysisInput,
-    config,
-    callbacks,
-    requestId,
-    abortController.signal,
-  );
+  log.info('run', 'Starting analysis...', requestId);
+  const plan = await streamAnalysis(analysisInput, callbacks, () => aborted);
+
+  if (aborted) {
+    process.exit(130);
+  }
+
+  if (!plan) {
+    throw new Error('The backend closed the analysis stream before sending a plan.');
+  }
+
   printAnalysisSummary(plan);
 
+  // Written from this machine, unlike everything else here: --output-json names
+  // a path on the caller's disk, which the backend cannot reach.
   if (args.outputJson) {
     await fs.writeFile(args.outputJson, JSON.stringify(plan, null, 2) + '\n', 'utf-8');
     log.info('run', `Wrote analysis JSON to ${args.outputJson}`, requestId);
@@ -151,7 +149,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   };
 
   log.info('run', `Generating ${plan.candidates.length} clips...`, requestId);
-  const clips = await generateClipsForAnalysis(clipInput, config, requestId);
+  const { clips } = await apiSend<{ clips: ClipArtifact[] }>('/api/clips', 'POST', clipInput);
   printClipResults(clips);
 }
 

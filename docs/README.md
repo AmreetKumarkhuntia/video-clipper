@@ -11,22 +11,23 @@ The architecture reference is the _Project Structure_ section of [AGENTS.md](../
 
 ## Guides
 
-| Doc                                             | Covers                                                                         |
-| ----------------------------------------------- | ------------------------------------------------------------------------------ |
-| [configuration.md](./guides/configuration.md)   | Every environment variable, provider setup, FFmpeg presets, yt-dlp cookie auth |
-| [advanced-usage.md](./guides/advanced-usage.md) | Advanced CLI examples, persistence and re-runs, pre-downloaded videos          |
-| [audio-sync.md](./guides/audio-sync.md)         | Audio/video sync troubleshooting and `TIMESTAMP_OFFSET_SECONDS`                |
-| [yt-downloader.md](./guides/yt-downloader.md)   | yt-dlp download modes, bot-detection errors, cookie troubleshooting            |
-| [free-models.md](./guides/free-models.md)       | Free OpenRouter models that work well with this tool                           |
+| Doc                                                       | Covers                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [configuration.md](./guides/configuration.md)             | Every environment variable, provider setup, FFmpeg presets, yt-dlp cookie auth        |
+| [advanced-usage.md](./guides/advanced-usage.md)           | Advanced CLI examples, persistence and re-runs, pre-downloaded videos                 |
+| [audio-sync.md](./guides/audio-sync.md)                   | Audio/video sync troubleshooting and `TIMESTAMP_OFFSET_SECONDS`                       |
+| [yt-downloader.md](./guides/yt-downloader.md)             | yt-dlp download modes, bot-detection errors, cookie troubleshooting                   |
+| [free-models.md](./guides/free-models.md)                 | Free OpenRouter models that work well with this tool                                  |
+| [google-oauth-scopes.md](./guides/google-oauth-scopes.md) | Which Google scopes sign-in and publishing request, and what the restricted ones cost |
 
 ## Active plans
 
-| Plan                                                             | Status                                                                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps, corrected structure; rebuilds the onboarding slice  |
-| [product-foundation.md](./plans/product-foundation.md)           | **Decided, not started** — customers, 1:1 channel link, jobs; the next workstream |
-| [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                 |
-| [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                    |
+| Plan                                                             | Status                                                                             |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps done; onboarding routes and pages outstanding         |
+| [product-foundation.md](./plans/product-foundation.md)           | **Partial** — Phase 1's identity tables and orchestrator shipped; jobs not started |
+| [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                  |
+| [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                     |
 
 ## Archived plans
 

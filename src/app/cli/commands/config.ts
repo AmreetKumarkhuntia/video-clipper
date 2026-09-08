@@ -1,7 +1,9 @@
-import { config, setConfigValues, getMaskedConfig } from '@lib/config/index.js';
 import { log } from '@lib/utils/logger.js';
-import { CONFIG_FIELD_META } from '@lib/types/config.js';
+import { apiBaseUrl, apiGet, apiSend } from '../client/index.js';
 import type { CommandHandler, ConfigArgs } from '@lib/types/command.js';
+import type { SettingsResponse, SettingsUpdateResponse } from '@lib/types/api.js';
+
+const SETTINGS_PATH = '/api/settings';
 
 function parseConfigArgs(argv: string[]): ConfigArgs {
   const result: ConfigArgs = { reset: false, help: false };
@@ -22,6 +24,35 @@ function parseConfigArgs(argv: string[]): ConfigArgs {
   return result;
 }
 
+/**
+ * Secret fields come back as `{ hasValue, masked }` — the raw value never leaves
+ * the backend — while everything else is a plain scalar. The mask exists to be
+ * shown, so it is what gets printed.
+ */
+function renderValue(value: unknown): string {
+  if (value === null || value === undefined) return '(not set)';
+  if (typeof value === 'object') {
+    const secret = value as Record<string, unknown>;
+    const masked = secret.masked;
+    return secret.hasValue === true && typeof masked === 'string' ? masked : '(not set)';
+  }
+  return String(value);
+}
+
+/** Descriptions come from the running backend's registry, not a local copy. */
+function describeKeys(registry: SettingsResponse['registry']): Map<string, string> {
+  const descriptions = new Map<string, string>();
+  for (const group of registry.groups) {
+    for (const field of group.fields) descriptions.set(field.key, field.description);
+  }
+  return descriptions;
+}
+
+/** An empty value tells the backend to drop the override and fall back to its default. */
+async function writeSetting(key: string, value: string): Promise<SettingsUpdateResponse> {
+  return apiSend<SettingsUpdateResponse>(SETTINGS_PATH, 'PATCH', { [key]: value });
+}
+
 async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseConfigArgs(argv);
 
@@ -35,6 +66,10 @@ Usage: video-clipper config [key] [value]
   <key> <value> Set a config value
   --reset       Reset a key to default (use with <key>)
 
+These are the backend's settings, not this machine's. They are read from and
+written to ${apiBaseUrl()}, so a change here applies to everyone that backend
+serves, the web app included.
+
 Examples:
   video-clipper config
   video-clipper config LLM_MODEL
@@ -46,64 +81,48 @@ Examples:
   }
 
   if (!args.key) {
-    const masked = getMaskedConfig();
-    const entries = Object.entries(masked).sort(([a], [b]) => a.localeCompare(b));
+    const { registry, values } = await apiGet<SettingsResponse>(SETTINGS_PATH);
+    const descriptions = describeKeys(registry);
+    const entries = Object.entries(values).sort(([a], [b]) => a.localeCompare(b));
 
     for (const [key, value] of entries) {
-      const meta = CONFIG_FIELD_META[key];
-      const desc = meta?.description ? ` (${meta.description})` : '';
-      console.log(`${key}${desc} = ${value ?? '(not set)'}`);
+      const description = descriptions.get(key);
+      const desc = description ? ` (${description})` : '';
+      console.log(`${key}${desc} = ${renderValue(value)}`);
     }
     return;
   }
 
   if (args.reset) {
-    try {
-      setConfigValues({ [args.key]: '' });
-      log.info('config', `Reset ${args.key} to default.`, requestId);
-    } catch (err) {
-      log.error(
-        'config',
-        `Failed to reset: ${err instanceof Error ? err.message : String(err)}`,
-        requestId,
-      );
-      process.exit(1);
-    }
+    const result = await writeSetting(args.key, '');
+    log.info('config', `Reset ${args.key} to default on ${apiBaseUrl()}.`, requestId);
+    for (const warning of result.warnings) log.warn('config', warning, requestId);
     return;
   }
 
   if (args.value !== undefined) {
-    try {
-      setConfigValues({ [args.key]: args.value });
-      log.info('config', `Set ${args.key} = ${args.value}`, requestId);
-    } catch (err) {
-      log.error(
-        'config',
-        `Failed to set: ${err instanceof Error ? err.message : String(err)}`,
-        requestId,
-      );
-      process.exit(1);
-    }
+    const result = await writeSetting(args.key, args.value);
+    log.info('config', `Set ${args.key} = ${args.value} on ${apiBaseUrl()}`, requestId);
+    for (const warning of result.warnings) log.warn('config', warning, requestId);
     return;
   }
 
-  const masked = getMaskedConfig();
-  const value = masked[args.key];
+  const { values } = await apiGet<SettingsResponse>(SETTINGS_PATH);
+  const value = values[args.key];
+
+  // The backend reports every key it holds, so a key missing from that answer is
+  // unknown to it — there is no second, local place left to look.
   if (value === undefined) {
-    const raw = (config as Record<string, unknown>)[args.key];
-    if (raw === undefined) {
-      log.error('config', `Unknown config key: ${args.key}`, requestId);
-      process.exit(1);
-    }
-    console.log(`${args.key} = ${String(raw)}`);
-  } else {
-    console.log(`${args.key} = ${value}`);
+    log.error('config', `Unknown config key: ${args.key}`, requestId);
+    process.exit(1);
   }
+
+  console.log(`${args.key} = ${renderValue(value)}`);
 }
 
 export const configCommand: CommandHandler = {
   name: 'config',
-  description: 'View or set configuration values',
+  description: "View or set the backend's configuration values",
   usage: 'video-clipper config [key] [value]',
   run,
 };

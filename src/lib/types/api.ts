@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PositionSchema, TextStyleSchema } from './clipEdit.js';
+import type { ConfigRegistryResponse, SetConfigResult } from './config.js';
 
 /**
  * The HTTP contract shared by all three apps.
@@ -73,6 +74,23 @@ export type UpdateCaptionPreset = z.infer<typeof UpdateCaptionPresetSchema>;
 export const SettingsUpdateSchema = z.record(z.string(), z.unknown());
 export type SettingsUpdate = z.infer<typeof SettingsUpdateSchema>;
 
+// ── Response shapes ──────────────────────────────────────────────────────────
+
+/**
+ * GET /api/settings: the field registry plus the values the server currently
+ * holds. Secret fields arrive as `{ hasValue, masked }` rather than the value,
+ * which is why `values` is untyped — the raw secret never leaves the backend.
+ */
+export interface SettingsResponse {
+  registry: ConfigRegistryResponse;
+  values: Record<string, unknown>;
+}
+
+/** PATCH /api/settings: the write result plus the values the server now holds. */
+export interface SettingsUpdateResponse extends SetConfigResult {
+  values: Record<string, unknown>;
+}
+
 // ── Server-sent event names ──────────────────────────────────────────────────
 
 export type AnalysisStreamEventName =
@@ -96,3 +114,8 @@ export type UploadStreamEventName =
 
 /** The session cookie name. Shared so the backend sets what the frontend forwards. */
 export const SESSION_COOKIE_NAME = 'vc_session';
+
+/** The error envelope every backend route returns, and every client reads. */
+export interface ApiErrorBody {
+  error: { message: string; detail?: string };
+}
