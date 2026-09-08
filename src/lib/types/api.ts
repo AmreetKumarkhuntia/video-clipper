@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { PositionSchema, TextStyleSchema } from './clipEdit.js';
 import type { ConfigRegistryResponse, SetConfigResult } from './config.js';
+import type { Customer } from './auth.js';
+import type { VideoPage } from './youtube.js';
 
 /**
  * The HTTP contract shared by all three apps.
@@ -34,6 +36,21 @@ export const ListVideosParamsSchema = z.object({
   pageToken: z.string().optional(),
 });
 export type ListVideosParams = z.infer<typeof ListVideosParamsSchema>;
+
+export const ChannelVideosQuerySchema = z.object({
+  pageToken: z.string().optional(),
+});
+export type ChannelVideosQuery = z.infer<typeof ChannelVideosQuerySchema>;
+
+/**
+ * Library paging. Capped at 100 so one call cannot ask the database for an
+ * unbounded join, and defaulted so the common call passes nothing.
+ */
+export const LibraryQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(24),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export type LibraryQuery = z.infer<typeof LibraryQuerySchema>;
 
 export const VideoParamsSchema = z.object({
   videoId: z.string().min(1),
@@ -89,6 +106,35 @@ export interface SettingsResponse {
 /** PATCH /api/settings: the write result plus the values the server now holds. */
 export interface SettingsUpdateResponse extends SetConfigResult {
   values: Record<string, unknown>;
+}
+
+// ── Identity and library responses ───────────────────────────────────────────
+
+/** GET /api/me. The page guard and the topbar both ask this on every load. */
+export interface MeResponse {
+  customer: Customer;
+}
+
+/** GET /api/channel. The one channel this customer is linked to. */
+export interface ChannelResponse {
+  channelId: string;
+  title: string;
+  handle?: string;
+}
+
+/**
+ * GET /api/channel/videos. A page of the customer's uploads, annotated with
+ * which are already saved so the grid can show Add against Added without a
+ * second round trip per card.
+ */
+export interface ChannelVideosResponse extends VideoPage {
+  savedIds: string[];
+}
+
+/** POST and DELETE /api/videos/:videoId. */
+export interface LibraryMembershipResponse {
+  videoId: string;
+  saved: boolean;
 }
 
 // ── Server-sent event names ──────────────────────────────────────────────────

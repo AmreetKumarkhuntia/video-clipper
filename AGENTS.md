@@ -75,16 +75,17 @@ src/
     api/                      # Backend — the only process that owns the db and reads config
       index.ts                # entry: migrations, then listen on API_PORT
       app.ts                  # Hono instance, middleware, route mounting
-      context.ts              # typed request context (requestId, config)
-      middleware/             # requestContext (id + config + logging) · errorEnvelope (onError)
-      routes/                 # one file per resource: analyses, clips, videos, qa, youtube,
-                              #   connection, publish, captionPresets, settings
-      http/                   # responses · sse/ · oauthCookies
+      context.ts              # typed request context (requestId, config, customer?)
+      middleware/             # requestContext (id + config + logging) · session (resolves the
+                              #   cookie; requireCustomer guards) · errorEnvelope (onError)
+      routes/                 # one file per resource: auth, channel, analyses, clips, videos,
+                              #   qa, youtube, connection, publish, captionPresets, settings
+      http/                   # responses (incl. HttpError) · sse/ · sessionCookies · oauthCookies
       services/               # appConfig, catalogFactory, artifactStore
 
     cli/                      # CLI application — HTTP client + local media work
-      client/                 # apiGet / apiSend / apiStream against the backend
-      index.ts                # CLI entrypoint (shebang, runs migrations)
+      client/                 # apiGet / apiSend / apiStream · settings · analysisStream
+      index.ts                # CLI entrypoint (shebang; the backend owns migrations)
       args.ts                 # parseArgs + printUsage for the run command
       commands/               # Subcommands: run, analyze, clip, candidates,
                               #   library, channel, ask, config
@@ -105,6 +106,7 @@ src/
       widgets/                # Domain/feature-specific components (not generically reusable)
         ChannelCard.svelte    # channel thumbnail + title + link
         VideoCard.svelte      # video thumbnail + duration + title
+        LibraryVideoCard.svelte # upload card with Add / Added + Remove
         CandidateCard.svelte  # clip candidate with checkbox + score
         AnalysisProgress.svelte
         publish/              # Publish-flow widgets
@@ -114,15 +116,13 @@ src/
         index.ts              # app name etc.
         api.ts                # readApiError(), apiFetch<T>()
         format.ts             # formatDuration(), formatTime()
-        services/             # Thin web glue over lib orchestrators/services
-          analysis/           # SSE adapters for analysis/transcript/qa
-          clipping/           # Pass-through to clipOrchestrator
-          artifacts/          # Read wrappers over db repos
-          publishing/         # Upload SSE event serialization
-          youtube/            # Catalog factory + OAuth cookie constants
-          config/             # Web config adapter (toYouTubeOAuthConfig etc.)
-          http/               # SvelteKit HTTP response helpers
+        server/backend.ts     # server-side fetch that forwards the session cookie
+        activity/ stores/     # analysis activity log · toast, theme, config, video
+        *Stream.ts            # browser SSE clients for analysis, qa, upload
       routes/                 # SvelteKit file-based routing
+        +layout.server.ts     # the page guard: asks /api/me, redirects to /login
+        +page.server.ts       # the library, paged from GET /api/videos
+        login/ browse/        # sign in · the channel's uploads
       types/                  # Web-only types
         analysis.ts           # TranscriptBundle, ClipPlan, ClipArtifact, etc.
         web.ts                # ApiError

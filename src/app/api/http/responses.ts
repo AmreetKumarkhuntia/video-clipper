@@ -19,6 +19,22 @@ export async function parseJsonBody<T>(request: Request, schema: z.ZodType<T>): 
   return schema.parse(body);
 }
 
+/**
+ * An error carrying the response to send. `app.onError` returns it as-is, so a
+ * handler can refuse from anywhere in its call stack without threading a
+ * Response back up by hand — which is what lets a guard `throw` instead of
+ * returning a union every caller has to branch on.
+ */
+export class HttpError extends Error {
+  readonly response: Response;
+
+  constructor(response: Response) {
+    super(`HTTP ${response.status}`);
+    this.name = 'HttpError';
+    this.response = response;
+  }
+}
+
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
