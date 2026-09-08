@@ -220,6 +220,12 @@ export const sessions = sqliteTable(
 
 // A customer's claim on a video. Ownership lives here, never as a column on the shared `videos` catalog,
 // which is keyed by YouTube video id and written by the CLI too.
+//
+// `video_id` is the provider's stable id, not a URL, for the same reason `auth_identities`
+// keys on `provider_account_id` rather than email: a URL is a weaker identity (youtu.be vs
+// watch?v=, tracking params, re-uploads) and it is the join key into `videos`. When a second
+// provider lands this becomes a `(provider, video_id)` pair mirroring `auth_identities`, and
+// the URL is derived for display — never stored as the key.
 export const libraryVideos = sqliteTable(
   'library_videos',
   {
