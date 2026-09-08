@@ -153,37 +153,51 @@ export const clips = sqliteTable('clips', {
   updatedAt: integer('updated_at').notNull(),
 });
 
-// Who someone is. Deliberately carries no auth columns: a sign-in method is a
-// separate concern, so adding one later is a new auth_identities row, not a
-// migration of this table.
-// The 1:1 channel link is enforced in authOrchestrator, not by a UNIQUE constraint,
-// so the error message is ours rather than SQLite's.
+// Who someone is, and nothing else. No auth columns, and no `channel_id`:
+// a channel belongs to a provider account, not to a person, and a provider we
+// add later may have no such concept at all. Everything provider-shaped lives
+// on auth_identities.
 export const customers = sqliteTable('customers', {
   id: text('id').primaryKey(),
   email: text('email'), // display and contact only — never an identity key
   name: text('name'),
   avatarUrl: text('avatar_url'),
-  channelId: text('channel_id'), // FK to channels.id; null only mid-link
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
 
-// How someone signs in. One row per linked login, so a customer can hold several.
-// `provider_account_id` is the provider's own stable id — Google's `sub` today.
-// It is used rather than email because an email can change hands, which would
-// silently move someone's library to a stranger.
+// How someone signs in, and what that sign-in gave us. One row per linked login,
+// so a customer can hold several.
+//
+// `provider` is the type — 'google' today, 'twitch' tomorrow — and is a value,
+// not a schema decision. `provider_account_id` is the provider's own stable id
+// (Google's `sub`), used rather than email because an email can change hands,
+// which would silently move someone's library to a stranger.
+//
+// The tokens live here rather than in a youtube_auth table so that adding a
+// provider needs no new table. `channel_id` is the creator account on that
+// provider — a YouTube channel, a Twitch channel — and is a column rather than
+// a metadata key only because the claimed-channel check queries it on every
+// sign-in. Anything else provider-specific goes in `metadata`.
 export const authIdentities = sqliteTable(
   'auth_identities',
   {
     id: text('id').primaryKey(),
     customerId: text('customer_id').notNull(),
-    provider: text('provider').notNull(), // 'google' today; a value, not a schema decision
+    provider: text('provider').notNull(),
     providerAccountId: text('provider_account_id').notNull(),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'), // issued only on first consent — never overwrite with null
+    expiryDate: integer('expiry_date'),
+    scope: text('scope'),
+    channelId: text('channel_id'), // null when the provider has no channel concept
+    metadata: text('metadata').notNull().default('{}'), // JSON: provider-specific extras
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [
     index('auth_identities_customer_id_idx').on(t.customerId),
+    index('auth_identities_channel_id_idx').on(t.channelId),
     uniqueIndex('auth_identities_provider_account_uq').on(t.provider, t.providerAccountId),
   ],
 );
@@ -200,17 +214,9 @@ export const sessions = sqliteTable(
   (t) => [index('sessions_customer_id_idx').on(t.customerId)],
 );
 
-// Per-customer Google tokens, captured at sign-in. Separate from the single-file publish auth store.
-export const youtubeAuth = sqliteTable('youtube_auth', {
-  customerId: text('customer_id').primaryKey(),
-  accessToken: text('access_token').notNull(),
-  refreshToken: text('refresh_token'), // Google returns this only on first consent — never overwrite with null
-  expiryDate: integer('expiry_date'),
-  scope: text('scope'),
-  channelId: text('channel_id'),
-  connectedAt: integer('connected_at').notNull(),
-  updatedAt: integer('updated_at').notNull(),
-});
+// youtube_auth is gone: per-provider tokens are columns on auth_identities now,
+// so a second provider needs no second table. The publish flow's single-file
+// store is a different thing and is untouched.
 
 // A customer's claim on a video. Ownership lives here, never as a column on the shared `videos` catalog,
 // which is keyed by YouTube video id and written by the CLI too.

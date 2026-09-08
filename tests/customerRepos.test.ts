@@ -18,12 +18,10 @@ vi.mock('../src/lib/services/db/client.js', () => ({ db: testDb }));
 
 const { createCustomer, updateCustomerProfile, findCustomerById, findCustomerByChannelId } =
   await import('../src/lib/services/db/repos/customersRepo.js');
-const { linkIdentity, findCustomerIdByIdentity } =
+const { linkIdentity, findCustomerIdByIdentity, findIdentity, unlinkIdentity } =
   await import('../src/lib/services/db/repos/authIdentitiesRepo.js');
 const { insertSession, findValidSession, deleteSession, deleteExpiredSessions } =
   await import('../src/lib/services/db/repos/sessionsRepo.js');
-const { findYouTubeAuth, upsertYouTubeAuth, deleteYouTubeAuth } =
-  await import('../src/lib/services/db/repos/youtubeAuthRepo.js');
 
 const GOOGLE_SUB = 'google-sub-001';
 const CHANNEL_ID = 'UC_test_channel';
@@ -33,9 +31,7 @@ function hash(token: string): string {
 }
 
 beforeEach(() => {
-  sqlite.exec(
-    'DELETE FROM sessions; DELETE FROM youtube_auth; DELETE FROM auth_identities; DELETE FROM customers;',
-  );
+  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
 });
 
 describe('customersRepo and authIdentitiesRepo', () => {
@@ -43,10 +39,16 @@ describe('customersRepo and authIdentitiesRepo', () => {
   function signIn(sub: string, overrides: Record<string, unknown> = {}) {
     const existingId = findCustomerIdByIdentity('google', sub);
     const customer = existingId
-      ? updateCustomerProfile(existingId, { channelId: CHANNEL_ID, ...overrides })
-      : createCustomer({ channelId: CHANNEL_ID, ...overrides });
-    linkIdentity({ customerId: customer.id, provider: 'google', providerAccountId: sub });
-    return customer;
+      ? updateCustomerProfile(existingId, overrides)
+      : createCustomer(overrides);
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: sub,
+      channelId: CHANNEL_ID,
+    });
+    // Re-read: the channel arrives with the identity, not with the customer row.
+    return findCustomerById(customer.id)!;
   }
 
   it('creates a customer that carries no provider field at all', () => {
@@ -56,6 +58,12 @@ describe('customersRepo and authIdentitiesRepo', () => {
     expect(created).not.toHaveProperty('googleSub');
     expect(findCustomerById(created.id)?.email).toBe('creator@example.com');
     expect(findCustomerByChannelId(CHANNEL_ID)?.id).toBe(created.id);
+  });
+
+  it('keeps the channel off the customers table entirely', () => {
+    signIn(GOOGLE_SUB);
+    const columns = sqlite.prepare('PRAGMA table_info(customers)').all() as { name: string }[];
+    expect(columns.map((c) => c.name)).not.toContain('channel_id');
   });
 
   it('resolves a returning login back to the same customer', () => {
@@ -92,9 +100,9 @@ describe('customersRepo and authIdentitiesRepo', () => {
 
   it('keeps an existing channel link when a later sign-in omits it', () => {
     const first = signIn(GOOGLE_SUB);
-    const second = updateCustomerProfile(first.id, { name: 'No channel this time' });
+    linkIdentity({ customerId: first.id, provider: 'google', providerAccountId: GOOGLE_SUB });
 
-    expect(second.channelId).toBe(CHANNEL_ID);
+    expect(findCustomerById(first.id)?.channelId).toBe(CHANNEL_ID);
   });
 
   it('returns null for unknown lookups', () => {
@@ -103,9 +111,65 @@ describe('customersRepo and authIdentitiesRepo', () => {
   });
 });
 
+describe('identity tokens', () => {
+  it('stores and reads the tokens the provider issued', () => {
+    const customer = createCustomer({});
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: GOOGLE_SUB,
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      scope: 'openid youtube.readonly',
+      channelId: CHANNEL_ID,
+    });
+
+    const identity = findIdentity(customer.id, 'google');
+    expect(identity?.accessToken).toBe('access-1');
+    expect(identity?.refreshToken).toBe('refresh-1');
+    expect(identity?.channelId).toBe(CHANNEL_ID);
+  });
+
+  it('keeps the stored refresh token when a later grant omits it', () => {
+    const customer = createCustomer({});
+    const base = { customerId: customer.id, provider: 'google' as const, providerAccountId: 'sub' };
+    linkIdentity({ ...base, accessToken: 'a1', refreshToken: 'refresh-1' });
+    linkIdentity({ ...base, accessToken: 'a2' });
+
+    const identity = findIdentity(customer.id, 'google');
+    expect(identity?.accessToken).toBe('a2');
+    expect(identity?.refreshToken).toBe('refresh-1');
+  });
+
+  it('round-trips provider-specific metadata', () => {
+    const customer = createCustomer({});
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: GOOGLE_SUB,
+      metadata: { uploadsPlaylistId: 'UU_test' },
+    });
+
+    expect(findIdentity(customer.id, 'google')?.metadata).toEqual({ uploadsPlaylistId: 'UU_test' });
+  });
+
+  it('unlinks a login and the tokens it carried', () => {
+    const customer = createCustomer({});
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: GOOGLE_SUB,
+      accessToken: 'a1',
+    });
+    unlinkIdentity(customer.id, 'google');
+
+    expect(findIdentity(customer.id, 'google')).toBeNull();
+  });
+});
+
 describe('sessionsRepo', () => {
   it('stores a hashed session and finds it while unexpired', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
+    const customer = createCustomer({});
     const idHash = hash('raw-token');
     insertSession(idHash, customer.id, Date.now() + 60_000);
 
@@ -114,7 +178,7 @@ describe('sessionsRepo', () => {
   });
 
   it('does not return an expired session', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
+    const customer = createCustomer({});
     const idHash = hash('expired-token');
     insertSession(idHash, customer.id, Date.now() - 1);
 
@@ -122,14 +186,14 @@ describe('sessionsRepo', () => {
   });
 
   it('does not match on the raw token, only its hash', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
+    const customer = createCustomer({});
     insertSession(hash('raw-token'), customer.id, Date.now() + 60_000);
 
     expect(findValidSession('raw-token')).toBeNull();
   });
 
   it('deletes one session and sweeps expired ones', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
+    const customer = createCustomer({});
     const live = hash('live');
     const dead = hash('dead');
     insertSession(live, customer.id, Date.now() + 60_000);
@@ -140,40 +204,5 @@ describe('sessionsRepo', () => {
 
     deleteSession(live);
     expect(findValidSession(live)).toBeNull();
-  });
-});
-
-describe('youtubeAuthRepo', () => {
-  it('stores and reads tokens for a customer', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
-    upsertYouTubeAuth({
-      customerId: customer.id,
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      scope: 'openid youtube.readonly',
-      channelId: CHANNEL_ID,
-    });
-
-    const auth = findYouTubeAuth(customer.id);
-    expect(auth?.accessToken).toBe('access-1');
-    expect(auth?.refreshToken).toBe('refresh-1');
-  });
-
-  it('keeps the stored refresh token when a later grant omits it', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
-    upsertYouTubeAuth({ customerId: customer.id, accessToken: 'a1', refreshToken: 'refresh-1' });
-    upsertYouTubeAuth({ customerId: customer.id, accessToken: 'a2' });
-
-    const auth = findYouTubeAuth(customer.id);
-    expect(auth?.accessToken).toBe('a2');
-    expect(auth?.refreshToken).toBe('refresh-1');
-  });
-
-  it('deletes tokens', () => {
-    const customer = createCustomer({ channelId: CHANNEL_ID });
-    upsertYouTubeAuth({ customerId: customer.id, accessToken: 'a1' });
-    deleteYouTubeAuth(customer.id);
-
-    expect(findYouTubeAuth(customer.id)).toBeNull();
   });
 });
