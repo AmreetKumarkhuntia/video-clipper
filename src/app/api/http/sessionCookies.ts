@@ -16,22 +16,32 @@ export const LOGIN_RETURN_TO_COOKIE = 'vc_login_return_to';
 const HANDSHAKE_TTL_SEC = 60 * 10;
 
 /**
- * Only same-origin paths. Blocks `//evil.com`, which a browser treats as
- * protocol-relative and would follow off-site after a successful sign-in.
+ * Only same-origin paths. Blocks `//evil.com` and `/\evil.com` — the WHATWG
+ * parser treats `\` as `/`, so both are protocol-relative and a browser would
+ * follow them off-site after a successful sign-in. Control characters are
+ * rejected outright because URL parsers strip tab and newline before resolving,
+ * which would smuggle a second slash past a prefix check.
  */
 export function sanitizeReturnTo(value: string | null | undefined): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  if (!value || !value.startsWith('/')) return '/';
+  // eslint-disable-next-line no-control-regex
+  if (/^\/[/\\]/.test(value) || /[\u0000-\u001f\u007f]/.test(value)) return '/';
   return value;
 }
 
 /**
  * Whether to mark cookies Secure.
  *
- * Read from the request URL rather than a config flag, because in development
- * the backend is reached over plain http through the Vite proxy and a Secure
- * cookie would simply never come back.
+ * `x-forwarded-proto` wins because in production TLS terminates at a proxy and
+ * the request reaches Node as plain http — the URL alone would never say
+ * `https:` and the session cookie would silently ship without Secure. The URL
+ * is the fallback for direct connections; in development the backend is
+ * reached over plain http through the Vite proxy (which sends no forwarded
+ * header), so a Secure cookie would simply never come back.
  */
 function isSecureRequest(c: Context<ApiEnv>): boolean {
+  const forwarded = c.req.header('x-forwarded-proto');
+  if (forwarded) return forwarded.split(',')[0]!.trim() === 'https';
   return new URL(c.req.url).protocol === 'https:';
 }
 

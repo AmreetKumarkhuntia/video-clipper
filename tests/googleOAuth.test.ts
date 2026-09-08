@@ -51,11 +51,13 @@ describe('isGoogleOAuthConfigured', () => {
 });
 
 describe('buildGoogleAuthUrl', () => {
-  it('requests offline access and consent so a refresh token comes back', () => {
+  it('requests offline access and the account chooser, but never forces re-consent', () => {
     const url = new URL(buildGoogleAuthUrl(OAUTH, 'state-1', 'verifier-1'));
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     expect(url.searchParams.get('access_type')).toBe('offline');
-    expect(url.searchParams.get('prompt')).toBe('consent');
+    // The refresh token from the first consent is preserved by linkIdentity, so
+    // repeating the consent screen on every sign-in would buy nothing.
+    expect(url.searchParams.get('prompt')).toBe('select_account');
     expect(url.searchParams.get('state')).toBe('state-1');
     expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(url.searchParams.get('code_challenge')).toBe(createCodeChallenge('verifier-1'));

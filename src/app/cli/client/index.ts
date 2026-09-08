@@ -27,12 +27,18 @@ export function setClientRequestId(requestId: string): void {
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
   const url = new URL(path, apiBaseUrl());
+  // The CLI has no sign-in; operator-scoped calls (config writes) authenticate
+  // with the same OPERATOR_TOKEN the backend holds, taken from this process's
+  // environment. Attached on every call because the backend ignores it where it
+  // is not required.
+  const operatorToken = process.env.OPERATOR_TOKEN;
   try {
     return await fetch(url, {
       ...init,
       headers: {
         'content-type': 'application/json',
         ...(currentRequestId ? { 'x-request-id': currentRequestId } : {}),
+        ...(operatorToken ? { authorization: `Bearer ${operatorToken}` } : {}),
         ...(init?.headers ?? {}),
       },
     });

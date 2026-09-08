@@ -41,6 +41,9 @@ async function postDirtyFields(): Promise<void> {
 
   if (Object.keys(payload).length === 0) return;
 
+  // Writes are operator-gated on the backend and the page sends no token, so
+  // saving answers 401 and the toast shows it. Deliberate: RBAC on the session
+  // is the planned way for the browser to prove itself, not a pasted secret.
   try {
     const res = await fetch('/api/settings', {
       method: 'PATCH',

@@ -25,8 +25,18 @@ export const errorEnvelope: ErrorHandler<ApiEnv> = (error, c) => {
     return withRequestId(c, jsonError(400, 'Request body must be valid JSON.'));
   }
 
-  log.error('api', 'unhandled error', c.get('requestId'), { error: errorMessage(error) });
-  return withRequestId(c, jsonError(500, errorMessage(error)));
+  // The real message goes to the log only: it can carry file paths, SQL, or an
+  // upstream API's error body, none of which belong in a client response.
+  const requestId = c.get('requestId');
+  log.error('api', 'unhandled error', requestId, { error: errorMessage(error) });
+  return withRequestId(
+    c,
+    jsonError(
+      500,
+      'Something went wrong on our end.',
+      requestId ? `request ${requestId}` : undefined,
+    ),
+  );
 };
 
 /**

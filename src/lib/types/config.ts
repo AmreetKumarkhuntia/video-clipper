@@ -55,6 +55,11 @@ export const ConfigSchema = z
     // so this is the whole of the session lifetime policy.
     SESSION_TTL_DAYS: z.coerce.number().min(1).default(30),
 
+    // Gates config writes over HTTP. A shared secret rather than a customer
+    // credential, because the CLI has no sign-in; RBAC replaces this later.
+    // Unset means config writes are refused, not open.
+    OPERATOR_TOKEN: z.string().optional(),
+
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
     CHUNK_LENGTH_SEC: z.coerce.number().min(10).default(120),
@@ -273,6 +278,7 @@ export const CONFIG_GROUPS = [
       'GOOGLE_OAUTH_CLIENT_SECRET',
       'GOOGLE_OAUTH_REDIRECT_URI',
       'SESSION_TTL_DAYS',
+      'OPERATOR_TOKEN',
     ],
   },
   {
@@ -459,6 +465,11 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
   SESSION_TTL_DAYS: {
     description: 'How many days a sign-in stays valid',
     widget: 'number',
+  },
+  OPERATOR_TOKEN: {
+    description: 'Token required to change these settings over HTTP',
+    widget: 'text',
+    secret: true,
   },
   YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
   YOUTUBE_OAUTH_CLIENT_ID: {
