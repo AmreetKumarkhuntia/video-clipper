@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Context, ErrorHandler } from 'hono';
 import { log } from '@lib/utils/logger.js';
-import { errorMessage, jsonError, zodErrorDetail } from '../http/responses.js';
+import { HttpError, errorMessage, jsonError, zodErrorDetail } from '../http/responses.js';
 import type { ApiEnv } from '../context.js';
 
 /**
@@ -12,6 +12,11 @@ import type { ApiEnv } from '../context.js';
  * validate with a throwing `.parse()` and carry no try/catch of their own.
  */
 export const errorEnvelope: ErrorHandler<ApiEnv> = (error, c) => {
+  // A refusal a handler already worded — a guard's 401, say. Not a failure to
+  // log, and not ours to rephrase.
+  if (error instanceof HttpError) {
+    return withRequestId(c, error.response);
+  }
   if (error instanceof z.ZodError) {
     return withRequestId(c, jsonError(400, 'Invalid request.', zodErrorDetail(error)));
   }
