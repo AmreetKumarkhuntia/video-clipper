@@ -23,6 +23,7 @@ The architecture reference is the _Project Structure_ section of [AGENTS.md](../
 
 | Plan                                                             | Status                                                                            |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps, corrected structure; rebuilds the onboarding slice  |
 | [product-foundation.md](./plans/product-foundation.md)           | **Decided, not started** — customers, 1:1 channel link, jobs; the next workstream |
 | [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                 |
 | [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                    |

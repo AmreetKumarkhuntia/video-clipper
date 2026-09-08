@@ -13,9 +13,7 @@
 
   let authStatus = $state<YouTubeAuthStatus | null>(null);
   let isLoading = $state(false);
-  let isSavingAuth = $state(false);
   let errorMessage = $state('');
-  let showAdvancedAuth = $state(false);
 
   let accessToken = $state('');
   let refreshToken = $state('');
@@ -39,7 +37,7 @@
     isLoading = true;
     errorMessage = '';
     try {
-      authStatus = await apiFetch<YouTubeAuthStatus>('/api/youtube/auth/status');
+      authStatus = await apiFetch<YouTubeAuthStatus>('/api/youtube/connection');
     } catch (error) {
       authStatus = null;
       errorMessage = error instanceof Error ? error.message : String(error);
@@ -48,33 +46,9 @@
     }
   }
 
-  async function connectManualToken(): Promise<void> {
-    isSavingAuth = true;
-    errorMessage = '';
-    try {
-      authStatus = await apiFetch<YouTubeAuthStatus>('/api/youtube/auth/manual', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          accessToken,
-          refreshToken: refreshToken || undefined,
-          clientId: clientId || undefined,
-          clientSecret: clientSecret || undefined,
-          expiryDate: expiryDate ? Number(expiryDate) : undefined,
-        } satisfies SaveYouTubeManualAuthRequest),
-      });
-      showToast('success', 'YouTube account connected.');
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : String(error);
-      showToast('error', 'Failed to connect YouTube account.');
-    } finally {
-      isSavingAuth = false;
-    }
-  }
-
   async function disconnectAccount(): Promise<void> {
     try {
-      await apiFetch<{ success: boolean }>('/api/youtube/auth/disconnect', { method: 'POST' });
+      await apiFetch<{ success: boolean }>('/api/youtube/connection', { method: 'DELETE' });
       authStatus = { connected: false, oauthConfigured: authStatus?.oauthConfigured ?? false };
       accessToken = '';
       refreshToken = '';
@@ -90,7 +64,7 @@
 
   function startOAuth(): void {
     const returnTo = `/videos/${videoId}/analysis/${analysisId}/connect`;
-    window.location.href = `/api/youtube/auth/start?returnTo=${encodeURIComponent(returnTo)}`;
+    window.location.href = `/api/youtube/connection/oauth/start?returnTo=${encodeURIComponent(returnTo)}`;
   }
 </script>
 
@@ -163,44 +137,6 @@
         </Card>
       {/if}
     </div>
-
-    <div class="advanced-section">
-      <Button variant="ghost" size="sm" onclick={() => (showAdvancedAuth = !showAdvancedAuth)}>
-        {showAdvancedAuth ? 'Hide' : 'Advanced:'} manual token entry
-        <Icon name={showAdvancedAuth ? 'chevron-down' : 'chevron-right'} size={13} />
-      </Button>
-
-      {#if showAdvancedAuth}
-        <div class="settings-form" style="max-width:560px;margin-top:16px">
-          <Field label="Access token" for="access-token">
-            <Textarea id="access-token" rows={4} bind:value={accessToken} monospace />
-          </Field>
-          <Field label="Refresh token (optional)" for="refresh-token">
-            <Textarea id="refresh-token" rows={3} bind:value={refreshToken} monospace />
-          </Field>
-          <div class="settings-form--two">
-            <Field label="Client ID override" for="client-id">
-              <InputText id="client-id" bind:value={clientId} />
-            </Field>
-            <Field label="Client secret override" for="client-secret">
-              <InputText id="client-secret" bind:value={clientSecret} secret />
-            </Field>
-          </div>
-          <Field label="Expiry timestamp in ms (optional)" for="expiry">
-            <InputText id="expiry" inputmode="numeric" bind:value={expiryDate} />
-          </Field>
-          <div>
-            <Button
-              variant="secondary"
-              onclick={connectManualToken}
-              disabled={isSavingAuth || accessToken.trim() === ''}
-            >
-              {isSavingAuth ? 'Connecting…' : 'Connect token'}
-            </Button>
-          </div>
-        </div>
-      {/if}
-    </div>
   {/if}
 </div>
 
@@ -261,11 +197,5 @@
   .connect-actions {
     display: flex;
     gap: 8px;
-  }
-
-  .advanced-section {
-    margin-top: 28px;
-    padding-top: 20px;
-    border-top: 1px solid var(--vc-divider);
   }
 </style>

@@ -11,7 +11,7 @@ export async function streamAnalysis(
   callbacks: AnalysisStreamCallbacks,
   signal?: AbortSignal,
 ): Promise<ClipPlan> {
-  const res = await fetch('/api/analysis/transcript', {
+  const res = await fetch('/api/analyses', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
