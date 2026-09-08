@@ -1,3 +1,41 @@
+# [3.0.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v2.0.0...v3.0.0) (2026-09-08)
+
+
+* refactor(api)!: move the http layer out of sveltekit into the backend ([f9f4ad7](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f9f4ad71f870ee169a15931e09f59e8c2b05ab71))
+* refactor(auth)!: one auth table, one provider base class ([20b46fe](https://github.com/AmreetKumarkhuntia/video-clipper/commit/20b46fe3e98f5ffdda58024ed8f3ae0c57a662b4))
+* refactor(cli)!: talk to the backend over http ([49b3ae4](https://github.com/AmreetKumarkhuntia/video-clipper/commit/49b3ae4d861e22244166a53cee5789afb8bb1df7))
+
+
+### Bug Fixes
+
+* **api:** harden sign-in and settings per the PR 36 review ([5d61aea](https://github.com/AmreetKumarkhuntia/video-clipper/commit/5d61aea51ae545ba4ff77225dec8a8b72cbe1075))
+
+
+### Features
+
+* **api:** backend app skeleton and per-app build split ([f114dc0](https://github.com/AmreetKumarkhuntia/video-clipper/commit/f114dc0b96c28a45d9b4c12c26b253282731403a))
+* **auth:** provider-independent customer identity ([3520bb3](https://github.com/AmreetKumarkhuntia/video-clipper/commit/3520bb35766c4c9489047d4181050eefad963efe))
+* **onboarding:** sign in, then browse and build a library ([984705e](https://github.com/AmreetKumarkhuntia/video-clipper/commit/984705e78f9ba793d3817e188357a19b5525a3c3))
+
+
+### BREAKING CHANGES
+
+* drizzle migration drops customers.channel_id and the
+youtube_auth table in favor of auth_identities.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VSF7SpmMaWwu5nCCyfox1P
+* the CLI needs a running backend. Set
+VIDEO_CLIPPER_API_URL if it is not on http://localhost:5051.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VSF7SpmMaWwu5nCCyfox1P
+* the api is a separate process on API_PORT, 5051 by
+default. Run pnpm api:dev alongside pnpm web:dev. Several routes renamed.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VSF7SpmMaWwu5nCCyfox1P
+
 # [2.0.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v1.12.0...v2.0.0) (2026-09-03)
 
 
