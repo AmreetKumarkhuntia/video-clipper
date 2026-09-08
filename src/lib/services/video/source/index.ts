@@ -1,5 +1,5 @@
 export type { VideoSource } from '@lib/types/video.js';
-export { parseUrl } from './youtube/parser.js';
+export { parseVideoId as parseUrl } from '@lib/utils/youtubeUrl.js';
 export { extractMetadata } from './youtube/metadata.js';
 export { downloadVideo } from './youtube/downloader.js';
 export { parseVtt, fetchTranscript, fetchAvailableCaptionTracks } from './youtube/subtitles.js';

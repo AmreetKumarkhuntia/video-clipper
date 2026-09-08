@@ -1,11 +1,7 @@
 import { Hono } from 'hono';
 import { log } from '@lib/utils/logger.js';
-import {
-  completeGoogleLogin,
-  signOut,
-  startGoogleLogin,
-} from '@lib/orchestration/authOrchestrator.js';
-import { toGoogleOAuthConfig } from '../services/appConfig.js';
+import { oauthProvider, signOut } from '@lib/orchestration/auth/index.js';
+import { toGoogleOAuthConfig, sessionTtlMs } from '../services/appConfig.js';
 import {
   clearHandshakeCookies,
   clearSessionCookie,
@@ -37,7 +33,10 @@ authRoutes.get('/google/start', (c) => {
   const returnTo = sanitizeReturnTo(c.req.query('returnTo'));
 
   try {
-    const { authUrl, handshake } = startGoogleLogin(toGoogleOAuthConfig(c.get('config')), returnTo);
+    const { authUrl, handshake } = oauthProvider(
+      'google',
+      toGoogleOAuthConfig(c.get('config')),
+    ).startLogin(returnTo);
     setHandshakeCookies(c, handshake);
     return c.redirect(authUrl, 302);
   } catch (error) {
@@ -67,11 +66,13 @@ authRoutes.get('/google/callback', async (c) => {
   }
 
   try {
-    const result = await completeGoogleLogin(
+    const result = await oauthProvider(
+      'google',
+      toGoogleOAuthConfig(c.get('config')),
+    ).completeLogin(
       code,
       { state, codeVerifier: handshake.codeVerifier, returnTo: handshake.returnTo },
-      toGoogleOAuthConfig(c.get('config')),
-      c.get('requestId'),
+      { sessionTtlMs: sessionTtlMs(c.get('config')), requestId: c.get('requestId') },
     );
     setSessionCookie(c, result.token, result.expiresAt);
     log.info('api.auth', 'signed in', c.get('requestId'), { customerId: result.customer.id });
