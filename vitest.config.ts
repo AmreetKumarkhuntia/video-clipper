@@ -5,5 +5,6 @@ export default defineConfig({
   resolve: { alias: aliases },
   test: {
     include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/setup.ts'],
   },
 });
