@@ -7,7 +7,7 @@ export async function streamQa(
   callbacks: QaStreamCallbacks,
   signal?: AbortSignal,
 ): Promise<QaAnswer> {
-  const res = await fetch('/api/analysis/qa', {
+  const res = await fetch('/api/qa', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),

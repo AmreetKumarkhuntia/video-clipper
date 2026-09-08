@@ -67,11 +67,11 @@
     try {
       const [loadedPlan, loadedClips] = await Promise.all([
         needsPlan
-          ? apiFetch<ClipPlan>(`/api/library/analyses/${analysisId}`)
+          ? apiFetch<ClipPlan>(`/api/analyses/${analysisId}`)
           : Promise.resolve(cached!.plan!),
         needsClips
           ? apiFetch<{ clips: ClipArtifact[] }>(
-              `/api/library/clips?analysisId=${encodeURIComponent(analysisId)}`,
+              `/api/clips?analysisId=${encodeURIComponent(analysisId)}`,
             ).then((r) => r.clips)
           : Promise.resolve(cached!.clips),
         get(configLoaded) ? Promise.resolve() : initConfig(),

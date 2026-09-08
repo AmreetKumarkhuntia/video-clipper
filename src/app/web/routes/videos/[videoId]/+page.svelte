@@ -400,7 +400,7 @@
       message: 'Clear cached LLM analysis for this video?',
       onconfirm: async () => {
         try {
-          await apiFetch<{ ok: true }>(`/api/cache/videos/${videoId}/analysis`, {
+          await apiFetch<{ ok: true }>(`/api/videos/${videoId}/analysis`, {
             method: 'DELETE',
           });
           storeClearAnalysis(videoId);

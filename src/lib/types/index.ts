@@ -232,3 +232,14 @@ export type {
   ClipEdits,
   FilterGraphResult,
 } from './clipEdit.js';
+
+export type {
+  ApiServerConfig,
+  ResolveChannelQuery,
+  ListVideosParams,
+  VideoParams,
+  AnalysisStreamEventName,
+  QaStreamEventName,
+  UploadStreamEventName,
+} from './api.js';
+export { ResolveChannelQuerySchema, ListVideosParamsSchema, VideoParamsSchema } from './api.js';

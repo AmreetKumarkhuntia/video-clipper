@@ -6,7 +6,7 @@
   import Select from '@web/components/Select.svelte';
   import ConfigInputProviderGrid from './ConfigInputProviderGrid.svelte';
   import Badge from '@web/components/Badge.svelte';
-  import type { ConfigFieldDescriptor } from '@lib/config/registry.js';
+  import type { ConfigFieldDescriptor } from '@lib/types/config.js';
   import type { ConfigFieldProps } from '@app/web/types/componentProps.js';
 
   let { field, value, onupdate }: ConfigFieldProps = $props();

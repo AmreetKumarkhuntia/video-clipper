@@ -11,7 +11,7 @@ export async function streamUploads(
   analysisId: string,
   callbacks: UploadStreamCallbacks,
 ): Promise<UploadArtifact[]> {
-  const res = await fetch('/api/youtube/uploads', {
+  const res = await fetch('/api/publish/uploads', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ analysisId }),
