@@ -214,18 +214,34 @@ pnpm web:dev     # frontend on :5002, proxying /api
 
 ## Progress
 
-| #   | Commit                                                      | State        |
-| --- | ----------------------------------------------------------- | ------------ |
-| 1   | `chore(build)` split the build per app, consolidate aliases | ✅ `9aa0396` |
-| 2   | `feat(api)` backend skeleton                                | ✅ `ee2a669` |
-| 3   | `refactor(api)` lift the shared helpers                     | ⬜           |
-| 4–6 | `feat(api)` routes by group                                 | ⬜           |
-| 7   | `refactor(web)` frontend only                               | ⬜           |
-| 8   | `refactor(cli)` talk to the backend                         | ⬜           |
-| 9   | `test(boundaries)` three-app rules                          | ⬜           |
-| 10  | `docs` structure and deployment                             | ⬜           |
-| 11  | `feat(auth)` provider-independent identity                  | ⬜           |
-| 12+ | `feat(auth)`, `feat(library)` onboarding rebuilt            | ⬜           |
+| #   | Commit                                                      | State                                          |
+| --- | ----------------------------------------------------------- | ---------------------------------------------- |
+| 1   | `chore(build)` split the build per app, consolidate aliases | ✅ `9aa0396`                                   |
+| 2   | `feat(api)` backend skeleton                                | ✅ `ee2a669`                                   |
+| 3   | `refactor(api)` lift the shared helpers                     | ✅ `9187b33`                                   |
+| 4–6 | `feat(api)` routes by group                                 | ✅ `9187b33` — all nine groups mount           |
+| 7   | `refactor(web)` frontend only                               | ✅ `9187b33` — no `@lib` domain imports remain |
+| 8   | `refactor(cli)` talk to the backend                         | ✅ `523f1c0`                                   |
+| 9   | `test(boundaries)` three-app rules                          | ✅ `ddb7b0e`, CLI rule in `523f1c0`            |
+| 10  | `docs` structure and deployment                             | ✅ `ddb7b0e` — deployment still deferred       |
+| 11  | `feat(auth)` provider-independent identity                  | ✅ `8c9a5c6`                                   |
+| 12+ | `feat(auth)`, `feat(library)` onboarding rebuilt            | ⬜ in progress — see below                     |
+
+### What step 12+ still owes
+
+The lib half of onboarding is done: `customers`, `auth_identities`, `sessions`, `library_videos`,
+their repos and `authOrchestrator`. Nothing above lib reaches it yet.
+
+| Layer   | Missing                                                                                         |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| backend | `routes/auth.ts` (`GET /api/me`, `/api/auth/google/{start,callback}`, `POST /api/auth/signout`) |
+| backend | `routes/channel.ts` (`GET /api/channel`, `GET /api/channel/videos`)                             |
+| backend | `middleware/session.ts` and `http/sessionCookies.ts` — no session is resolved anywhere yet      |
+| backend | library routes: paged `GET /api/videos`, `POST`/`DELETE /api/videos/:id` membership             |
+| web     | `/login`, `/browse`, the library landing page, the root `+layout.server.ts` guard               |
+| web     | `LibraryVideoCard`, `ChannelCard`, the topbar channel chip and sign-out                         |
+
+Behaviour for all of these is on `reference/customer-onboarding-prototype`; the layout is not.
 
 Note: the backend listens on **5051**, not 5003, because another process holds 5003 on the
 development machine. Override with `API_PORT` and `API_ORIGIN`.
