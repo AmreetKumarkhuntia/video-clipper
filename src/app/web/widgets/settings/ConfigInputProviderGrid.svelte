@@ -16,13 +16,14 @@
     { key: 'custom', name: 'Custom', defaultModel: 'custom endpoint' },
   ];
 
-  let { value, onchange }: ConfigInputProviderGridProps = $props();
+  let { value, disabled = false, onchange }: ConfigInputProviderGridProps = $props();
 </script>
 
 <div class="provider-grid">
   {#each PROVIDERS as p (p.key)}
     <Button
       variant="ghost"
+      {disabled}
       class={`provider${value === p.key ? ' is-active' : ''}`}
       onclick={() => onchange?.(p.key)}
     >

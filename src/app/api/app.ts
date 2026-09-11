@@ -4,7 +4,8 @@ import { requestContext } from './middleware/requestContext.js';
 import { session } from './middleware/session.js';
 import { jsonError } from './http/responses.js';
 import { analysesRoutes } from './routes/analyses.js';
-import { authRoutes, meRoutes } from './routes/auth.js';
+import { createAuthRoutes, createCliAuthRoutes, meRoutes } from './routes/auth.js';
+import { CliLoginStore } from './services/cliLoginStore.js';
 import { channelRoutes } from './routes/channel.js';
 import { captionPresetsRoutes } from './routes/captionPresets.js';
 import { clipsRoutes } from './routes/clips.js';
@@ -24,6 +25,7 @@ import type { ApiEnv } from './context.js';
  */
 export function createApp(): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>();
+  const cliLogins = new CliLoginStore();
 
   app.use('*', requestContext);
   // Resolves the session for every request without requiring one. Routes that
@@ -31,8 +33,10 @@ export function createApp(): Hono<ApiEnv> {
   // keeps the CLI working while it has no way to sign in.
   app.use('*', session);
 
-  // Mounted more specific first: /api/youtube/connection must win over /api/youtube.
-  app.route('/api/auth', authRoutes);
+  // Mounted more specific first: /api/auth/cli must win over /api/auth, and
+  // /api/youtube/connection over /api/youtube.
+  app.route('/api/auth/cli', createCliAuthRoutes(cliLogins));
+  app.route('/api/auth', createAuthRoutes(cliLogins));
   app.route('/api/me', meRoutes);
   app.route('/api/channel', channelRoutes);
   app.route('/api/youtube/connection', connectionRoutes);

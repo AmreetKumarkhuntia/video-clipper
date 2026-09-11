@@ -2,8 +2,11 @@
   import { page } from '$app/stores';
   import Button from '@web/components/Button.svelte';
   import Icon from '@web/components/Icon.svelte';
+  import { loginErrorMessage } from '@web/lib/loginErrors.js';
 
-  let errorMessage = $derived($page.url.searchParams.get('error') ?? '');
+  let errorMessage = $derived(
+    loginErrorMessage($page.url.searchParams.get('error'), $page.url.searchParams.get('detail')),
+  );
   let returnTo = $derived($page.url.searchParams.get('returnTo') ?? '/');
   let startHref = $derived(`/api/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`);
 </script>

@@ -1,14 +1,13 @@
-import { timingSafeEqual } from 'node:crypto';
 import { resolveSession } from '@lib/orchestration/auth/index.js';
-import { hashSessionToken } from '@lib/utils/sessionToken.js';
 import { readSessionToken } from '../http/sessionCookies.js';
 import { HttpError, jsonError } from '../http/responses.js';
 import type { Context, MiddlewareHandler } from 'hono';
-import type { Customer } from '@lib/types/auth.js';
+import type { Customer, Permission } from '@lib/types/auth.js';
 import type { ApiEnv } from '../context.js';
 
 /**
- * Resolves the session cookie into `c.get('customer')` for every request.
+ * Resolves the session — cookie or bearer header — into `c.get('customer')`
+ * for every request.
  *
  * Resolving is not guarding: this sets the customer when there is one and moves
  * on when there is not, so a route can be public, customer-scoped, or behave
@@ -35,27 +34,19 @@ export function requireCustomer(c: Context<ApiEnv>): Customer {
 }
 
 /**
- * Guard for operator-scoped routes — config writes today. A bearer token
- * rather than a session, because the CLI has no way to sign in; RBAC on the
- * session is the planned replacement, and it swaps out this one function.
- * An unset token means locked, not open.
+ * Guard for a route that needs a specific permission. 401 when nobody is
+ * signed in, 403 when someone is but may not do this — two different fixes,
+ * so two different answers.
+ *
+ * Asks for a permission rather than a role: a third role later is a seed row
+ * in `roles.permissions`, not a change to every route that checks it.
  */
-export function requireOperator(c: Context<ApiEnv>): void {
-  const expected = c.get('config').OPERATOR_TOKEN;
-  if (!expected) {
+export function requirePermission(c: Context<ApiEnv>, permission: Permission): Customer {
+  const customer = requireCustomer(c);
+  if (!customer.permissions.includes(permission)) {
     throw new HttpError(
-      jsonError(403, 'Settings are locked. Set OPERATOR_TOKEN on the server to allow changes.'),
+      jsonError(403, 'You do not have permission to do this.', `requires ${permission}`),
     );
   }
-  const header = c.req.header('authorization');
-  const presented = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : '';
-  // Hashing both sides first gives timingSafeEqual the equal-length buffers it
-  // requires, without leaking the token's length through an early return.
-  const match =
-    presented !== '' &&
-    timingSafeEqual(
-      Buffer.from(hashSessionToken(presented)),
-      Buffer.from(hashSessionToken(expected)),
-    );
-  if (!match) throw new HttpError(jsonError(401, 'Operator token required.'));
+  return customer;
 }

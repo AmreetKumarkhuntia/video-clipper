@@ -24,6 +24,20 @@ export function sessionTtlMs(cfg: Config): number {
   return cfg.SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
 }
 
+/**
+ * Where the web app lives, for a URL the CLI must print. The OAuth redirect URI
+ * already has to be the frontend's origin for sign-in to work at all, so it is
+ * the one address an operator has necessarily configured correctly.
+ */
+export function webOrigin(cfg: Config): string {
+  try {
+    if (cfg.GOOGLE_OAUTH_REDIRECT_URI) return new URL(cfg.GOOGLE_OAUTH_REDIRECT_URI).origin;
+  } catch {
+    // fall through to the development default
+  }
+  return 'http://localhost:5002';
+}
+
 /** Assembles the OAuth client config the publish service expects from full Config. */
 export function toYouTubeOAuthConfig(cfg: Config): YouTubeOAuthClientConfig {
   const { YOUTUBE } = groupConfig(cfg);

@@ -1,4 +1,5 @@
 import { apiError, errorMessageFrom, isNotFound } from './errors.js';
+import { readCredential } from './credentials.js';
 import type { ApiErrorBody } from '@lib/types/api.js';
 
 /**
@@ -27,18 +28,17 @@ export function setClientRequestId(requestId: string): void {
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
   const url = new URL(path, apiBaseUrl());
-  // The CLI has no sign-in; operator-scoped calls (config writes) authenticate
-  // with the same OPERATOR_TOKEN the backend holds, taken from this process's
-  // environment. Attached on every call because the backend ignores it where it
-  // is not required.
-  const operatorToken = process.env.OPERATOR_TOKEN;
+  // The session `video-clipper login` stored, sent as a bearer header — the same
+  // token a browser would hold in its cookie. Attached on every call because the
+  // backend ignores it where it is not required.
+  const token = readCredential(apiBaseUrl())?.token;
   try {
     return await fetch(url, {
       ...init,
       headers: {
         'content-type': 'application/json',
         ...(currentRequestId ? { 'x-request-id': currentRequestId } : {}),
-        ...(operatorToken ? { authorization: `Bearer ${operatorToken}` } : {}),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...(init?.headers ?? {}),
       },
     });
@@ -57,9 +57,28 @@ export async function apiGet<T>(path: string): Promise<T> {
   return readJson<T>(await request(path));
 }
 
-export async function apiSend<T>(path: string, method: string, body?: unknown): Promise<T> {
+export async function apiSend<T>(
+  path: string,
+  method: string,
+  body?: unknown,
+  options?: RequestInit,
+): Promise<T> {
   return readJson<T>(
-    await request(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }),
+    await request(path, {
+      ...options,
+      method,
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    }),
+  );
+}
+
+/** Uses the queued bearer explicitly, without ever including it in an error. */
+export async function revokeSession(token: string): Promise<void> {
+  await readJson(
+    await request('/api/auth/signout', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}` },
+    }),
   );
 }
 

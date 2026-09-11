@@ -105,6 +105,7 @@ describe('guarded routes', () => {
     ['GET', '/api/videos'],
     ['POST', '/api/videos/abc'],
     ['DELETE', '/api/videos/abc'],
+    ['PATCH', '/api/settings'],
   ];
 
   for (const [method, route] of guarded) {
@@ -130,6 +131,36 @@ describe('signed in', () => {
     const body = (await res.json()) as { customer: Customer };
     expect(body.customer.id).toBe(customer.id);
     expect(body.customer.channelId).toBe(CHANNEL_ID);
+  });
+
+  it('carries the role and permissions, so the web app can decide what to show', async () => {
+    const res = await app.request('/api/me', signedIn());
+    const body = (await res.json()) as { customer: Customer };
+    expect(body.customer.role).toBe('customer');
+    expect(body.customer.permissions).toEqual([]);
+  });
+
+  it('accepts the same token as a bearer header, which is how the CLI sends it', async () => {
+    const res = await app.request('/api/me', {
+      headers: { authorization: `Bearer ${SESSION_TOKEN}` },
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { customer: Customer }).customer.id).toBe(customer.id);
+  });
+
+  it('lets the bearer header win over the cookie when both are present', async () => {
+    const res = await app.request('/api/me', {
+      headers: {
+        authorization: 'Bearer not-a-real-token',
+        cookie: `${SESSION_COOKIE_NAME}=${SESSION_TOKEN}`,
+      },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('ignores a bearer header that is not a session', async () => {
+    const res = await app.request('/api/me', { headers: { authorization: 'Bearer nope' } });
+    expect(res.status).toBe(401);
   });
 
   it('answers /api/channel with the linked channel', async () => {
@@ -231,7 +262,7 @@ describe('sign-in redirects', () => {
     // to click sign in gets a page, never a stack trace.
     const location = res.headers.get('location') ?? '';
     const configured = location.startsWith('https://accounts.google.com/');
-    expect(configured || location.startsWith('/login?error=')).toBe(true);
+    expect(configured || location === '/login?error=not_configured').toBe(true);
   });
 
   // The branch the route above catches, exercised directly so it is covered on
@@ -245,15 +276,13 @@ describe('sign-in redirects', () => {
       headers: { cookie: 'vc_login_state=real; vc_login_verifier=v' },
     });
     expect(res.status).toBe(302);
-    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain(
-      'Sign-in could not be verified',
-    );
+    expect(res.headers.get('location')).toBe('/login?error=state_mismatch');
   });
 
-  it('reports an error Google itself returned', async () => {
+  it('reports an error Google itself returned as a code plus the provider word', async () => {
     const res = await app.request('/api/auth/google/callback?error=access_denied');
     expect(res.status).toBe(302);
-    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain('access_denied');
+    expect(res.headers.get('location')).toBe('/login?error=provider_denied&detail=access_denied');
   });
 });
 

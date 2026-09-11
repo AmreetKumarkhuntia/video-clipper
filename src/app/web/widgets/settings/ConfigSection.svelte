@@ -2,7 +2,7 @@
   import ConfigField from './ConfigField.svelte';
   import type { ConfigSectionProps } from '@app/web/types/componentProps.js';
 
-  let { group, values, sections, onupdate }: ConfigSectionProps = $props();
+  let { group, values, sections, disabled = false, onupdate }: ConfigSectionProps = $props();
 
   // Build a lookup from field key → descriptor for fast resolution inside sections.
   let fieldMap = $derived(Object.fromEntries(group.fields.map((f) => [f.key, f])));
@@ -29,7 +29,12 @@
       {#if regular.length > 0}
         <div class="settings-form" class:settings-form--two={section.layout === 'two'}>
           {#each regular as field (field.key)}
-            <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+            <ConfigField
+              {field}
+              value={values[field.key]}
+              {disabled}
+              onupdate={(k, v) => onupdate?.(k, v)}
+            />
           {/each}
         </div>
       {/if}
@@ -37,7 +42,12 @@
       {#if toggles.length > 0}
         <div class="settings-toggles">
           {#each toggles as field (field.key)}
-            <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+            <ConfigField
+              {field}
+              value={values[field.key]}
+              {disabled}
+              onupdate={(k, v) => onupdate?.(k, v)}
+            />
           {/each}
         </div>
       {/if}
@@ -48,7 +58,12 @@
   {#if flatRegular.length > 0}
     <div class="settings-form">
       {#each flatRegular as field (field.key)}
-        <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+        <ConfigField
+          {field}
+          value={values[field.key]}
+          {disabled}
+          onupdate={(k, v) => onupdate?.(k, v)}
+        />
       {/each}
     </div>
   {/if}
@@ -56,7 +71,12 @@
   {#if flatToggles.length > 0}
     <div class="settings-toggles">
       {#each flatToggles as field (field.key)}
-        <ConfigField {field} value={values[field.key]} onupdate={(k, v) => onupdate?.(k, v)} />
+        <ConfigField
+          {field}
+          value={values[field.key]}
+          {disabled}
+          onupdate={(k, v) => onupdate?.(k, v)}
+        />
       {/each}
     </div>
   {/if}

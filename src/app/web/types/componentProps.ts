@@ -261,6 +261,7 @@ export interface ToggleRowProps {
   titleContent?: Snippet;
   description?: string;
   checked: boolean;
+  disabled?: boolean;
   ariaLabel?: string;
   onchange: (checked: boolean) => void;
   class?: string;
@@ -347,6 +348,7 @@ export interface UploadStatusCardProps {
 export interface ConfigFieldProps {
   field: ConfigFieldDescriptor;
   value: unknown;
+  disabled?: boolean;
   onupdate?: (key: string, value: unknown) => void;
 }
 
@@ -359,6 +361,7 @@ export interface ProviderDef {
 
 export interface ConfigInputProviderGridProps {
   value: string;
+  disabled?: boolean;
   onchange?: (value: string) => void;
 }
 
@@ -366,6 +369,7 @@ export interface ConfigSectionProps {
   group: ConfigGroupDescriptor;
   values: Record<string, unknown>;
   sections?: SectionConfig[];
+  disabled?: boolean;
   onupdate?: (key: string, value: unknown) => void;
 }
 

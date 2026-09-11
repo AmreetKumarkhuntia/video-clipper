@@ -2,6 +2,7 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
 import type { Context } from 'hono';
 import type { ApiEnv } from '../context.js';
+import { CLI } from '@lib/utils/constants.js';
 
 /**
  * Cookies for the sign-in flow.
@@ -84,7 +85,35 @@ export function clearHandshakeCookies(c: Context<ApiEnv>): void {
   }
 }
 
+export function setCliRequestCookie(c: Context<ApiEnv>, requestId: string): void {
+  setCookie(c, CLI.AUTH.REQUEST_COOKIE, requestId, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'Lax',
+    secure: isSecureRequest(c),
+    maxAge: CLI.AUTH.HANDSHAKE_TTL_SEC,
+  });
+}
+
+export function readCliRequestCookie(c: Context<ApiEnv>): string | undefined {
+  return getCookie(c, CLI.AUTH.REQUEST_COOKIE);
+}
+
+export function clearCliRequestCookie(c: Context<ApiEnv>): void {
+  deleteCookie(c, CLI.AUTH.REQUEST_COOKIE, { path: '/', secure: isSecureRequest(c) });
+}
+
+/**
+ * One session mechanism, two carriers. A browser holds the token in the cookie;
+ * the CLI, which has no cookie jar, sends the same token as a bearer header.
+ * The header wins when both are present: it is the explicit one.
+ */
 export function readSessionToken(c: Context<ApiEnv>): string | undefined {
+  const header = c.req.header('authorization');
+  if (header?.startsWith('Bearer ')) {
+    const token = header.slice('Bearer '.length).trim();
+    if (token) return token;
+  }
   return getCookie(c, SESSION_COOKIE_NAME);
 }
 

@@ -62,6 +62,7 @@ src/
       analysis/               # llm, ranker, refiner, transcript (detector/chunker),
                               #   qa, subtitlePlanner, prompts
       publish/                # oauth, authStore, uploadClient, metadata(+cache), prompts
+      encryption/             # Provider-token cipher; key injected by the API at startup
       db/                     # drizzle client (lazy), migrate, repos/ (one per table)
     orchestration/            # The only lib layer that touches services/db. Shared by
                               # CLI + web: transcript / analysis / clip / qa /
@@ -171,7 +172,8 @@ pnpm web:dev     # frontend on 5002, proxying /api
 - From outside a service, import only its barrel: `@lib/services/<svc>/index.js`
   (deep paths — alias or relative — fail the test). Types always come from `@lib/types/*`.
   Intra-service imports stay relative.
-- Cross-service edges are limited to `* → modelFactory` and `audio → video`
+- Cross-service edges are limited to `* → modelFactory`, `audio → video`, and
+  `db → encryption` (provider tokens at rest; encryption reads no config or database)
 - Within `src/lib/`, only `orchestration/` and the public barrel import `services/db`
 - `services/`, `orchestration/` and `pipeline/` never import `@lib/config` — config is injected by
   the app layer, which is what lets the backend own it exclusively

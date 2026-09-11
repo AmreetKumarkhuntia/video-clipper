@@ -5,6 +5,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import * as schema from '../src/lib/services/db/schema.js';
+import { log } from '../src/lib/utils/logger.js';
 
 // ── In-memory DB setup ────────────────────────────────────────────────────────
 
@@ -18,10 +19,17 @@ vi.mock('../src/lib/services/db/client.js', () => ({ db: testDb }));
 
 const { createCustomer, updateCustomerProfile, findCustomerById, findCustomerByChannelId } =
   await import('../src/lib/services/db/repos/customersRepo.js');
-const { linkIdentity, findCustomerIdByIdentity, findIdentity, unlinkIdentity } =
-  await import('../src/lib/services/db/repos/authIdentitiesRepo.js');
+const {
+  linkIdentity,
+  findCustomerIdByIdentity,
+  findIdentity,
+  unlinkIdentity,
+  reencryptIdentityTokens,
+} = await import('../src/lib/services/db/repos/authIdentitiesRepo.js');
 const { insertSession, findValidSession, deleteSession, deleteExpiredSessions } =
   await import('../src/lib/services/db/repos/sessionsRepo.js');
+const { setCustomerRole } = await import('../src/lib/services/db/repos/customersRepo.js');
+const { findRolePermissions } = await import('../src/lib/services/db/repos/rolesRepo.js');
 
 const GOOGLE_SUB = 'google-sub-001';
 const CHANNEL_ID = 'UC_test_channel';
@@ -32,6 +40,10 @@ function hash(token: string): string {
 
 beforeEach(() => {
   sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
+  sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run('[]', 'customer');
+  sqlite
+    .prepare('UPDATE roles SET permissions = ? WHERE id = ?')
+    .run('["settings:write"]', 'admin');
 });
 
 describe('customersRepo and authIdentitiesRepo', () => {
@@ -105,6 +117,27 @@ describe('customersRepo and authIdentitiesRepo', () => {
     expect(findCustomerById(first.id)?.channelId).toBe(CHANNEL_ID);
   });
 
+  it('prefers the most recently refreshed identity when two carry a channel', () => {
+    const customer = signIn(GOOGLE_SUB);
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: 'second-sub',
+      channelId: 'UC_second',
+    });
+    // Force a clear ordering rather than relying on two writes in the same millisecond.
+    sqlite
+      .prepare('UPDATE auth_identities SET updated_at = ? WHERE provider_account_id = ?')
+      .run(Date.now() + 10_000, GOOGLE_SUB);
+
+    expect(findCustomerById(customer.id)?.channelId).toBe(CHANNEL_ID);
+
+    sqlite
+      .prepare('UPDATE auth_identities SET updated_at = ? WHERE provider_account_id = ?')
+      .run(Date.now() + 20_000, 'second-sub');
+    expect(findCustomerById(customer.id)?.channelId).toBe('UC_second');
+  });
+
   it('returns null for unknown lookups', () => {
     expect(findCustomerById('nope')).toBeNull();
     expect(findCustomerByChannelId('nope')).toBeNull();
@@ -176,6 +209,85 @@ describe('identity tokens', () => {
     });
   });
 
+  it('stores tokens encrypted and reads them back plain', () => {
+    const customer = createCustomer({});
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: GOOGLE_SUB,
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+    });
+
+    const raw = sqlite
+      .prepare('SELECT access_token AS a, refresh_token AS r FROM auth_identities')
+      .get() as { a: string; r: string };
+    expect(raw.a.startsWith('enc:v1:')).toBe(true);
+    expect(raw.r.startsWith('enc:v1:')).toBe(true);
+    expect(raw.a).not.toContain('access-1');
+
+    const identity = findIdentity(customer.id, 'google');
+    expect(identity?.accessToken).toBe('access-1');
+    expect(identity?.refreshToken).toBe('refresh-1');
+  });
+
+  it('reads a row written before encryption, and encrypts it on the next write', () => {
+    const customer = createCustomer({});
+    sqlite
+      .prepare(
+        `INSERT INTO auth_identities (id, customer_id, provider, provider_account_id, access_token, refresh_token, metadata, created_at, updated_at)
+         VALUES ('legacy', ?, 'google', ?, 'old-access', 'old-refresh', '{}', 1, 1)`,
+      )
+      .run(customer.id, GOOGLE_SUB);
+
+    expect(findIdentity(customer.id, 'google')?.refreshToken).toBe('old-refresh');
+
+    // The next grant omits a refresh token, so the kept one must be re-encrypted, not copied.
+    linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: GOOGLE_SUB,
+      accessToken: 'new-access',
+    });
+    const raw = sqlite.prepare('SELECT refresh_token AS r FROM auth_identities').get() as {
+      r: string;
+    };
+    expect(raw.r.startsWith('enc:v1:')).toBe(true);
+    expect(findIdentity(customer.id, 'google')?.refreshToken).toBe('old-refresh');
+  });
+
+  it('sweeps rows written before encryption once at startup', () => {
+    const customer = createCustomer({});
+    sqlite
+      .prepare(
+        `INSERT INTO auth_identities (id, customer_id, provider, provider_account_id, access_token, refresh_token, metadata, created_at, updated_at)
+         VALUES ('legacy', ?, 'google', ?, 'old-access', NULL, '{}', 1, 1)`,
+      )
+      .run(customer.id, GOOGLE_SUB);
+
+    expect(reencryptIdentityTokens()).toBe(1);
+    expect(reencryptIdentityTokens()).toBe(0);
+    const raw = sqlite.prepare('SELECT access_token AS a FROM auth_identities').get() as {
+      a: string;
+    };
+    expect(raw.a.startsWith('enc:v1:')).toBe(true);
+    expect(findIdentity(customer.id, 'google')?.accessToken).toBe('old-access');
+  });
+
+  it('treats a token it cannot decrypt as absent rather than failing the read', () => {
+    const customer = createCustomer({});
+    sqlite
+      .prepare(
+        `INSERT INTO auth_identities (id, customer_id, provider, provider_account_id, access_token, metadata, created_at, updated_at)
+         VALUES ('broken', ?, 'google', ?, 'enc:v1:not:really:encrypted', '{}', 1, 1)`,
+      )
+      .run(customer.id, GOOGLE_SUB);
+
+    const identity = findIdentity(customer.id, 'google');
+    expect(identity).not.toBeNull();
+    expect(identity?.accessToken).toBeUndefined();
+  });
+
   it('unlinks a login and the tokens it carried', () => {
     const customer = createCustomer({});
     linkIdentity({
@@ -228,4 +340,62 @@ describe('sessionsRepo', () => {
     deleteSession(live);
     expect(findValidSession(live)).toBeNull();
   });
+});
+
+describe('roles and permissions', () => {
+  it('seeds both roles and gives only admin the settings permission', () => {
+    const roles = sqlite.prepare('SELECT id FROM roles ORDER BY rank').all() as { id: string }[];
+    expect(roles.map((r) => r.id)).toEqual(['customer', 'admin']);
+    expect(findRolePermissions('customer')).toEqual([]);
+    expect(findRolePermissions('admin')).toEqual(['settings:write']);
+  });
+
+  it('starts everyone as a customer with no permissions', () => {
+    const customer = createCustomer({ email: 'new@example.com' });
+    expect(customer.role).toBe('customer');
+    expect(customer.permissions).toEqual([]);
+  });
+
+  it('promotes and demotes through the role, and the permissions follow', () => {
+    const customer = createCustomer({});
+    const admin = setCustomerRole(customer.id, 'admin');
+    expect(admin.role).toBe('admin');
+    expect(admin.permissions).toEqual(['settings:write']);
+    expect(findCustomerById(customer.id)?.permissions).toEqual(['settings:write']);
+
+    expect(setCustomerRole(customer.id, 'customer').permissions).toEqual([]);
+  });
+});
+
+describe('stored role permission validation', () => {
+  it('reads permission changes on the next customer load', () => {
+    const customer = createCustomer({});
+    sqlite
+      .prepare('UPDATE roles SET permissions = ? WHERE id = ?')
+      .run('["settings:write"]', 'customer');
+    expect(findCustomerById(customer.id)?.permissions).toEqual(['settings:write']);
+    sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run('[]', 'customer');
+    expect(findCustomerById(customer.id)?.permissions).toEqual([]);
+  });
+
+  it('grants nothing for a missing role', () => {
+    const warning = vi.spyOn(log, 'warn').mockImplementation(() => {});
+    expect(findRolePermissions('missing')).toEqual([]);
+    expect(warning).toHaveBeenCalledWith('db', 'stored role is missing; no permissions granted');
+    warning.mockRestore();
+  });
+
+  it.each(['null', '{}', '"settings:write"', '[1]', '["unknown:permission"]', 'broken-json'])(
+    'fails closed for invalid permissions %s without echoing stored data',
+    (value) => {
+      const warning = vi.spyOn(log, 'warn').mockImplementation(() => {});
+      sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run(value, 'customer');
+      expect(findRolePermissions('customer')).toEqual([]);
+      expect(warning).toHaveBeenCalledWith(
+        'db',
+        'stored role permissions are invalid; no permissions granted',
+      );
+      warning.mockRestore();
+    },
+  );
 });

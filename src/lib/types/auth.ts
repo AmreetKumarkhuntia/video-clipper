@@ -45,6 +45,7 @@ export type GoogleTokenResponse = z.infer<typeof GoogleTokenResponseSchema>;
 export const GoogleUserInfoSchema = z.object({
   sub: z.string().min(1),
   email: z.string().optional(),
+  email_verified: z.boolean().optional(),
   name: z.string().optional(),
   picture: z.string().optional(),
 });
@@ -95,6 +96,7 @@ export interface ProviderAccount {
   /** The provider's own stable id for the account — Google's `sub`. */
   accountId: string;
   email?: string;
+  emailVerified?: boolean;
   name?: string;
   avatarUrl?: string;
   channel: ProviderChannel | null;
@@ -102,6 +104,22 @@ export interface ProviderAccount {
   /** Anything provider-specific worth keeping, stored as JSON on the identity row. */
   metadata?: Record<string, unknown>;
 }
+
+// ── Roles and permissions ────────────────────────────────────────────────────
+
+/**
+ * The levels a person can hold. Everyone starts as `customer`; the configured
+ * verified Google account can bootstrap the first administrator at sign-in.
+ */
+export type Role = 'customer' | 'admin';
+
+/**
+ * What a guard asks for. A route never checks a role — it checks a permission,
+ * so a third role later is a seed row, not a code change on every route.
+ */
+export const PermissionSchema = z.enum(['settings:write']);
+export const PermissionsSchema = z.array(PermissionSchema);
+export type Permission = z.infer<typeof PermissionSchema>;
 
 // ── Customer, session, tokens ────────────────────────────────────────────────
 
@@ -116,6 +134,9 @@ export interface Customer {
    * provider that has no channel concept.
    */
   channelId?: string;
+  role: Role;
+  /** Resolved from the role's permissions when loaded, so `/api/me` carries it. */
+  permissions: Permission[];
   createdAt: string;
   updatedAt: string;
 }
@@ -179,6 +200,24 @@ export interface SignInResult {
   expiresAt: number;
 }
 
+// ── Sign-in errors ───────────────────────────────────────────────────────────
+
+/**
+ * Why a sign-in failed, as a code the login page turns into copy. The URL
+ * carries the code, never free text, so nothing an upstream returned is
+ * rendered verbatim and the wording lives in one place.
+ */
+export const LoginErrorCodeSchema = z.enum([
+  'not_configured', // the operator has not set the OAuth client
+  'provider_denied', // the provider answered the redirect with an error
+  'state_mismatch', // the callback did not match the handshake we started
+  'no_channel', // the account owns no channel
+  'channel_claimed', // the channel is linked to a different account
+  'channel_mismatch', // this account is linked to a different channel
+  'sign_in_failed', // anything else
+]);
+export type LoginErrorCode = z.infer<typeof LoginErrorCodeSchema>;
+
 /**
  * What the caller must supply to complete a sign-in.
  *
@@ -188,6 +227,14 @@ export interface SignInResult {
  */
 export interface CompleteLoginOptions {
   sessionTtlMs: number;
+  /** A verified provider email eligible for the one-time admin bootstrap. */
+  initialAdminEmail?: string;
+  /**
+   * The session the browser presented with the callback, if any. Deleted
+   * before the new one is minted, so signing in again rotates the session
+   * rather than leaving the old token live beside the new one.
+   */
+  replacesToken?: string;
   requestId?: string;
 }
 

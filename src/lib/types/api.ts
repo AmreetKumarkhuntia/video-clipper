@@ -2,6 +2,14 @@ import { z } from 'zod';
 import { PositionSchema, TextStyleSchema } from './clipEdit.js';
 import type { ConfigRegistryResponse, SetConfigResult } from './config.js';
 import type { Customer } from './auth.js';
+import { PermissionsSchema } from './auth.js';
+import {
+  CliCodeChallengeSchema,
+  CliCodeVerifierSchema,
+  CliExchangeCodeSchema,
+  CliLoopbackRedirectUriSchema,
+  CliStateSchema,
+} from './cliAuth.js';
 import type { VideoPage } from './youtube.js';
 
 /**
@@ -114,6 +122,74 @@ export interface SettingsUpdateResponse extends SetConfigResult {
 export interface MeResponse {
   customer: Customer;
 }
+
+// ── CLI sign-in ──────────────────────────────────────────────────────────────
+
+export const CliLoginStartSchema = z
+  .object({
+    redirectUri: CliLoopbackRedirectUriSchema,
+    state: CliStateSchema,
+    codeChallenge: CliCodeChallengeSchema,
+    codeChallengeMethod: z.literal('S256'),
+  })
+  .strict();
+export type CliLoginStartRequest = z.infer<typeof CliLoginStartSchema>;
+
+const CliLoginExpirySchema = z.number().int().positive().max(8_640_000_000_000_000);
+
+/** POST /api/auth/cli/start. The browser URL uses the configured web origin. */
+export const CliLoginStartResponseSchema = z
+  .object({
+    authorizationUrl: z.string().refine((value: string): boolean => {
+      try {
+        const url = new URL(value);
+        return (
+          ['http:', 'https:'].includes(url.protocol) &&
+          url.href === value &&
+          /^[A-Za-z0-9.:[\]-]+$/.test(url.hostname) &&
+          !url.username &&
+          !url.password &&
+          !url.hash &&
+          url.pathname === '/api/auth/cli/authorize' &&
+          /^\?request=[A-Za-z0-9_-]{32,128}$/.test(url.search)
+        );
+      } catch {
+        return false;
+      }
+    }),
+    expiresAt: CliLoginExpirySchema,
+  })
+  .strict();
+export type CliLoginStartResponse = z.infer<typeof CliLoginStartResponseSchema>;
+
+export const CliLoginExchangeSchema = z
+  .object({
+    code: CliExchangeCodeSchema,
+    codeVerifier: CliCodeVerifierSchema,
+    redirectUri: CliLoopbackRedirectUriSchema,
+  })
+  .strict();
+export type CliLoginExchangeRequest = z.infer<typeof CliLoginExchangeSchema>;
+
+/** Validate the entire external response before persisting any credential. */
+export const CliLoginExchangeResponseSchema = z
+  .object({
+    customer: z.object({
+      id: z.string().min(1),
+      email: z.string().email().optional(),
+      name: z.string().optional(),
+      avatarUrl: z.string().url().optional(),
+      channelId: z.string().min(1).optional(),
+      role: z.enum(['customer', 'admin']),
+      permissions: PermissionsSchema,
+      createdAt: z.string().datetime(),
+      updatedAt: z.string().datetime(),
+    }),
+    token: z.string().min(1),
+    expiresAt: CliLoginExpirySchema,
+  })
+  .strict();
+export type CliLoginExchangeResponse = z.infer<typeof CliLoginExchangeResponseSchema>;
 
 /** GET /api/channel. The one channel this customer is linked to. */
 export interface ChannelResponse {

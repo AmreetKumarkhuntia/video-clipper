@@ -1,9 +1,10 @@
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../client.js';
 import { authIdentities, customers } from '../schema.js';
+import { findRolePermissions } from './rolesRepo.js';
 import { log } from '@lib/utils/logger.js';
-import type { Customer, CustomerInput } from '@lib/types/auth.js';
+import type { Customer, CustomerInput, Permission, Role } from '@lib/types/auth.js';
 
 /**
  * A customer row carries no channel — that lives on the identity that provided
@@ -11,31 +12,44 @@ import type { Customer, CustomerInput } from '@lib/types/auth.js';
  * callers still see one object while the table stays provider-neutral.
  */
 
-function rowToCustomer(row: typeof customers.$inferSelect, channelId: string | null): Customer {
+function rowToCustomer(
+  row: typeof customers.$inferSelect,
+  channelId: string | null,
+  permissions: Permission[],
+): Customer {
   return {
     id: row.id,
     ...(row.email ? { email: row.email } : {}),
     ...(row.name ? { name: row.name } : {}),
     ...(row.avatarUrl ? { avatarUrl: row.avatarUrl } : {}),
     ...(channelId ? { channelId } : {}),
+    role: row.roleId as Role,
+    permissions,
     createdAt: new Date(row.createdAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
   };
 }
 
-/** The channel of whichever linked identity has one. 1:1 today, so the first is the only. */
+/**
+ * The channel of whichever linked identity has one. 1:1 today; should a second
+ * identity ever carry a channel, the most recently refreshed one wins rather
+ * than whichever row SQLite happens to return first.
+ */
 function linkedChannelId(customerId: string): string | null {
   const row = db
     .select({ channelId: authIdentities.channelId })
     .from(authIdentities)
     .where(and(eq(authIdentities.customerId, customerId), isNotNull(authIdentities.channelId)))
+    .orderBy(desc(authIdentities.updatedAt))
     .get();
   return row?.channelId ?? null;
 }
 
 function load(customerId: string): Customer | null {
   const row = db.select().from(customers).where(eq(customers.id, customerId)).get();
-  return row ? rowToCustomer(row, linkedChannelId(customerId)) : null;
+  return row
+    ? rowToCustomer(row, linkedChannelId(customerId), findRolePermissions(row.roleId))
+    : null;
 }
 
 export function findCustomerById(customerId: string): Customer | null {
@@ -91,4 +105,21 @@ export function updateCustomerProfile(customerId: string, input: CustomerInput):
     .run();
   done({ id: customerId });
   return load(customerId)!;
+}
+
+/** Promotion and demotion. Takes effect on the next request — the role is read on every session resolve. */
+export function setCustomerRole(customerId: string, role: Role): Customer {
+  const done = log.dbCalled('setCustomerRole', undefined, { customerId, role });
+  db.update(customers)
+    .set({ roleId: role, updatedAt: Date.now() })
+    .where(eq(customers.id, customerId))
+    .run();
+  done({ id: customerId });
+  return load(customerId)!;
+}
+
+export function hasCustomerWithRole(role: Role): boolean {
+  return Boolean(
+    db.select({ id: customers.id }).from(customers).where(eq(customers.roleId, role)).get(),
+  );
 }
