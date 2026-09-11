@@ -94,7 +94,20 @@ If your commit is rejected, check the error output — it will tell you exactly 
 
 ## Testing
 
-- Write unit tests for pure functions
-- Test files live in `tests/` at the project root
-- Run `pnpm test` to run all tests
-- Run `pnpm test:watch` for watch mode
+- See [`tests/README.md`](tests/README.md) for the placement guide and coverage principles.
+- Tests are grouped by level and then mirror the source tree:
+  - `tests/unit/` for isolated, deterministic module behavior
+  - `tests/integration/` for API, CLI, database, and orchestration contracts
+  - `tests/architecture/` for static dependency and repository-shape rules
+  - `tests/e2e/` for Playwright browser journeys
+  - `tests/support/` for shared fixtures and test-only helpers
+- Keep each test focused on a meaningful business rule, boundary, failure path, or compatibility
+  contract. Avoid duplicate examples and incidental input permutations that do not protect distinct
+  behavior.
+- Mock external providers and processes in Vitest. Live browser journeys belong in Playwright.
+- Run `pnpm test:unit`, `pnpm test:integration`, or `pnpm test:architecture` for one Vitest layer.
+- Run `pnpm test` for all Vitest layers, `pnpm test:e2e` for browser journeys, or `pnpm test:all`
+  for both.
+- Run `pnpm test:coverage` to generate text, HTML, and JSON coverage reports under
+  `temp/coverage/`. Coverage is diagnostic; there is no repository-wide percentage gate.
+- Run `pnpm test:watch` for Vitest watch mode.

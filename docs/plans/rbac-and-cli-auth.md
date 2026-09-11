@@ -86,10 +86,10 @@ PKCE, expiry/replay races, independent sessions, rate limits, and callback liste
 Run `pnpm type-check`, `pnpm test` and `pnpm web:check`. Browser smoke-test artifacts belong
 under `temp/`.
 
-Run the opt-in Chromium smoke with
-`RUN_AUTH_BROWSER_TEST=1 pnpm exec vitest run tests/authBrowser.test.ts`. It uses a local mock
-Google consent server with real API cookies, SQLite, redirects, and the CLI loopback listener.
-Install the Playwright Chromium browser first if it is not already available.
+Run the Chromium flow with
+`pnpm test:e2e tests/e2e/auth/cliLogin.spec.ts`. It uses a local mock Google consent server with
+real API cookies, SQLite, redirects, and the CLI loopback listener. Install the Playwright Chromium
+browser first if it is not already available.
 
 Before upgrading, back up the database and matching secret and provision the existing key file's
 base64 value as `TOKEN_ENCRYPTION_KEY`. Upgrade backend and CLI together. Do not generate a new
