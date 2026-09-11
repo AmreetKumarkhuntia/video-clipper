@@ -103,7 +103,7 @@ Add `lastRenderedHash: z.string().optional()` to `ClipArtifactSchema`. Compute a
 - Publish/upload an edited clip → bytes posted to YouTube come from `_edited.mp4`.
 - Edit a clip after rendering, don't re-render → analysis page shows "Stale render" badge.
 
-### Playwright smoke (extend specs under `src/app/web/tests/`)
+### Playwright smoke (extend specs under `tests/e2e/web/`)
 
 - `editor.variant.spec.ts` — opens editor; asserts `<video>` `src` contains `variant=original` even when `editedPath` is set.
 - `preview.modal.spec.ts` — clicks Preview on a clip with `editedPath`; asserts the modal video src contains `variant=edited`.
