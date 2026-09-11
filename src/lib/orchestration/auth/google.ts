@@ -1,3 +1,4 @@
+import { SignInError } from '@lib/utils/signInError.js';
 import {
   buildGoogleAuthUrl,
   createCodeVerifier,
@@ -51,7 +52,8 @@ export class GoogleOAuthProvider extends BaseOAuthProvider {
     // A YouTube rule, not an OAuth one, so it belongs to this provider: the
     // product has nothing to show someone with no channel.
     if (!channel) {
-      throw new Error(
+      throw new SignInError(
+        'no_channel',
         'This Google account has no YouTube channel. Sign in with the account that owns your channel.',
       );
     }
@@ -60,6 +62,7 @@ export class GoogleOAuthProvider extends BaseOAuthProvider {
     return {
       accountId: profile.sub,
       ...(profile.email ? { email: profile.email } : {}),
+      ...(profile.email_verified !== undefined ? { emailVerified: profile.email_verified } : {}),
       ...(profile.name ? { name: profile.name } : {}),
       ...(profile.picture ? { avatarUrl: profile.picture } : {}),
       channel: { id: channel.channelId, title: channel.title },

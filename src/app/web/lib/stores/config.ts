@@ -10,8 +10,10 @@ export const configLoaded = writable(false);
 
 const dirtyKeys = new Set<string>();
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let canWrite = false;
 
 function scheduleSave(): void {
+  if (!canWrite) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     void postDirtyFields();
@@ -19,7 +21,8 @@ function scheduleSave(): void {
 }
 
 async function postDirtyFields(): Promise<void> {
-  if (dirtyKeys.size === 0) return;
+  saveTimer = null;
+  if (!canWrite || dirtyKeys.size === 0) return;
 
   const values = get(configValues);
   const payload: Record<string, unknown> = {};
@@ -41,9 +44,9 @@ async function postDirtyFields(): Promise<void> {
 
   if (Object.keys(payload).length === 0) return;
 
-  // Writes are operator-gated on the backend and the page sends no token, so
-  // saving answers 401 and the toast shows it. Deliberate: RBAC on the session
-  // is the planned way for the browser to prove itself, not a pasted secret.
+  // Writes need the `settings:write` permission on the backend. The session
+  // cookie rides along with the fetch, so an admin's save simply works and a
+  // customer's answers 403, which the toast shows.
   try {
     const res = await fetch('/api/settings', {
       method: 'PATCH',
@@ -73,11 +76,22 @@ export async function initConfig(): Promise<void> {
 }
 
 export function updateField(key: string, value: unknown): void {
+  if (!canWrite) return;
   dirtyKeys.add(key);
   configValues.update((current) => ({ ...current, [key]: value }));
   scheduleSave();
 }
 
 export function resetToDefaults(): void {
+  if (!canWrite) return;
   void initConfig();
+}
+
+/** Cancels a queued autosave as soon as write permission is lost. */
+export function setConfigWritable(value: boolean): void {
+  canWrite = value;
+  if (canWrite) return;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  dirtyKeys.clear();
 }

@@ -81,7 +81,13 @@
     bind:value
   />
   {#if secret}
-    <Button variant="ghost" size="sm" class="reveal-btn" onclick={() => (revealed = !revealed)}>
+    <Button
+      variant="ghost"
+      size="sm"
+      class="reveal-btn"
+      {disabled}
+      onclick={() => (revealed = !revealed)}
+    >
       {revealed ? 'Hide' : 'Show'}
     </Button>
   {/if}

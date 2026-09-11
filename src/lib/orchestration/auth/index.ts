@@ -2,7 +2,7 @@ import { GoogleOAuthProvider } from './google.js';
 import type { AuthProvider, GoogleOAuthClientConfig } from '@lib/types/auth.js';
 import type { BaseOAuthProvider } from './base.js';
 
-export { BaseOAuthProvider, resolveSession, signOut } from './base.js';
+export { BaseOAuthProvider, mintSession, resolveSession, signOut } from './base.js';
 export { GoogleOAuthProvider } from './google.js';
 
 /**

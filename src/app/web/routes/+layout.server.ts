@@ -14,12 +14,11 @@ import type { ChannelResponse, MeResponse } from '@lib/types/api.js';
  * session and opens no database; the cookie is forwarded and the answer is
  * whatever `/api/me` says.
  */
+// Only the sign-in page is public; CLI authorization is handled by the backend.
 const PUBLIC_PATHS = ['/login'];
 
 export async function load({ cookies, url }: ServerLoadEvent) {
-  const isPublic = PUBLIC_PATHS.some(
-    (path) => url.pathname === path || url.pathname.startsWith(`${path}/`),
-  );
+  const isPublic = PUBLIC_PATHS.includes(url.pathname);
 
   const customer = await currentCustomer(cookies);
 

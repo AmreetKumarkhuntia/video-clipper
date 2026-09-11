@@ -1,3 +1,4 @@
+import { SignInError } from './signInError.js';
 import { createHash, randomBytes } from 'node:crypto';
 import {
   GoogleTokenResponseSchema,
@@ -63,7 +64,8 @@ export function isGoogleOAuthConfigured(oauth: GoogleOAuthClientConfig): boolean
 
 function assertConfigured(oauth: GoogleOAuthClientConfig): void {
   if (!isGoogleOAuthConfigured(oauth)) {
-    throw new Error(
+    throw new SignInError(
+      'not_configured',
       'Configure GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REDIRECT_URI before signing in.',
     );
   }

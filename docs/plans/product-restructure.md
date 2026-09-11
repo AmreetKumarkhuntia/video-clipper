@@ -200,11 +200,9 @@ The pre-merge review confirmed seven issues; the fixes and their reasoning:
   URL parsers, so they could smuggle a second slash past a prefix check.
 - **`Secure` follows `x-forwarded-proto`, then the URL.** In production TLS terminates at a proxy
   and Node sees plain http, so the URL alone would never mark the session cookie Secure.
-- **`PATCH /api/settings` is gated by `OPERATOR_TOKEN`** — a bearer token, not a session, because
-  the CLI has no sign-in. Unset means locked. This is the interim gate; RBAC on the session is the
-  agreed follow-up and replaces the single `requireOperator` guard. The web Settings page sends no
-  token and 401s on save until then — a paste-a-secret field was considered and dropped as not
-  worth building around an interim gate.
+- **`PATCH /api/settings` was gated by `OPERATOR_TOKEN`** — a bearer token, not a session, because
+  the CLI had no sign-in. Superseded: it is now `requirePermission(c, 'settings:write')` on the
+  session, and the CLI signs in. See `rbac-and-cli-auth.md`.
 - **500 responses no longer echo the error.** Internal messages (paths, SQL, upstream bodies) go to
   the log; the client gets a generic message plus the request id.
 - **Expired-session sweep runs hourly** from the API entry point; the table no longer grows forever.
@@ -215,10 +213,8 @@ The pre-merge review confirmed seven issues; the fixes and their reasoning:
 
 ## Deferred
 
-- **RBAC.** Replaces the `OPERATOR_TOKEN` gate with roles on the session (`requireRole`), and is the
-  natural home for the remaining review notes: session rotation on re-login, token encryption at
-  rest, mapping `/login?error=` to error codes, ordering for `linkedChannelId`.
-- **CLI authentication.** Fine while the backend is local; required the moment it is not.
+- **RBAC and CLI authentication** — shipped, with the four review notes that rode along; see
+  `rbac-and-cli-auth.md`. Deny-by-default guarding is now unblocked and remains a follow-up.
 - **pnpm workspaces and separate manifests** — packaging, worth doing when the apps deploy separately.
 - **Deployment.** No Dockerfile or process config exists, and the backend needs ffmpeg, yt-dlp, Python
   and a native SQLite build. Its own plan.
@@ -273,17 +269,18 @@ The plan says guarding inverts: the backend denies by default and a route opts o
 The CLI has no way to sign in — that was already listed under Deferred — so denying by default would
 break every command that moved onto HTTP in `523f1c0`. Session resolution runs on every request; the
 routes that reach into one customer's data guard themselves with `requireCustomer`. Inverting the
-default is blocked on CLI authentication, and should land with it.
+default was blocked on CLI authentication; that is included in [PR #37](https://github.com/AmreetKumarkhuntia/video-clipper/pull/37)
+(see [the auth design](rbac-and-cli-auth.md)), so the inversion is unblocked and remains a follow-up
+of its own.
 
 ### Still open
 
-| Area               | What                                                                                          |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| tenancy            | analyses, clips and drafts are still global — a customer's library is scoped, its work is not |
-| `youtube_auth`     | written at sign-in, but publish still reads the single-file store                             |
-| private uploads    | browse lists the public uploads playlist; using the customer's own token would show the rest  |
-| `DELETE /api/db`   | gone from the backend, but nothing replaced it for local development                          |
-| CLI authentication | see the correction above                                                                      |
+| Area             | What                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| tenancy          | analyses, clips and drafts are still global — a customer's library is scoped, its work is not |
+| `youtube_auth`   | written at sign-in, but publish still reads the single-file store                             |
+| private uploads  | browse lists the public uploads playlist; using the customer's own token would show the rest  |
+| `DELETE /api/db` | gone from the backend, but nothing replaced it for local development                          |
 
 Note: the backend listens on **5051**, not 5003, because another process holds 5003 on the
 development machine. Override with `API_PORT` and `API_ORIGIN`.

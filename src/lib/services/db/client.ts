@@ -12,12 +12,15 @@ let handle: BetterSQLite3Database<typeof schema> | null = null;
  * active handle. Called implicitly with the default path on first query;
  * call it explicitly first to point the library at a different database.
  *
- * Default resolution: `LIBRARY_DB_PATH` env var, else
- * `~/.config/video-clipper/library.sqlite`.
+ * The app resolves `LIBRARY_DB_PATH` through validated configuration and passes
+ * it here. Library/test callers that omit it get the standard user-config path.
  */
+export function resolveDatabasePath(dbPath?: string): string {
+  return path.resolve(dbPath ?? path.join(getUserConfigDir(), 'library.sqlite'));
+}
+
 export function initDb(dbPath?: string): BetterSQLite3Database<typeof schema> {
-  const resolved =
-    dbPath ?? process.env.LIBRARY_DB_PATH ?? path.join(getUserConfigDir(), 'library.sqlite');
+  const resolved = resolveDatabasePath(dbPath);
 
   fs.mkdirSync(path.dirname(resolved), { recursive: true });
   const sqlite = new Database(resolved);

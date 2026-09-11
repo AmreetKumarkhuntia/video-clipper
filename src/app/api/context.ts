@@ -1,3 +1,4 @@
+import type { HttpBindings } from '@hono/node-server';
 import type { Config } from '@lib/types/config.js';
 import type { Customer } from '@lib/types/auth.js';
 
@@ -12,6 +13,7 @@ import type { Customer } from '@lib/types/auth.js';
  * the route decides whether that is allowed.
  */
 export type ApiEnv = {
+  Bindings: Partial<HttpBindings>;
   Variables: {
     requestId: string;
     config: Config;

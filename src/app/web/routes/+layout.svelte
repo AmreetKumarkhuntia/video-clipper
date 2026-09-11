@@ -12,6 +12,8 @@
   $: customer = $page.data.customer ?? null;
   $: channelTitle = $page.data.channelTitle ?? null;
   $: isSignedIn = Boolean(customer);
+  // The backend decides; this only keeps a link off the screen that would 403.
+  $: canWriteSettings = customer?.permissions.includes('settings:write') ?? false;
   $: pathname = $page.url.pathname;
 
   function toggleTheme() {
@@ -49,12 +51,14 @@
         <a href="/browse" class="topbar__nav-link" class:is-active={pathname.startsWith('/browse')}
           ><Icon name="search" size={14} /> Browse</a
         >
-        <a
-          href="/settings"
-          class="topbar__nav-link"
-          class:is-active={pathname.startsWith('/settings')}
-          ><Icon name="settings" size={14} /> Settings</a
-        >
+        {#if canWriteSettings}
+          <a
+            href="/settings"
+            class="topbar__nav-link"
+            class:is-active={pathname.startsWith('/settings')}
+            ><Icon name="settings" size={14} /> Settings</a
+          >
+        {/if}
       </nav>
     {:else}
       <div class="topbar__nav"></div>

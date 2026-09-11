@@ -5,7 +5,7 @@
  * (`client.js`) is internal — consumers never receive the raw handle.
  */
 export { runMigrations } from './migrate.js';
-export { initDb, getDb } from './client.js';
+export { initDb, getDb, resolveDatabasePath } from './client.js';
 
 export { clearDatabase } from './repos/adminRepo.js';
 export {
@@ -27,13 +27,19 @@ export {
   findIdentity,
   linkIdentity,
   unlinkIdentity,
+  reencryptIdentityTokens,
+  hasEncryptedIdentityTokens,
+  validateEncryptedIdentityTokens,
 } from './repos/authIdentitiesRepo.js';
 export {
   findCustomerById,
   findCustomerByChannelId,
   createCustomer,
   updateCustomerProfile,
+  setCustomerRole,
+  hasCustomerWithRole,
 } from './repos/customersRepo.js';
+export { findRolePermissions } from './repos/rolesRepo.js';
 export {
   findChunks,
   upsertChunks,

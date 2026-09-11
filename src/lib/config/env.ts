@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import {
   ConfigSchema,
+  ConfigUpdatesSchema,
   type Config,
   CONFIG_FIELD_META,
   type SetConfigResult,
@@ -53,10 +54,14 @@ export const config: Config = new Proxy({} as Config, {
 });
 
 export function setConfigValues(updates: Record<string, unknown>): SetConfigResult {
+  ConfigUpdatesSchema.parse(updates);
   const warnings: string[] = [];
 
   const currentFile = loadUserConfig() ?? {};
   const merged = { ...currentFile };
+  // Ignore legacy/manual entries as well as rejecting new settings writes.
+  delete merged.TOKEN_ENCRYPTION_KEY;
+  delete merged.TOKEN_ENCRYPTION_KEY_PATH;
 
   for (const [key, value] of Object.entries(updates)) {
     if (value === '' || value === null || value === undefined) {

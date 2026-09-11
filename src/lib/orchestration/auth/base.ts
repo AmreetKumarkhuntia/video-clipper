@@ -1,8 +1,10 @@
 import { log } from '@lib/utils/logger.js';
 import { createSessionToken, hashSessionToken } from '@lib/utils/sessionToken.js';
+import { SignInError } from '@lib/utils/signInError.js';
 import {
   findCustomerById,
   findCustomerByChannelId,
+  hasCustomerWithRole,
   findCustomerIdByIdentity,
   linkIdentity,
   createCustomer,
@@ -10,6 +12,7 @@ import {
   findValidSession,
   deleteSession,
   insertSession,
+  setCustomerRole,
   upsertChannel,
 } from '@lib/services/db/index.js';
 import type {
@@ -58,7 +61,7 @@ export abstract class BaseOAuthProvider {
     handshake: OAuthHandshake,
     options: CompleteLoginOptions,
   ): Promise<SignInResult> {
-    const { sessionTtlMs, requestId } = options;
+    const { sessionTtlMs, replacesToken, requestId } = options;
     const account = await this.fetchAccount(code, handshake);
 
     // Both link rules are checked before any write, so a rejected sign-in leaves no trace.
@@ -66,11 +69,16 @@ export abstract class BaseOAuthProvider {
     if (account.channel) {
       const claimedBy = findCustomerByChannelId(account.channel.id);
       if (claimedBy && claimedBy.id !== existingId) {
-        throw new Error(`${account.channel.title} is already linked to another account.`);
+        throw new SignInError(
+          'channel_claimed',
+          `${account.channel.title} is already linked to another account.`,
+          account.channel.title,
+        );
       }
       const existing = existingId ? findCustomerById(existingId) : null;
       if (existing?.channelId && existing.channelId !== account.channel.id) {
-        throw new Error(
+        throw new SignInError(
+          'channel_mismatch',
           'This account is already linked to a different channel. Sign in with the account that owns it.',
         );
       }
@@ -89,7 +97,7 @@ export abstract class BaseOAuthProvider {
     };
 
     // Create then link, so a customer never exists without the identity that reached it.
-    const customer = existingId
+    let customer = existingId
       ? updateCustomerProfile(existingId, profile)
       : createCustomer(profile);
 
@@ -105,13 +113,49 @@ export abstract class BaseOAuthProvider {
       ...(account.metadata ? { metadata: account.metadata } : {}),
     });
 
-    const token = createSessionToken();
-    const expiresAt = Date.now() + sessionTtlMs;
-    insertSession(hashSessionToken(token), customer.id, expiresAt);
+    // Bootstrap is deployment-controlled and requires Google's verified email
+    // claim. A customer cannot grant this to themselves through an app route.
+    const bootstrapEmail = options.initialAdminEmail?.trim().toLowerCase();
+    if (
+      bootstrapEmail &&
+      account.emailVerified === true &&
+      account.email?.trim().toLowerCase() === bootstrapEmail &&
+      customer.role !== 'admin' &&
+      !hasCustomerWithRole('admin')
+    ) {
+      customer = setCustomerRole(customer.id, 'admin');
+      log.info('auth', 'initial administrator assigned', requestId, {
+        customerId: customer.id,
+        provider: this.id,
+      });
+    }
+
+    // Rotation: a sign-in over an existing session retires it, so a token that
+    // leaked before this point stops working now rather than at expiry.
+    if (replacesToken) {
+      deleteSession(hashSessionToken(replacesToken));
+      log.info('auth', 'rotated session', requestId, { customerId: customer.id });
+    }
+    const { token, expiresAt } = mintSession(customer.id, sessionTtlMs);
 
     // Re-read so the channel just linked is on the object the route returns.
     return { customer: findCustomerById(customer.id) ?? customer, token, expiresAt };
   }
+}
+
+/**
+ * Mints a session for a customer we have already verified. Shared by the
+ * browser flow and the CLI flow, so there is one place a session comes from.
+ * The raw token is returned to the caller and only its hash is stored.
+ */
+export function mintSession(
+  customerId: string,
+  sessionTtlMs: number,
+): { token: string; expiresAt: number } {
+  const token = createSessionToken();
+  const expiresAt = Date.now() + sessionTtlMs;
+  insertSession(hashSessionToken(token), customerId, expiresAt);
+  return { token, expiresAt };
 }
 
 /** Resolves the cookie value to a customer, or null when absent, expired, or orphaned. */

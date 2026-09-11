@@ -9,7 +9,7 @@
   import type { ConfigFieldDescriptor } from '@lib/types/config.js';
   import type { ConfigFieldProps } from '@app/web/types/componentProps.js';
 
-  let { field, value, onupdate }: ConfigFieldProps = $props();
+  let { field, value, disabled = false, onupdate }: ConfigFieldProps = $props();
 
   // Stable id shared between the <label for="…"> and the underlying <input id="…">
   const inputId = $derived(`config-${field.key}`);
@@ -25,6 +25,7 @@
   }
 
   function emit(newValue: unknown): void {
+    if (disabled) return;
     onupdate?.(field.key, newValue);
   }
 
@@ -43,6 +44,7 @@
   <ToggleRow
     description={field.description}
     checked={Boolean(resolvedValue)}
+    {disabled}
     onchange={(v) => emit(v)}
   >
     {#snippet titleContent()}
@@ -68,12 +70,17 @@
 
     <div>
       {#if field.key === 'LLM_PROVIDER'}
-        <ConfigInputProviderGrid value={String(resolvedValue ?? '')} onchange={(v) => emit(v)} />
+        <ConfigInputProviderGrid
+          value={String(resolvedValue ?? '')}
+          {disabled}
+          onchange={(v) => emit(v)}
+        />
       {:else if field.widget === 'select' && field.options}
         <Select
           id={inputId}
           value={String(resolvedValue)}
           options={mappedSelectOptions}
+          {disabled}
           onchange={(v) => emit(v)}
         />
       {:else if field.widget === 'slider'}
@@ -82,6 +89,7 @@
           value={typeof resolvedValue === 'number' ? resolvedValue : undefined}
           min={field.min}
           max={field.max}
+          {disabled}
           onchange={(v) => emit(v)}
         />
       {:else if field.widget === 'number'}
@@ -91,6 +99,7 @@
           value={strNumberValue}
           min={field.min}
           max={field.max}
+          {disabled}
           placeholder={field.placeholder ?? String(field.defaultValue ?? '')}
           onchange={(raw) => {
             const n = raw === '' ? undefined : Number(raw);
@@ -103,6 +112,7 @@
           value={String(resolvedValue ?? '')}
           placeholder={field.placeholder ?? ''}
           monospace={true}
+          {disabled}
           onchange={(v) => emit(v)}
         />
       {:else}
@@ -110,6 +120,7 @@
           id={inputId}
           value={String(resolvedValue ?? '')}
           secret={field.secret}
+          {disabled}
           placeholder={field.placeholder ?? String(field.defaultValue ?? '')}
           onchange={(v) => emit(v)}
         />

@@ -7,6 +7,7 @@
     titleContent,
     description,
     checked,
+    disabled = false,
     ariaLabel,
     onchange,
     class: extraClass,
@@ -20,5 +21,5 @@
     </span>
     {#if description}<span class="toggle-row__d">{description}</span>{/if}
   </div>
-  <Toggle {checked} {ariaLabel} {onchange} />
+  <Toggle {checked} {disabled} {ariaLabel} {onchange} />
 </label>

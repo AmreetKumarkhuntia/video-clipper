@@ -78,6 +78,13 @@
       "when": 1788514988600,
       "tag": "0010_flawless_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1788870179741,
+      "tag": "0011_rbac_and_cli_login",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
  *  4. `services/`, `orchestration/`, and `pipeline/` never import `@lib/config`
  *     — config is injected by the apps.
  *  5. Cross-service imports are limited to the documented edges:
- *     `audio → video` and `* → modelFactory`.
+ *     `audio → video`, `db → encryption`, and `* → modelFactory`.
  *  6. Within `src/lib/`, only `orchestration/` (and the public barrel
  *     `index.ts`) imports `services/db` — app code may use the db barrel.
  *  7. The web app holds no domain logic: it may import `@lib/types/*` and
@@ -29,6 +29,7 @@ const SERVICES_DIR = path.join(SRC, 'lib', 'services');
 
 const ALLOWED_CROSS_SERVICE = [
   { from: 'audio', to: 'video' },
+  { from: 'db', to: 'encryption' },
   { from: '*', to: 'modelFactory' },
 ];
 

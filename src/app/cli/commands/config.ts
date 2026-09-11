@@ -68,7 +68,8 @@ Usage: video-clipper config [key] [value]
 
 These are the backend's settings, not this machine's. They are read from and
 written to ${apiBaseUrl()}, so a change here applies to everyone that backend
-serves, the web app included.
+serves, the web app included. Reading is open; changing a value needs an admin
+account — run "video-clipper login" first.
 
 Examples:
   video-clipper config

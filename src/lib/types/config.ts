@@ -54,11 +54,18 @@ export const ConfigSchema = z
     // How long a sign-in lasts. Fixed per session — there is no sliding renewal,
     // so this is the whole of the session lifetime policy.
     SESSION_TTL_DAYS: z.coerce.number().min(1).default(30),
+    INITIAL_ADMIN_EMAIL: z.string().email().optional(),
 
-    // Gates config writes over HTTP. A shared secret rather than a customer
-    // credential, because the CLI has no sign-in; RBAC replaces this later.
-    // Unset means config writes are refused, not open.
-    OPERATOR_TOKEN: z.string().optional(),
+    // Device-login abuse controls. Forwarded addresses are ignored unless the
+    // deployment explicitly declares how many proxy hops it trusts.
+    CLI_LOGIN_RATE_LIMIT_REQUESTS: z.coerce.number().int().min(1).default(10),
+    CLI_LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).default(60),
+    CLI_LOGIN_MAX_OUTSTANDING: z.coerce.number().int().min(1).default(1000),
+    TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
+
+    // The database path requires a restart. The encryption key is environment-
+    // only and validated separately; it must never enter mutable config.
+    LIBRARY_DB_PATH: z.string().min(1).optional(),
 
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
@@ -197,6 +204,20 @@ export const ConfigSchema = z
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+/** Deployment secrets cannot be set or cleared through the mutable settings pipeline. */
+export const ConfigUpdatesSchema = z.record(z.string(), z.unknown()).superRefine((updates, ctx) => {
+  for (const key of ['TOKEN_ENCRYPTION_KEY', 'TOKEN_ENCRYPTION_KEY_PATH']) {
+    if (Object.hasOwn(updates, key)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [key],
+        message:
+          'Configure TOKEN_ENCRYPTION_KEY in the server environment, then restart the server.',
+      });
+    }
+  }
+});
+
 /**
  * The same values, grouped.
  *
@@ -278,7 +299,10 @@ export const CONFIG_GROUPS = [
       'GOOGLE_OAUTH_CLIENT_SECRET',
       'GOOGLE_OAUTH_REDIRECT_URI',
       'SESSION_TTL_DAYS',
-      'OPERATOR_TOKEN',
+      'CLI_LOGIN_RATE_LIMIT_REQUESTS',
+      'CLI_LOGIN_RATE_LIMIT_WINDOW_SECONDS',
+      'CLI_LOGIN_MAX_OUTSTANDING',
+      'TRUSTED_PROXY_HOPS',
     ],
   },
   {
@@ -466,10 +490,26 @@ export const CONFIG_FIELD_META: Record<string, ConfigFieldMeta> = {
     description: 'How many days a sign-in stays valid',
     widget: 'number',
   },
-  OPERATOR_TOKEN: {
-    description: 'Token required to change these settings over HTTP',
+  INITIAL_ADMIN_EMAIL: {
+    description: 'Verified Google email eligible for the initial administrator role',
     widget: 'text',
     secret: true,
+  },
+  CLI_LOGIN_RATE_LIMIT_REQUESTS: {
+    description: 'Maximum device-login starts allowed per client in one window',
+    widget: 'number',
+  },
+  CLI_LOGIN_RATE_LIMIT_WINDOW_SECONDS: {
+    description: 'Device-login rate-limit window in seconds',
+    widget: 'number',
+  },
+  CLI_LOGIN_MAX_OUTSTANDING: {
+    description: 'Maximum unexpired device-login requests stored at once',
+    widget: 'number',
+  },
+  TRUSTED_PROXY_HOPS: {
+    description: 'Number of reverse-proxy hops trusted in X-Forwarded-For (0 ignores it)',
+    widget: 'number',
   },
   YOUTUBE_API_KEY: { description: 'YouTube Data API v3 key', widget: 'text', secret: true },
   YOUTUBE_OAUTH_CLIENT_ID: {

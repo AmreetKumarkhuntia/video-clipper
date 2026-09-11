@@ -26,7 +26,11 @@ export async function errorMessageFrom(res: Response): Promise<string> {
 }
 
 export async function apiError(res: Response): Promise<ApiRequestError> {
-  return new ApiRequestError(await errorMessageFrom(res), res.status);
+  const message = await errorMessageFrom(res);
+  // A 401 from this CLI always has the same fix, so say it here rather than in
+  // every command.
+  const hint = res.status === 401 ? ' Run "video-clipper login" to sign in.' : '';
+  return new ApiRequestError(`${message}${hint}`, res.status);
 }
 
 export function isNotFound(error: unknown): boolean {
