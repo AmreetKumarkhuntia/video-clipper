@@ -30,8 +30,11 @@ Commands:
   candidates <id>        List clip candidates for a saved analysis
   library                Browse saved analyses and generated clips
   channel <handle/url>   Resolve a YouTube channel and list videos
-  config [key] [value]   View or set configuration values
+  config [key] [value]   View or set configuration values (changes need an admin sign-in)
   run <url>              One-shot pipeline: analyze + clip (legacy)
+  login                  Sign this machine in to the backend
+  logout                 Revoke and forget the stored session
+  whoami                 Show the signed-in account
 
 Run "video-clipper <command> --help" for command-specific options.
 `.trim(),

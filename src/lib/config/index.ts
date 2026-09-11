@@ -1,6 +1,7 @@
 export { config, getConfig, getGroupedConfig, setConfigValues, getMaskedConfig } from './env.js';
 export { groupConfig } from './groups.js';
 export { buildConfigRegistry } from './registry.js';
+export { getTokenEncryptionKey } from './tokenEncryptionKey.js';
 export type {
   ConfigRegistryResponse,
   ConfigGroupDescriptor,

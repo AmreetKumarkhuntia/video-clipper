@@ -157,13 +157,28 @@ export const clips = sqliteTable('clips', {
 // a channel belongs to a provider account, not to a person, and a provider we
 // add later may have no such concept at all. Everything provider-shaped lives
 // on auth_identities.
+//
+// `role_id` is authorisation, not authentication — what this person may do,
+// not how they proved who they are — so it belongs here. No foreign key: SQLite
+// cannot ADD COLUMN … REFERENCES with a non-null default while foreign keys are
+// on, and the seed rows plus the `Role` union are the integrity check.
 export const customers = sqliteTable('customers', {
   id: text('id').primaryKey(),
   email: text('email'), // display and contact only — never an identity key
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  roleId: text('role_id').notNull().default('customer'), // Role
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
+});
+
+// Each role owns its JSON permission list. `rank` is only a display order;
+// authorization checks the validated permissions loaded from this row.
+export const roles = sqliteTable('roles', {
+  id: text('id').primaryKey(), // Role
+  rank: integer('rank').notNull(),
+  permissions: text('permissions').notNull().default('[]'),
+  createdAt: integer('created_at').notNull(),
 });
 
 // How someone signs in, and what that sign-in gave us. One row per linked login,

@@ -1,4 +1,6 @@
+import { randomBytes } from 'node:crypto';
 import { vi } from 'vitest';
+import { initTokenCipher } from '../src/lib/services/encryption/index.js';
 
 /**
  * Runs before every test file, so the suite behaves the same on a fresh clone,
@@ -23,3 +25,10 @@ vi.mock('../src/lib/config/fileStore.js', () => ({
   loadUserConfig: (): null => null,
   saveUserConfig: (): void => {},
 }));
+
+/**
+ * Identity rows are encrypted on write and the repo refuses to store plaintext
+ * without a key, so every file gets a throwaway one. The API loads its real key
+ * from its environment at startup; tests never touch that.
+ */
+initTokenCipher(randomBytes(32));

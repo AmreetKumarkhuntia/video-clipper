@@ -17,6 +17,8 @@ vi.mock('../src/lib/services/db/client.js', () => ({ db: testDb }));
 
 const googleState = {
   sub: 'sub-a',
+  email: 'a@example.com',
+  emailVerified: true,
   channel: { channelId: 'UC_a', title: 'Channel A' } as { channelId: string; title: string } | null,
   refreshToken: 'refresh-1' as string | undefined,
 };
@@ -31,7 +33,11 @@ vi.mock('../src/lib/utils/googleOAuth.js', async (importOriginal) => {
       expires_in: 3600,
       scope: 'openid https://www.googleapis.com/auth/youtube.readonly',
     })),
-    fetchGoogleUserInfo: vi.fn(async () => ({ sub: googleState.sub, email: 'a@example.com' })),
+    fetchGoogleUserInfo: vi.fn(async () => ({
+      sub: googleState.sub,
+      email: googleState.email,
+      email_verified: googleState.emailVerified,
+    })),
     fetchOwnedYouTubeChannel: vi.fn(async () => googleState.channel),
   };
 });
@@ -60,6 +66,8 @@ function customerCount(): number {
 beforeEach(() => {
   sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
   googleState.sub = 'sub-a';
+  googleState.email = 'a@example.com';
+  googleState.emailVerified = true;
   googleState.channel = { channelId: 'UC_a', title: 'Channel A' };
   googleState.refreshToken = 'refresh-1';
 });
@@ -122,11 +130,77 @@ describe('completeLogin', () => {
     expect(second.token).not.toBe(first.token);
   });
 
+  it('retires the session it was presented with, so signing in again rotates it', async () => {
+    const first = await google().completeLogin('code', HANDSHAKE, SESSION);
+    const second = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      replacesToken: first.token,
+    });
+
+    expect(resolveSession(first.token)).toBeNull();
+    expect(resolveSession(second.token)?.id).toBe(first.customer.id);
+  });
+
+  it('ignores a presented token that is already dead', async () => {
+    const result = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      replacesToken: 'long-gone',
+    });
+    expect(resolveSession(result.token)?.id).toBe(result.customer.id);
+  });
+
+  it('bootstraps only the configured verified Google email as administrator', async () => {
+    const result = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      initialAdminEmail: 'A@EXAMPLE.COM',
+    });
+
+    expect(result.customer.role).toBe('admin');
+    expect(result.customer.permissions).toContain('settings:write');
+  });
+
+  it('does not bootstrap an unverified or different email', async () => {
+    googleState.emailVerified = false;
+    const unverified = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      initialAdminEmail: 'a@example.com',
+    });
+    expect(unverified.customer.role).toBe('customer');
+
+    googleState.sub = 'sub-b';
+    googleState.email = 'b@example.com';
+    googleState.channel = { channelId: 'UC_b', title: 'Channel B' };
+    googleState.emailVerified = true;
+    const different = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      initialAdminEmail: 'admin@example.com',
+    });
+    expect(different.customer.role).toBe('customer');
+  });
+
+  it('does not bootstrap another administrator while one already exists', async () => {
+    const first = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      initialAdminEmail: 'a@example.com',
+    });
+    expect(first.customer.role).toBe('admin');
+
+    googleState.sub = 'sub-b';
+    googleState.email = 'b@example.com';
+    googleState.channel = { channelId: 'UC_b', title: 'Channel B' };
+    const second = await google().completeLogin('code', HANDSHAKE, {
+      ...SESSION,
+      initialAdminEmail: 'b@example.com',
+    });
+    expect(second.customer.role).toBe('customer');
+  });
+
   it('rejects an account with no channel and writes nothing', async () => {
     googleState.channel = null;
-    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
-      /no YouTube channel/,
-    );
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toMatchObject({
+      code: 'no_channel',
+      message: expect.stringMatching(/no YouTube channel/) as string,
+    });
     expect(customerCount()).toBe(0);
   });
 
@@ -134,9 +208,11 @@ describe('completeLogin', () => {
     const first = await google().completeLogin('code', HANDSHAKE, SESSION);
     googleState.sub = 'sub-b';
 
-    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
-      /already linked to another account/,
-    );
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toMatchObject({
+      code: 'channel_claimed',
+      detail: 'Channel A',
+      message: expect.stringMatching(/already linked to another account/) as string,
+    });
     expect(customerCount()).toBe(1);
     expect(resolveSession(first.token)?.id).toBe(first.customer.id);
   });
@@ -145,9 +221,10 @@ describe('completeLogin', () => {
     await google().completeLogin('code', HANDSHAKE, SESSION);
     googleState.channel = { channelId: 'UC_other', title: 'Other Channel' };
 
-    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toThrow(
-      /already linked to a different channel/,
-    );
+    await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toMatchObject({
+      code: 'channel_mismatch',
+      message: expect.stringMatching(/already linked to a different channel/) as string,
+    });
     expect(customerCount()).toBe(1);
   });
 });
