@@ -284,6 +284,7 @@ async function runSegmentation(
   }
 
   clearSegmentations(videoId);
+  const persistedRanks = new Set<number>();
 
   const wrappedRefineCallbacks = {
     onSegmentStarted: (rank: number) => callbacks?.onSegmentStarted?.(rank),
@@ -292,6 +293,7 @@ async function runSegmentation(
 
     onSegmentRefined: (rank: number, segment: RankedSegment) => {
       insertSegmentation(videoId, segment, optionsHash);
+      persistedRanks.add(segment.rank);
       callbacks?.onSegmentRefined?.(rank, segment);
     },
   };
@@ -306,6 +308,11 @@ async function runSegmentation(
     signal,
   });
 
+  for (const segment of refined) {
+    if (!persistedRanks.has(segment.rank)) {
+      insertSegmentation(videoId, segment, optionsHash);
+    }
+  }
   markSegmentationsComplete(videoId);
 
   return refined;

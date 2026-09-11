@@ -128,7 +128,12 @@ src/
         analysis.ts           # TranscriptBundle, ClipPlan, ClipArtifact, etc.
         web.ts                # ApiError
 
-tests/                        # Unit tests (mirrors module names)
+tests/                        # Tests grouped by level, then mirroring src/
+  unit/                       # Isolated module behavior; collaborators mocked
+  integration/                # API, CLI, database, and orchestration contracts
+  architecture/               # Static dependency and repository-shape rules
+  e2e/                        # Playwright browser journeys
+  support/                    # Shared fixtures and test-only helpers
 downloads/                    # yt-dlp output (gitignored)
 outputs/                      # ffmpeg clip output, caches, dumps (gitignored)
 ```
@@ -166,7 +171,7 @@ pnpm api:dev     # backend, API_PORT (5051 by default)
 pnpm web:dev     # frontend on 5002, proxying /api
 ```
 
-### Boundaries enforced by `tests/serviceBoundaries.test.ts`
+### Boundaries enforced by `tests/architecture/serviceBoundaries.test.ts`
 
 - `src/lib/types/` is a **leaf**: it imports nothing from `@lib/*` or `@app/*`
 - From outside a service, import only its barrel: `@lib/services/<svc>/index.js`
@@ -255,11 +260,20 @@ Both `generateClips()` and `remuxClips()` check whether `{outputDir}/{videoId}_{
 
 ## Testing
 
-- Write unit tests for pure functions (URL parser, chunker, ranker, deduplicator)
-- Do not unit test functions that call external services (LLM, yt-dlp, ffmpeg) — integration test those separately
-- Test files live in `tests/` at the project root, mirroring the module name (e.g. `tests/urlParser.test.ts`)
-- When taking screenshots etc via playwright keep it in temp/ folder(always)
-- For testing UI etc.. you should navigate to that page and take screenshot etc.. to verify components.
+- Group tests by level first, then mirror the source path: `tests/unit/lib/...`,
+  `tests/integration/app/...`, `tests/architecture/...`, and `tests/e2e/...`.
+- Unit tests cover deterministic behavior, validation boundaries, and failure handling with external
+  collaborators mocked. Do not call live LLMs, yt-dlp, ffmpeg, OAuth providers, or the network.
+- Integration tests cover contracts across modules: HTTP routes and middleware, CLI/backend behavior,
+  database repositories and migrations, and orchestration with provider/process boundaries mocked.
+- Architecture tests statically enforce dependency rules and the test layout itself.
+- Browser journeys use Playwright `*.spec.ts` files under `tests/e2e/`; keep screenshots, traces,
+  reports, and videos under `temp/`.
+- Prefer one focused case per meaningful behavior. Cover business rules, edge boundaries,
+  failure/recovery paths, and compatibility contracts; remove exact duplicates and incidental variants.
+- Run `pnpm test:unit`, `pnpm test:integration`, `pnpm test:architecture`, or `pnpm test:e2e` for a
+  layer. `pnpm test` runs every Vitest layer, `pnpm test:coverage` writes reports to
+  `temp/coverage/`, and `pnpm test:all` also runs Playwright.
 
 ## Git
 
