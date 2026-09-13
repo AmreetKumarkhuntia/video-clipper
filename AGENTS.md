@@ -74,7 +74,7 @@ src/
 
   app/
     api/                      # Backend — the only process that owns the db and reads config
-      index.ts                # entry: migrations, then listen on API_PORT
+      index.ts                # entry: database init, then listen on API_PORT
       app.ts                  # Hono instance, middleware, route mounting
       context.ts              # typed request context (requestId, config, customer?)
       middleware/             # requestContext (id + config + logging) · session (resolves the
@@ -86,7 +86,7 @@ src/
 
     cli/                      # CLI application — HTTP client + local media work
       client/                 # apiGet / apiSend / apiStream · settings · analysisStream
-      index.ts                # CLI entrypoint (shebang; the backend owns migrations)
+      index.ts                # CLI entrypoint (shebang; no database access)
       args.ts                 # parseArgs + printUsage for the run command
       commands/               # Subcommands: run, analyze, clip, candidates,
                               #   library, channel, ask, config

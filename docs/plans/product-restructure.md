@@ -94,7 +94,7 @@ src/
   lib/                        # UNCHANGED. The prototype got this right
   app/
     api/                      # NEW — the backend
-      index.ts                #   entry: migrations, config, listen
+      index.ts                #   entry: config, database init, listen
       app.ts                  #   Hono instance, middleware, route mounting
       context.ts              #   typed Env { requestId, config, customer }
       middleware/             #   requestContext · session · errorEnvelope
