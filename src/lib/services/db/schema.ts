@@ -179,6 +179,7 @@ export const roles = sqliteTable('roles', {
   rank: integer('rank').notNull(),
   permissions: text('permissions').notNull().default('[]'),
   createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 });
 
 // How someone signs in, and what that sign-in gave us. One row per linked login,

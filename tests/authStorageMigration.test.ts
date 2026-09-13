@@ -46,6 +46,9 @@ describe('auth storage migration', () => {
       { id: 'admin', permissions: '["settings:write"]' },
     ]);
     expect(
+      sqlite.prepare('SELECT COUNT(*) FROM roles WHERE updated_at = created_at').pluck().get(),
+    ).toBe(2);
+    expect(
       sqlite
         .prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('login_requests', 'role_permissions')",
@@ -55,7 +58,7 @@ describe('auth storage migration', () => {
 
     sqlite.exec(`
       INSERT INTO customers (id, created_at, updated_at) VALUES ('new-customer', 100, 100);
-      INSERT INTO roles (id, rank, created_at) VALUES ('new-role', 50, 100);
+      INSERT INTO roles (id, rank, created_at, updated_at) VALUES ('new-role', 50, 100, 100);
     `);
     expect(
       sqlite.prepare("SELECT role_id FROM customers WHERE id = 'new-customer'").pluck().get(),
@@ -114,8 +117,8 @@ describe('auth storage migration', () => {
     sqlite.exec(`
       UPDATE roles SET permissions = '[]' WHERE id = 'admin';
       UPDATE roles SET permissions = '["settings:write"]' WHERE id = 'customer';
-      INSERT INTO roles (id, rank, permissions, created_at)
-      VALUES ('custom-role', 50, '["future:permission"]', 100);
+      INSERT INTO roles (id, rank, permissions, created_at, updated_at)
+      VALUES ('custom-role', 50, '["future:permission"]', 100, 100);
       INSERT INTO customers (id, role_id, created_at, updated_at)
       VALUES ('admin-one', 'admin', 100, 100), ('custom-one', 'custom-role', 200, 200);
     `);
@@ -153,7 +156,10 @@ describe('auth storage migration', () => {
     expect(current.tables).not.toHaveProperty('role_permissions');
     expect(current.tables).not.toHaveProperty('login_requests');
     expect(current.tables.roles).toMatchObject({
-      columns: { permissions: { type: 'text', notNull: true, default: "'[]'" } },
+      columns: {
+        permissions: { type: 'text', notNull: true, default: "'[]'" },
+        updated_at: { type: 'integer', notNull: true },
+      },
     });
     expect(current.tables.customers).toMatchObject({
       columns: { role_id: { type: 'text', notNull: true, default: "'customer'" } },

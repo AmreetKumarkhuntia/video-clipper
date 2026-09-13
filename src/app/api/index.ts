@@ -5,7 +5,6 @@ import {
   initDb,
   reencryptIdentityTokens,
   resolveDatabasePath,
-  runMigrations,
   validateEncryptedIdentityTokens,
 } from '@lib/services/db/index.js';
 import { initTokenCipher } from '@lib/services/encryption/index.js';
@@ -15,15 +14,14 @@ import { createApp } from './app.js';
 /**
  * Backend entry point.
  *
- * This process owns the database — it is the only one that migrates or writes,
- * which is what removes the prototype's two-writer contention on SQLite.
+ * This process owns live database access — it is the only application that
+ * opens or writes the database, avoiding two-writer contention on SQLite.
  */
 const startupConfig = getConfig();
-// Validate the deployment secret before opening or migrating a database.
+// Validate the deployment secret before opening the database.
 initTokenCipher(getTokenEncryptionKey());
 const databasePath = resolveDatabasePath(startupConfig.LIBRARY_DB_PATH);
 initDb(databasePath);
-runMigrations();
 
 try {
   validateEncryptedIdentityTokens();

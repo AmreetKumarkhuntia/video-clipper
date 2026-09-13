@@ -3,10 +3,8 @@ import { generateRequestId, log } from '@lib/utils/logger.js';
 import { commands } from './commands/index.js';
 import { setClientRequestId } from './client/index.js';
 
-// No runMigrations here any more. The backend owns the database and is the only
-// process that opens or migrates it, which is what actually ends two writers
-// contending on one SQLite file — reaching the API from the commands is not
-// enough while the entry point still opens it on every invocation.
+// The CLI never opens the database. Schema migrations are run manually, and
+// the backend is the only application process that reads or writes SQLite.
 
 const requestId = generateRequestId();
 // Share the id with the backend so both sides' logs line up.
