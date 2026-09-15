@@ -22,16 +22,19 @@ beforeEach(async (): Promise<void> => {
   root = await mkdtemp(join(tmpdir(), 'cli-release-test-'));
   await mkdir(join(root, 'artifacts/releases'), { recursive: true });
   archives = [];
-  for (const [scope, registry] of [
-    ['thunderkiller', 'https://registry.npmjs.org'],
-    ['amreetkumarkhuntia', 'https://npm.pkg.github.com'],
+  for (const [name, filename, registry] of [
+    ['vdclip', 'vdclip-1.0.0.tgz', 'https://registry.npmjs.org'],
+    [
+      '@amreetkumarkhuntia/vdclip',
+      'amreetkumarkhuntia-vdclip-1.0.0.tgz',
+      'https://npm.pkg.github.com',
+    ],
   ] as const) {
-    const content = Buffer.from(`verified test archive for ${scope}`);
-    const filename = `${scope}-video-clipper-4.0.0.tgz`;
+    const content = Buffer.from(`verified test archive for ${name}`);
     await writeFile(join(root, 'artifacts/releases', filename), content);
     archives.push({
-      name: `@${scope}/video-clipper`,
-      version: '4.0.0',
+      name,
+      version: '1.0.0',
       filename,
       registry,
       integrity: `sha512-${createHash('sha512').update(content).digest('base64')}`,
@@ -43,12 +46,12 @@ beforeEach(async (): Promise<void> => {
   }
   await writeFile(
     join(root, 'artifacts/releases/release.json'),
-    JSON.stringify({ version: '4.0.0', sourceCommit: 'abc123', archives }),
+    JSON.stringify({ version: '1.0.0', sourceCommit: 'abc123', archives }),
   );
   context = {
     cwd: root,
     env: { NPM_TOKEN: 'test-npm-token', GH_PACKAGES_TOKEN: 'test-gh-token' },
-    nextRelease: { version: '4.0.0' },
+    nextRelease: { version: '1.0.0' },
     logger: { log: vi.fn() },
   };
 });

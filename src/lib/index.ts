@@ -1,5 +1,5 @@
 /**
- * Public programmatic API for @thunderkiller/video-clipper.
+ * Domain library used by the video-clipper backend.
  *
  * This module re-exports all shared library code: types, schemas, config,
  * utilities, services, orchestration, and shared pipeline stages.

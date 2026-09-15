@@ -22,7 +22,7 @@ import {
 } from '../src/lib/types/cli.js';
 import type { CliBuildRecord, CliPackageManifest, CliPackedArchive } from '../src/lib/types/cli.js';
 
-export const CLI_FILES = ['LICENSE', 'README.md', 'bin/video-clipper.js', 'package.json'];
+export const CLI_FILES = ['LICENSE', 'README.md', 'bin/vdclip.js', 'package.json'];
 
 export async function readManifest(directory: string): Promise<CliPackageManifest> {
   return CliPackageManifestSchema.parse(
@@ -61,7 +61,7 @@ export async function buildCli(
   const result = await build({
     absWorkingDir: root,
     entryPoints: ['src/app/cli/index.ts'],
-    outfile: join(destination, manifest.bin['video-clipper']),
+    outfile: join(destination, manifest.bin.vdclip),
     bundle: true,
     platform: 'node',
     format: 'esm',
@@ -93,7 +93,7 @@ export async function buildCli(
   }
 
   for (const file of result.outputFiles) await writeFile(file.path, file.contents);
-  await chmod(join(destination, manifest.bin['video-clipper']), 0o755);
+  await chmod(join(destination, manifest.bin.vdclip), 0o755);
   await writeFile(join(destination, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   await copyFile(join(root, 'packages/cli/README.md'), join(destination, 'README.md'));
   await copyFile(join(root, 'LICENSE'), join(destination, 'LICENSE'));
@@ -102,7 +102,7 @@ export async function buildCli(
   const record = CliBuildRecordSchema.parse({
     sourceCommit,
     sourceDirty: status.length > 0,
-    executableSha256: await fileHash(join(destination, manifest.bin['video-clipper'])),
+    executableSha256: await fileHash(join(destination, manifest.bin.vdclip)),
     inputs,
     externals,
   });
@@ -117,8 +117,7 @@ export async function verifyCliBuild(root: string): Promise<CliBuildRecord> {
   assertCliInputs(record.inputs);
   const manifest = await readManifest(join(root, 'artifacts/cli'));
   if (
-    (await fileHash(join(root, 'artifacts/cli', manifest.bin['video-clipper']))) !==
-    record.executableSha256
+    (await fileHash(join(root, 'artifacts/cli', manifest.bin.vdclip))) !== record.executableSha256
   ) {
     throw new Error('The CLI executable changed after its build was recorded.');
   }
@@ -198,8 +197,8 @@ export async function installCliArchive(archive: string, destination: string): P
     'wsl-utils',
     'bundle-name',
     'run-applescript',
-    '@thunderkiller/video-clipper',
-    '@amreetkumarkhuntia/video-clipper',
+    'vdclip',
+    '@amreetkumarkhuntia/vdclip',
   ]);
   for (const [packagePath, dependency] of Object.entries(lock.packages)) {
     if (!packagePath) continue;
@@ -210,9 +209,9 @@ export async function installCliArchive(archive: string, destination: string): P
   }
   await assertNoNativeDependencies(join(destination, 'node_modules'));
   const packagePath = Object.keys(lock.packages).find((key: string): boolean =>
-    /node_modules\/@(?:thunderkiller|amreetkumarkhuntia)\/video-clipper$/.test(key),
+    /node_modules\/(?:vdclip|@amreetkumarkhuntia\/vdclip)$/.test(key),
   );
-  if (!packagePath) throw new Error('The archive did not install a video-clipper package.');
+  if (!packagePath) throw new Error('The archive did not install a vdclip package.');
   return join(destination, packagePath);
 }
 
@@ -227,7 +226,7 @@ export async function smokeCliArchive(
     const manifest = await readManifest(installed);
     if (JSON.stringify(manifest) !== JSON.stringify(expected))
       throw new Error('Installed CLI manifest differs from the packed manifest.');
-    const executable = join(installed, manifest.bin['video-clipper']);
+    const executable = join(installed, manifest.bin.vdclip);
     if ((await fileHash(executable)) !== executableSha256)
       throw new Error('Installed CLI executable does not match the verified build.');
     const { stdout: version } = await execa(process.execPath, [executable, '--version'], {
@@ -261,7 +260,7 @@ export async function smokeCliArchive(
     const shim = join(
       temporary,
       'node_modules/.bin',
-      process.platform === 'win32' ? 'video-clipper.cmd' : 'video-clipper',
+      process.platform === 'win32' ? 'vdclip.cmd' : 'vdclip',
     );
     const result = await execa(shim, ['--version'], { cwd: temporary, timeout: 10_000 });
     if (result.stdout !== expected.version)

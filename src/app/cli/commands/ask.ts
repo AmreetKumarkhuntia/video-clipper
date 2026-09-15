@@ -69,7 +69,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper ask <youtube-url> "<question>" [options]
+Usage: vdclip ask <youtube-url> "<question>" [options]
 
 Options:
   --reset       Clear the conversation history before asking
@@ -90,11 +90,7 @@ The thread lives in the backend at ${apiBaseUrl()}.
   }
 
   if (!args.question) {
-    log.error(
-      'ask',
-      'No question provided. Usage: video-clipper ask <url> "<question>"',
-      requestId,
-    );
+    log.error('ask', 'No question provided. Usage: vdclip ask <url> "<question>"', requestId);
     process.exit(1);
   }
 
@@ -174,6 +170,6 @@ The thread lives in the backend at ${apiBaseUrl()}.
 export const askCommand: CommandHandler = {
   name: 'ask',
   description: 'Ask a question about a YouTube video using its transcript',
-  usage: 'video-clipper ask <youtube-url> "<question>" [--reset]',
+  usage: 'vdclip ask <youtube-url> "<question>" [--reset]',
   run,
 };

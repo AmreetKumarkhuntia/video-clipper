@@ -127,12 +127,12 @@ sign-in button reports that they are unset.
 The redirect URI points at the **frontend's** origin, not the backend's: the browser reaches the
 backend through the frontend's `/api` proxy, so that is the address Google must send it back to. It
 has to match the Cloud console entry byte for byte, port included. The CLI also uses its origin for
-the page it asks you to open when you run `video-clipper login`.
+the page it asks you to open when you run `vdclip login`.
 
 ### Roles
 
 Every migrated or newly created account starts as a `customer`. Changing settings — from the web Settings page or
-`video-clipper config <key> <value>` — needs the `settings:write` permission, which only the `admin`
+`vdclip config <key> <value>` — needs the `settings:write` permission, which only the `admin`
 role holds. Reading settings is open to any signed-in account.
 
 For initial setup, set `INITIAL_ADMIN_EMAIL` to the Google email that should administer the app,
@@ -190,7 +190,7 @@ environment secret alone is not a supported key-rotation procedure.
 
 ### CLI sign-in
 
-`video-clipper login` opens your system browser for Google sign-in. The browser and CLI must run
+`vdclip login` opens your system browser for Google sign-in. The browser and CLI must run
 on the same machine: after sign-in, the backend redirects to a temporary listener on
 `127.0.0.1` and the CLI exchanges a one-use grant for its own session. No code needs to be typed
 or compared. If opening the browser fails, open the printed URL in a browser on that machine.
@@ -309,10 +309,10 @@ Clips are re-encoded with `libx264` + `aac` to ensure audio/video sync. Use `FFM
 
 ```bash
 # Faster processing (lower quality)
-FFMPEG_PRESET=ultrafast video-clipper <url> --clip
+FFMPEG_PRESET=ultrafast vdclip <url> --clip
 
 # Higher quality (slower)
-FFMPEG_PRESET=medium video-clipper <url> --clip
+FFMPEG_PRESET=medium vdclip <url> --clip
 ```
 
 ## Using a Free Model via OpenRouter

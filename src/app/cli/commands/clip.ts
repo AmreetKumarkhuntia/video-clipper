@@ -38,7 +38,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper clip <analysis-id> [options]
+Usage: vdclip clip <analysis-id> [options]
 
 Options:
   --candidates <ranks>       Comma-separated candidate ranks to clip (default: all)
@@ -53,8 +53,8 @@ Options:
 
   if (!args.analysisId) {
     log.error('clip', 'No analysis ID provided.', requestId);
-    console.log('\nUsage: video-clipper clip <analysis-id>');
-    console.log('Run "video-clipper library" to see available analyses.');
+    console.log('\nUsage: vdclip clip <analysis-id>');
+    console.log('Run "vdclip library" to see available analyses.');
     process.exit(1);
   }
 
@@ -110,6 +110,6 @@ Options:
 export const clipCommand: CommandHandler = {
   name: 'clip',
   description: 'Generate video clips from an analysis',
-  usage: 'video-clipper clip <analysis-id> [options]',
+  usage: 'vdclip clip <analysis-id> [options]',
   run,
 };

@@ -1,10 +1,10 @@
-# @thunderkiller/video-clipper
+# Video Clipper
 
 [![CI](https://github.com/AmreetKumarkhuntia/video-clipper/actions/workflows/ci.yml/badge.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/@thunderkiller/video-clipper.svg)](https://www.npmjs.com/package/@thunderkiller/video-clipper)
-[![license](https://img.shields.io/npm/l/@thunderkiller/video-clipper.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/blob/master/LICENSE)
+[![npm version](https://img.shields.io/npm/v/vdclip.svg)](https://www.npmjs.com/package/vdclip)
+[![license](https://img.shields.io/npm/l/vdclip.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/blob/master/LICENSE)
 
-A TypeScript backend, web app, and CLI that analyze YouTube videos with an LLM, find interesting moments, and generate clips. The npm package contains only the CLI; analysis, storage, source downloads, and rendering run on the backend.
+A TypeScript backend, web app, and CLI that analyze YouTube videos with an LLM, find interesting moments, and generate clips. The `vdclip` npm package contains only the CLI; analysis, storage, source downloads, and rendering run on the backend.
 
 For installation and login, see the [CLI guide](packages/cli/README.md). Package build and release instructions are in [CLI distribution](docs/guides/cli-distribution.md).
 
@@ -44,14 +44,14 @@ brew install yt-dlp ffmpeg
 
 ```bash
 # Global CLI
-npm install -g @thunderkiller/video-clipper
+npm install -g vdclip
 
 # Connect to a running backend and sign in
 export VIDEO_CLIPPER_API_URL=https://your-backend.example
-video-clipper login
+vdclip login
 
 # One-off with npx (no install)
-npx @thunderkiller/video-clipper analyze <url>
+npx vdclip analyze <url>
 ```
 
 ## Quick Start
@@ -86,16 +86,16 @@ Configure browser sign-in as described in the [configuration guide](docs/guides/
 **3. Sign in and run the client**
 
 ```bash
-video-clipper login
+vdclip login
 
 # Analyze on the backend
-video-clipper https://youtube.com/watch?v=VIDEO_ID
+vdclip https://youtube.com/watch?v=VIDEO_ID
 
 # Analyze and cut clips on the backend
-video-clipper https://youtube.com/watch?v=VIDEO_ID --clip
+vdclip https://youtube.com/watch?v=VIDEO_ID --clip
 
 # Download only the top 3 segments (faster than full video)
-video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
+vdclip https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 ```
 
 ## CLI Flags
@@ -147,7 +147,7 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 
 ## Programmatic API
 
-The npm package no longer exports a library API. Integrations should use the backend HTTP API; shared contracts live in [src/lib/types/api.ts](src/lib/types/api.ts). The internal domain library remains in [src/lib/index.ts](src/lib/index.ts) for server development in this repository.
+The `vdclip` package exposes only the command-line client. Integrations should use the backend HTTP API; shared contracts live in [src/lib/types/api.ts](src/lib/types/api.ts). The internal domain library remains in [src/lib/index.ts](src/lib/index.ts) for server development in this repository, and the existing `@thunderkiller/video-clipper` publication remains unchanged.
 
 ## Contributing
 

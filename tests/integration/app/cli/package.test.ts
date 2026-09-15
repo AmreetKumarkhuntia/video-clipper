@@ -51,7 +51,7 @@ afterAll(async (): Promise<void> => {
 });
 
 async function runCli(args: string[]): Promise<Awaited<ReturnType<typeof execa>>> {
-  return execa(process.execPath, [join(artifacts, 'cli/bin/video-clipper.js'), ...args], {
+  return execa(process.execPath, [join(artifacts, 'cli/bin/vdclip.js'), ...args], {
     cwd: artifacts,
     env: { VIDEO_CLIPPER_API_URL: origin },
     timeout: 10_000,
@@ -95,7 +95,7 @@ describe('built CLI package', (): void => {
 
   it('packs only the CLI and reads the release-stamped version without rebuilding', async (): Promise<void> => {
     const directory = join(artifacts, 'cli');
-    const executable = join(directory, 'bin/video-clipper.js');
+    const executable = join(directory, 'bin/vdclip.js');
     const hash = await fileHash(executable);
     const manifest = { ...(await readManifest(directory)), version: '4.0.0-test.1' };
     await writeFile(join(directory, 'package.json'), JSON.stringify(manifest));
@@ -107,7 +107,7 @@ describe('built CLI package', (): void => {
     expect(archive.files.map((file): string => file.path).sort()).toEqual([
       'LICENSE',
       'README.md',
-      'bin/video-clipper.js',
+      'bin/vdclip.js',
       'package.json',
     ]);
   }, 30_000);

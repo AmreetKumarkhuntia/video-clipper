@@ -38,12 +38,12 @@ flowchart LR
 
 The CLI owns argument parsing, terminal output, HTTP requests, login credentials, connection preferences, and files the user explicitly downloads or exports. The backend owns business rules, authorization, source-video fetching, LLM calls, ffmpeg, persistence, provider credentials, rendering, and publishing. Writing a downloaded MP4 or `--output-json` on the client is still supported.
 
-Shared request/response schemas and small utilities stay in `src/lib/types/` and `src/lib/utils/`; they can be compiled into the CLI without publishing the domain library. The npm package offers the `video-clipper` executable only.
+Shared request/response schemas and small utilities stay in `src/lib/types/` and `src/lib/utils/`; they can be compiled into the CLI without publishing the domain library. The npm package offers the `vdclip` executable only.
 
 ## Phase 1 — Isolate the package
 
 1. Add `packages/cli/package.json` as an explicit publish template, plus a CLI-specific README. Keep `src/app/cli/` in place. Mark the root package `private: true` in the same change that redirects the release workflow, so the root cannot be accidentally published.
-2. Keep the npm name `@thunderkiller/video-clipper` and binary name `video-clipper`. Remove public library `main`, `module`, `types`, and `exports` entries from the publish template. Do not copy root dependencies or development lifecycle scripts into it.
+2. Publish the new npm package `vdclip` with the binary name `vdclip`. Remove public library `main`, `module`, `types`, and `exports` entries from the publish template. Do not copy root dependencies or development lifecycle scripts into it. Keep `@thunderkiller/video-clipper` unchanged.
 3. Add `build:cli`, backed by a TypeScript build script, producing an isolated, ignored `artifacts/cli/` directory. Use an explicitly declared build-time bundler such as esbuild to compile the CLI entry and reachable internal modules into Node ESM. Preserve the executable shebang and ensure the installed command works on supported platforms.
 4. Keep small third-party runtime dependencies explicit in the CLI manifest. The current graph needs Zod and nanoid; include `eventsource-parser` if used for the stream reader. The bundler resolves internal aliases but leaves these declared packages external. Build tooling remains a root development dependency.
 5. Include only the executable output, package manifest, CLI README, and license in the release artifact. Exclude server code, migrations, Python, configuration machinery, media, and public library declarations. Verify the import graph as well as filenames: a bundle can hide server imports inside one file.
@@ -57,7 +57,7 @@ Changing `files` alone is insufficient: the package needs its own dependencies a
 
 Reuse the backend's browser sign-in and bearer sessions; do not create a second identity system. The baseline uses the device-style flow documented in `rbac-and-cli-auth.md`; concurrent work is changing the handoff to a PKCE-protected loopback callback. Integrate the settled handoff while preserving these user-visible steps:
 
-1. `video-clipper login` starts sign-in with the backend and opens or prints its browser URL.
+1. `vdclip login` starts sign-in with the backend and opens or prints its browser URL.
 2. The user signs in through the app's existing backend identity flow.
 3. The CLI completes a one-time, invocation-bound exchange and stores the resulting session under that backend origin. With the pending loopback design, the browser carries only a short-lived code; the CLI exchanges it using its PKCE verifier and validates callback state.
 4. Every data request carries that bearer session. `whoami` resolves it server-side; `logout` revokes it and retains the existing failed-revocation retry behavior.
@@ -122,16 +122,16 @@ For the first release, retain the current synchronous/SSE processing model if it
 
 ## Phase 5 — Release a verified CLI artifact
 
-1. Keep backend/web deployment and npm publication as separate outputs. The server deployment continues to contain migrations, media tooling, provider SDKs, secrets/configuration, and durable storage; the CLI artifact does not. Preserve the current registry package names unless deliberately changed.
+1. Keep backend/web deployment and npm publication as separate outputs. The server deployment continues to contain migrations, media tooling, provider SDKs, secrets/configuration, and durable storage; the CLI artifact does not. Publish the new package as `vdclip` and its GitHub Packages mirror as `@amreetkumarkhuntia/vdclip`.
 2. Build from one checked-out commit with the frozen pnpm lockfile. Make release depend on the required CI checks for that commit. Serialize release jobs and remove the post-build `git pull` and root manifest mutation.
-3. Let semantic-release determine the version from the existing tag history. Configure its npm plugin with `pkgRoot: artifacts/cli` and `npmPublish: false`; the plugin supports updating the package in that directory independently of the repository root. Treat the release tag and final CLI manifest as authoritative; do not assume the private root version was updated. See the [plugin's package-root/version behavior](https://github.com/semantic-release/npm#options).
+3. Let semantic-release determine the version from the independent `vdclip-v*` tag history. Configure its npm plugin with `pkgRoot: artifacts/cli` and `npmPublish: false`; the plugin supports updating the package in that directory independently of the repository root. Treat the release tag and final CLI manifest as authoritative; do not assume the private root version was updated. See the [plugin's package-root/version behavior](https://github.com/semantic-release/npm#options).
 4. In a release hook after version preparation, pack the final staged directory, validate the archive, and install that archive in an isolated temporary project. Then publish that **same `.tgz`** through the release publish hook. Do not rebuild or regenerate its manifest between verification and publication. Record version, source commit, file list, and checksum.
-5. If GitHub Packages remains enabled, create a separate staged variant for `@amreetkumarkhuntia/video-clipper`, with the same executable bytes and release version. Pack and verify it separately; do not rename the repository package after publishing npm. Record each registry result so a partial failure can retry the missing publication without rebuilding or overwriting an existing version.
+5. If GitHub Packages remains enabled, create a separate staged variant for `@amreetkumarkhuntia/vdclip`, with the same executable bytes and release version. Pack and verify it separately; do not rename the repository package after publishing npm. Record each registry result so a partial failure can retry the missing publication without rebuilding or overwriting an existing version.
 6. Add package-content and dependency assertions: allowlisted files, working executable, version agreement, no unresolved aliases/workspace paths, no server imports or native/media dependencies, no install-time build scripts. Measure packed and installed size rather than relying on a file-count target.
 7. Install normally in clean Linux, macOS, and Windows environments, including the supported Node versions. Exercise help/version offline and HTTP/auth flows against a controlled backend. Use a local fake HTTP server for deterministic CLI protocol tests; reserve actual Google/YouTube/LLM/media execution for staging integration checks.
 8. Adopt Node 22+ as the proposed CLI minimum and test Node 22/24, with Node 24 for release tooling. These are supported LTS lines as of this plan; this intentionally replaces the current Node 18 claim. Recheck support before release against the [Node release schedule](https://github.com/nodejs/Release).
 
-Removing the advertised library exports and filesystem flags requires a **major release** under the existing package name. Publish a migration guide covering login, server selection, remote output, Node support, and the end of the public library API. Deploy the compatible backend first, validate a prerelease CLI, then promote the verified release. Maintain a stated API compatibility window; backend deployments should not force a CLI update unless the contract actually changes.
+The new `vdclip` release track starts at `1.0.0`; the prior package and its `v*` tags remain untouched. Publish a migration guide covering login, server selection, remote output, Node support, and the move to a command-only package. Deploy the compatible backend first, validate a prerelease CLI, then promote the verified release. Maintain a stated API compatibility window; backend deployments should not force a CLI update unless the contract actually changes.
 
 **Exit condition:** CI publishes only archives it built and verified from the release source commit. Fresh installation works independently of the repository, and the previous CLI's migration path is documented.
 
@@ -149,12 +149,12 @@ Suggested implementation slices, each with its own review and meaningful checks:
 2. Backend-origin configuration, response validation, offline help/version, and existing sign-in polish.
 3. Backend guards, ownership migration, resource/cache isolation, and safe client contracts.
 4. CLI downloads, remote flag migration, and coordinated web changes.
-5. Staging verification, migration documentation, and the major CLI release.
+5. Staging verification, migration documentation, and the initial `vdclip` release.
 6. Durable jobs from the existing plan, moving ahead of launch if timeout testing requires them.
 
 Phases 1–4 are developed and verified before publication. No package has been published from this implementation branch.
 
-Defaults proposed here: keep the package/binary names; use one existing repo; backend performs all video work; local source upload follows later; reuse backend browser sign-in and bearer sessions; keep both existing registries until a separate decision changes that. Inputs still needed before release are the real hosted origin, deployment limits, and ownership assignment for legacy global data. These do not block the packaging work.
+Decisions recorded here: use the existing repository; publish the package and binary as `vdclip`; backend performs all video work; local source upload follows later; reuse backend browser sign-in and bearer sessions; keep npm and GitHub Packages. Inputs still needed before release are the real hosted origin, deployment limits, and ownership assignment for legacy global data. These do not block the packaging work.
 
 The companion plans remain the references for [completed authentication](./rbac-and-cli-auth.md), [product tenancy gaps](./product-restructure.md), and [background jobs](./product-foundation.md). This plan narrows those dependencies to what a distributed CLI needs.
 
@@ -162,6 +162,7 @@ The companion plans remain the references for [completed authentication](./rbac-
 
 - Created `codex/cli-only-distribution` from `98fbbd2`, retaining the completed auth and test-layout changes.
 - Added the standalone manifest/build, import and package-content gates, offline help/version, normal-install verification, both registry variants, release receipts, and publication retry.
+- Renamed the new package and command to `vdclip`, with an independent `vdclip-v*` semantic-release tag namespace. The existing `@thunderkiller/video-clipper` package remains unchanged.
 - Reused the shipped PKCE/browser authentication. No auth protocol or customer data changes in this slice.
-- Full Vitest suite: 617 tests passed; the subsequently added development-publication guard and focused release checks also passed (8 focused tests). Server build and web type-check passed. Isolated npm installation passed locally on macOS/Node 24; the Linux/Windows/Node 22 matrix is configured for CI and has not run locally.
+- Full Vitest suite: 618 tests passed. Server build, formatting, and web type-check passed. Both registry archives installed and passed package verification locally on macOS/Node 24; the Linux/Windows/Node 22 matrix is configured for CI and has not run locally.
 - Phases 2–4 and staging validation remain open. See [build and release instructions](../guides/cli-distribution.md).

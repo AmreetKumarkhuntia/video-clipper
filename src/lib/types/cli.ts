@@ -3,15 +3,15 @@ import { z } from 'zod';
 /** The complete allowlist for the executable package, independent of the server manifest. */
 export const CliPackageManifestSchema = z
   .object({
-    name: z.enum(['@thunderkiller/video-clipper', '@amreetkumarkhuntia/video-clipper']),
+    name: z.enum(['vdclip', '@amreetkumarkhuntia/vdclip']),
     version: z.string().regex(/^\d+\.\d+\.\d+(?:-[\da-zA-Z.-]+)?$/),
     description: z.string(),
     license: z.string(),
     author: z.string(),
     type: z.literal('module'),
     engines: z.object({ node: z.literal('>=22') }).strict(),
-    bin: z.object({ 'video-clipper': z.literal('bin/video-clipper.js') }).strict(),
-    files: z.tuple([z.literal('bin/video-clipper.js')]),
+    bin: z.object({ vdclip: z.literal('bin/vdclip.js') }).strict(),
+    files: z.tuple([z.literal('bin/vdclip.js')]),
     publishConfig: z.object({ access: z.literal('public') }).strict(),
     repository: z.object({ type: z.literal('git'), url: z.string().url() }).strict(),
     dependencies: z.object({ nanoid: z.string(), open: z.string(), zod: z.string() }).strict(),
@@ -59,12 +59,11 @@ export const CliReleaseRecordSchema = z.object({
       (archives): boolean =>
         archives.some(
           (archive): boolean =>
-            archive.name === '@thunderkiller/video-clipper' &&
-            archive.registry === 'https://registry.npmjs.org',
+            archive.name === 'vdclip' && archive.registry === 'https://registry.npmjs.org',
         ) &&
         archives.some(
           (archive): boolean =>
-            archive.name === '@amreetkumarkhuntia/video-clipper' &&
+            archive.name === '@amreetkumarkhuntia/vdclip' &&
             archive.registry === 'https://npm.pkg.github.com',
         ),
       { message: 'Expected one verified archive for each configured registry.' },

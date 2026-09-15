@@ -1,5 +1,5 @@
 {
-  "name": "@thunderkiller/video-clipper",
+  "name": "vdclip",
   "version": "0.0.0-development",
   "description": "Command-line client for the video-clipper backend",
   "license": "ISC",
@@ -9,10 +9,10 @@
     "node": ">=22"
   },
   "bin": {
-    "video-clipper": "bin/video-clipper.js"
+    "vdclip": "bin/vdclip.js"
   },
   "files": [
-    "bin/video-clipper.js"
+    "bin/vdclip.js"
   ],
   "publishConfig": {
     "access": "public"

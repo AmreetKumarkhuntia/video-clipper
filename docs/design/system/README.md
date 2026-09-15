@@ -1,6 +1,6 @@
 # Video Clipper — Design System
 
-A calm, considered design system for **@thunderkiller/video-clipper** — a TypeScript CLI + Svelte web app that analyzes YouTube videos with an LLM, finds the most interesting moments, and cuts clips automatically.
+A calm, considered design system for **Video Clipper** — a TypeScript CLI + Svelte web app that analyzes YouTube videos with an LLM, finds the most interesting moments, and cuts clips automatically.
 
 The system is rooted in the existing repo's layout (positioning preserved) but modernizes buttons, colors, typography, and surfaces. Tone is **Claude-like**: warm cream surfaces, clay-orange accent, considered serif display + clean sans body, generous whitespace.
 
@@ -21,7 +21,7 @@ The system is rooted in the existing repo's layout (positioning preserved) but m
 - Numbers: monospace where they're data (timestamps, scores, durations); proportional where they're prose.
 - Timestamps: always `mm:ss` or `hh:mm:ss`, never decimal seconds in UI (use `02:14`, not `134.0s`).
 
-**Naming.** Product is **Video Clipper** (wordmark only, no glyph). Package is `@thunderkiller/video-clipper`. Use the wordmark in product UI; reserve the package name for docs/CLI.
+**Naming.** Product is **Video Clipper** (wordmark only, no glyph). The CLI package and command are `vdclip`. Use the wordmark in product UI; reserve the package name for docs/CLI.
 
 ---
 

@@ -41,7 +41,7 @@ describe('CLI distribution boundaries', (): void => {
           files: [
             'LICENSE',
             'README.md',
-            'bin/video-clipper.js',
+            'bin/vdclip.js',
             'package.json',
             'drizzle/schema.sql',
           ].map((path: string) => ({ path, mode: 0o644, size: 1 })),

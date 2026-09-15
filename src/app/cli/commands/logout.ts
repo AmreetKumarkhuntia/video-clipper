@@ -6,7 +6,7 @@ async function run(argv: string[]): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(
       `
-Usage: video-clipper logout
+Usage: vdclip logout
 
 Revokes the session stored for ${apiBaseUrl()} and forgets it locally.
 `.trim(),
@@ -32,6 +32,6 @@ Revokes the session stored for ${apiBaseUrl()} and forgets it locally.
 export const logoutCommand: CommandHandler = {
   name: 'logout',
   description: 'Revoke and forget the stored session',
-  usage: 'video-clipper logout',
+  usage: 'vdclip logout',
   run,
 };

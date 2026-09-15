@@ -35,7 +35,7 @@ Applies a global offset (in seconds) to all clip timestamps before cutting.
 TIMESTAMP_OFFSET_SECONDS=-3
 
 # Or inline
-TIMESTAMP_OFFSET_SECONDS=-3 video-clipper <url> --clip
+TIMESTAMP_OFFSET_SECONDS=-3 vdclip <url> --clip
 ```
 
 ## Finding the Correct Offset
@@ -43,7 +43,7 @@ TIMESTAMP_OFFSET_SECONDS=-3 video-clipper <url> --clip
 ### Step 1: Run a single segment with no offset
 
 ```bash
-TIMESTAMP_OFFSET_SECONDS=0 video-clipper <url> --download-sections 1
+TIMESTAMP_OFFSET_SECONDS=0 vdclip <url> --download-sections 1
 ```
 
 ### Step 2: Play and inspect
@@ -69,7 +69,7 @@ TIMESTAMP_OFFSET_SECONDS=2    # shift later
 ### Step 4: Verify across multiple clips
 
 ```bash
-TIMESTAMP_OFFSET_SECONDS=-3 video-clipper <url> --download-sections 3
+TIMESTAMP_OFFSET_SECONDS=-3 vdclip <url> --download-sections 3
 ```
 
 Check that the offset works consistently across different segments. If it varies per segment, the issue is video-specific rather than a global transcript offset.
@@ -80,7 +80,7 @@ If you are unsure of the exact value, try a few candidates and narrow down:
 
 ```bash
 for offset in 0 -3 -6 -9; do
-  TIMESTAMP_OFFSET_SECONDS=$offset video-clipper <url> --download-sections 1
+  TIMESTAMP_OFFSET_SECONDS=$offset vdclip <url> --download-sections 1
   echo "Tested offset: $offset"
 done
 ```

@@ -11,7 +11,7 @@ pnpm verify:cli-package
 
 The build creates `artifacts/cli/`, a source/import/hash record at `artifacts/cli-build.json`, and the compiled release plugin. Verification runs the release preparation hook: it creates both registry variants, packs them, and installs each archive in a separate system temporary directory. It checks the installed manifest, executable checksum, dependency tree, command shim, offline help, and version. It makes no publication request. npm needs registry/cache access for these normal installations.
 
-Only four package files are permitted: `package.json`, `README.md`, `LICENSE`, and `bin/video-clipper.js`. The runtime dependencies are Zod, nanoid, and `open` with its small platform helpers. CI rejects undeclared dependencies, unexpected transitive packages, native addons, and install scripts. The esbuild input graph must stay within CLI sources, shared types, and utilities, even when a forbidden import is indirect.
+Only four package files are permitted: `package.json`, `README.md`, `LICENSE`, and `bin/vdclip.js`. The runtime dependencies are Zod, nanoid, and `open` with its small platform helpers. CI rejects undeclared dependencies, unexpected transitive packages, native addons, and install scripts. The esbuild input graph must stay within CLI sources, shared types, and utilities, even when a forbidden import is indirect.
 
 All source is TypeScript. The Node ESM bundle preserves its shebang and reads the nearest package manifest for `--version`, so release-time versioning cannot leave an older version embedded in the executable. Development builds use `0.0.0-development`, which the publish hook refuses; the private root package's historical version is not the CLI release version.
 
@@ -23,14 +23,14 @@ The release job checks out the same source SHA, builds the CLI, and runs semanti
 
 Publication sends the verified `.tgz` directly to each registry with lifecycle scripts disabled. The two registry names remain:
 
-- npm: `@thunderkiller/video-clipper`
-- GitHub Packages: `@amreetkumarkhuntia/video-clipper`
+- npm: `vdclip`
+- GitHub Packages: `@amreetkumarkhuntia/vdclip`
 
 The variants share executable bytes and version, but have different package names and archive hashes. The workflow stores the archives, source record, release manifest, and per-registry receipts as a GitHub Actions artifact for 14 days, including on failure. No tokens are stored in those files.
 
 The workflow uses `NPM_TOKEN`, the workflow's package-write token for GitHub Packages, and the existing `PUSH_TOKEN` when provided for release git/GitHub operations. Direct invocation of the plugin uses `GH_PACKAGES_TOKEN` for the package-write token. All publication is separate from backend deployment.
 
-Use a breaking Conventional Commit for this migration, such as `feat(cli)!: publish a standalone backend client`: removing the public library exports requires a major release. The registry packages currently published before this change remain unchanged until the branch is merged and a versioned release runs.
+The `vdclip-v*` tag namespace gives the new npm package an independent release history. Its first release is `1.0.0`; existing `v*` tags and the `@thunderkiller/video-clipper` package remain unchanged.
 
 ## Retrying a partial registry publication
 

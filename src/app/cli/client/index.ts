@@ -28,7 +28,7 @@ export function setClientRequestId(requestId: string): void {
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
   const url = new URL(path, apiBaseUrl());
-  // The session `video-clipper login` stored, sent as a bearer header — the same
+  // The session `vdclip login` stored, sent as a bearer header — the same
   // token a browser would hold in its cookie. Attached on every call because the
   // backend ignores it where it is not required.
   const token = readCredential(apiBaseUrl())?.token;

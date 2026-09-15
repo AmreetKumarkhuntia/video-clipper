@@ -30,9 +30,9 @@ export async function prepare(_options: unknown, context: CliReleaseContext): Pr
   await mkdir(join(githubDirectory, 'bin'), { recursive: true });
   const githubManifest = CliPackageManifestSchema.parse({
     ...npmManifest,
-    name: '@amreetkumarkhuntia/video-clipper',
+    name: '@amreetkumarkhuntia/vdclip',
   });
-  for (const file of ['bin/video-clipper.js', 'README.md', 'LICENSE']) {
+  for (const file of ['bin/vdclip.js', 'README.md', 'LICENSE']) {
     await copyFile(join(npmDirectory, file), join(githubDirectory, file));
   }
   await writeFile(

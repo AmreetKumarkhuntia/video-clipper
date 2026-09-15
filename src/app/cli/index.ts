@@ -19,9 +19,9 @@ function isUrl(value: string): boolean {
 function printHelp(): void {
   console.log(
     `
-video-clipper — Analyze YouTube videos and generate clips
+vdclip — Analyze YouTube videos and generate clips
 
-Usage: video-clipper <command> [options]
+Usage: vdclip <command> [options]
 
 Commands:
   analyze <url>          Analyze a YouTube video and find clip candidates
@@ -38,7 +38,7 @@ Commands:
 Options:
   --version, -v          Show the installed CLI version
 
-Run "video-clipper <command> --help" for command-specific options.
+Run "vdclip <command> --help" for command-specific options.
 `.trim(),
   );
 }

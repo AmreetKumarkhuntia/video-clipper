@@ -45,7 +45,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper analyze <youtube-url> [options]
+Usage: vdclip analyze <youtube-url> [options]
 
 Options:
   --threshold <n>     Minimum score to keep a segment (default: backend setting)
@@ -142,6 +142,6 @@ Analysis runs on the backend at ${apiBaseUrl()}, where these defaults live.
 export const analyzeCommand: CommandHandler = {
   name: 'analyze',
   description: 'Analyze a YouTube video and find clip candidates',
-  usage: 'video-clipper analyze <youtube-url> [options]',
+  usage: 'vdclip analyze <youtube-url> [options]',
   run,
 };
