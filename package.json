@@ -1,6 +1,6 @@
 {
   "name": "@thunderkiller/video-clipper",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "CLI that analyzes YouTube transcripts with an LLM to find interesting moments and cut clips",
   "license": "ISC",
   "author": "Amreet Kumar Khuntia",

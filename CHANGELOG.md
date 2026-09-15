@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v3.0.0...v3.0.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **auth:** address final review feedback ([8124438](https://github.com/AmreetKumarkhuntia/video-clipper/commit/8124438b7bf24bb1edb6d68d393c79ae4ba8c888))
+
 # [3.0.0](https://github.com/AmreetKumarkhuntia/video-clipper/compare/v2.0.0...v3.0.0) (2026-09-08)
 
 
