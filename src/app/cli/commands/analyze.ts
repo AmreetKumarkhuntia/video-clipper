@@ -43,16 +43,15 @@ async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseAnalyzeArgs(argv);
 
   if (args.help) {
-    const values = await backendSettings();
     console.log(
       `
 Usage: video-clipper analyze <youtube-url> [options]
 
 Options:
-  --threshold <n>     Minimum score to keep a segment (default: ${describeSetting(values, 'SCORE_THRESHOLD')})
-  --top-n <n>         Maximum number of segments to return (default: ${describeSetting(values, 'TOP_N_SEGMENTS')})
+  --threshold <n>     Minimum score to keep a segment (default: backend setting)
+  --top-n <n>         Maximum number of segments to return (default: backend setting)
   --max-chunks <n>    Limit transcript chunks sent to LLM
-  --max-parallel <n>  Max parallel LLM calls (default: ${describeSetting(values, 'LLM_CONCURRENCY')})
+  --max-parallel <n>  Max parallel LLM calls (default: backend setting)
   --max-duration <s>  Abort if video exceeds <s> seconds
   --no-cache          Bypass all caches
   --no-refine         Skip segment refinement (LLM pass 2)

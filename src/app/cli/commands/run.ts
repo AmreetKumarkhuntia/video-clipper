@@ -20,7 +20,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseArgs(['_', '_', ...argv]);
 
   if (args.help) {
-    printUsage(await backendSettings());
+    printUsage();
     return;
   }
 

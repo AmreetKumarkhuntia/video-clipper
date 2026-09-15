@@ -2,6 +2,7 @@
 import { generateRequestId, log } from '@lib/utils/logger.js';
 import { commands } from './commands/index.js';
 import { setClientRequestId } from './client/index.js';
+import { cliVersion } from './version.js';
 
 // The CLI never opens the database. Schema migrations are run manually, and
 // the backend is the only application process that reads or writes SQLite.
@@ -34,12 +35,19 @@ Commands:
   logout                 Revoke and forget the stored session
   whoami                 Show the signed-in account
 
+Options:
+  --version, -v          Show the installed CLI version
+
 Run "video-clipper <command> --help" for command-specific options.
 `.trim(),
   );
 }
 
 async function main(): Promise<void> {
+  if (subcommand === '--version' || subcommand === '-v') {
+    console.log(cliVersion());
+    return;
+  }
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
     printHelp();
     return;

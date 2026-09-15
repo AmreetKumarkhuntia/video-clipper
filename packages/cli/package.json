@@ -1,0 +1,29 @@
+{
+  "name": "@thunderkiller/video-clipper",
+  "version": "0.0.0-development",
+  "description": "Command-line client for the video-clipper backend",
+  "license": "ISC",
+  "author": "Amreet Kumar Khuntia",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "video-clipper": "bin/video-clipper.js"
+  },
+  "files": [
+    "bin/video-clipper.js"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AmreetKumarkhuntia/video-clipper.git"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.11",
+    "open": "^10.2.0",
+    "zod": "^4.3.6"
+  }
+}

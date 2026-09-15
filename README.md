@@ -4,7 +4,9 @@
 [![npm version](https://img.shields.io/npm/v/@thunderkiller/video-clipper.svg)](https://www.npmjs.com/package/@thunderkiller/video-clipper)
 [![license](https://img.shields.io/npm/l/@thunderkiller/video-clipper.svg)](https://github.com/AmreetKumarkhuntia/video-clipper/blob/master/LICENSE)
 
-A TypeScript CLI (and library) that analyzes a YouTube video with an LLM, finds the most interesting moments, and optionally downloads the video and cuts clips automatically.
+A TypeScript backend, web app, and CLI that analyze YouTube videos with an LLM, find interesting moments, and generate clips. The npm package contains only the CLI; analysis, storage, source downloads, and rendering run on the backend.
+
+For installation and login, see the [CLI guide](packages/cli/README.md). Package build and release instructions are in [CLI distribution](docs/guides/cli-distribution.md).
 
 ## How It Works
 
@@ -27,9 +29,9 @@ Refine clip boundaries (second LLM pass)
 (Optional) Download video + cut clips with ffmpeg
 ```
 
-## Requirements
+## Requirements for self-hosting
 
-- Node.js 18+
+- Node.js 22+ for the installed CLI; Node.js 24 for repository build and release tooling
 - [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — for video download
 - [`ffmpeg`](https://ffmpeg.org) — for clip cutting
 
@@ -44,18 +46,19 @@ brew install yt-dlp ffmpeg
 # Global CLI
 npm install -g @thunderkiller/video-clipper
 
-# One-off with npx (no install)
-npx @thunderkiller/video-clipper <url>
+# Connect to a running backend and sign in
+export VIDEO_CLIPPER_API_URL=https://your-backend.example
+video-clipper login
 
-# As a library
-npm install @thunderkiller/video-clipper
+# One-off with npx (no install)
+npx @thunderkiller/video-clipper analyze <url>
 ```
 
 ## Quick Start
 
-**1. Configure your LLM provider**
+**1. Configure the backend's LLM provider (self-hosting only)**
 
-Create a `.env` file in your working directory:
+Create a `.env` file in the backend repository. CLI users connecting to a hosted backend do not need provider keys:
 
 ```env
 LLM_PROVIDER=openai
@@ -70,13 +73,25 @@ OPENROUTER_API_KEY=sk-or-...
 LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ```
 
-**2. Run**
+**2. Start the backend and web app (self-hosting only)**
 
 ```bash
-# Analyze only — prints ranked segments as JSON
+pnpm api:dev
+# In another terminal:
+pnpm web:dev
+```
+
+Configure browser sign-in as described in the [configuration guide](docs/guides/configuration.md). Schema setup remains a server deployment responsibility.
+
+**3. Sign in and run the client**
+
+```bash
+video-clipper login
+
+# Analyze on the backend
 video-clipper https://youtube.com/watch?v=VIDEO_ID
 
-# Analyze and cut clips (downloads video, runs ffmpeg)
+# Analyze and cut clips on the backend
 video-clipper https://youtube.com/watch?v=VIDEO_ID --clip
 
 # Download only the top 3 segments (faster than full video)
@@ -85,22 +100,22 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 
 ## CLI Flags
 
-| Flag                       | Description                                                              |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `--clip`                   | Download video and generate mp4 clips for each segment                   |
-| `--download-sections <n>`  | Download only top N segments via yt-dlp `--download-sections` (e.g. `3`) |
-| `--local-video <path>`     | Cut clips from a local video file — skips yt-dlp download entirely       |
-| `--video-path <path>`      | Custom output directory for downloaded videos and clips                  |
-| `--threshold <n>`          | Minimum score (1–10) to keep a segment (default: `7`)                    |
-| `--top-n <n>`              | Maximum number of segments to return (default: `10`)                     |
-| `--max-duration <s>`       | Abort if video is longer than N seconds                                  |
-| `--max-chunks <n>`         | Limit number of transcript chunks sent to LLM                            |
-| `--max-parallel <n>`       | Max parallel LLM calls                                                   |
-| `--no-audio`               | Deprecated — ignored (`run` no longer performs audio event detection)    |
-| `--game-profile <profile>` | Deprecated — ignored                                                     |
-| `--output-json <path>`     | Write output JSON to file instead of stdout                              |
-| `--no-cache`               | Re-analyze every chunk, ignoring stored LLM results (transcript reused)  |
-| `--help, -h`               | Show help message                                                        |
+| Flag                       | Description                                                                |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `--clip`                   | Download video and generate mp4 clips for each segment                     |
+| `--download-sections <n>`  | Download only top N segments via yt-dlp `--download-sections` (e.g. `3`)   |
+| `--local-video <path>`     | Legacy server-side source path; cannot read a file on a remote CLI machine |
+| `--video-path <path>`      | Legacy server-side output directory                                        |
+| `--threshold <n>`          | Minimum score (1–10) to keep a segment (default: `7`)                      |
+| `--top-n <n>`              | Maximum number of segments to return (default: `10`)                       |
+| `--max-duration <s>`       | Abort if video is longer than N seconds                                    |
+| `--max-chunks <n>`         | Limit number of transcript chunks sent to LLM                              |
+| `--max-parallel <n>`       | Max parallel LLM calls                                                     |
+| `--no-audio`               | Deprecated — ignored (`run` no longer performs audio event detection)      |
+| `--game-profile <profile>` | Deprecated — ignored                                                       |
+| `--output-json <path>`     | Write output JSON to file instead of stdout                                |
+| `--no-cache`               | Re-analyze every chunk, ignoring stored LLM results (transcript reused)    |
+| `--help, -h`               | Show help message                                                          |
 
 ## Output
 
@@ -132,28 +147,7 @@ video-clipper https://youtube.com/watch?v=VIDEO_ID --download-sections 3
 
 ## Programmatic API
 
-```typescript
-import {
-  config,
-  runMigrations,
-  runAnalysis,
-  generateClipsForAnalysis,
-} from '@thunderkiller/video-clipper';
-
-runMigrations();
-
-const plan = await runAnalysis(
-  { videoId, title, durationSec, options: { noCache: false, noSegmentCache: false, refine: true } },
-  config,
-);
-
-const clips = await generateClipsForAnalysis(
-  { videoId: plan.videoId, analysisId: plan.id, segments: plan.candidates },
-  config,
-);
-```
-
-Services (video source, audio, analysis, publish, db) and the orchestration layer are all exported from the package root, along with every public type and Zod schema. See [src/lib/index.ts](src/lib/index.ts) for the full surface. (The legacy `runPipeline`/`parseArgs` exports were removed — use the `video-clipper run` CLI command or the orchestrators shown above.)
+The npm package no longer exports a library API. Integrations should use the backend HTTP API; shared contracts live in [src/lib/types/api.ts](src/lib/types/api.ts). The internal domain library remains in [src/lib/index.ts](src/lib/index.ts) for server development in this repository.
 
 ## Contributing
 

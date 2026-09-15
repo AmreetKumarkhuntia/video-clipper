@@ -189,20 +189,23 @@ describe('service boundaries', () => {
   });
 
   /**
-   * The CLI talks to the backend. Local media work — yt-dlp and ffmpeg against
-   * files on this machine — may stay in-process, which is why `@lib/services`
-   * is not banned wholesale; opening the database is what put two writers on
-   * one SQLite file, and running an orchestrator locally is what made the
-   * backend's config irrelevant to what the CLI actually did.
+   * The CLI is distributed independently. Both source and relative imports must
+   * stay in the client, shared contracts, or small utilities. The bundle build
+   * also checks transitive runtime inputs and external packages.
    */
-  it('the CLI never opens the database or runs orchestration', () => {
+  it('the CLI imports only client modules, shared types, and utilities', () => {
     const cliDir = path.join(SRC, 'app', 'cli') + path.sep;
-    const forbidden = ['@lib/services/db', '@lib/orchestration', '@lib/pipeline', '@lib/config'];
+    const allowed = [
+      cliDir,
+      path.join(SRC, 'lib', 'types') + path.sep,
+      path.join(SRC, 'lib', 'utils') + path.sep,
+    ];
     const violations: string[] = [];
     for (const file of files) {
       if (!file.startsWith(cliDir)) continue;
       for (const spec of importSpecifiers(file)) {
-        if (forbidden.some((prefix) => spec === prefix || spec.startsWith(`${prefix}/`))) {
+        const target = resolveSpecifier(file, spec);
+        if (target && !allowed.some((prefix) => target.startsWith(prefix))) {
           violations.push(`${rel(file)} -> ${spec}`);
         }
       }

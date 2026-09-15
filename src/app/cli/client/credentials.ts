@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getUserConfigDir } from '@lib/utils/paths.js';
+import { getUserConfigDir } from '@lib/utils/userConfigDir.js';
 import { CliCredentialsFileSchema } from '@lib/types/command.js';
 import type { CliCredential, CliCredentialsFile } from '@lib/types/command.js';
 
