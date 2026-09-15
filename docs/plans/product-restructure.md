@@ -232,7 +232,7 @@ pnpm web:dev     # frontend on :5002, proxying /api
 - The three SSE streams still stream and abort on disconnect; clip playback still serves byte ranges so
   seeking works; thumbnail upload still writes to disk.
 - Sign in, browse, add and remove a video, run an analysis, cut a clip, end to end.
-- `video-clipper library` and `analyze` work against a running backend, and fail with a clear message
+- `vdclip library` and `analyze` work against a running backend, and fail with a clear message
   when it is down rather than a stack trace.
 - The architecture test proves the web app no longer imports `@lib`.
 - `grep -ri google src/lib/services/db src/lib/types/auth.ts` returns nothing outside the adapter.

@@ -1,5 +1,4 @@
-import { resolve, dirname, join } from 'path';
-import os from 'os';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 /**
@@ -33,6 +32,4 @@ export function scriptPath(name: string): string {
  * Home for the user config file, persisted YouTube auth state, and the
  * default SQLite library location.
  */
-export function getUserConfigDir(): string {
-  return join(os.homedir(), '.config', 'video-clipper');
-}
+export { getUserConfigDir } from './userConfigDir.js';

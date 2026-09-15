@@ -29,7 +29,7 @@ export async function apiError(res: Response): Promise<ApiRequestError> {
   const message = await errorMessageFrom(res);
   // A 401 from this CLI always has the same fix, so say it here rather than in
   // every command.
-  const hint = res.status === 401 ? ' Run "video-clipper login" to sign in.' : '';
+  const hint = res.status === 401 ? ' Run "vdclip login" to sign in.' : '';
   return new ApiRequestError(`${message}${hint}`, res.status);
 }
 

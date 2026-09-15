@@ -20,14 +20,17 @@ The architecture reference is the _Project Structure_ section of [AGENTS.md](../
 | [free-models.md](./guides/free-models.md)                 | Free OpenRouter models that work well with this tool                                  |
 | [google-oauth-scopes.md](./guides/google-oauth-scopes.md) | Which Google scopes sign-in and publishing request, and what the restricted ones cost |
 
+Build and release the standalone client: [CLI distribution](./guides/cli-distribution.md).
+
 ## Active plans
 
-| Plan                                                             | Status                                                                             |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps done; onboarding routes and pages outstanding         |
-| [product-foundation.md](./plans/product-foundation.md)           | **Partial** — Phase 1's identity tables and orchestrator shipped; jobs not started |
-| [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                  |
-| [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                     |
+| Plan                                                             | Status                                                                                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| [cli-only-distribution.md](./plans/cli-only-distribution.md)     | **In progress** — CLI package/release slice implemented; hosted configuration, ownership, and downloads remain |
+| [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps done; onboarding routes and pages outstanding                                     |
+| [product-foundation.md](./plans/product-foundation.md)           | **Partial** — Phase 1's identity tables and orchestrator shipped; jobs not started                             |
+| [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                                              |
+| [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                                                 |
 
 ## Archived plans
 

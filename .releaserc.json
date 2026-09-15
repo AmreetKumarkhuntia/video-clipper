@@ -1,5 +1,6 @@
 {
   "branches": ["master"],
+  "tagFormat": "vdclip-v${version}",
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -9,11 +10,18 @@
         "changelogFile": "CHANGELOG.md"
       }
     ],
-    ["@semantic-release/npm", { "npmPublish": false }],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false,
+        "pkgRoot": "artifacts/cli"
+      }
+    ],
+    "./artifacts/release/cliRelease.mjs",
     [
       "@semantic-release/git",
       {
-        "assets": ["package.json", "CHANGELOG.md"],
+        "assets": ["CHANGELOG.md"],
         "message": "chore(release): ${nextRelease.version} [skip ci]"
       }
     ],
