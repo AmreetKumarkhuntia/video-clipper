@@ -160,7 +160,7 @@ export function parseArgs(argv: string[]): CliArgs {
 export function printUsage(values: Record<string, unknown> = {}): void {
   console.log(
     `
-Usage: video-clipper run <youtube-url> [options]
+Usage: vdclip run <youtube-url> [options]
        npm run start -- run <youtube-url> [options]
 
 Note: when invoking via npm run, use -- to pass flags to the script:
@@ -172,8 +172,8 @@ Arguments:
 Options:
   --clip                  Download video and generate mp4 clips for each segment
   --download-sections <mode>  yt-dlp download mode: 'all' (full video) or N (top N segments only, e.g. 1, 2, 3...) (default: ${describeSetting(values, 'DOWNLOAD_SECTIONS_MODE')})
-  --local-video <path>    Path to local video file (skips yt-dlp download; implies --clip)
-  --video-path <path>     Custom output directory for downloaded videos and clips (overrides DOWNLOAD_DIR/OUTPUT_DIR)
+  --local-video <path>    Legacy video path on the backend host (skips download; implies --clip)
+  --video-path <path>     Legacy output directory on the backend host (overrides DOWNLOAD_DIR/OUTPUT_DIR)
   --threshold <n>         Minimum score to keep a segment (default: ${describeSetting(values, 'SCORE_THRESHOLD')})
   --top-n <n>             Maximum number of segments to return (default: ${describeSetting(values, 'TOP_N_SEGMENTS')})
   --max-duration <s>      Abort if video is longer than <s> seconds
@@ -185,15 +185,15 @@ Options:
   --game-profile <type>   Deprecated — ignored
   --help, -h              Show this help message
 
-Results are persisted to the library database: re-run "video-clipper clip <analysis-id>"
-or "video-clipper library" to reuse them.
+Results are persisted to the backend library database: re-run "vdclip clip <analysis-id>"
+or "vdclip library" to reuse them.
 
 Examples:
-  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ
-  video-clipper run https://youtu.be/dQw4w9WgXcQ --clip
-  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 3
-  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --local-video /path/to/video.mp4 --top-n 5
-  video-clipper run https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --output-json results.json
+  vdclip run https://youtube.com/watch?v=dQw4w9WgXcQ
+  vdclip run https://youtu.be/dQw4w9WgXcQ --clip
+  vdclip run https://youtube.com/watch?v=dQw4w9WgXcQ --download-sections 3
+  vdclip run https://youtube.com/watch?v=dQw4w9WgXcQ --local-video /server/path/video.mp4 --top-n 5
+  vdclip run https://youtube.com/watch?v=dQw4w9WgXcQ --threshold 8 --output-json results.json
 `.trim(),
   );
 }

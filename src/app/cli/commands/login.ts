@@ -105,7 +105,7 @@ async function run(argv: string[], _requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper login
+Usage: vdclip login
 
 Signs this machine in to the backend at ${apiBaseUrl()} using your system browser.
 Choose your Google account and return here; the browser redirects to a temporary
@@ -113,7 +113,7 @@ Choose your Google account and return here; the browser redirects to a temporary
 Your session is stored in ~/.config/video-clipper/credentials.json (owner-only).
 
 Set VIDEO_CLIPPER_API_URL to sign in to a different backend. Run
-"video-clipper logout" to revoke and forget the session.
+"vdclip logout" to revoke and forget the session.
 `.trim(),
     );
     return;
@@ -182,6 +182,6 @@ Set VIDEO_CLIPPER_API_URL to sign in to a different backend. Run
 export const loginCommand: CommandHandler = {
   name: 'login',
   description: 'Sign this machine in to the backend',
-  usage: 'video-clipper login',
+  usage: 'vdclip login',
   run,
 };

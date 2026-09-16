@@ -84,7 +84,7 @@ src/
       http/                   # responses (incl. HttpError) · sse/ · sessionCookies · oauthCookies
       services/               # appConfig, catalogFactory, artifactStore
 
-    cli/                      # CLI application — HTTP client + local media work
+    cli/                      # Independently packaged HTTP client; backend performs media work
       client/                 # apiGet / apiSend / apiStream · settings · analysisStream
       index.ts                # CLI entrypoint (shebang; no database access)
       args.ts                 # parseArgs + printUsage for the run command
@@ -154,8 +154,10 @@ app/cli/  ──HTTP──>  app/api/
 - **`app/web/`** is a frontend. It holds **no domain logic** and opens no database. It may import
   `@lib/types/*` and `@lib/utils/*`; importing services, orchestration, pipeline or config fails the
   architecture test.
-- **`app/cli/`** talks to the backend over HTTP for anything stateful. Local media work — yt-dlp and
-  ffmpeg acting on the user's own files — stays in-process, because it needs the user's disk.
+- **`app/cli/`** talks to the backend over HTTP for state and media work. It imports only client
+  modules, shared types, and small utilities. The standalone npm package is built from
+  `packages/cli/package.json` into `artifacts/cli/`; the repository root is private to npm.
+  Credentials and explicit response exports live on the client's disk.
 - **The three apps never import each other.** Anything two of them need belongs in `src/lib/`, which
   is why the HTTP contract lives in `src/lib/types/api.ts`.
 
@@ -184,6 +186,8 @@ pnpm web:dev     # frontend on 5002, proxying /api
   the app layer, which is what lets the backend own it exclusively
 - The web app never imports lib domain logic
 - The apps never import each other
+- The CLI package build checks every transitive runtime source input and external dependency;
+  no service, orchestration, pipeline, or backend config code may enter its bundle.
 
 ## Code Rules
 
