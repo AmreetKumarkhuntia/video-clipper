@@ -41,7 +41,7 @@ async function run(argv: string[], _requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper library [options]
+Usage: vdclip library [options]
 
 Options:
   --analyses         List saved analyses (default)
@@ -74,6 +74,6 @@ Options:
 export const libraryCommand: CommandHandler = {
   name: 'library',
   description: 'Browse saved analyses and generated clips',
-  usage: 'video-clipper library [--analyses | --clips] [--json]',
+  usage: 'vdclip library [--analyses | --clips] [--json]',
   run,
 };

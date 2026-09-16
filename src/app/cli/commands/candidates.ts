@@ -34,7 +34,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper candidates <analysis-id> [options]
+Usage: vdclip candidates <analysis-id> [options]
 
 Options:
   --json       Output raw JSON
@@ -46,8 +46,8 @@ Options:
 
   if (!args.analysisId) {
     log.error('candidates', 'No analysis ID provided.', requestId);
-    console.log('\nUsage: video-clipper candidates <analysis-id>');
-    console.log('Run "video-clipper library" to see available analyses.');
+    console.log('\nUsage: vdclip candidates <analysis-id>');
+    console.log('Run "vdclip library" to see available analyses.');
     process.exit(1);
   }
 
@@ -57,7 +57,7 @@ Options:
   } catch (error) {
     if (!isNotFound(error)) throw error;
     log.error('candidates', `Analysis not found: ${args.analysisId}`, requestId);
-    console.log('Run "video-clipper library" to see available analyses.');
+    console.log('Run "vdclip library" to see available analyses.');
     process.exit(1);
   }
 
@@ -73,6 +73,6 @@ Options:
 export const candidatesCommand: CommandHandler = {
   name: 'candidates',
   description: 'List clip candidates for a saved analysis',
-  usage: 'video-clipper candidates <analysis-id> [--json]',
+  usage: 'vdclip candidates <analysis-id> [--json]',
   run,
 };

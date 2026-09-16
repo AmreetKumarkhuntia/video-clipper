@@ -27,7 +27,7 @@ export function printAnalysisSummary(plan: ClipPlan): void {
     printCandidates(plan);
   }
 
-  console.log(`\nRun: video-clipper clip ${plan.id}`);
+  console.log(`\nRun: vdclip clip ${plan.id}`);
 }
 
 export function printCandidates(plan: ClipPlan): void {
@@ -56,7 +56,7 @@ export function printClipResults(clips: ClipArtifact[]): void {
 
 export function printAnalysesList(analyses: ClipPlan[]): void {
   if (analyses.length === 0) {
-    console.log('No analyses found. Run: video-clipper analyze <youtube-url>');
+    console.log('No analyses found. Run: vdclip analyze <youtube-url>');
     return;
   }
 

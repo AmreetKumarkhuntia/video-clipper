@@ -20,7 +20,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   const args = parseArgs(['_', '_', ...argv]);
 
   if (args.help) {
-    printUsage(await backendSettings());
+    printUsage();
     return;
   }
 
@@ -49,7 +49,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
 
   log.info(
     'run',
-    `Starting video-clipper against ${apiBaseUrl()} (model: ${describeSetting(values, 'LLM_MODEL')})` +
+    `Starting vdclip against ${apiBaseUrl()} (model: ${describeSetting(values, 'LLM_MODEL')})` +
       (args.clip ? ' [--clip enabled]' : '') +
       (args.localVideo ? ` [--local-video: ${args.localVideo}]` : ''),
     requestId,
@@ -156,6 +156,6 @@ async function run(argv: string[], requestId: string): Promise<void> {
 export const runCommand: CommandHandler = {
   name: 'run',
   description: 'One-shot pipeline: analyze + clip in one command',
-  usage: 'video-clipper run <youtube-url> [options]',
+  usage: 'vdclip run <youtube-url> [options]',
   run,
 };

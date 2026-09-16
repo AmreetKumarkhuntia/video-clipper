@@ -10,7 +10,7 @@ describe('parseArgs', () => {
     expect(
       parseArgs([
         'node',
-        'video-clipper',
+        'vdclip',
         'https://youtu.be/dQw4w9WgXcQ',
         '--download-sections',
         '3',
@@ -37,11 +37,11 @@ describe('parseArgs', () => {
   });
 
   it.each(['--help', '-h'])('recognizes %s', (flag) => {
-    expect(parseArgs(['node', 'video-clipper', flag]).help).toBe(true);
+    expect(parseArgs(['node', 'vdclip', flag]).help).toBe(true);
   });
 
   it('keeps full-video mode and implies clip generation', () => {
-    expect(parseArgs(['node', 'video-clipper', '--download-sections', 'all'])).toMatchObject({
+    expect(parseArgs(['node', 'vdclip', '--download-sections', 'all'])).toMatchObject({
       downloadSections: 'all',
       clip: true,
     });
@@ -58,7 +58,7 @@ describe('parseArgs', () => {
       throw new Error(`exit:${String(code)}`);
     });
     vi.spyOn(console, 'log').mockImplementation(() => {});
-    const argv = ['node', 'video-clipper', flag];
+    const argv = ['node', 'vdclip', flag];
     if (value !== undefined) argv.push(value);
 
     expect(() => parseArgs(argv)).toThrow('exit:1');

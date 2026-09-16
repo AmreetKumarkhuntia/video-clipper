@@ -18,3 +18,4 @@ outputs
 .playwright-mcp
 
 temp/
+artifacts/

@@ -6,7 +6,7 @@ async function run(argv: string[]): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(
       `
-Usage: video-clipper whoami
+Usage: vdclip whoami
 
 Shows the account this machine is signed in as on ${apiBaseUrl()}.
 `.trim(),
@@ -28,6 +28,6 @@ Shows the account this machine is signed in as on ${apiBaseUrl()}.
 export const whoamiCommand: CommandHandler = {
   name: 'whoami',
   description: 'Show the signed-in account',
-  usage: 'video-clipper whoami',
+  usage: 'vdclip whoami',
   run,
 };

@@ -59,7 +59,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper config [key] [value]
+Usage: vdclip config [key] [value]
 
   No args       Show all config values
   <key>         Show value for a specific key
@@ -69,13 +69,13 @@ Usage: video-clipper config [key] [value]
 These are the backend's settings, not this machine's. They are read from and
 written to ${apiBaseUrl()}, so a change here applies to everyone that backend
 serves, the web app included. Reading is open; changing a value needs an admin
-account — run "video-clipper login" first.
+account — run "vdclip login" first.
 
 Examples:
-  video-clipper config
-  video-clipper config LLM_MODEL
-  video-clipper config LLM_MODEL gpt-4o
-  video-clipper config LLM_MODEL --reset
+  vdclip config
+  vdclip config LLM_MODEL
+  vdclip config LLM_MODEL gpt-4o
+  vdclip config LLM_MODEL --reset
 `.trim(),
     );
     return;
@@ -124,6 +124,6 @@ Examples:
 export const configCommand: CommandHandler = {
   name: 'config',
   description: "View or set the backend's configuration values",
-  usage: 'video-clipper config [key] [value]',
+  usage: 'vdclip config [key] [value]',
   run,
 };

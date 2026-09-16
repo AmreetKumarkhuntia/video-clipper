@@ -1,6 +1,8 @@
 # yt-dlp Download Modes
 
-This CLI supports two download strategies for generating video clips.
+The backend supports two download strategies for generating video clips. The command examples below
+assume a self-hosted backend; paths passed through `--video-path` refer to that backend host, not a
+remote CLI user's computer.
 
 ---
 

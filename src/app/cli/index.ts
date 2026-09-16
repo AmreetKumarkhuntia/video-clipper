@@ -2,6 +2,7 @@
 import { generateRequestId, log } from '@lib/utils/logger.js';
 import { commands } from './commands/index.js';
 import { setClientRequestId } from './client/index.js';
+import { cliVersion } from './version.js';
 
 // The CLI never opens the database. Schema migrations are run manually, and
 // the backend is the only application process that reads or writes SQLite.
@@ -18,9 +19,9 @@ function isUrl(value: string): boolean {
 function printHelp(): void {
   console.log(
     `
-video-clipper — Analyze YouTube videos and generate clips
+vdclip — Analyze YouTube videos and generate clips
 
-Usage: video-clipper <command> [options]
+Usage: vdclip <command> [options]
 
 Commands:
   analyze <url>          Analyze a YouTube video and find clip candidates
@@ -28,18 +29,26 @@ Commands:
   candidates <id>        List clip candidates for a saved analysis
   library                Browse saved analyses and generated clips
   channel <handle/url>   Resolve a YouTube channel and list videos
+  ask <url> <question>   Ask a question about a video's transcript
   config [key] [value]   View or set configuration values (changes need an admin sign-in)
   run <url>              One-shot pipeline: analyze + clip (legacy)
   login                  Sign this machine in to the backend
   logout                 Revoke and forget the stored session
   whoami                 Show the signed-in account
 
-Run "video-clipper <command> --help" for command-specific options.
+Options:
+  --version, -v          Show the installed CLI version
+
+Run "vdclip <command> --help" for command-specific options.
 `.trim(),
   );
 }
 
 async function main(): Promise<void> {
+  if (subcommand === '--version' || subcommand === '-v') {
+    console.log(cliVersion());
+    return;
+  }
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
     printHelp();
     return;

@@ -41,7 +41,7 @@ async function run(argv: string[], requestId: string): Promise<void> {
   if (args.help) {
     console.log(
       `
-Usage: video-clipper channel <handle/url/id> [options]
+Usage: vdclip channel <handle/url/id> [options]
 
 Options:
   --page-token <token>  Pagination token for next page of videos
@@ -100,17 +100,15 @@ Requires the backend at ${apiBaseUrl()} to have YOUTUBE_API_KEY configured.
   printTable(headers, rows);
 
   if (page.nextPageToken) {
-    console.log(
-      `\nMore videos: video-clipper channel ${args.input} --page-token ${page.nextPageToken}`,
-    );
+    console.log(`\nMore videos: vdclip channel ${args.input} --page-token ${page.nextPageToken}`);
   }
 
-  console.log(`\nTo analyze a video: video-clipper analyze https://youtube.com/watch?v=<VIDEO_ID>`);
+  console.log(`\nTo analyze a video: vdclip analyze https://youtube.com/watch?v=<VIDEO_ID>`);
 }
 
 export const channelCommand: CommandHandler = {
   name: 'channel',
   description: 'Resolve a YouTube channel and list videos',
-  usage: 'video-clipper channel <handle/url/id> [--json]',
+  usage: 'vdclip channel <handle/url/id> [--json]',
   run,
 };

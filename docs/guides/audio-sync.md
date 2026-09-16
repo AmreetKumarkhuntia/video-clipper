@@ -31,19 +31,25 @@ Applies a global offset (in seconds) to all clip timestamps before cutting.
 - **Negative value** → shifts all clips earlier
 
 ```bash
-# In .env
+# In the backend .env
 TIMESTAMP_OFFSET_SECONDS=-3
 
-# Or inline
-TIMESTAMP_OFFSET_SECONDS=-3 video-clipper <url> --clip
+# Or when starting a self-hosted backend
+TIMESTAMP_OFFSET_SECONDS=-3 pnpm api:dev
+
+# Run separately on the client
+vdclip <url> --clip
 ```
+
+The offset is backend configuration. Setting it only in the CLI process does not affect rendering.
 
 ## Finding the Correct Offset
 
 ### Step 1: Run a single segment with no offset
 
 ```bash
-TIMESTAMP_OFFSET_SECONDS=0 video-clipper <url> --download-sections 1
+TIMESTAMP_OFFSET_SECONDS=0 pnpm api:dev
+vdclip <url> --download-sections 1
 ```
 
 ### Step 2: Play and inspect
@@ -69,20 +75,20 @@ TIMESTAMP_OFFSET_SECONDS=2    # shift later
 ### Step 4: Verify across multiple clips
 
 ```bash
-TIMESTAMP_OFFSET_SECONDS=-3 video-clipper <url> --download-sections 3
+TIMESTAMP_OFFSET_SECONDS=-3 pnpm api:dev
+vdclip <url> --download-sections 3
 ```
 
 Check that the offset works consistently across different segments. If it varies per segment, the issue is video-specific rather than a global transcript offset.
 
 ### Binary Search for the Optimal Offset
 
-If you are unsure of the exact value, try a few candidates and narrow down:
+If you are unsure of the exact value, try a few candidates and narrow down. Restart the backend
+with each candidate, then generate one clip from the client:
 
 ```bash
-for offset in 0 -3 -6 -9; do
-  TIMESTAMP_OFFSET_SECONDS=$offset video-clipper <url> --download-sections 1
-  echo "Tested offset: $offset"
-done
+TIMESTAMP_OFFSET_SECONDS=-3 pnpm api:dev
+vdclip <url> --download-sections 1
 ```
 
 Then narrow down: if `-3` looks close, try `-2` and `-4`.
