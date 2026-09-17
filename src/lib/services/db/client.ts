@@ -1,51 +1,75 @@
-import Database from 'better-sqlite3';
-import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import fs from 'node:fs';
-import path from 'node:path';
-import { getUserConfigDir } from '@lib/utils/paths.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { drizzle, type NodePgDatabase, type NodePgTransaction } from 'drizzle-orm/node-postgres';
+import type { ExtractTablesWithRelations } from 'drizzle-orm';
+import { Pool } from 'pg';
+import type { DatabaseConfig } from '@lib/types/config.js';
+import { log } from '@lib/utils/logger.js';
 import * as schema from './schema.js';
 
-let handle: BetterSQLite3Database<typeof schema> | null = null;
+let pool: Pool | null = null;
+let handle: NodePgDatabase<typeof schema> | null = null;
 
-/**
- * Opens (or reopens) the SQLite database at the given path and makes it the
- * active handle. Called implicitly with the default path on first query;
- * call it explicitly first to point the library at a different database.
- *
- * The app resolves `LIBRARY_DB_PATH` through validated configuration and passes
- * it here. Library/test callers that omit it get the standard user-config path.
- */
-export function resolveDatabasePath(dbPath?: string): string {
-  return path.resolve(dbPath ?? path.join(getUserConfigDir(), 'library.sqlite'));
-}
+const transactionContext = new AsyncLocalStorage<
+  NodePgTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>
+>();
 
-export function initDb(dbPath?: string): BetterSQLite3Database<typeof schema> {
-  const resolved = resolveDatabasePath(dbPath);
-
-  fs.mkdirSync(path.dirname(resolved), { recursive: true });
-  const sqlite = new Database(resolved);
-  sqlite.pragma('journal_mode = WAL');
-  handle = drizzle(sqlite, { schema });
+function getRootDb(): NodePgDatabase<typeof schema> {
+  if (!handle) {
+    throw new Error('Database is not initialized. Call initDb(getDatabaseConfig()) first.');
+  }
   return handle;
 }
 
-/** Returns the active database handle, opening the default database lazily. */
-export function getDb(): BetterSQLite3Database<typeof schema> {
-  return handle ?? initDb();
+/** Creates the process-wide PostgreSQL pool. Connecting remains explicit through pingDb(). */
+export function initDb(config: DatabaseConfig): NodePgDatabase<typeof schema> {
+  if (pool || handle) {
+    throw new Error('Database is already initialized. Call closeDb() before initializing again.');
+  }
+
+  const nextPool = new Pool({
+    connectionString: config.connectionString,
+    max: config.max,
+    connectionTimeoutMillis: config.connectionTimeoutMillis,
+    idleTimeoutMillis: config.idleTimeoutMillis,
+  });
+
+  nextPool.on('error', (error: Error): void => {
+    log.error('db', 'idle PostgreSQL client error', undefined, { reason: error.message });
+  });
+
+  pool = nextPool;
+  handle = drizzle(nextPool, { schema });
+  return handle;
 }
 
-/**
- * Lazy database handle. Repos import this as a plain value; the underlying
- * connection is not opened until the first property access, so importing a
- * repo module has no side effects.
- */
-export const db: BetterSQLite3Database<typeof schema> = new Proxy(
-  {} as BetterSQLite3Database<typeof schema>,
-  {
-    get(_target, prop) {
-      const real = getDb();
-      const value = Reflect.get(real as object, prop, real);
-      return typeof value === 'function' ? value.bind(real) : value;
-    },
-  },
-);
+/** Returns the current transaction handle, or the initialized root database outside a transaction. */
+export function getDb(): NodePgDatabase<typeof schema> {
+  const transaction = transactionContext.getStore();
+  return transaction ? (transaction as NodePgDatabase<typeof schema>) : getRootDb();
+}
+
+/** Runs existing repository calls atomically without exposing the raw transaction handle. */
+export async function withDbTransaction<T>(operation: () => Promise<T>): Promise<T> {
+  if (transactionContext.getStore()) {
+    return operation();
+  }
+
+  return getRootDb().transaction(async (transaction): Promise<T> => {
+    return transactionContext.run(transaction, operation);
+  });
+}
+
+/** Verifies that the configured PostgreSQL server accepts queries. */
+export async function pingDb(): Promise<void> {
+  await getRootDb().execute('select 1');
+}
+
+/** Drains the process-wide pool and clears all initialized state. */
+export async function closeDb(): Promise<void> {
+  const currentPool = pool;
+  pool = null;
+  handle = null;
+  if (currentPool) {
+    await currentPool.end();
+  }
+}

@@ -1,6 +1,6 @@
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../client.js';
+import { getDb } from '../client.js';
 import { libraryVideos, videos } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
 import type { LibraryVideoEntry, LibraryVideoInput, LibraryVideoPage } from '@lib/types/auth.js';
@@ -11,13 +11,14 @@ import type { LibraryVideoEntry, LibraryVideoInput, LibraryVideoPage } from '@li
  */
 
 /** Idempotent: re-adding an already-saved video is a no-op, guarded by the composite unique index. */
-export function saveLibraryVideo(input: LibraryVideoInput): void {
+export async function saveLibraryVideo(input: LibraryVideoInput): Promise<void> {
   const done = log.dbCalled('saveLibraryVideo', undefined, {
     customerId: input.customerId,
     videoId: input.videoId,
   });
-  const ts = Date.now();
-  db.insert(libraryVideos)
+  const ts = new Date();
+  await getDb()
+    .insert(libraryVideos)
     .values({
       id: `lib-${nanoid()}`,
       customerId: input.customerId,
@@ -27,20 +28,21 @@ export function saveLibraryVideo(input: LibraryVideoInput): void {
       updatedAt: ts,
     })
     .onConflictDoNothing()
-    .run();
+    .returning({ id: libraryVideos.id });
   done({ videoId: input.videoId });
 }
 
-export function removeLibraryVideo(customerId: string, videoId: string): void {
+export async function removeLibraryVideo(customerId: string, videoId: string): Promise<void> {
   const done = log.dbCalled('removeLibraryVideo', undefined, { customerId, videoId });
-  db.delete(libraryVideos)
+  await getDb()
+    .delete(libraryVideos)
     .where(and(eq(libraryVideos.customerId, customerId), eq(libraryVideos.videoId, videoId)))
-    .run();
+    .returning({ id: libraryVideos.id });
   done({ deleted: 1 });
 }
 
 /** Which of `videoIds` this customer has already saved. Marks Add vs Added on the browse grid. */
-export function findSavedVideoIds(customerId: string, videoIds: string[]): string[] {
+export async function findSavedVideoIds(customerId: string, videoIds: string[]): Promise<string[]> {
   const done = log.dbCalled('findSavedVideoIds', undefined, {
     customerId,
     count: videoIds.length,
@@ -49,45 +51,44 @@ export function findSavedVideoIds(customerId: string, videoIds: string[]): strin
     done({ found: 0 });
     return [];
   }
-  const rows = db
+  const rows = await getDb()
     .select({ videoId: libraryVideos.videoId })
     .from(libraryVideos)
-    .where(and(eq(libraryVideos.customerId, customerId), inArray(libraryVideos.videoId, videoIds)))
-    .all();
+    .where(and(eq(libraryVideos.customerId, customerId), inArray(libraryVideos.videoId, videoIds)));
   done({ found: rows.length });
   return rows.map((r) => r.videoId);
 }
 
 /** One page of the library, newest save first, joined to the catalog row. */
-export function listLibraryVideos(
+export async function listLibraryVideos(
   customerId: string,
   limit: number,
   offset: number,
-): LibraryVideoPage {
+): Promise<LibraryVideoPage> {
   const done = log.dbCalled('listLibraryVideos', undefined, { customerId, limit, offset });
-  const rows = db
-    .select({ saved: libraryVideos, video: videos })
-    .from(libraryVideos)
-    .innerJoin(videos, eq(libraryVideos.videoId, videos.id))
-    .where(eq(libraryVideos.customerId, customerId))
-    .orderBy(desc(libraryVideos.savedAt))
-    .limit(limit)
-    .offset(offset)
-    .all();
-  const totalRow = db
-    .select({ value: count() })
-    .from(libraryVideos)
-    .where(eq(libraryVideos.customerId, customerId))
-    .get();
+  const [rows, [totalRow]] = await Promise.all([
+    getDb()
+      .select({ saved: libraryVideos, video: videos })
+      .from(libraryVideos)
+      .innerJoin(videos, eq(libraryVideos.videoId, videos.id))
+      .where(eq(libraryVideos.customerId, customerId))
+      .orderBy(desc(libraryVideos.savedAt))
+      .limit(limit)
+      .offset(offset),
+    getDb()
+      .select({ value: count() })
+      .from(libraryVideos)
+      .where(eq(libraryVideos.customerId, customerId)),
+  ]);
   const entries: LibraryVideoEntry[] = rows.map(({ saved, video }) => ({
     videoId: video.id,
     title: video.title,
     channelId: video.channelId,
     channelTitle: video.channelTitle,
-    publishedAt: video.publishedAt,
+    publishedAt: video.publishedAt?.toISOString() ?? '',
     durationSec: video.durationSec,
     ...(video.thumbnailUrl ? { thumbnailUrl: video.thumbnailUrl } : {}),
-    savedAt: new Date(saved.savedAt).toISOString(),
+    savedAt: saved.savedAt.toISOString(),
   }));
   done({ count: entries.length });
   return { videos: entries, total: totalRow?.value ?? 0, limit, offset };

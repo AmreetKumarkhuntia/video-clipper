@@ -2,6 +2,7 @@ export { config, getConfig, getGroupedConfig, setConfigValues, getMaskedConfig }
 export { groupConfig } from './groups.js';
 export { buildConfigRegistry } from './registry.js';
 export { getTokenEncryptionKey } from './tokenEncryptionKey.js';
+export { getDatabaseConfig } from './database.js';
 export type {
   ConfigRegistryResponse,
   ConfigGroupDescriptor,
@@ -9,4 +10,5 @@ export type {
   ConfigGroup,
   ConfigGroupPrefix,
   GroupedConfig,
+  DatabaseConfig,
 } from '@lib/types/config.js';
