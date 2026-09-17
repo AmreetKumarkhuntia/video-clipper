@@ -31,7 +31,7 @@ describe('CLI login lifetime and capacity', () => {
     vi.mocked(Date.now).mockReturnValue(now + CLI.AUTH.LOGIN_TTL_MS);
     expect((await app().request(started.authorizationUrl)).status).toBe(410);
     expect(exchangeGoogleCodeMock()).not.toHaveBeenCalled();
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
   });
 
   it('expires a request after authorization but before the provider callback', async () => {
@@ -69,7 +69,7 @@ describe('CLI login lifetime and capacity', () => {
     vi.mocked(Date.now).mockReturnValue(now + CLI.AUTH.EXCHANGE_TTL_MS);
     expect((await exchange(response)).status).toBe(400);
     expect((await me(cookiesOf(response)[SESSION_COOKIE_NAME]!)).status).toBe(200);
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(1);
   });
 
   it('counts pending, processing and completed grants against one capacity limit', async () => {
@@ -167,7 +167,7 @@ describe('CLI login endpoint validation and rate limits', () => {
       expect(await response.json()).toEqual({
         error: { message: 'CLI sign-in request is too large.' },
       });
-      expect(sessionCount()).toBe(0);
+      expect(await sessionCount()).toBe(0);
     },
   );
 
@@ -179,7 +179,7 @@ describe('CLI login endpoint validation and rate limits', () => {
     expect(
       (await app().request('/api/auth/cli/start', json({ ...INPUT, redirectUri }))).status,
     ).toBe(400);
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
   });
 
   it('rejects malformed JSON, start payloads, authorization ids and exchanges', async () => {
@@ -203,7 +203,7 @@ describe('CLI login endpoint validation and rate limits', () => {
   it('fails without allocating pending state when Google OAuth is not configured', async () => {
     setConfigValues({ GOOGLE_OAUTH_CLIENT_ID: ' ', CLI_LOGIN_MAX_OUTSTANDING: 1 });
     expect((await app().request('/api/auth/cli/start', json(INPUT))).status).toBe(503);
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
 
     setConfigValues({ GOOGLE_OAUTH_CLIENT_ID: 'test-cli-client' });
     expect((await app().request('/api/auth/cli/start', json(INPUT))).status).toBe(200);
@@ -289,7 +289,7 @@ describe('CLI login endpoint validation and rate limits', () => {
       const response = await app().request(`/api/auth/cli${route}`, json({}));
       expect(response.status).toBe(410);
       expect(await response.text()).toContain('Upgrade the CLI');
-      expect(sessionCount()).toBe(0);
+      expect(await sessionCount()).toBe(0);
     },
   );
 });

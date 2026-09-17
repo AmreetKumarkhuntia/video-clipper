@@ -9,14 +9,13 @@ const mocks = vi.hoisted(() => ({
   clearSegmentations: vi.fn(),
   findChunks: vi.fn(),
   findSegmentations: vi.fn(),
-  insertSegmentation: vi.fn(),
   loadOrFetchTranscript: vi.fn(),
-  markSegmentationsComplete: vi.fn(),
   refineRankedSegments: vi.fn(),
   saveAnalysisToDb: vi.fn(),
   selectSegments: vi.fn(),
-  setChunkAnalysisByRange: vi.fn(),
+  setChunkAnalysesByRange: vi.fn(),
   upsertSegmentations: vi.fn(),
+  withDbTransaction: vi.fn(async (operation: () => Promise<unknown>) => operation()),
 }));
 
 vi.mock('@lib/services/modelFactory/index.js', () => ({
@@ -46,11 +45,10 @@ vi.mock('@lib/services/db/index.js', () => ({
   clearSegmentations: mocks.clearSegmentations,
   findChunks: mocks.findChunks,
   findSegmentations: mocks.findSegmentations,
-  insertSegmentation: mocks.insertSegmentation,
-  markSegmentationsComplete: mocks.markSegmentationsComplete,
   saveAnalysisToDb: mocks.saveAnalysisToDb,
-  setChunkAnalysisByRange: mocks.setChunkAnalysisByRange,
+  setChunkAnalysesByRange: mocks.setChunkAnalysesByRange,
   upsertSegmentations: mocks.upsertSegmentations,
+  withDbTransaction: mocks.withDbTransaction,
 }));
 
 import { runAnalysis } from '@lib/orchestration/analysisOrchestrator.js';
@@ -153,14 +151,16 @@ describe('runAnalysis cache orchestration', () => {
     expect(result.chunkEvaluations.map((evaluation) => evaluation.chunk_index)).toEqual([0, 1]);
     expect(onChunkStarted.mock.calls.map(([index]) => index)).toEqual([0, 1]);
     expect(onChunkAnalyzed.mock.calls.map(([index]) => index)).toEqual([0, 1]);
-    expect(mocks.setChunkAnalysisByRange).toHaveBeenCalledWith(
-      'video-1',
-      60,
-      120,
-      expect.any(String),
-      9,
-    );
+    expect(mocks.setChunkAnalysesByRange).toHaveBeenCalledWith('video-1', [
+      {
+        start: 60,
+        end: 120,
+        analysis: expect.any(String),
+        score: 9,
+      },
+    ]);
     expect(mocks.clearSegmentations).toHaveBeenCalledWith('video-1');
+    expect(mocks.withDbTransaction).toHaveBeenCalledOnce();
     expect(mocks.upsertSegmentations).toHaveBeenCalledWith(
       'video-1',
       [rankedSegment],
@@ -208,7 +208,7 @@ describe('runAnalysis cache orchestration', () => {
     expect(mocks.saveAnalysisToDb).not.toHaveBeenCalled();
   });
 
-  it('persists refined segments incrementally before marking the batch complete', async () => {
+  it('persists refined segments in one awaited batch after refinement completes', async () => {
     mocks.findChunks.mockReturnValue([
       { start: 0, end: 60, analysis: JSON.stringify(cachedEvaluation) },
     ]);
@@ -224,15 +224,10 @@ describe('runAnalysis cache orchestration', () => {
 
     await runAnalysis(request(true), config);
 
-    expect(mocks.clearSegmentations).toHaveBeenCalledWith('video-1');
-    expect(mocks.insertSegmentation).toHaveBeenCalledWith(
+    expect(mocks.upsertSegmentations).toHaveBeenCalledWith(
       'video-1',
-      rankedSegment,
+      [rankedSegment],
       expect.any(String),
-    );
-    expect(mocks.markSegmentationsComplete).toHaveBeenCalledWith('video-1');
-    expect(mocks.insertSegmentation.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.markSegmentationsComplete.mock.invocationCallOrder[0],
     );
   });
 
@@ -253,12 +248,10 @@ describe('runAnalysis cache orchestration', () => {
 
     await runAnalysis(request(true), config);
 
-    expect(mocks.insertSegmentation.mock.calls).toEqual([
-      ['video-1', rankedSegment, expect.any(String)],
-      ['video-1', fallbackSegment, expect.any(String)],
-    ]);
-    expect(mocks.insertSegmentation.mock.invocationCallOrder[1]).toBeLessThan(
-      mocks.markSegmentationsComplete.mock.invocationCallOrder[0],
+    expect(mocks.upsertSegmentations).toHaveBeenCalledWith(
+      'video-1',
+      [rankedSegment, fallbackSegment],
+      expect.any(String),
     );
   });
 });

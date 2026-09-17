@@ -1,96 +1,121 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import path from 'node:path';
-import * as schema from '@lib/services/db/schema.js';
-
-const sqlite = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
-
-const {
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
   createCustomer,
   findCustomerByChannelId,
   findCustomerById,
+  linkIdentity,
   setCustomerRole,
   updateCustomerProfile,
-} = await import('@lib/services/db/repos/customersRepo.js');
-const { linkIdentity } = await import('@lib/services/db/repos/authIdentitiesRepo.js');
+} from '@lib/services/db/index.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../../support/postgres.js';
+import { seedChannel } from '../postgresFixtures.js';
 
-beforeEach(() => {
-  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
+let database: PostgresTestDatabase;
+
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('customers_repo');
 });
 
-afterAll(() => sqlite.close());
+beforeEach(async () => {
+  await database.reset();
+  await Promise.all(
+    ['UC_test_channel', 'UC_first', 'UC_second'].map((id) => seedChannel(database, id)),
+  );
+});
+
+afterAll(async () => {
+  await database.close();
+});
 
 describe('customersRepo', () => {
-  it('creates and updates a customer without provider-specific fields', () => {
-    const created = createCustomer({ email: 'creator@example.com', name: 'Test Creator' });
+  it('creates and updates a customer without provider-specific fields', async () => {
+    const created = await createCustomer({
+      email: 'creator@example.com',
+      name: 'Test Creator',
+    });
 
     expect(created.email).toBe('creator@example.com');
     expect(created).not.toHaveProperty('googleSub');
     expect(created.role).toBe('customer');
     expect(created.permissions).toEqual([]);
+    expect(new Date(created.createdAt).toISOString()).toBe(created.createdAt);
 
-    const updated = updateCustomerProfile(created.id, { name: 'Renamed' });
+    const updated = await updateCustomerProfile(created.id, { name: 'Renamed' });
     expect(updated.id).toBe(created.id);
     expect(updated.name).toBe('Renamed');
   });
 
-  it('resolves the channel projected from a linked identity', () => {
-    const customer = createCustomer({});
-    linkIdentity({
+  it('resolves the channel projected from a linked identity', async () => {
+    const customer = await createCustomer({});
+    await linkIdentity({
       customerId: customer.id,
       provider: 'google',
       providerAccountId: 'google-sub-001',
       channelId: 'UC_test_channel',
     });
 
-    expect(findCustomerById(customer.id)?.channelId).toBe('UC_test_channel');
-    expect(findCustomerByChannelId('UC_test_channel')?.id).toBe(customer.id);
+    expect((await findCustomerById(customer.id))?.channelId).toBe('UC_test_channel');
+    expect((await findCustomerByChannelId('UC_test_channel'))?.id).toBe(customer.id);
   });
 
-  it('uses the most recently refreshed identity when several carry a channel', () => {
-    const customer = createCustomer({});
-    linkIdentity({
+  it('uses the most recently refreshed identity when several carry a channel', async () => {
+    const customer = await createCustomer({});
+    await linkIdentity({
       customerId: customer.id,
       provider: 'google',
       providerAccountId: 'first-sub',
       channelId: 'UC_first',
     });
-    linkIdentity({
+    await linkIdentity({
       customerId: customer.id,
       provider: 'google',
       providerAccountId: 'second-sub',
       channelId: 'UC_second',
     });
-    sqlite
-      .prepare('UPDATE auth_identities SET updated_at = ? WHERE provider_account_id = ?')
-      .run(Date.now() + 10_000, 'first-sub');
+    await database.query(
+      'update auth_identities set updated_at = $1 where provider_account_id = $2',
+      [new Date('2036-01-01T00:00:10.000Z'), 'first-sub'],
+    );
 
-    expect(findCustomerById(customer.id)?.channelId).toBe('UC_first');
+    expect((await findCustomerById(customer.id))?.channelId).toBe('UC_first');
 
-    sqlite
-      .prepare('UPDATE auth_identities SET updated_at = ? WHERE provider_account_id = ?')
-      .run(Date.now() + 20_000, 'second-sub');
-    expect(findCustomerById(customer.id)?.channelId).toBe('UC_second');
+    await database.query(
+      'update auth_identities set updated_at = $1 where provider_account_id = $2',
+      [new Date('2036-01-01T00:00:20.000Z'), 'second-sub'],
+    );
+    expect((await findCustomerById(customer.id))?.channelId).toBe('UC_second');
   });
 
-  it('returns null for unknown customer and channel lookups', () => {
-    expect(findCustomerById('nope')).toBeNull();
-    expect(findCustomerByChannelId('nope')).toBeNull();
+  it('sets an identity channel to null when its channel is deleted', async () => {
+    const customer = await createCustomer({});
+    await linkIdentity({
+      customerId: customer.id,
+      provider: 'google',
+      providerAccountId: 'google-sub-001',
+      channelId: 'UC_test_channel',
+    });
+
+    await database.query('delete from channels where id = $1', ['UC_test_channel']);
+
+    expect((await findCustomerById(customer.id))?.channelId).toBeUndefined();
+    expect(await findCustomerByChannelId('UC_test_channel')).toBeNull();
   });
 
-  it('promotes and demotes a customer through the assigned role', () => {
-    const customer = createCustomer({});
-    const admin = setCustomerRole(customer.id, 'admin');
+  it('returns null for unknown customer and channel lookups', async () => {
+    expect(await findCustomerById('nope')).toBeNull();
+    expect(await findCustomerByChannelId('nope')).toBeNull();
+  });
+
+  it('promotes and demotes a customer through the assigned role', async () => {
+    const customer = await createCustomer({});
+    const admin = await setCustomerRole(customer.id, 'admin');
 
     expect(admin.role).toBe('admin');
     expect(admin.permissions).toEqual(['settings:write']);
-    expect(findCustomerById(customer.id)?.permissions).toEqual(['settings:write']);
-    expect(setCustomerRole(customer.id, 'customer').permissions).toEqual([]);
+    expect((await findCustomerById(customer.id))?.permissions).toEqual(['settings:write']);
+    expect((await setCustomerRole(customer.id, 'customer')).permissions).toEqual([]);
   });
 });

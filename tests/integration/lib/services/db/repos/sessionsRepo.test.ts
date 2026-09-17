@@ -1,60 +1,74 @@
 import { createHash } from 'node:crypto';
-import path from 'node:path';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import * as schema from '@lib/services/db/schema.js';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  createCustomer,
+  deleteExpiredSessions,
+  deleteSession,
+  findValidSession,
+  insertSession,
+} from '@lib/services/db/index.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../../support/postgres.js';
 
-const sqlite = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
-
-const { createCustomer } = await import('@lib/services/db/repos/customersRepo.js');
-const { deleteExpiredSessions, deleteSession, findValidSession, insertSession } =
-  await import('@lib/services/db/repos/sessionsRepo.js');
+let database: PostgresTestDatabase;
 
 function hash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-beforeEach(() => {
-  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('sessions_repo');
 });
 
-afterAll(() => sqlite.close());
+beforeEach(async () => {
+  await database.reset();
+});
+
+afterAll(async () => {
+  await database.close();
+});
 
 describe('sessionsRepo', () => {
-  it('finds an unexpired hashed session without matching the raw token', () => {
-    const customer = createCustomer({});
+  it('finds an unexpired hashed session without matching the raw token', async () => {
+    const customer = await createCustomer({});
     const idHash = hash('raw-token');
-    insertSession(idHash, customer.id, Date.now() + 60_000);
+    const expiresAt = Date.now() + 60_000;
+    await insertSession(idHash, customer.id, expiresAt);
 
-    expect(findValidSession(idHash)?.customerId).toBe(customer.id);
-    expect(findValidSession('raw-token')).toBeNull();
+    expect(await findValidSession(idHash)).toMatchObject({ customerId: customer.id, expiresAt });
+    expect(await findValidSession('raw-token')).toBeNull();
+
+    const stored = await database.query<{ expires_at: Date; created_at: Date }>(
+      'select expires_at, created_at from sessions where id = $1',
+      [idHash],
+    );
+    expect(stored.rows[0]?.expires_at).toBeInstanceOf(Date);
+    expect(stored.rows[0]?.created_at).toBeInstanceOf(Date);
   });
 
-  it('does not return an expired session', () => {
-    const customer = createCustomer({});
+  it('does not return an expired session', async () => {
+    const customer = await createCustomer({});
     const idHash = hash('expired-token');
-    insertSession(idHash, customer.id, Date.now() - 1);
+    await insertSession(idHash, customer.id, Date.now() - 1);
 
-    expect(findValidSession(idHash)).toBeNull();
+    expect(await findValidSession(idHash)).toBeNull();
   });
 
-  it('deletes one session and sweeps expired sessions without deleting live ones', () => {
-    const customer = createCustomer({});
+  it('deletes one session and sweeps expired sessions without deleting live ones', async () => {
+    const customer = await createCustomer({});
     const live = hash('live');
     const dead = hash('dead');
-    insertSession(live, customer.id, Date.now() + 60_000);
-    insertSession(dead, customer.id, Date.now() - 1);
+    const now = Date.now();
+    await insertSession(live, customer.id, now + 60_000);
+    await insertSession(dead, customer.id, now - 1);
 
-    deleteExpiredSessions();
-    expect(findValidSession(live)?.customerId).toBe(customer.id);
+    await deleteExpiredSessions(now);
+    expect((await findValidSession(live))?.customerId).toBe(customer.id);
+    expect(await findValidSession(dead)).toBeNull();
 
-    deleteSession(live);
-    expect(findValidSession(live)).toBeNull();
+    await deleteSession(live);
+    expect(await findValidSession(live)).toBeNull();
   });
 });

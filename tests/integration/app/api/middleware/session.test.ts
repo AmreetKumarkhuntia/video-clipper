@@ -1,15 +1,16 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '@app/api/app.js';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
-import { createCustomer, initDb, insertSession, runMigrations } from '@lib/services/db/index.js';
+import { createCustomer, insertSession } from '@lib/services/db/index.js';
 import { hashSessionToken } from '@lib/utils/sessionToken.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 const app = createApp();
 const SESSION_TOKEN = 'middleware-session-token';
-let tempDirectory: string;
+let database: PostgresTestDatabase;
 let customerId: string;
 
 async function errorMessageOf(response: Response): Promise<string> {
@@ -17,19 +18,14 @@ async function errorMessageOf(response: Response): Promise<string> {
   return body.error.message;
 }
 
-beforeAll(() => {
-  tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-session-middleware-'));
-  initDb(path.join(tempDirectory, 'library.sqlite'));
-  runMigrations();
-
-  const customer = createCustomer({ email: 'owner@example.com' });
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('session_middleware');
+  const customer = await createCustomer({ email: 'owner@example.com' });
   customerId = customer.id;
-  insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
+  await insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
 });
 
-afterAll(() => {
-  fs.rmSync(tempDirectory, { recursive: true, force: true });
-});
+afterAll(async () => database.close());
 
 describe('session middleware', () => {
   it('leaves unguarded routes reachable without a session', async () => {
@@ -43,7 +39,7 @@ describe('session middleware', () => {
     expect(unknown.status).toBe(401);
 
     const stale = 'expired-token';
-    insertSession(hashSessionToken(stale), customerId, Date.now() - 1);
+    await insertSession(hashSessionToken(stale), customerId, Date.now() - 1);
     const expired = await app.request('/api/me', {
       headers: { cookie: `${SESSION_COOKIE_NAME}=${stale}` },
     });

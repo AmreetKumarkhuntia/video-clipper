@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Architecture test enforcing the service-boundary rules from
@@ -231,6 +232,23 @@ describe('service boundaries', () => {
         }
       }
     }
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps the active backend PostgreSQL-only', () => {
+    const forbidden =
+      /better-sqlite3|drizzle-orm\/sqlite-core|drizzle-orm\/better-sqlite3|LIBRARY_DB_PATH|library\.sqlite|sqlite_web/;
+    const configFiles = [
+      path.resolve(process.cwd(), 'package.json'),
+      path.resolve(process.cwd(), 'drizzle.config.ts'),
+      path.resolve(process.cwd(), '.env.example'),
+    ];
+    const candidates = [...files, ...walk(path.resolve(process.cwd(), 'tests')), ...configFiles];
+    const violations = candidates
+      .filter((file) => file !== fileURLToPath(import.meta.url))
+      .filter((file) => forbidden.test(fs.readFileSync(file, 'utf8')))
+      .map((file) => path.relative(process.cwd(), file));
+
     expect(violations).toEqual([]);
   });
 });

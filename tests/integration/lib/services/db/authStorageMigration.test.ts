@@ -1,172 +1,195 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { readMigrationFiles } from 'drizzle-orm/migrator';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { z } from 'zod';
+import {
+  assertMigrationsCurrent,
+  createCustomer,
+  withDbTransaction,
+} from '@lib/services/db/index.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
+import { seedAnalysis, seedCustomer, seedSegmentation } from './postgresFixtures.js';
 
-const migrationsFolder = path.join(process.cwd(), 'drizzle');
-const databases: Database.Database[] = [];
+let database: PostgresTestDatabase | undefined;
 
-function createDatabase(preRbac: boolean = false): Database.Database {
-  const sqlite = new Database(':memory:');
-  databases.push(sqlite);
-  if (preRbac) {
-    // Build the schema through 0010, as shipped before this PR, with its migration ledger.
-    sqlite.exec(
-      'CREATE TABLE __drizzle_migrations (id SERIAL PRIMARY KEY, hash TEXT NOT NULL, created_at NUMERIC)',
-    );
-    for (const migration of readMigrationFiles({ migrationsFolder }).slice(0, 11)) {
-      for (const statement of migration.sql) sqlite.exec(statement);
-      sqlite
-        .prepare('INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)')
-        .run(migration.hash, migration.folderMillis);
-    }
-  }
-  return sqlite;
+function quoteIdentifier(identifier: string): string {
+  return `"${identifier.replaceAll('"', '""')}"`;
 }
 
-function upgrade(sqlite: Database.Database): void {
-  migrate(drizzle(sqlite), { migrationsFolder });
-}
-
-afterEach(() => {
-  for (const sqlite of databases.splice(0)) sqlite.close();
+afterEach(async () => {
+  if (!database) return;
+  await database.close();
+  database = undefined;
 });
 
-describe('auth storage migration', () => {
-  it('installs the final roles schema directly with unprivileged defaults', () => {
-    const sqlite = createDatabase();
-    upgrade(sqlite);
+describe('PostgreSQL baseline migration', () => {
+  it('migrates an empty schema, seeds roles, and installs native PostgreSQL types and indexes', async () => {
+    database = await createPostgresTestDatabase('empty_baseline', false);
+    const options = { migrationsSchema: database.migrationSchemaName };
 
-    expect(sqlite.prepare('SELECT id, permissions FROM roles ORDER BY rank').all()).toEqual([
-      { id: 'customer', permissions: '[]' },
-      { id: 'admin', permissions: '["settings:write"]' },
+    await expect(assertMigrationsCurrent(undefined, options)).rejects.toThrow(
+      /run `pnpm db:migrate`/i,
+    );
+    const before = await database.query<{ relation: string | null }>(
+      "select to_regclass(current_schema() || '.roles')::text as relation",
+    );
+    expect(before.rows[0]?.relation).toBeNull();
+
+    await database.migrate();
+    await expect(assertMigrationsCurrent(undefined, options)).resolves.toBeUndefined();
+
+    const roles = await database.query<{
+      id: string;
+      permissions: unknown;
+      timestamps_match: boolean;
+    }>(
+      `select id, permissions, updated_at = created_at as timestamps_match
+       from roles
+       order by rank`,
+    );
+    expect(roles.rows).toEqual([
+      { id: 'customer', permissions: [], timestamps_match: true },
+      { id: 'admin', permissions: ['settings:write'], timestamps_match: true },
     ]);
-    expect(
-      sqlite.prepare('SELECT COUNT(*) FROM roles WHERE updated_at = created_at').pluck().get(),
-    ).toBe(2);
-    expect(
-      sqlite
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('login_requests', 'role_permissions')",
-        )
-        .all(),
-    ).toEqual([]);
 
-    sqlite.exec(`
-      INSERT INTO customers (id, created_at, updated_at) VALUES ('new-customer', 100, 100);
-      INSERT INTO roles (id, rank, created_at, updated_at) VALUES ('new-role', 50, 100, 100);
-    `);
+    const columns = await database.query<{ column_name: string; data_type: string }>(
+      `select column_name, data_type
+       from information_schema.columns
+       where table_schema = current_schema()
+         and (table_name, column_name) in (
+           ('videos', 'published_at'),
+           ('videos', 'tags'),
+           ('segmentations', 'completed'),
+           ('segmentations', 'score'),
+           ('segmentations', 'rank')
+         )
+       order by column_name`,
+    );
+    expect(columns.rows).toEqual([
+      { column_name: 'completed', data_type: 'boolean' },
+      { column_name: 'published_at', data_type: 'timestamp with time zone' },
+      { column_name: 'rank', data_type: 'integer' },
+      { column_name: 'score', data_type: 'double precision' },
+      { column_name: 'tags', data_type: 'jsonb' },
+    ]);
+
+    const indexes = await database.query<{ indexname: string; indexdef: string }>(
+      'select indexname, indexdef from pg_indexes where schemaname = current_schema()',
+    );
+    expect(indexes.rows.map((row) => row.indexname)).toEqual(
+      expect.arrayContaining([
+        'chunks_video_range_idx',
+        'segmentations_cache_idx',
+        'analyses_video_created_idx',
+        'clips_analysis_id_idx',
+        'clips_video_id_idx',
+        'sessions_expires_at_idx',
+        'qa_messages_video_created_idx',
+        'auth_identities_provider_channel_uq',
+      ]),
+    );
     expect(
-      sqlite.prepare("SELECT role_id FROM customers WHERE id = 'new-customer'").pluck().get(),
-    ).toBe('customer');
-    expect(
-      sqlite.prepare("SELECT permissions FROM roles WHERE id = 'new-role'").pluck().get(),
-    ).toBe('[]');
+      indexes.rows.find((row) => row.indexname === 'auth_identities_provider_channel_uq')?.indexdef,
+    ).toMatch(/where .*channel_id.* is not null/i);
   });
 
-  it('upgrades 0010 without losing customer data, identities, library entries or active sessions', () => {
-    const sqlite = createDatabase(true);
-    expect(() => sqlite.prepare('SELECT role_id FROM customers')).toThrow(/no such column/);
-    expect(() => sqlite.prepare('SELECT * FROM roles')).toThrow(/no such table/);
-    sqlite.exec(`
-      INSERT INTO customers (id, email, name, avatar_url, created_at, updated_at)
-      VALUES ('customer-one', 'creator@example.com', 'Creator', 'https://example.com/avatar', 100, 100),
-             ('customer-two', 'admin@example.com', 'Administrator', NULL, 200, 200);
-      INSERT INTO auth_identities
-        (id, customer_id, provider, provider_account_id, access_token, refresh_token, metadata, created_at, updated_at)
-      VALUES ('identity-one', 'customer-two', 'google', 'google-sub-one', 'stored-access', 'stored-refresh',
-              '{"email_verified":true}', 200, 200);
-      INSERT INTO sessions (id, customer_id, expires_at, created_at)
-      VALUES ('session-hash', 'customer-two', 9999999999999, 200);
-      INSERT INTO library_videos (id, customer_id, video_id, saved_at, created_at, updated_at)
-      VALUES ('library-entry', 'customer-one', 'video-one', 100, 100, 100);
-    `);
-    const customerColumns = 'id, email, name, avatar_url, created_at, updated_at';
-    const customers = sqlite.prepare(`SELECT ${customerColumns} FROM customers ORDER BY id`).all();
-    const identities = sqlite.prepare('SELECT * FROM auth_identities').all();
-    const sessions = sqlite.prepare('SELECT * FROM sessions').all();
-    const libraryEntries = sqlite.prepare('SELECT * FROM library_videos').all();
-
-    upgrade(sqlite);
-
-    expect(sqlite.prepare(`SELECT ${customerColumns} FROM customers ORDER BY id`).all()).toEqual(
-      customers,
+  it('reruns idempotently without overwriting stored roles or assignments', async () => {
+    database = await createPostgresTestDatabase('idempotent_baseline');
+    await database.query("update roles set permissions = '[]'::jsonb where id = 'admin'");
+    await database.query(
+      `insert into roles (id, rank, permissions, created_at, updated_at)
+       values ('custom-role', 50, '["settings:write"]'::jsonb, now(), now())`,
     );
-    expect(sqlite.prepare('SELECT id, role_id FROM customers ORDER BY id').all()).toEqual([
-      { id: 'customer-one', role_id: 'customer' },
-      { id: 'customer-two', role_id: 'customer' },
-    ]);
-    expect(sqlite.prepare('SELECT * FROM auth_identities').all()).toEqual(identities);
-    expect(sqlite.prepare('SELECT * FROM sessions').all()).toEqual(sessions);
-    expect(sqlite.prepare('SELECT * FROM library_videos').all()).toEqual(libraryEntries);
-    expect(sqlite.prepare('SELECT id, permissions FROM roles ORDER BY rank').all()).toEqual([
-      { id: 'customer', permissions: '[]' },
-      { id: 'admin', permissions: '["settings:write"]' },
-    ]);
-    expect(() => sqlite.prepare('SELECT * FROM login_requests')).toThrow(/no such table/);
-    expect(() => sqlite.prepare('SELECT * FROM role_permissions')).toThrow(/no such table/);
+    await database.query(
+      `insert into customers (id, role_id, created_at, updated_at)
+       values ('custom-customer', 'custom-role', now(), now())`,
+    );
+    const ledgerTable = `${quoteIdentifier(database.migrationSchemaName)}.${quoteIdentifier('__drizzle_migrations')}`;
+    const ledgerBefore = await database.query<{ count: number }>(
+      `select count(*)::int as count from ${ledgerTable}`,
+    );
+
+    await database.migrate();
+
+    const ledgerAfter = await database.query<{ count: number }>(
+      `select count(*)::int as count from ${ledgerTable}`,
+    );
+    expect(ledgerAfter.rows).toEqual(ledgerBefore.rows);
+    const stored = await database.query<{ role_id: string; permissions: unknown }>(
+      `select customers.role_id, roles.permissions
+       from customers
+       join roles on roles.id = customers.role_id
+       where customers.id = 'custom-customer'`,
+    );
+    expect(stored.rows).toEqual([{ role_id: 'custom-role', permissions: ['settings:write'] }]);
+    const admin = await database.query<{ permissions: unknown }>(
+      "select permissions from roles where id = 'admin'",
+    );
+    expect(admin.rows[0]?.permissions).toEqual([]);
   });
 
-  it('retains changed grants, custom roles and assignments when migrations run again', () => {
-    const sqlite = createDatabase();
-    upgrade(sqlite);
-    sqlite.exec(`
-      UPDATE roles SET permissions = '[]' WHERE id = 'admin';
-      UPDATE roles SET permissions = '["settings:write"]' WHERE id = 'customer';
-      INSERT INTO roles (id, rank, permissions, created_at, updated_at)
-      VALUES ('custom-role', 50, '["future:permission"]', 100, 100);
-      INSERT INTO customers (id, role_id, created_at, updated_at)
-      VALUES ('admin-one', 'admin', 100, 100), ('custom-one', 'custom-role', 200, 200);
-    `);
-    const roles = sqlite.prepare('SELECT * FROM roles ORDER BY id').all();
-    const customers = sqlite.prepare('SELECT * FROM customers ORDER BY id').all();
-    const ledger = sqlite.prepare('SELECT * FROM __drizzle_migrations ORDER BY created_at').all();
+  it('persists rows after the application pool closes and reopens', async () => {
+    database = await createPostgresTestDatabase('pool_reopen');
+    await seedCustomer(database, 'persistent-customer');
 
-    upgrade(sqlite);
+    await database.reopen();
 
-    expect(sqlite.prepare('SELECT * FROM roles ORDER BY id').all()).toEqual(roles);
-    expect(sqlite.prepare('SELECT * FROM customers ORDER BY id').all()).toEqual(customers);
-    expect(sqlite.prepare('SELECT * FROM __drizzle_migrations ORDER BY created_at').all()).toEqual(
-      ledger,
+    const persisted = await database.query<{ id: string }>(
+      'select id from customers where id = $1',
+      ['persistent-customer'],
     );
+    expect(persisted.rows).toEqual([{ id: 'persistent-customer' }]);
   });
 
-  it('links the consolidated snapshot directly to 0010 and journals only one auth migration', () => {
-    const SnapshotSchema = z.object({
-      id: z.string().uuid(),
-      prevId: z.string().uuid(),
-      tables: z.record(z.string(), z.unknown()),
-    });
-    const previous = SnapshotSchema.parse(
-      JSON.parse(readFileSync(path.join(migrationsFolder, 'meta/0010_snapshot.json'), 'utf8')),
-    );
-    const current = SnapshotSchema.parse(
-      JSON.parse(readFileSync(path.join(migrationsFolder, 'meta/0011_snapshot.json'), 'utf8')),
-    );
-    const journal = z
-      .object({ entries: z.array(z.object({ idx: z.number().int(), tag: z.string() })) })
-      .parse(JSON.parse(readFileSync(path.join(migrationsFolder, 'meta/_journal.json'), 'utf8')));
+  it('rolls back every write when a transaction operation rejects', async () => {
+    database = await createPostgresTestDatabase('transaction_rollback');
 
-    expect(current.prevId).toBe(previous.id);
-    expect(current.id).not.toBe(previous.id);
-    expect(current.tables).not.toHaveProperty('role_permissions');
-    expect(current.tables).not.toHaveProperty('login_requests');
-    expect(current.tables.roles).toMatchObject({
-      columns: {
-        permissions: { type: 'text', notNull: true, default: "'[]'" },
-        updated_at: { type: 'integer', notNull: true },
-      },
-    });
-    expect(current.tables.customers).toMatchObject({
-      columns: { role_id: { type: 'text', notNull: true, default: "'customer'" } },
-    });
-    expect(journal.entries.filter((entry) => entry.idx >= 11)).toEqual([
-      { idx: 11, tag: '0011_rbac_and_cli_login' },
-    ]);
-    expect(journal.entries.map((entry) => entry.tag)).not.toContain('0012_simplify_auth_storage');
+    await expect(
+      withDbTransaction(async () => {
+        await createCustomer({ email: 'rollback@example.com' });
+        throw new Error('force rollback');
+      }),
+    ).rejects.toThrow('force rollback');
+
+    const count = await database.query<{ count: number }>(
+      'select count(*)::int as count from customers where email = $1',
+      ['rollback@example.com'],
+    );
+    expect(count.rows[0]?.count).toBe(0);
+  });
+
+  it('keeps upload artifact ids as audit references without a clip foreign key', async () => {
+    database = await createPostgresTestDatabase('upload_audit_reference');
+    await seedAnalysis(database, 'analysis-1', 'video-1');
+    await seedSegmentation(database, 'segment-1', 'video-1');
+    const timestamp = new Date('2026-01-01T00:00:00.000Z');
+    await database.query(
+      `insert into clips
+         (id, video_id, analysis_id, segmentation_id, segment_rank, filename, path,
+          start_sec, end_sec, duration_sec, created_at, updated_at)
+       values ('clip-1', 'video-1', 'analysis-1', 'segment-1', 1, 'clip.mp4', '/clip.mp4',
+               10, 40, 30, $1, $1)`,
+      [timestamp],
+    );
+    await database.query(
+      `insert into upload_artifacts
+         (id, analysis_id, video_id, clip_artifact_id, title, privacy_status, status,
+          created_at, updated_at)
+       values ('upload-1', 'analysis-1', 'video-1', 'clip-1', 'Upload', 'private', 'complete',
+               $1, $1)`,
+      [timestamp],
+    );
+
+    await database.query("delete from clips where id = 'clip-1'");
+    const afterClipDelete = await database.query<{ clip_artifact_id: string }>(
+      "select clip_artifact_id from upload_artifacts where id = 'upload-1'",
+    );
+    expect(afterClipDelete.rows).toEqual([{ clip_artifact_id: 'clip-1' }]);
+
+    await database.query("delete from videos where id = 'video-1'");
+    const afterVideoDelete = await database.query<{ count: number }>(
+      "select count(*)::int as count from upload_artifacts where id = 'upload-1'",
+    );
+    expect(afterVideoDelete.rows[0]?.count).toBe(0);
   });
 });
