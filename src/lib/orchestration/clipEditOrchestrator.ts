@@ -17,7 +17,7 @@ export function computeEditsHash(edits: ClipEdits): string {
 }
 
 export async function loadClipEdits(clipId: string): Promise<ClipEdits> {
-  const row = getClipRow(clipId);
+  const row = await getClipRow(clipId);
   if (!row) throw new Error(`Clip artifact not found: ${clipId}`);
 
   if (row.editsJson) {
@@ -42,22 +42,19 @@ export async function saveClipEdits(edits: ClipEdits): Promise<ClipEdits> {
   // Strip clipId before storing (it's redundant with the row id)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { clipId: _clipId, ...stable } = parsed;
-  setClipEdits(parsed.clipId, JSON.stringify(stable), computeEditsHash(parsed));
+  await setClipEdits(parsed.clipId, JSON.stringify(stable), computeEditsHash(parsed));
 
   return parsed;
 }
 
 export async function renderEditedClip(cfg: ClipperConfig, clipId: string): Promise<ClipArtifact> {
-  const [edits, artifact] = await Promise.all([
-    loadClipEdits(clipId),
-    Promise.resolve(getClip(clipId)),
-  ]);
+  const [edits, artifact] = await Promise.all([loadClipEdits(clipId), getClip(clipId)]);
 
   if (!artifact) throw new Error(`Clip artifact not found: ${clipId}`);
 
   const editedPath = artifact.path.replace(/\.mp4$/i, '_edited.mp4');
   await renderClipWithEdits(artifact.path, edits, editedPath, cfg);
 
-  setClipRender(clipId, editedPath, computeEditsHash(edits));
-  return getClip(clipId)!;
+  await setClipRender(clipId, editedPath, computeEditsHash(edits));
+  return (await getClip(clipId))!;
 }

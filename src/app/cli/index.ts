@@ -5,7 +5,7 @@ import { setClientRequestId } from './client/index.js';
 import { cliVersion } from './version.js';
 
 // The CLI never opens the database. Schema migrations are run manually, and
-// the backend is the only application process that reads or writes SQLite.
+// the backend is the only application process that reads or writes PostgreSQL.
 
 const requestId = generateRequestId();
 // Share the id with the backend so both sides' logs line up.

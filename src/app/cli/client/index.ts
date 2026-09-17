@@ -6,8 +6,8 @@ import type { ApiErrorBody } from '@lib/types/api.js';
  * The CLI's view of the backend.
  *
  * The CLI no longer opens the database or runs orchestration in-process. State
- * lives behind the API, which is what ends two processes writing the same SQLite
- * file. Downloads and media processing also run on the backend; only explicit
+ * lives behind the API, so one process owns PostgreSQL access. Downloads and
+ * media processing also run on the backend; only explicit
  * response exports and authentication state are written to the client's disk.
  */
 const DEFAULT_BASE_URL = 'http://localhost:5051';

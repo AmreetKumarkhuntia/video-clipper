@@ -32,6 +32,11 @@ export interface ApiServerConfig {
   defaultConcurrency: number;
 }
 
+/** A running backend instance. Shutdown is idempotent and drains HTTP and database resources. */
+export interface ApiRuntime {
+  shutdown(signal: string): Promise<void>;
+}
+
 // ── Request shapes ───────────────────────────────────────────────────────────
 
 export const ResolveChannelQuerySchema = z.object({

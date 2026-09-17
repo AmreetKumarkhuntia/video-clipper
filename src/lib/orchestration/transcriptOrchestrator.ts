@@ -11,6 +11,7 @@ import {
   clearTranscript,
   upsertChunks,
   deleteChunks,
+  withDbTransaction,
 } from '@lib/services/db/index.js';
 import { TranscriptBundleSchema } from '@lib/types/analysis.js';
 import type { TranscriptBundle } from '@lib/types/analysis.js';
@@ -56,7 +57,7 @@ export async function loadOrFetchTranscript(
   cfg: Config,
   languageCode?: string,
 ): Promise<TranscriptBundle> {
-  const stored = !languageCode ? findTranscriptLines(videoId) : null;
+  const stored = !languageCode ? await findTranscriptLines(videoId) : null;
   if (stored) {
     const microBlocks = buildMicroBlocks(stored.lines, cfg.MICRO_BLOCK_SEC);
     const chunks = buildLLMChunks(microBlocks, cfg.CHUNK_LENGTH_SEC, cfg.CHUNK_OVERLAP_SEC);
@@ -70,13 +71,15 @@ export async function loadOrFetchTranscript(
   }
 
   const transcript = await getTranscriptBundle(videoId, cfg, languageCode);
-  saveTranscript(videoId, transcript.lines, transcript.fetchedAt);
   const microBlocks = buildMicroBlocks(transcript.lines, cfg.MICRO_BLOCK_SEC);
   const chunks = buildLLMChunks(microBlocks, cfg.CHUNK_LENGTH_SEC, cfg.CHUNK_OVERLAP_SEC);
-  upsertChunks(
-    videoId,
-    chunks.map((c) => ({ videoId, chunk: JSON.stringify(c), start: c.start, end: c.end })),
-  );
+  await withDbTransaction(async () => {
+    await saveTranscript(videoId, transcript.lines, transcript.fetchedAt);
+    await upsertChunks(
+      videoId,
+      chunks.map((c) => ({ videoId, chunk: JSON.stringify(c), start: c.start, end: c.end })),
+    );
+  });
   return TranscriptBundleSchema.parse({
     videoId,
     lines: transcript.lines,
@@ -86,8 +89,10 @@ export async function loadOrFetchTranscript(
   });
 }
 
-export function clearVideoTranscript(videoId: string): { dbCleared: boolean } {
-  const dbCleared = clearTranscript(videoId);
-  deleteChunks(videoId);
-  return { dbCleared };
+export async function clearVideoTranscript(videoId: string): Promise<{ dbCleared: boolean }> {
+  return withDbTransaction(async () => {
+    const dbCleared = await clearTranscript(videoId);
+    await deleteChunks(videoId);
+    return { dbCleared };
+  });
 }

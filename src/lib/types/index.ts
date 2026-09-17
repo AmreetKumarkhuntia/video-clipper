@@ -234,6 +234,7 @@ export type {
 } from './clipEdit.js';
 
 export type {
+  ApiRuntime,
   ApiServerConfig,
   ResolveChannelQuery,
   ListVideosParams,

@@ -150,8 +150,8 @@ export function createAuthRoutes(store: CliLoginStore): Hono<ApiEnv> {
     }
   });
 
-  routes.post('/signout', (c) => {
-    signOut(readSessionToken(c));
+  routes.post('/signout', async (c) => {
+    await signOut(readSessionToken(c));
     clearSessionCookie(c);
     return c.json({ success: true });
   });
@@ -264,13 +264,13 @@ export function createCliAuthRoutes(store: CliLoginStore): Hono<ApiEnv> {
   routes.post('/exchange', async (c) => {
     const input = await parseJsonBody(c.req.raw, CliLoginExchangeSchema);
     const grant = store.redeem(input);
-    const customer = grant ? findCustomerById(grant.customerId) : null;
+    const customer = grant ? await findCustomerById(grant.customerId) : null;
     if (!grant || !customer) {
       throw new HttpError(
         jsonError(400, 'CLI sign-in exchange is invalid or expired. Run login again.'),
       );
     }
-    const session = mintSession(customer.id, sessionTtlMs(c.get('config')));
+    const session = await mintSession(customer.id, sessionTtlMs(c.get('config')));
     return c.json({ customer, ...session });
   });
 

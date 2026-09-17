@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { pingDb } from '@lib/services/db/index.js';
 import { errorEnvelope } from './middleware/errorEnvelope.js';
 import { requestContext } from './middleware/requestContext.js';
 import { session } from './middleware/session.js';
@@ -50,6 +51,10 @@ export function createApp(): Hono<ApiEnv> {
   app.route('/api/settings', settingsRoutes);
 
   app.get('/api/health', (c) => c.json({ ok: true, requestId: c.get('requestId') }));
+  app.get('/api/ready', async (c) => {
+    await pingDb();
+    return c.json({ ok: true, requestId: c.get('requestId') });
+  });
 
   // Unknown routes answer in the same envelope as everything else, so the
   // client's error reader never has to special-case a 404.

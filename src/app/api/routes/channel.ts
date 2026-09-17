@@ -26,12 +26,12 @@ function linkedChannelId(customer: Customer): string {
   return customer.channelId;
 }
 
-channelRoutes.get('/', (c) => {
+channelRoutes.get('/', async (c) => {
   const customer = requireCustomer(c);
   const channelId = linkedChannelId(customer);
   // The row is written at sign-in, so it is normally present; an empty title
   // rather than a 404 keeps the topbar renderable if it ever is not.
-  const channel = findChannel(channelId);
+  const channel = await findChannel(channelId);
   return c.json({
     channelId,
     title: channel?.title ?? '',
@@ -55,7 +55,7 @@ channelRoutes.get('/videos', async (c) => {
   });
 
   const page = await createYouTubeCatalogService().listChannelVideos(channelId, pageToken);
-  const savedIds = findSavedVideoIds(
+  const savedIds = await findSavedVideoIds(
     customer.id,
     page.videos.map((video) => video.id),
   );

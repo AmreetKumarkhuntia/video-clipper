@@ -9,6 +9,7 @@ import {
   removeLibraryVideo,
   saveLibraryVideo,
   upsertVideo,
+  withDbTransaction,
 } from '@lib/services/db/index.js';
 import { fetchAvailableCaptionTracks } from '@lib/services/video/index.js';
 import { LibraryQuerySchema, VideoParamsSchema } from '@lib/types/api.js';
@@ -37,13 +38,13 @@ export const videosRoutes = new Hono<ApiEnv>();
  * grouping, not a resource — these are videos, filtered to the ones this
  * customer saved.
  */
-videosRoutes.get('/', (c) => {
+videosRoutes.get('/', async (c) => {
   const customer = requireCustomer(c);
   const { limit, offset } = LibraryQuerySchema.parse({
     limit: c.req.query('limit') ?? undefined,
     offset: c.req.query('offset') ?? undefined,
   });
-  return c.json(listLibraryVideos(customer.id, limit, offset));
+  return c.json(await listLibraryVideos(customer.id, limit, offset));
 });
 
 /** Adds a video to the signed-in customer's library. Idempotent. */
@@ -58,16 +59,16 @@ videosRoutes.post('/:videoId', async (c) => {
     throw new HttpError(jsonError(403, 'You can only add videos from your own channel.'));
   }
 
-  upsertVideo(details);
-  saveLibraryVideo({ customerId: customer.id, videoId });
+  await upsertVideo(details);
+  await saveLibraryVideo({ customerId: customer.id, videoId });
   return c.json({ videoId, saved: true });
 });
 
 /** Removes a video from the library. The catalog row and any analyses are untouched. */
-videosRoutes.delete('/:videoId', (c) => {
+videosRoutes.delete('/:videoId', async (c) => {
   const customer = requireCustomer(c);
   const { videoId } = VideoParamsSchema.parse({ videoId: c.req.param('videoId') });
-  removeLibraryVideo(customer.id, videoId);
+  await removeLibraryVideo(customer.id, videoId);
   return c.json({ videoId, saved: false });
 });
 
@@ -82,9 +83,9 @@ videosRoutes.get('/:videoId/transcript', async (c) => {
   return c.json(bundle);
 });
 
-videosRoutes.delete('/:videoId/transcript', (c) => {
+videosRoutes.delete('/:videoId/transcript', async (c) => {
   const { videoId } = VideoParamsSchema.parse({ videoId: c.req.param('videoId') });
-  const { dbCleared } = clearVideoTranscript(videoId);
+  const { dbCleared } = await clearVideoTranscript(videoId);
   return c.json({ ok: true, dbCleared });
 });
 
@@ -101,23 +102,26 @@ videosRoutes.get('/:videoId/transcript/languages', async (c) => {
   return c.json({ languages });
 });
 
-videosRoutes.get('/:videoId/qa', (c) => {
+videosRoutes.get('/:videoId/qa', async (c) => {
   const { videoId } = VideoParamsSchema.parse({ videoId: c.req.param('videoId') });
-  return c.json(findQaMessages(videoId));
+  return c.json(await findQaMessages(videoId));
 });
 
-videosRoutes.delete('/:videoId/qa', (c) => {
+videosRoutes.delete('/:videoId/qa', async (c) => {
   const { videoId } = VideoParamsSchema.parse({ videoId: c.req.param('videoId') });
-  return c.json({ ok: true, cleared: clearQaMessages(videoId) });
+  return c.json({ ok: true, cleared: await clearQaMessages(videoId) });
 });
 
-videosRoutes.delete('/:videoId/analysis', (c) => {
+videosRoutes.delete('/:videoId/analysis', async (c) => {
   const { videoId } = VideoParamsSchema.parse({ videoId: c.req.param('videoId') });
 
   // Chunk analysis is blanked in place rather than deleted because the chunk
   // rows themselves belong to the transcript, which this route leaves alone.
-  const chunksCleared = clearChunkAnalysis(videoId);
-  const segmentationsCleared = clearSegmentations(videoId);
+  const { chunksCleared, segmentationsCleared } = await withDbTransaction(async () => {
+    const chunksCleared = await clearChunkAnalysis(videoId);
+    const segmentationsCleared = await clearSegmentations(videoId);
+    return { chunksCleared, segmentationsCleared };
+  });
 
   return c.json({ ok: true, chunksCleared, segmentationsCleared });
 });

@@ -118,9 +118,9 @@ publishRoutes.post('/thumbnails', async (c) => {
   return c.json({ path: outputPath });
 });
 
-publishRoutes.get('/uploads', (c) => {
+publishRoutes.get('/uploads', async (c) => {
   const { analysisId } = AnalysisParamsSchema.parse({ analysisId: c.req.query('analysisId') });
-  const uploads = listUploadArtifactsByAnalysisId(analysisId);
+  const uploads = await listUploadArtifactsByAnalysisId(analysisId);
   return c.json({ uploads });
 });
 

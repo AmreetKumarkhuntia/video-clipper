@@ -20,17 +20,16 @@ import { CreateCaptionPresetSchema, UpdateCaptionPresetSchema } from '@lib/types
  */
 export const captionPresetsRoutes = new Hono<ApiEnv>();
 
-captionPresetsRoutes.get('/', (c) => {
-  return c.json({ presets: listCaptionPresets() });
+captionPresetsRoutes.get('/', async (c) => {
+  return c.json({ presets: await listCaptionPresets() });
 });
 
 captionPresetsRoutes.post('/', async (c) => {
   const body = await parseJsonBody(c.req.raw, CreateCaptionPresetSchema);
 
-  // `captionPresets` stores style and position as JSON text and the repo still
-  // takes them that way, so the encoding has to happen here for now. It belongs
-  // in captionPresetsRepo, which is the only place that knows the column shape.
-  const preset = createCaptionPreset({
+  // The repository keeps its existing serialized input contract and validates
+  // the values before writing them to PostgreSQL JSONB columns.
+  const preset = await createCaptionPreset({
     name: body.name,
     style: JSON.stringify(body.style),
     position: JSON.stringify(body.position),
@@ -50,14 +49,14 @@ captionPresetsRoutes.put('/:id', async (c) => {
   if (body.style !== undefined) updates.style = JSON.stringify(body.style);
   if (body.position !== undefined) updates.position = JSON.stringify(body.position);
 
-  const preset = updateCaptionPreset(c.req.param('id'), updates);
+  const preset = await updateCaptionPreset(c.req.param('id'), updates);
   if (!preset) return jsonError(404, 'Caption preset not found.');
 
   return c.json({ preset });
 });
 
-captionPresetsRoutes.delete('/:id', (c) => {
-  const deleted = deleteCaptionPreset(c.req.param('id'));
+captionPresetsRoutes.delete('/:id', async (c) => {
+  const deleted = await deleteCaptionPreset(c.req.param('id'));
   if (!deleted) return jsonError(404, 'Caption preset not found.');
 
   return c.body(null, 204);
