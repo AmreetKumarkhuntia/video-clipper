@@ -32,6 +32,7 @@ Refine clip boundaries (second LLM pass)
 ## Requirements for self-hosting
 
 - Node.js 22+ for the installed CLI; Node.js 24 for repository build and release tooling
+- PostgreSQL 17 for backend persistence (or Docker Compose for the bundled development service)
 - [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — for video download
 - [`ffmpeg`](https://ffmpeg.org) — for clip cutting
 
@@ -63,6 +64,8 @@ Create a `.env` file in the backend repository. CLI users connecting to a hosted
 ```env
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql://video_clipper:video_clipper@127.0.0.1:5432/video_clipper
+TOKEN_ENCRYPTION_KEY=<base64-encoded-32-byte-key>
 ```
 
 Or use a free model via OpenRouter:
@@ -73,15 +76,19 @@ OPENROUTER_API_KEY=sk-or-...
 LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ```
 
-**2. Start the backend and web app (self-hosting only)**
+**2. Start PostgreSQL, migrate it, then start the apps (self-hosting only)**
 
 ```bash
+pnpm db:up
+pnpm db:migrate
 pnpm api:dev
 # In another terminal:
 pnpm web:dev
 ```
 
-Configure browser sign-in as described in the [configuration guide](docs/guides/configuration.md). Schema setup remains a server deployment responsibility.
+Configure browser sign-in as described in the [configuration guide](docs/guides/configuration.md).
+Run `pnpm db:migrate` once before each release that contains schema changes; API replicas never run
+migrations automatically.
 
 **3. Sign in and run the client**
 
