@@ -32,7 +32,7 @@ Refine clip boundaries (second LLM pass)
 ## Requirements for self-hosting
 
 - Node.js 22+ for the installed CLI; Node.js 24 for repository build and release tooling
-- PostgreSQL 17 for backend persistence (or Docker Compose for the bundled development service)
+- PostgreSQL 17 for backend persistence
 - [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — for video download
 - [`ffmpeg`](https://ffmpeg.org) — for clip cutting
 
@@ -76,10 +76,9 @@ OPENROUTER_API_KEY=sk-or-...
 LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ```
 
-**2. Start PostgreSQL, migrate it, then start the apps (self-hosting only)**
+**2. Provision PostgreSQL, migrate it, then start the apps (self-hosting only)**
 
 ```bash
-pnpm db:up
 pnpm db:migrate
 pnpm api:dev
 # In another terminal:

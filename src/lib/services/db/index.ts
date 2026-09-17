@@ -7,7 +7,6 @@
 export { runMigrations, assertMigrationsCurrent } from './migrate.js';
 export { initDb, getDb, pingDb, closeDb, withDbTransaction } from './client.js';
 
-export { clearDatabase } from './repos/adminRepo.js';
 export {
   saveAnalysisToDb,
   getAnalysisFromDb,

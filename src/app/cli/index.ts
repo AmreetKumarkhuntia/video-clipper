@@ -4,8 +4,8 @@ import { commands } from './commands/index.js';
 import { setClientRequestId } from './client/index.js';
 import { cliVersion } from './version.js';
 
-// The CLI never opens the database. Schema migrations are run manually, and
-// the backend is the only application process that reads or writes PostgreSQL.
+// The CLI is an HTTP-only client; backend lifecycle and persistence concerns
+// remain server-side.
 
 const requestId = generateRequestId();
 // Share the id with the backend so both sides' logs line up.

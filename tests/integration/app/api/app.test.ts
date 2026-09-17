@@ -1,4 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+const database = vi.hoisted(() => ({
+  pingDb: vi.fn(async (): Promise<void> => {}),
+}));
+
+vi.mock('@lib/services/db/index.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@lib/services/db/index.js')>()),
+  pingDb: database.pingDb,
+}));
+
 import { createApp } from '@app/api/app.js';
 
 const app = createApp();
@@ -21,6 +31,20 @@ describe('backend app', () => {
   it('honours a caller-supplied request id so logs can be correlated', async () => {
     const res = await app.request('/api/health', { headers: { 'x-request-id': 'caller-123' } });
     expect(res.headers.get('x-request-id')).toBe('caller-123');
+  });
+
+  it('checks PostgreSQL through the database heartbeat endpoint', async () => {
+    const res = await app.request('/api/heartbeat/database');
+
+    expect(res.status).toBe(200);
+    expect(database.pingDb).toHaveBeenCalledOnce();
+    expect(await res.json()).toMatchObject({ ok: true });
+  });
+
+  it('does not expose the replaced readiness endpoint', async () => {
+    const res = await app.request('/api/ready');
+
+    expect(res.status).toBe(404);
   });
 
   it('returns unknown routes in the shared error envelope', async () => {

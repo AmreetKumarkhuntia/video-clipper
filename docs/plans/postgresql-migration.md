@@ -19,7 +19,7 @@
 
 ## Implementation order
 
-1. Add PostgreSQL dependencies, environment validation, pool lifecycle, Compose, and CI services.
+1. Add PostgreSQL dependencies, environment validation, pool lifecycle, and CI services.
 2. Replace the SQLite schema and migration history with one PostgreSQL baseline migration.
 3. Convert repositories and their API/orchestration callers to awaited asynchronous operations.
 4. Port integration and CLI-login browser tests to isolated PostgreSQL schemas.
@@ -29,14 +29,14 @@
 ## Local development
 
 ```bash
-pnpm db:up
 pnpm db:migrate
 pnpm api:dev
 pnpm web:dev
 ```
 
-The default development URL is documented in `.env.example`. Tests require a separate
-`TEST_DATABASE_URL`; they never fall back to the development or production URL.
+Provision PostgreSQL 17 before running these commands. The default development URL is documented in
+`.env.example`. Tests require a separate `TEST_DATABASE_URL`; they never fall back to the
+development or production URL.
 
 ## Deployment and recovery
 

@@ -112,9 +112,9 @@ provider-required TLS settings in the URL, for example `?sslmode=require`.
 | `DATABASE_CONNECTION_TIMEOUT_MS` | `5000`  | Maximum time to establish a connection            |
 | `DATABASE_IDLE_TIMEOUT_MS`       | `30000` | Time before an unused pooled connection is closed |
 
-For local development, `pnpm db:up` starts the bundled PostgreSQL 17 service. Run
-`pnpm db:migrate` before starting the API. Production deployments run the same command once as a
-release step before starting new API replicas; the API never applies migrations automatically.
+Provision PostgreSQL 17 and run `pnpm db:migrate` before starting the API. Production deployments
+run the same command once as a release step before starting new API replicas; the API never applies
+migrations automatically.
 
 ### YouTube / yt-dlp Authentication
 

@@ -51,7 +51,7 @@ export function createApp(): Hono<ApiEnv> {
   app.route('/api/settings', settingsRoutes);
 
   app.get('/api/health', (c) => c.json({ ok: true, requestId: c.get('requestId') }));
-  app.get('/api/ready', async (c) => {
+  app.get('/api/heartbeat/database', async (c) => {
     await pingDb();
     return c.json({ ok: true, requestId: c.get('requestId') });
   });
