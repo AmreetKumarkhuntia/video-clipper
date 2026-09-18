@@ -78,6 +78,16 @@ LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
 
 **2. Provision PostgreSQL, migrate it, then start the apps (self-hosting only)**
 
+Create the development role and database once. Use the password you placed in `DATABASE_URL` when
+`createuser` prompts for it:
+
+```bash
+createuser --login --pwprompt video_clipper
+createdb --owner=video_clipper video_clipper
+```
+
+Then apply migrations and start the backend:
+
 ```bash
 pnpm db:migrate
 pnpm api:dev

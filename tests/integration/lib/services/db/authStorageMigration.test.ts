@@ -128,6 +128,60 @@ describe('PostgreSQL baseline migration', () => {
     expect(admin.rows[0]?.permissions).toEqual([]);
   });
 
+  it('adopts an existing populated baseline when the migration ledger is absent', async () => {
+    database = await createPostgresTestDatabase('missing_ledger');
+    await database.query("update roles set permissions = '[]'::jsonb where id = 'admin'");
+    await database.query(
+      `insert into roles (id, rank, permissions, created_at, updated_at)
+       values ('existing-role', 50, '["settings:write"]'::jsonb, now(), now())`,
+    );
+    await database.query(
+      `insert into customers (id, role_id, email, created_at, updated_at)
+       values ('existing-customer', 'existing-role', 'existing@example.com', now(), now())`,
+    );
+
+    const migrationSchema = quoteIdentifier(database.migrationSchemaName);
+    await database.query(`drop schema ${migrationSchema} cascade`);
+    await database.query(`create schema ${migrationSchema}`);
+
+    const before = await database.query<{ relation: string | null }>(
+      'select to_regclass($1)::text as relation',
+      [`${database.migrationSchemaName}.__drizzle_migrations`],
+    );
+    expect(before.rows[0]?.relation).toBeNull();
+
+    await expect(database.migrate()).resolves.toBeUndefined();
+
+    const ledgerTable = `${migrationSchema}.${quoteIdentifier('__drizzle_migrations')}`;
+    const ledger = await database.query<{ count: number }>(
+      `select count(*)::int as count from ${ledgerTable}`,
+    );
+    expect(ledger.rows).toEqual([{ count: 1 }]);
+
+    const stored = await database.query<{
+      id: string;
+      role_id: string;
+      permissions: unknown;
+    }>(
+      `select customers.id, customers.role_id, roles.permissions
+       from customers
+       join roles on roles.id = customers.role_id
+       where customers.id = 'existing-customer'`,
+    );
+    expect(stored.rows).toEqual([
+      {
+        id: 'existing-customer',
+        role_id: 'existing-role',
+        permissions: ['settings:write'],
+      },
+    ]);
+
+    const admin = await database.query<{ permissions: unknown }>(
+      "select permissions from roles where id = 'admin'",
+    );
+    expect(admin.rows[0]?.permissions).toEqual([]);
+  });
+
   it('persists rows after the application pool closes and reopens', async () => {
     database = await createPostgresTestDatabase('pool_reopen');
     await seedCustomer(database, 'persistent-customer');

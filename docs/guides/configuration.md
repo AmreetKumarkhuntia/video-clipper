@@ -112,9 +112,11 @@ provider-required TLS settings in the URL, for example `?sslmode=require`.
 | `DATABASE_CONNECTION_TIMEOUT_MS` | `5000`  | Maximum time to establish a connection            |
 | `DATABASE_IDLE_TIMEOUT_MS`       | `30000` | Time before an unused pooled connection is closed |
 
-Provision PostgreSQL 17 and run `pnpm db:migrate` before starting the API. Production deployments
-run the same command once as a release step before starting new API replicas; the API never applies
-migrations automatically.
+Provision PostgreSQL 17 with the role and database named by `DATABASE_URL`. For the example URL,
+create them once with `createuser --login --pwprompt video_clipper` and
+`createdb --owner=video_clipper video_clipper`, using the URL's password when prompted. Run
+`pnpm db:migrate` before starting the API. Production deployments run the same command once as a
+release step before starting new API replicas; the API never applies migrations automatically.
 
 ### YouTube / yt-dlp Authentication
 

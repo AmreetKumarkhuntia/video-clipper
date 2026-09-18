@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { drizzle, type NodePgDatabase, type NodePgTransaction } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgDatabase, type NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
 import type { ExtractTablesWithRelations } from 'drizzle-orm';
+import type { PgDatabase, PgTransaction } from 'drizzle-orm/pg-core';
 import { Pool } from 'pg';
 import type { DatabaseConfig } from '@lib/types/config.js';
 import { log } from '@lib/utils/logger.js';
@@ -10,7 +11,7 @@ let pool: Pool | null = null;
 let handle: NodePgDatabase<typeof schema> | null = null;
 
 const transactionContext = new AsyncLocalStorage<
-  NodePgTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>
+  PgTransaction<NodePgQueryResultHKT, typeof schema, ExtractTablesWithRelations<typeof schema>>
 >();
 
 function getRootDb(): NodePgDatabase<typeof schema> {
@@ -18,6 +19,13 @@ function getRootDb(): NodePgDatabase<typeof schema> {
     throw new Error('Database is not initialized. Call initDb(getDatabaseConfig()) first.');
   }
   return handle;
+}
+
+function getPool(): Pool {
+  if (!pool) {
+    throw new Error('Database is not initialized. Call initDb(getDatabaseConfig()) first.');
+  }
+  return pool;
 }
 
 /** Creates the process-wide PostgreSQL pool. Connecting remains explicit through pingDb(). */
@@ -43,9 +51,12 @@ export function initDb(config: DatabaseConfig): NodePgDatabase<typeof schema> {
 }
 
 /** Returns the current transaction handle, or the initialized root database outside a transaction. */
-export function getDb(): NodePgDatabase<typeof schema> {
-  const transaction = transactionContext.getStore();
-  return transaction ? (transaction as NodePgDatabase<typeof schema>) : getRootDb();
+export function getDb(): PgDatabase<
+  NodePgQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+> {
+  return transactionContext.getStore() ?? getRootDb();
 }
 
 /** Runs existing repository calls atomically without exposing the raw transaction handle. */
@@ -61,7 +72,9 @@ export async function withDbTransaction<T>(operation: () => Promise<T>): Promise
 
 /** Verifies that the configured PostgreSQL server accepts queries. */
 export async function pingDb(): Promise<void> {
-  await getRootDb().execute('select 1');
+  // Use the driver directly so connection/authentication errors remain
+  // actionable instead of being hidden behind Drizzle's query wrapper.
+  await getPool().query('select 1');
 }
 
 /** Drains the process-wide pool and clears all initialized state. */
