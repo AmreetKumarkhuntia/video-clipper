@@ -180,13 +180,13 @@ Options:
   --max-chunks <n>        Limit the number of transcript chunks sent to the LLM (useful for testing/cost control)
   --max-parallel <n>      Max number of LLM calls to run in parallel (default: LLM_CONCURRENCY env, or 3)
   --output-json <path>    Write the analysis ClipPlan JSON to a file
-  --no-cache              Re-analyze all chunks, ignoring cached LLM results (transcript is reused from the library DB)
+  --no-cache              Re-analyze all chunks, ignoring cached LLM results (the stored transcript is reused)
   --no-audio              Deprecated — ignored (run no longer performs audio event detection)
   --game-profile <type>   Deprecated — ignored
   --help, -h              Show this help message
 
-Results are persisted to the backend library database: re-run "vdclip clip <analysis-id>"
-or "vdclip library" to reuse them.
+Results are persisted by the backend: re-run "vdclip clip <analysis-id>" or
+"vdclip library" to reuse them.
 
 Examples:
   vdclip run https://youtube.com/watch?v=dQw4w9WgXcQ

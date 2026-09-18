@@ -1,68 +1,98 @@
-import path from 'node:path';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import * as schema from '@lib/services/db/schema.js';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createCustomer, findCustomerById, findRolePermissions } from '@lib/services/db/index.js';
 import { log } from '@lib/utils/logger.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../../support/postgres.js';
 
-const sqlite = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
+let database: PostgresTestDatabase;
 
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
-
-const { createCustomer, findCustomerById } =
-  await import('@lib/services/db/repos/customersRepo.js');
-const { findRolePermissions } = await import('@lib/services/db/repos/rolesRepo.js');
-
-beforeEach(() => {
-  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
-  sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run('[]', 'customer');
-  sqlite
-    .prepare('UPDATE roles SET permissions = ? WHERE id = ?')
-    .run('["settings:write"]', 'admin');
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('roles_repo');
 });
 
-afterAll(() => sqlite.close());
+beforeEach(async () => {
+  vi.restoreAllMocks();
+  await database.reset();
+  await database.query(
+    `update roles
+     set permissions = case id
+       when 'admin' then '["settings:write"]'::jsonb
+       else '[]'::jsonb
+     end`,
+  );
+});
+
+afterAll(async () => {
+  await database.close();
+});
 
 describe('rolesRepo', () => {
-  it('loads seeded role permissions', () => {
-    const roles = sqlite.prepare('SELECT id FROM roles ORDER BY rank').all() as { id: string }[];
-    expect(roles.map((role) => role.id)).toEqual(['customer', 'admin']);
-    expect(findRolePermissions('customer')).toEqual([]);
-    expect(findRolePermissions('admin')).toEqual(['settings:write']);
+  it('loads seeded role permissions', async () => {
+    const roles = await database.query<{ id: string; permissions: unknown }>(
+      'select id, permissions from roles order by rank',
+    );
+    expect(roles.rows).toEqual([
+      { id: 'customer', permissions: [] },
+      { id: 'admin', permissions: ['settings:write'] },
+    ]);
+    expect(await findRolePermissions('customer')).toEqual([]);
+    expect(await findRolePermissions('admin')).toEqual(['settings:write']);
   });
 
-  it('reflects stored permission changes on the next customer load', () => {
-    const customer = createCustomer({});
-    sqlite
-      .prepare('UPDATE roles SET permissions = ? WHERE id = ?')
-      .run('["settings:write"]', 'customer');
-    expect(findCustomerById(customer.id)?.permissions).toEqual(['settings:write']);
+  it('reflects stored permission changes on the next customer load', async () => {
+    const customer = await createCustomer({});
+    await database.query('update roles set permissions = $1::jsonb where id = $2', [
+      '["settings:write"]',
+      'customer',
+    ]);
+    expect((await findCustomerById(customer.id))?.permissions).toEqual(['settings:write']);
 
-    sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run('[]', 'customer');
-    expect(findCustomerById(customer.id)?.permissions).toEqual([]);
+    await database.query('update roles set permissions = $1::jsonb where id = $2', [
+      '[]',
+      'customer',
+    ]);
+    expect((await findCustomerById(customer.id))?.permissions).toEqual([]);
   });
 
-  it('grants nothing and warns when a stored role is missing', () => {
+  it('grants nothing and warns when a stored role is missing', async () => {
     const warning = vi.spyOn(log, 'warn').mockImplementation(() => {});
-    expect(findRolePermissions('missing')).toEqual([]);
+    expect(await findRolePermissions('missing')).toEqual([]);
     expect(warning).toHaveBeenCalledWith('db', 'stored role is missing; no permissions granted');
   });
 
-  it.each(['null', '{}', '"settings:write"', '[1]', '["unknown:permission"]', 'broken-json'])(
-    'fails closed for invalid stored permissions %s',
-    (value) => {
+  it.each([{}, 'settings:write', [1], ['unknown:permission']])(
+    'fails closed for invalid stored permissions %j',
+    async (value) => {
       const warning = vi.spyOn(log, 'warn').mockImplementation(() => {});
-      sqlite.prepare('UPDATE roles SET permissions = ? WHERE id = ?').run(value, 'customer');
+      await database.query('update roles set permissions = $1::jsonb where id = $2', [
+        JSON.stringify(value),
+        'customer',
+      ]);
 
-      expect(findRolePermissions('customer')).toEqual([]);
+      expect(await findRolePermissions('customer')).toEqual([]);
       expect(warning).toHaveBeenCalledWith(
         'db',
         'stored role permissions are invalid; no permissions granted',
       );
-      warning.mockRestore();
     },
   );
+
+  it('rejects malformed JSON before it can become stored permissions', async () => {
+    await expect(
+      database.query('update roles set permissions = $1::jsonb where id = $2', [
+        'broken-json',
+        'customer',
+      ]),
+    ).rejects.toMatchObject({ code: '22P02' });
+    expect(await findRolePermissions('customer')).toEqual([]);
+  });
+
+  it('restricts deletion of a role assigned to a customer', async () => {
+    await createCustomer({});
+    await expect(database.query("delete from roles where id = 'customer'")).rejects.toMatchObject({
+      code: '23503',
+    });
+  });
 });

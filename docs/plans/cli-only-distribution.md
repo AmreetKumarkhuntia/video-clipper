@@ -21,7 +21,7 @@ Baseline reviewed on 2026-09-10 at commit `428b598`; older architecture comments
 | Authorization   | Session middleware resolves identity, but analyses, clips, Q&A and several other routes remain unguarded.            | Require sign-in and scope user-owned work, including files, to the customer.                            |
 | Long operations | Analysis/Q&A stream over HTTP; clip generation holds a normal request open.                                          | Define interruption behavior; add durable jobs as a separate follow-up.                                 |
 
-A local `npm pack --dry-run --ignore-scripts --json` preview of the existing build included **745 files**, about **311 KB compressed / 1.59 MB unpacked**: 112 API files, 288 service files, 44 orchestration files, 26 migration files, and 3 scripts. These counts describe the current checkout's build output, not a freshly rebuilt or registry-downloaded release. They exclude installed dependencies, which also currently include SQLite, AI providers, Hono, and media libraries.
+A local `npm pack --dry-run --ignore-scripts --json` preview of the pre-split build included **745 files**, about **311 KB compressed / 1.59 MB unpacked**: 112 API files, 288 service files, 44 orchestration files, 26 migration files, and 3 scripts. These counts describe that historical build output, not a freshly rebuilt or registry-downloaded release. They exclude installed dependencies, which also included the database driver, AI providers, Hono, and media libraries.
 
 ## Target responsibilities
 
@@ -51,7 +51,7 @@ Shared request/response schemas and small utilities stay in `src/lib/types/` and
 
 Changing `files` alone is insufficient: the package needs its own dependencies as well. npm documents file inclusion, executable mapping, and the root publication guard in its [package manifest reference](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/).
 
-**Exit condition:** an isolated installation of the tarball runs `--help` and `--version` without a backend, project checkout, provider keys, Python, ffmpeg, yt-dlp, or SQLite/native compilation. No server packages are present in the installed dependency tree.
+**Exit condition:** an isolated installation of the tarball runs `--help` and `--version` without a backend, project checkout, provider keys, Python, ffmpeg, yt-dlp, PostgreSQL, or Drizzle. No server packages are present in the installed dependency tree.
 
 ## Phase 2 — Finish connection and sign-in behavior
 

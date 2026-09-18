@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../client.js';
+import { getDb } from '../client.js';
 import { publishDrafts } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
 import { PublishDraftItemSchema } from '@lib/types/publish.js';
@@ -11,40 +11,47 @@ function rowToDraft(row: typeof publishDrafts.$inferSelect): PublishDraft {
     analysisId: row.analysisId,
     videoId: row.videoId,
     title: row.title,
-    items: (JSON.parse(row.itemsJson) as unknown[]).map((i) => PublishDraftItemSchema.parse(i)),
-    createdAt: new Date(row.createdAt).toISOString(),
-    updatedAt: new Date(row.updatedAt).toISOString(),
+    items: PublishDraftItemSchema.array().parse(row.itemsJson),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-export function upsertPublishDraft(draft: PublishDraft): void {
+export async function upsertPublishDraft(draft: PublishDraft): Promise<void> {
   const done = log.dbCalled('upsertPublishDraft', undefined, { analysisId: draft.analysisId });
-  const now = Date.now();
-  db.insert(publishDrafts)
+  const now = new Date();
+  await getDb()
+    .insert(publishDrafts)
     .values({
       id: draft.id,
       analysisId: draft.analysisId,
       videoId: draft.videoId,
       title: draft.title,
-      itemsJson: JSON.stringify(draft.items),
-      createdAt: new Date(draft.createdAt).getTime(),
+      itemsJson: PublishDraftItemSchema.array().parse(draft.items),
+      createdAt: new Date(draft.createdAt),
       updatedAt: now,
     })
     .onConflictDoUpdate({
       target: publishDrafts.analysisId,
       set: {
         title: draft.title,
-        itemsJson: JSON.stringify(draft.items),
+        itemsJson: PublishDraftItemSchema.array().parse(draft.items),
         updatedAt: now,
       },
     })
-    .run();
+    .returning({ id: publishDrafts.id });
   done({});
 }
 
-export function getPublishDraftByAnalysisId(analysisId: string): PublishDraft | null {
+export async function getPublishDraftByAnalysisId(
+  analysisId: string,
+): Promise<PublishDraft | null> {
   const done = log.dbCalled('getPublishDraftByAnalysisId', undefined, { analysisId });
-  const row = db.select().from(publishDrafts).where(eq(publishDrafts.analysisId, analysisId)).get();
+  const [row] = await getDb()
+    .select()
+    .from(publishDrafts)
+    .where(eq(publishDrafts.analysisId, analysisId))
+    .limit(1);
   done({ found: row ? 1 : 0 });
   return row ? rowToDraft(row) : null;
 }

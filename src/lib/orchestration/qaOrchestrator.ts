@@ -35,7 +35,7 @@ export async function answerVideoQuestion(
     citations: [],
     createdAt: new Date().toISOString(),
   };
-  insertQaMessage(input.videoId, userMessage);
+  await insertQaMessage(input.videoId, userMessage);
 
   const answer = await answerQuestion({
     bundle,
@@ -59,7 +59,7 @@ export async function answerVideoQuestion(
     citations: answer.citations,
     createdAt: new Date().toISOString(),
   };
-  insertQaMessage(input.videoId, assistantMessage);
+  await insertQaMessage(input.videoId, assistantMessage);
 
   return answer;
 }

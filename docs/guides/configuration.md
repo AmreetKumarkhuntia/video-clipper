@@ -93,12 +93,30 @@ cp .env.example .env
 
 ### Paths & Output
 
-| Variable          | Default                                  | Description                                          |
-| ----------------- | ---------------------------------------- | ---------------------------------------------------- |
-| `DOWNLOAD_DIR`    | `downloads/`                             | Where to store downloaded videos                     |
-| `OUTPUT_DIR`      | `outputs/`                               | Where to store generated clips, audio, and artifacts |
-| `CACHE_DIR`       | `outputs/cache`                          | Publish metadata cache (LLM-generated titles etc.)   |
-| `LIBRARY_DB_PATH` | `~/.config/video-clipper/library.sqlite` | Persistent SQLite database                           |
+| Variable       | Default         | Description                                          |
+| -------------- | --------------- | ---------------------------------------------------- |
+| `DOWNLOAD_DIR` | `downloads/`    | Where to store downloaded videos                     |
+| `OUTPUT_DIR`   | `outputs/`      | Where to store generated clips, audio, and artifacts |
+| `CACHE_DIR`    | `outputs/cache` | Publish metadata cache (LLM-generated titles etc.)   |
+
+### PostgreSQL
+
+`DATABASE_URL` is required by the backend and is read only from its environment. It is deliberately
+absent from the editable settings API because connection URLs normally contain credentials. Encode
+provider-required TLS settings in the URL, for example `?sslmode=require`.
+
+| Variable                         | Default | Description                                       |
+| -------------------------------- | ------- | ------------------------------------------------- |
+| `DATABASE_URL`                   | —       | PostgreSQL connection URL; required               |
+| `DATABASE_POOL_MAX`              | `10`    | Maximum backend connections in the process pool   |
+| `DATABASE_CONNECTION_TIMEOUT_MS` | `5000`  | Maximum time to establish a connection            |
+| `DATABASE_IDLE_TIMEOUT_MS`       | `30000` | Time before an unused pooled connection is closed |
+
+Provision PostgreSQL 17 with the role and database named by `DATABASE_URL`. For the example URL,
+create them once with `createuser --login --pwprompt video_clipper` and
+`createdb --owner=video_clipper video_clipper`, using the URL's password when prompted. Run
+`pnpm db:migrate` before starting the API. Production deployments run the same command once as a
+release step before starting new API replicas; the API never applies migrations automatically.
 
 ### YouTube / yt-dlp Authentication
 
@@ -131,7 +149,7 @@ the page it asks you to open when you run `vdclip login`.
 
 ### Roles
 
-Every migrated or newly created account starts as a `customer`. Changing settings — from the web Settings page or
+Every newly created account starts as a `customer`. Changing settings — from the web Settings page or
 `vdclip config <key> <value>` — needs the `settings:write` permission, which only the `admin`
 role holds. Reading settings is open to any signed-in account.
 
@@ -141,12 +159,10 @@ runs only while no administrator exists. The promotion is audit-logged. Remove t
 bootstrap; if every administrator is later demoted or removed, setting it again provides the
 documented recovery path.
 
-There is intentionally no self-service role mutation endpoint. Each row in `roles` contains its
-own JSON `permissions` array. The single auth migration, `0011_rbac_and_cli_login`, upgrades the
-pre-PR schema through migration `0010` directly to this structure and assigns existing customers
-the `customer` role. It never creates `role_permissions` or `login_requests`. Invalid permission
-data grants no access. `/api/me` returns the current role and permissions for both browser and CLI
-sessions.
+There is intentionally no self-service role mutation endpoint. Each row in `roles` contains its own
+JSONB `permissions` array. The PostgreSQL baseline seeds the `customer` and `admin` roles; there is
+no legacy-data upgrade path. Invalid permission data grants no access. `/api/me` returns the current
+role and permissions for both browser and CLI sessions.
 
 ### Provider tokens at rest
 
@@ -161,32 +177,25 @@ environment or secret manager. A missing or malformed key stops startup before t
 opened. A key that cannot decrypt existing records stops startup before token migration or serving
 requests. Plaintext records from older versions are encrypted after validation succeeds.
 
-#### Upgrading an existing installation
+#### Backup and restore
 
-1. Stop the backend and back up the database, including any uncheckpointed SQLite WAL, and its
-   matching encryption key. Keep the secret backup securely alongside the database backup.
-2. Set `TOKEN_ENCRYPTION_KEY` to the **existing key file's base64 value**. Find that file at the
-   previously configured `TOKEN_ENCRYPTION_KEY_PATH`, beside the database as `auth-token.key`, or
-   in the user configuration directory for older installations. Do not generate a replacement.
-3. Upgrade backend and CLI together. Migration `0011` adds roles with their permissions stored
-   directly as JSON; existing customers, identities and sessions are preserved. Existing CLI
-   credentials remain compatible, but unfinished code-based login attempts must be restarted
-   with the updated CLI.
-4. Start the backend and verify sign-in. Existing key files are left untouched; retire them only
-   according to your backup policy after verifying the provisioned secret and backup.
+Back up the PostgreSQL database with `pg_dump` and store the exact matching
+`TOKEN_ENCRYPTION_KEY` securely with the backup. Restore with `pg_restore`, provision that same key,
+run `pnpm db:migrate`, and only then start the API. If the key is permanently lost, clear
+`access_token` and `refresh_token` deliberately after taking another backup; affected customers
+must consent again. Changing the environment secret alone is not a supported rotation procedure.
 
-PR #37 is unreleased, so its intermediate `0011`/`0012` migrations have been consolidated into
-one migration. A development database that already applied either intermediate version cannot
-use the normal upgrade path above. Back up that database and its matching secret before an
-explicit, reviewed reconciliation of its schema and migration history, preserving any custom
-roles and grants. Alternatively, point `LIBRARY_DB_PATH` at a separate, new development database
-and retain the old database and secret. Do not reset, delete or silently rewrite an existing
-database or its migration history.
+```bash
+pg_dump --format=custom --dbname="$DATABASE_URL" --file=video-clipper.dump
+pg_restore --dbname="$DATABASE_URL" --clean --if-exists video-clipper.dump
+pnpm db:migrate
+```
 
-To restore a database, restore the exact matching environment secret too. If the key is permanently
-lost, first back up the database, deliberately clear `access_token` and `refresh_token` in
-`auth_identities`, and provision a new key; affected customers must consent again. Changing the
-environment secret alone is not a supported key-rotation procedure.
+Stop API writers during a restore. Once the PostgreSQL-backed release has accepted writes, rollback
+means restoring a PostgreSQL backup and deploying compatible code; SQLite is not a fallback.
+
+This PostgreSQL cutover is intentionally greenfield. Existing SQLite databases are not imported or
+read by the backend.
 
 ### CLI sign-in
 

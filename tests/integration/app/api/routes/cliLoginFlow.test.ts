@@ -10,6 +10,7 @@ import {
   begin,
   callback,
   cookiesOf,
+  deleteCustomers,
   exchange,
   exchangeGoogleCodeMock,
   exchangeSession,
@@ -17,7 +18,6 @@ import {
   locationOf,
   me,
   sessionCount,
-  sqlite,
   start,
 } from './cliLogin.fixture.js';
 
@@ -43,7 +43,7 @@ describe('CLI login flow', () => {
         .getSetCookie()
         .find((value) => value.startsWith(`${CLI.AUTH.REQUEST_COOKIE}=`)),
     ).toMatch(/HttpOnly.*SameSite=Lax/);
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
     expect((await app().request(started.authorizationUrl)).status).toBe(410);
   });
 
@@ -65,12 +65,12 @@ describe('CLI login flow', () => {
       cookiesOf(authorized)[LOGIN_VERIFIER_COOKIE],
       expect.any(Object),
     );
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(1);
 
     const result = await exchangeSession(response);
     expect(result.token).not.toBe(browserToken);
     expect(redirected.toString()).not.toContain(result.token);
-    expect(sessionCount()).toBe(2);
+    expect(await sessionCount()).toBe(2);
     expect((await me(result.token)).status).toBe(200);
     expect(
       (
@@ -127,7 +127,7 @@ describe('CLI login flow', () => {
     const results = await Promise.all([exchange(response), exchange(response)]);
 
     expect(results.map((result) => result.status).sort()).toEqual([200, 400]);
-    expect(sessionCount()).toBe(2);
+    expect(await sessionCount()).toBe(2);
   });
 
   it('does not consume a grant when the verifier or redirect URI is incorrect', async () => {
@@ -136,15 +136,15 @@ describe('CLI login flow', () => {
     expect(
       (await exchange(response, { redirectUri: 'http://127.0.0.1:43124/callback' })).status,
     ).toBe(400);
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(1);
     expect((await exchange(response)).status).toBe(200);
   });
 
   it('rejects a grant after its customer is deleted without minting another session', async () => {
     const response = await grant();
-    sqlite.exec('DELETE FROM customers');
+    await deleteCustomers();
 
     expect((await exchange(response)).status).toBe(400);
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(0);
   });
 });

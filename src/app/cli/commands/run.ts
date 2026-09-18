@@ -57,9 +57,8 @@ async function run(argv: string[], requestId: string): Promise<void> {
 
   log.info('run', `Fetching metadata for ${videoId}...`, requestId);
 
-  // Metadata comes from the backend rather than a local yt-dlp probe. That is
-  // what replaces the command's own upsertVideo: the read write-throughs the
-  // channel and video catalog rows, in the process that owns the database.
+  // Metadata comes from the backend rather than a local yt-dlp probe. The
+  // server also owns the catalog write-through performed by this read.
   const video = await apiGet<VideoDetails>(`/api/youtube/videos/${encodeURIComponent(videoId)}`);
   log.info(
     'run',

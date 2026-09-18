@@ -7,13 +7,13 @@ import { createArtifactId } from '@lib/utils/ids.js';
 export { createArtifactId };
 
 export async function getAnalysis(analysisId: string): Promise<ClipPlan | null> {
-  return getAnalysisFromDb(analysisId);
+  return await getAnalysisFromDb(analysisId);
 }
 
 export async function listAnalyses(): Promise<ClipPlan[]> {
-  return listAnalysesFromDb();
+  return await listAnalysesFromDb();
 }
 
 export async function getPublishDraft(analysisId: string): Promise<PublishDraft | null> {
-  return getPublishDraftByAnalysisId(analysisId);
+  return await getPublishDraftByAnalysisId(analysisId);
 }

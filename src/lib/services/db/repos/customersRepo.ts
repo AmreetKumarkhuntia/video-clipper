@@ -1,6 +1,6 @@
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../client.js';
+import { getDb, withDbTransaction } from '../client.js';
 import { authIdentities, customers } from '../schema.js';
 import { findRolePermissions } from './rolesRepo.js';
 import { log } from '@lib/utils/logger.js';
@@ -25,101 +25,127 @@ function rowToCustomer(
     ...(channelId ? { channelId } : {}),
     role: row.roleId as Role,
     permissions,
-    createdAt: new Date(row.createdAt).toISOString(),
-    updatedAt: new Date(row.updatedAt).toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
 /**
  * The channel of whichever linked identity has one. 1:1 today; should a second
  * identity ever carry a channel, the most recently refreshed one wins rather
- * than whichever row SQLite happens to return first.
+ * than an arbitrary matching row.
  */
-function linkedChannelId(customerId: string): string | null {
-  const row = db
+async function linkedChannelId(customerId: string): Promise<string | null> {
+  const [row] = await getDb()
     .select({ channelId: authIdentities.channelId })
     .from(authIdentities)
     .where(and(eq(authIdentities.customerId, customerId), isNotNull(authIdentities.channelId)))
     .orderBy(desc(authIdentities.updatedAt))
-    .get();
+    .limit(1);
   return row?.channelId ?? null;
 }
 
-function load(customerId: string): Customer | null {
-  const row = db.select().from(customers).where(eq(customers.id, customerId)).get();
-  return row
-    ? rowToCustomer(row, linkedChannelId(customerId), findRolePermissions(row.roleId))
-    : null;
+async function load(customerId: string): Promise<Customer | null> {
+  const [row] = await getDb().select().from(customers).where(eq(customers.id, customerId)).limit(1);
+  if (!row) return null;
+  const [channelId, permissions] = await Promise.all([
+    linkedChannelId(customerId),
+    findRolePermissions(row.roleId),
+  ]);
+  return rowToCustomer(row, channelId, permissions);
 }
 
-export function findCustomerById(customerId: string): Customer | null {
+export async function findCustomerById(customerId: string): Promise<Customer | null> {
   const done = log.dbCalled('findCustomerById', undefined, { customerId });
-  const customer = load(customerId);
+  const customer = await load(customerId);
   done({ found: customer ? 1 : 0 });
   return customer;
 }
 
 /** Which customer, if any, has already claimed this channel. Drives the 1:1 rule. */
-export function findCustomerByChannelId(channelId: string): Customer | null {
+export async function findCustomerByChannelId(channelId: string): Promise<Customer | null> {
   const done = log.dbCalled('findCustomerByChannelId', undefined, { channelId });
-  const row = db
+  const [row] = await getDb()
     .select({ customerId: authIdentities.customerId })
     .from(authIdentities)
     .where(eq(authIdentities.channelId, channelId))
-    .get();
-  const customer = row ? load(row.customerId) : null;
+    .limit(1);
+  const customer = row ? await load(row.customerId) : null;
   done({ found: customer ? 1 : 0 });
   return customer;
 }
 
-export function createCustomer(input: CustomerInput): Customer {
+export async function createCustomer(input: CustomerInput): Promise<Customer> {
   const done = log.dbCalled('createCustomer', undefined, {});
-  const ts = Date.now();
+  const ts = new Date();
   const id = `customer-${nanoid()}`;
-  db.insert(customers)
-    .values({
-      id,
-      email: input.email ?? null,
-      name: input.name ?? null,
-      avatarUrl: input.avatarUrl ?? null,
-      createdAt: ts,
-      updatedAt: ts,
-    })
-    .run();
+  const customer = await withDbTransaction(async () => {
+    await getDb()
+      .insert(customers)
+      .values({
+        id,
+        email: input.email ?? null,
+        name: input.name ?? null,
+        avatarUrl: input.avatarUrl ?? null,
+        createdAt: ts,
+        updatedAt: ts,
+      })
+      .returning({ id: customers.id });
+    return (await load(id))!;
+  });
   done({ id });
-  return load(id)!;
+  return customer;
 }
 
 /** Refreshes the profile of a customer we already know. Omitted fields keep their value. */
-export function updateCustomerProfile(customerId: string, input: CustomerInput): Customer {
+export async function updateCustomerProfile(
+  customerId: string,
+  input: CustomerInput,
+): Promise<Customer> {
   const done = log.dbCalled('updateCustomerProfile', undefined, { customerId });
-  const existing = db.select().from(customers).where(eq(customers.id, customerId)).get();
-  db.update(customers)
-    .set({
-      email: input.email ?? existing?.email ?? null,
-      name: input.name ?? existing?.name ?? null,
-      avatarUrl: input.avatarUrl ?? existing?.avatarUrl ?? null,
-      updatedAt: Date.now(),
-    })
-    .where(eq(customers.id, customerId))
-    .run();
+  const customer = await withDbTransaction(async () => {
+    const db = getDb();
+    const [existing] = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, customerId))
+      .limit(1);
+    await db
+      .update(customers)
+      .set({
+        email: input.email ?? existing?.email ?? null,
+        name: input.name ?? existing?.name ?? null,
+        avatarUrl: input.avatarUrl ?? existing?.avatarUrl ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(customers.id, customerId))
+      .returning({ id: customers.id });
+    return (await load(customerId))!;
+  });
   done({ id: customerId });
-  return load(customerId)!;
+  return customer;
 }
 
 /** Promotion and demotion. Takes effect on the next request — the role is read on every session resolve. */
-export function setCustomerRole(customerId: string, role: Role): Customer {
+export async function setCustomerRole(customerId: string, role: Role): Promise<Customer> {
   const done = log.dbCalled('setCustomerRole', undefined, { customerId, role });
-  db.update(customers)
-    .set({ roleId: role, updatedAt: Date.now() })
-    .where(eq(customers.id, customerId))
-    .run();
+  const customer = await withDbTransaction(async () => {
+    await getDb()
+      .update(customers)
+      .set({ roleId: role, updatedAt: new Date() })
+      .where(eq(customers.id, customerId))
+      .returning({ id: customers.id });
+    return (await load(customerId))!;
+  });
   done({ id: customerId });
-  return load(customerId)!;
+  return customer;
 }
 
-export function hasCustomerWithRole(role: Role): boolean {
-  return Boolean(
-    db.select({ id: customers.id }).from(customers).where(eq(customers.roleId, role)).get(),
-  );
+export async function hasCustomerWithRole(role: Role): Promise<boolean> {
+  const [row] = await getDb()
+    .select({ id: customers.id })
+    .from(customers)
+    .where(eq(customers.roleId, role))
+    .limit(1);
+  return row !== undefined;
 }

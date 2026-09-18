@@ -33,7 +33,7 @@ describe('CLI login callback binding', () => {
     expect(locationOf(response).pathname).toBe('/login');
     expect(locationOf(response).searchParams.get('error')).toBe('state_mismatch');
     expect(exchangeGoogleCodeMock()).not.toHaveBeenCalled();
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
   });
 
   it('completes ordinary browser sign-in without delivering a CLI grant when binding is absent', async () => {
@@ -44,7 +44,7 @@ describe('CLI login callback binding', () => {
     const response = await callback(authorization, {}, cookies);
     expect(locationOf(response).origin).toBe('http://localhost:5002');
     expect(locationOf(response).searchParams.has('code')).toBe(false);
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(1);
   });
 
   it('rejects a request cookie swapped between valid browser handshakes', async () => {
@@ -112,7 +112,7 @@ describe('CLI login callback binding', () => {
     expect(locationOf(await callback(authorization)).searchParams.get('error')).toBe(
       'state_mismatch',
     );
-    expect(sessionCount()).toBe(0);
+    expect(await sessionCount()).toBe(0);
   });
 
   it('claims a request before awaiting Google so duplicate callbacks cannot mint a session', async () => {
@@ -143,6 +143,6 @@ describe('CLI login callback binding', () => {
     }
 
     expect(locationOf(await first).searchParams.has('code')).toBe(true);
-    expect(sessionCount()).toBe(1);
+    expect(await sessionCount()).toBe(1);
   });
 });

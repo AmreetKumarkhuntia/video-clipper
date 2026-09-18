@@ -1,23 +1,21 @@
-import path from 'node:path';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import * as schema from '@lib/services/db/schema.js';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  findSavedVideoIds,
+  listLibraryVideos,
+  removeLibraryVideo,
+  saveLibraryVideo,
+  upsertVideo,
+} from '@lib/services/db/index.js';
 import type { VideoDetails } from '@lib/types/youtube.js';
-
-const sqlite = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
-
-const { findSavedVideoIds, listLibraryVideos, removeLibraryVideo, saveLibraryVideo } =
-  await import('@lib/services/db/repos/libraryVideosRepo.js');
-const { upsertVideo } = await import('@lib/services/db/repos/videosRepo.js');
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../../support/postgres.js';
+import { seedChannel, seedCustomer } from '../postgresFixtures.js';
 
 const CUSTOMER_A = 'customer-a';
 const CUSTOMER_B = 'customer-b';
+let database: PostgresTestDatabase;
 
 function makeVideo(id: string): VideoDetails {
   return {
@@ -33,18 +31,26 @@ function makeVideo(id: string): VideoDetails {
   };
 }
 
-beforeEach(() => {
-  sqlite.exec('DELETE FROM library_videos; DELETE FROM videos;');
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('library_videos_repo');
 });
 
-afterAll(() => sqlite.close());
+beforeEach(async () => {
+  await database.reset();
+  await seedChannel(database);
+  await Promise.all([seedCustomer(database, CUSTOMER_A), seedCustomer(database, CUSTOMER_B)]);
+});
+
+afterAll(async () => {
+  await database.close();
+});
 
 describe('libraryVideosRepo', () => {
-  it('saves a video and lists its joined catalog fields', () => {
-    upsertVideo(makeVideo('vid1'));
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+  it('saves a video and lists its joined catalog fields', async () => {
+    await upsertVideo(makeVideo('vid1'));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
 
-    expect(listLibraryVideos(CUSTOMER_A, 24, 0)).toMatchObject({
+    expect(await listLibraryVideos(CUSTOMER_A, 24, 0)).toMatchObject({
       total: 1,
       videos: [
         {
@@ -56,56 +62,71 @@ describe('libraryVideosRepo', () => {
     });
   });
 
-  it('is idempotent when the same customer saves the same video twice', () => {
-    upsertVideo(makeVideo('vid1'));
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+  it('is idempotent when the same customer saves the same video twice', async () => {
+    await upsertVideo(makeVideo('vid1'));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
 
-    expect(listLibraryVideos(CUSTOMER_A, 24, 0).total).toBe(1);
+    expect((await listLibraryVideos(CUSTOMER_A, 24, 0)).total).toBe(1);
   });
 
-  it('isolates saved videos by customer', () => {
-    upsertVideo(makeVideo('vid1'));
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
-    saveLibraryVideo({ customerId: CUSTOMER_B, videoId: 'vid1' });
+  it('isolates saved videos by customer', async () => {
+    await upsertVideo(makeVideo('vid1'));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+    await saveLibraryVideo({ customerId: CUSTOMER_B, videoId: 'vid1' });
 
-    removeLibraryVideo(CUSTOMER_A, 'vid1');
-    expect(listLibraryVideos(CUSTOMER_A, 24, 0).total).toBe(0);
-    expect(listLibraryVideos(CUSTOMER_B, 24, 0).total).toBe(1);
+    await removeLibraryVideo(CUSTOMER_A, 'vid1');
+    expect((await listLibraryVideos(CUSTOMER_A, 24, 0)).total).toBe(0);
+    expect((await listLibraryVideos(CUSTOMER_B, 24, 0)).total).toBe(1);
   });
 
-  it('orders saved videos newest first and pages with limit and offset', () => {
-    for (const id of ['vid1', 'vid2', 'vid3']) {
-      upsertVideo(makeVideo(id));
-      saveLibraryVideo({ customerId: CUSTOMER_A, videoId: id });
-      sqlite.exec(`UPDATE library_videos SET saved_at = saved_at + ${id.slice(-1)} * 1000`);
+  it('orders saved videos newest first and pages with limit and offset', async () => {
+    for (const [index, id] of ['vid1', 'vid2', 'vid3'].entries()) {
+      await upsertVideo(makeVideo(id));
+      await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: id });
+      await database.query(
+        'update library_videos set saved_at = $1 where customer_id = $2 and video_id = $3',
+        [new Date(Date.UTC(2026, 0, index + 1)), CUSTOMER_A, id],
+      );
     }
 
-    const first = listLibraryVideos(CUSTOMER_A, 2, 0);
-    const second = listLibraryVideos(CUSTOMER_A, 2, 2);
+    const first = await listLibraryVideos(CUSTOMER_A, 2, 0);
+    const second = await listLibraryVideos(CUSTOMER_A, 2, 2);
     expect(first.total).toBe(3);
-    expect(first.videos).toHaveLength(2);
-    expect(second.videos).toHaveLength(1);
-    expect(
-      new Set([...first.videos, ...second.videos].map((video) => video.videoId)),
-    ).toHaveProperty('size', 3);
+    expect(first.videos.map((video) => video.videoId)).toEqual(['vid3', 'vid2']);
+    expect(second.videos.map((video) => video.videoId)).toEqual(['vid1']);
   });
 
-  it('finds saved ids for one customer and accepts an empty lookup', () => {
-    for (const id of ['vid1', 'vid2', 'vid3']) upsertVideo(makeVideo(id));
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid3' });
+  it('finds saved ids for one customer and accepts an empty lookup', async () => {
+    for (const id of ['vid1', 'vid2', 'vid3']) await upsertVideo(makeVideo(id));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid3' });
 
-    expect(findSavedVideoIds(CUSTOMER_A, ['vid1', 'vid2', 'vid3']).sort()).toEqual([
+    expect((await findSavedVideoIds(CUSTOMER_A, ['vid1', 'vid2', 'vid3'])).sort()).toEqual([
       'vid1',
       'vid3',
     ]);
-    expect(findSavedVideoIds(CUSTOMER_B, ['vid1', 'vid2', 'vid3'])).toEqual([]);
-    expect(findSavedVideoIds(CUSTOMER_A, [])).toEqual([]);
+    expect(await findSavedVideoIds(CUSTOMER_B, ['vid1', 'vid2', 'vid3'])).toEqual([]);
+    expect(await findSavedVideoIds(CUSTOMER_A, [])).toEqual([]);
   });
 
-  it('omits a saved id whose catalog row is missing', () => {
-    saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'ghost' });
-    expect(listLibraryVideos(CUSTOMER_A, 24, 0).videos).toEqual([]);
+  it('enforces parent keys and cascades library rows with videos and customers', async () => {
+    await expect(
+      saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'missing-video' }),
+    ).rejects.toMatchObject({ cause: { code: '23503' } });
+
+    await upsertVideo(makeVideo('vid1'));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid1' });
+    await database.query('delete from videos where id = $1', ['vid1']);
+    expect((await listLibraryVideos(CUSTOMER_A, 24, 0)).total).toBe(0);
+
+    await upsertVideo(makeVideo('vid2'));
+    await saveLibraryVideo({ customerId: CUSTOMER_A, videoId: 'vid2' });
+    await database.query('delete from customers where id = $1', [CUSTOMER_A]);
+    const remaining = await database.query<{ count: number }>(
+      'select count(*)::int as count from library_videos where customer_id = $1',
+      [CUSTOMER_A],
+    );
+    expect(remaining.rows[0]?.count).toBe(0);
   });
 });

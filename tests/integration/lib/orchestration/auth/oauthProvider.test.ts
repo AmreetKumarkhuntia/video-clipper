@@ -1,17 +1,10 @@
-import { afterAll, describe, it, expect, beforeEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import path from 'node:path';
-import * as schema from '@lib/services/db/schema.js';
-
-// ── In-memory DB setup ────────────────────────────────────────────────────────
-
-const sqlite = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
+import { afterAll, beforeAll, describe, it, expect, beforeEach, vi } from 'vitest';
+import { Client } from 'pg';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
+import type { GoogleUserInfo, OwnedYouTubeChannel, SignInResult } from '@lib/types/auth.js';
 
 // ── Stub the Google HTTP calls; keep the real crypto helpers ─────────────────
 
@@ -22,23 +15,30 @@ const googleState = {
   channel: { channelId: 'UC_a', title: 'Channel A' } as { channelId: string; title: string } | null,
   refreshToken: 'refresh-1' as string | undefined,
 };
+const googleProfiles = new Map<string, GoogleUserInfo>();
+const googleChannels = new Map<string, OwnedYouTubeChannel | null>();
 
 vi.mock('@lib/utils/googleOAuth.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@lib/utils/googleOAuth.js')>();
   return {
     ...actual,
-    exchangeGoogleCode: vi.fn(async () => ({
-      access_token: 'access-1',
+    exchangeGoogleCode: vi.fn(async (code: string) => ({
+      access_token: code === 'code' ? 'access-1' : `access-${code}`,
       refresh_token: googleState.refreshToken,
       expires_in: 3600,
       scope: 'openid https://www.googleapis.com/auth/youtube.readonly',
     })),
-    fetchGoogleUserInfo: vi.fn(async () => ({
-      sub: googleState.sub,
-      email: googleState.email,
-      email_verified: googleState.emailVerified,
-    })),
-    fetchOwnedYouTubeChannel: vi.fn(async () => googleState.channel),
+    fetchGoogleUserInfo: vi.fn(
+      async (accessToken: string) =>
+        googleProfiles.get(accessToken) ?? {
+          sub: googleState.sub,
+          email: googleState.email,
+          email_verified: googleState.emailVerified,
+        },
+    ),
+    fetchOwnedYouTubeChannel: vi.fn(async (accessToken: string) =>
+      googleChannels.has(accessToken) ? googleChannels.get(accessToken)! : googleState.channel,
+    ),
   };
 });
 
@@ -57,21 +57,61 @@ const OAUTH = {
 const HANDSHAKE = { state: 's', codeVerifier: 'v', returnTo: '/' };
 
 const google = () => oauthProvider('google', OAUTH);
+let database: PostgresTestDatabase;
 
-function customerCount(): number {
-  return (sqlite.prepare('SELECT COUNT(*) AS n FROM customers').get() as { n: number }).n;
+async function customerCount(): Promise<number> {
+  const result = await database.query<{ count: string }>('select count(*) from customers');
+  return Number(result.rows[0]?.count ?? 0);
 }
 
-beforeEach(() => {
-  sqlite.exec('DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers;');
+function setGoogleAccount(
+  code: string,
+  accountId: string,
+  email: string,
+  channelId: string,
+  channelTitle: string,
+): void {
+  const accessToken = `access-${code}`;
+  googleProfiles.set(accessToken, {
+    sub: accountId,
+    email,
+    email_verified: true,
+  });
+  googleChannels.set(accessToken, { channelId, title: channelTitle });
+}
+
+async function waitForInitialAdminWaiters(expected: number): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const result = await database.query<{ count: string }>(`
+      select count(*)::text as count
+      from pg_stat_activity
+      where datname = current_database()
+        and lower(coalesce(wait_event, '')) = 'advisory'
+        and query like '%video-clipper-initial-admin%'
+    `);
+    if (Number(result.rows[0]?.count ?? 0) >= expected) return;
+    await new Promise<void>((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`Timed out waiting for ${expected} initial-admin advisory-lock waiters.`);
+}
+
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('oauth_provider');
+});
+
+beforeEach(async () => {
+  await database.reset();
   googleState.sub = 'sub-a';
   googleState.email = 'a@example.com';
   googleState.emailVerified = true;
   googleState.channel = { channelId: 'UC_a', title: 'Channel A' };
   googleState.refreshToken = 'refresh-1';
+  googleProfiles.clear();
+  googleChannels.clear();
 });
 
-afterAll(() => sqlite.close());
+afterAll(async () => database.close());
 
 describe('startLogin', () => {
   it('mints a fresh handshake and an auth url carrying its state', () => {
@@ -93,18 +133,18 @@ describe('completeLogin', () => {
     expect(result.customer.email).toBe('a@example.com');
     // The provider id lives on the identity row, never on the customer.
     expect(result.customer).not.toHaveProperty('googleSub');
-    const identity = sqlite
-      .prepare('SELECT provider, provider_account_id AS sub FROM auth_identities')
-      .get() as { provider: string; sub: string };
-    expect(identity).toEqual({ provider: 'google', sub: 'sub-a' });
+    const identity = await database.query<{ provider: string; sub: string }>(
+      'select provider, provider_account_id as sub from auth_identities',
+    );
+    expect(identity.rows[0]).toEqual({ provider: 'google', sub: 'sub-a' });
     expect(result.expiresAt).toBeGreaterThan(Date.now());
-    expect(findIdentity(result.customer.id, 'google')?.refreshToken).toBe('refresh-1');
-    expect(resolveSession(result.token)?.id).toBe(result.customer.id);
+    expect((await findIdentity(result.customer.id, 'google'))?.refreshToken).toBe('refresh-1');
+    expect((await resolveSession(result.token))?.id).toBe(result.customer.id);
   });
 
   it('keeps the channel and the tokens on the identity, not on the customer', async () => {
     const result = await google().completeLogin('code', HANDSHAKE, SESSION);
-    const identity = findIdentity(result.customer.id, 'google');
+    const identity = await findIdentity(result.customer.id, 'google');
 
     expect(identity?.channelId).toBe('UC_a');
     expect(identity?.accessToken).toBe('access-1');
@@ -114,10 +154,11 @@ describe('completeLogin', () => {
 
   it('registers the linked channel so its title is available without an api call', async () => {
     await google().completeLogin('code', HANDSHAKE, SESSION);
-    const row = sqlite.prepare('SELECT title FROM channels WHERE id = ?').get('UC_a') as
-      | { title: string }
-      | undefined;
-    expect(row?.title).toBe('Channel A');
+    const row = await database.query<{ title: string }>(
+      'select title from channels where id = $1',
+      ['UC_a'],
+    );
+    expect(row.rows[0]?.title).toBe('Channel A');
   });
 
   it('signing in again reuses the customer and keeps the first refresh token', async () => {
@@ -126,9 +167,56 @@ describe('completeLogin', () => {
     const second = await google().completeLogin('code', HANDSHAKE, SESSION);
 
     expect(second.customer.id).toBe(first.customer.id);
-    expect(customerCount()).toBe(1);
-    expect(findIdentity(second.customer.id, 'google')?.refreshToken).toBe('refresh-1');
+    expect(await customerCount()).toBe(1);
+    expect((await findIdentity(second.customer.id, 'google'))?.refreshToken).toBe('refresh-1');
     expect(second.token).not.toBe(first.token);
+  });
+
+  it('serializes a concurrent claim for the same provider account without leaving an orphan', async () => {
+    await database.query(`
+      create function oauth_test_delay_customer_insert() returns trigger
+      language plpgsql as $$
+      begin
+        perform pg_sleep(0.2);
+        return new;
+      end;
+      $$
+    `);
+    await database.query(`
+      create trigger oauth_test_delay_customer_insert
+      before insert on customers
+      for each row execute function oauth_test_delay_customer_insert()
+    `);
+
+    setGoogleAccount('same-account-a', 'shared-sub', 'shared@example.com', 'UC_shared', 'Shared');
+    setGoogleAccount('same-account-b', 'shared-sub', 'shared@example.com', 'UC_shared', 'Shared');
+
+    let settled: PromiseSettledResult<SignInResult>[] = [];
+    try {
+      settled = await Promise.allSettled([
+        google().completeLogin('same-account-a', HANDSHAKE, SESSION),
+        google().completeLogin('same-account-b', HANDSHAKE, SESSION),
+      ]);
+    } finally {
+      await database.query('drop trigger oauth_test_delay_customer_insert on customers');
+      await database.query('drop function oauth_test_delay_customer_insert()');
+    }
+
+    expect(settled[0].status).toBe('fulfilled');
+    expect(settled[1].status).toBe('fulfilled');
+    if (settled[0].status !== 'fulfilled' || settled[1].status !== 'fulfilled') {
+      throw new Error('Both concurrent sign-ins should succeed.');
+    }
+    expect(settled[0].value.customer.id).toBe(settled[1].value.customer.id);
+    expect(await customerCount()).toBe(1);
+    const identityCount = await database.query<{ count: string }>(
+      'select count(*)::text as count from auth_identities',
+    );
+    const sessionCount = await database.query<{ count: string }>(
+      'select count(*)::text as count from sessions',
+    );
+    expect(Number(identityCount.rows[0]?.count ?? 0)).toBe(1);
+    expect(Number(sessionCount.rows[0]?.count ?? 0)).toBe(2);
   });
 
   it('retires the session it was presented with, so signing in again rotates it', async () => {
@@ -138,8 +226,8 @@ describe('completeLogin', () => {
       replacesToken: first.token,
     });
 
-    expect(resolveSession(first.token)).toBeNull();
-    expect(resolveSession(second.token)?.id).toBe(first.customer.id);
+    expect(await resolveSession(first.token)).toBeNull();
+    expect((await resolveSession(second.token))?.id).toBe(first.customer.id);
   });
 
   it('ignores a presented token that is already dead', async () => {
@@ -147,7 +235,7 @@ describe('completeLogin', () => {
       ...SESSION,
       replacesToken: 'long-gone',
     });
-    expect(resolveSession(result.token)?.id).toBe(result.customer.id);
+    expect((await resolveSession(result.token))?.id).toBe(result.customer.id);
   });
 
   it('bootstraps only the configured verified Google email as administrator', async () => {
@@ -196,13 +284,58 @@ describe('completeLogin', () => {
     expect(second.customer.role).toBe('customer');
   });
 
+  it('serializes truly concurrent initial-administrator decisions', async () => {
+    setGoogleAccount('admin-a', 'admin-sub-a', 'bootstrap@example.com', 'UC_admin_a', 'Admin A');
+    setGoogleAccount('admin-b', 'admin-sub-b', 'bootstrap@example.com', 'UC_admin_b', 'Admin B');
+
+    const blocker = new Client({ connectionString: database.connectionString });
+    await blocker.connect();
+    await blocker.query('select pg_advisory_lock(hashtext($1))', ['video-clipper-initial-admin']);
+    let released = false;
+    const signIns = [
+      google().completeLogin('admin-a', HANDSHAKE, {
+        ...SESSION,
+        initialAdminEmail: 'bootstrap@example.com',
+      }),
+      google().completeLogin('admin-b', HANDSHAKE, {
+        ...SESSION,
+        initialAdminEmail: 'bootstrap@example.com',
+      }),
+    ];
+
+    let results: SignInResult[];
+    try {
+      await waitForInitialAdminWaiters(2);
+      await blocker.query('select pg_advisory_unlock(hashtext($1))', [
+        'video-clipper-initial-admin',
+      ]);
+      released = true;
+      results = await Promise.all(signIns);
+    } finally {
+      if (!released) {
+        await blocker.query('select pg_advisory_unlock(hashtext($1))', [
+          'video-clipper-initial-admin',
+        ]);
+      }
+      await Promise.allSettled(signIns);
+      await blocker.end();
+    }
+
+    expect(results.map(({ customer }) => customer.role).sort()).toEqual(['admin', 'customer']);
+    const administrators = await database.query<{ id: string }>(
+      `select id from customers where role_id = 'admin'`,
+    );
+    expect(administrators.rows).toHaveLength(1);
+    expect(await customerCount()).toBe(2);
+  });
+
   it('rejects an account with no channel and writes nothing', async () => {
     googleState.channel = null;
     await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.toMatchObject({
       code: 'no_channel',
       message: expect.stringMatching(/no YouTube channel/) as string,
     });
-    expect(customerCount()).toBe(0);
+    expect(await customerCount()).toBe(0);
   });
 
   it('rejects a channel already claimed by another account, leaving the first intact', async () => {
@@ -214,8 +347,52 @@ describe('completeLogin', () => {
       detail: 'Channel A',
       message: expect.stringMatching(/already linked to another account/) as string,
     });
-    expect(customerCount()).toBe(1);
-    expect(resolveSession(first.token)?.id).toBe(first.customer.id);
+    expect(await customerCount()).toBe(1);
+    expect((await resolveSession(first.token))?.id).toBe(first.customer.id);
+  });
+
+  it('maps a concurrent partial channel uniqueness conflict to channel_claimed', async () => {
+    setGoogleAccount('channel-a', 'channel-sub-a', 'a@example.com', 'UC_race', 'Race Channel');
+    setGoogleAccount('channel-b', 'channel-sub-b', 'b@example.com', 'UC_race', 'Race Channel');
+
+    const settled = await Promise.allSettled([
+      google().completeLogin('channel-a', HANDSHAKE, SESSION),
+      google().completeLogin('channel-b', HANDSHAKE, SESSION),
+    ]);
+    const successes = settled.filter(({ status }) => status === 'fulfilled');
+    const failures = settled.filter(({ status }) => status === 'rejected');
+
+    expect(successes).toHaveLength(1);
+    expect(failures).toHaveLength(1);
+    expect(failures[0]).toMatchObject({
+      reason: {
+        code: 'channel_claimed',
+        detail: 'Race Channel',
+      },
+    });
+    expect(await customerCount()).toBe(1);
+  });
+
+  it('does not misclassify an unrelated unique violation as a channel claim', async () => {
+    await database.query(
+      'alter table customers add constraint oauth_customers_email_uq unique (email)',
+    );
+    await database.query(
+      `insert into customers (id, email, role_id, created_at, updated_at)
+       values ('customer-existing', 'a@example.com', 'customer', now(), now())`,
+    );
+
+    try {
+      await expect(google().completeLogin('code', HANDSHAKE, SESSION)).rejects.not.toMatchObject({
+        code: 'channel_claimed',
+      });
+    } finally {
+      await database.query('alter table customers drop constraint oauth_customers_email_uq');
+    }
+
+    expect(await customerCount()).toBe(1);
+    const identities = await database.query<{ id: string }>('select id from auth_identities');
+    expect(identities.rows).toHaveLength(0);
   });
 
   it('rejects an account whose channel has changed', async () => {
@@ -226,27 +403,27 @@ describe('completeLogin', () => {
       code: 'channel_mismatch',
       message: expect.stringMatching(/already linked to a different channel/) as string,
     });
-    expect(customerCount()).toBe(1);
+    expect(await customerCount()).toBe(1);
   });
 });
 
 describe('resolveSession and signOut', () => {
-  it('rejects an unknown or absent token', () => {
-    expect(resolveSession(undefined)).toBeNull();
-    expect(resolveSession('not-a-token')).toBeNull();
+  it('rejects an unknown or absent token', async () => {
+    expect(await resolveSession(undefined)).toBeNull();
+    expect(await resolveSession('not-a-token')).toBeNull();
   });
 
   it('stores only the hash of the token', async () => {
     const { token } = await google().completeLogin('code', HANDSHAKE, SESSION);
-    const stored = sqlite.prepare('SELECT id FROM sessions').all() as { id: string }[];
+    const stored = await database.query<{ id: string }>('select id from sessions');
 
-    expect(stored[0]?.id).toBe(hashSessionToken(token));
-    expect(stored.some((r) => r.id === token)).toBe(false);
+    expect(stored.rows[0]?.id).toBe(hashSessionToken(token));
+    expect(stored.rows.some((row) => row.id === token)).toBe(false);
   });
 
   it('signing out invalidates the session', async () => {
     const { token } = await google().completeLogin('code', HANDSHAKE, SESSION);
-    signOut(token);
-    expect(resolveSession(token)).toBeNull();
+    await signOut(token);
+    expect(await resolveSession(token)).toBeNull();
   });
 });

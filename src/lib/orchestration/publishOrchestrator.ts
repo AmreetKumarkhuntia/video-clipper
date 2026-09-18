@@ -3,7 +3,7 @@ import {
   listClipsByAnalysisId,
   getPublishDraftByAnalysisId,
   upsertPublishDraft,
-  upsertUploadArtifact,
+  upsertUploadArtifacts,
 } from '@lib/services/db/index.js';
 import {
   getAuthorizedYouTubeAuthState,
@@ -36,8 +36,10 @@ export async function buildPublishDraft(
 ): Promise<PublishDraft | null> {
   const done = log.fnCalled('buildPublishDraft', requestId, { analysisId });
 
-  const analysis = getAnalysisFromDb(analysisId);
-  const clips = listClipsByAnalysisId(analysisId);
+  const [analysis, clips] = await Promise.all([
+    getAnalysisFromDb(analysisId),
+    listClipsByAnalysisId(analysisId),
+  ]);
 
   if (!analysis || clips.length === 0) {
     done({ clips: 0 });
@@ -63,7 +65,7 @@ export async function loadAndRefreshPublishDraft(
   cfg: Config,
   requestId?: string,
 ): Promise<PublishDraft | null> {
-  const existingDraft = getPublishDraftByAnalysisId(analysisId);
+  const existingDraft = await getPublishDraftByAnalysisId(analysisId);
   const freshDraft = await buildPublishDraft(analysisId, cfg, requestId);
 
   if (!freshDraft) return existingDraft;
@@ -93,7 +95,7 @@ export async function savePublishDraftFromRequest(
 ): Promise<PublishDraft> {
   const done = log.fnCalled('savePublishDraft', requestId, { analysisId: input.analysisId });
 
-  const existing = getPublishDraftByAnalysisId(input.analysisId);
+  const existing = await getPublishDraftByAnalysisId(input.analysisId);
   const fresh = await buildPublishDraft(input.analysisId, cfg, requestId);
   const createdAt = existing?.createdAt ?? fresh?.createdAt ?? new Date().toISOString();
   const freshById = new Map((fresh?.items ?? []).map((i) => [i.clipArtifactId, i]));
@@ -118,7 +120,7 @@ export async function savePublishDraftFromRequest(
     updatedAt: new Date().toISOString(),
     items,
   });
-  upsertPublishDraft(saved);
+  await upsertPublishDraft(saved);
   done({ items: items.length });
   return saved;
 }
@@ -191,9 +193,7 @@ export async function uploadDraftClips(
     }
   }
 
-  for (const upload of uploads) {
-    upsertUploadArtifact(upload);
-  }
+  await upsertUploadArtifacts(uploads);
   const uploaded = uploads.filter((u) => u.status === 'uploaded').length;
   const failed = uploads.length - uploaded;
   log.info('uploadDraftClips', '[persisted]', requestId, {

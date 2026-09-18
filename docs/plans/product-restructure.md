@@ -20,7 +20,7 @@ convenience, correct it or drop it. Do not port mistakes forward for the sake of
 | Keep as-is                                                                  | Correct                                                | Drop                                                                                        |
 | --------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | All of `src/lib/` — services, orchestration, pipeline, types, config, utils | Identity model: no provider column on `customers`      | `DELETE /api/db`, an unauthenticated whole-database wipe                                    |
-| The SQLite schema and repo conventions                                      | HTTP layer moves out of SvelteKit into its own app     | Manual YouTube token paste — an OAuth workaround, not a product affordance                  |
+| The database schema and repo conventions                                    | HTTP layer moves out of SvelteKit into its own app     | Manual YouTube token paste — an OAuth workaround, not a product affordance                  |
 | The design system, components and widgets                                   | Routes get product names, not prototype ones           | `/legacy/*` — the prototype itself is the reference now                                     |
 | The transcript, analysis, clip and publish flows                            | Everything guarded by default; public is the exception | `analysisService`, `qaService`, `transcriptService`, `clipService` — 4–23 line passthroughs |
 | SSE as the progress mechanism                                               | CLI stops writing the database directly                | Reading `@lib` from the web app                                                             |
@@ -51,7 +51,7 @@ auth_identities  id PK · customer_id · provider · provider_account_id · crea
 | new `services/db/repos/authIdentitiesRepo.ts` | link and resolve an identity                                                                                   |
 | `types/auth.ts`                               | `Customer` loses `googleSub`; add `AuthProvider`, `AuthIdentity`                                               |
 | `orchestration/authOrchestrator.ts`           | resolve customer via identity; the claimed-channel check compares customer ids                                 |
-| `drizzle/0010_*.sql`                          | regenerated — the commits are being reset, so no second migration                                              |
+| PostgreSQL baseline schema                    | provider-neutral identities are part of the fresh baseline rather than a follow-up migration                   |
 
 **Deliberately unchanged.** `utils/googleOAuth.ts` and the `Google*` types stay Google-named; they _are_
 the Google adapter. The rule is narrow: **identity tables must not name a provider; adapters should.**
@@ -68,7 +68,7 @@ the Google adapter. The rule is narrow: **identity tables must not name a provid
 missing is an HTTP server of its own; SvelteKit's route files play that role today. So this is lifting
 the HTTP layer out, not rewriting the product.
 
-Three prototype hazards disappear as a side effect: two processes writing the same SQLite file, config
+Three prototype hazards disappear as a side effect: two processes sharing database ownership, config
 changes that never propagate between processes, and the npm tarball shipping ~83 compiled web files
 because one `tsconfig` compiles all three trees.
 
@@ -216,8 +216,8 @@ The pre-merge review confirmed seven issues; the fixes and their reasoning:
 - **RBAC and CLI authentication** — shipped, with the four review notes that rode along; see
   `rbac-and-cli-auth.md`. Deny-by-default guarding is now unblocked and remains a follow-up.
 - **pnpm workspaces and separate manifests** — packaging, worth doing when the apps deploy separately.
-- **Deployment.** No Dockerfile or process config exists, and the backend needs ffmpeg, yt-dlp, Python
-  and a native SQLite build. Its own plan.
+- **Deployment.** No Dockerfile or process config exists, and the backend needs ffmpeg, yt-dlp,
+  Python and PostgreSQL connectivity. Its own plan.
 - Customer-scoping analyses, clips and drafts. Still global after this work.
 
 ## Verification
@@ -319,8 +319,8 @@ token in the wild until it expired.
 
 Having both means a short-lived access JWT (~15 min) plus the current opaque token as a refresh
 credential: two cookies, silent re-issue in the session middleware, and a signing secret in config.
-That is a real feature, and on a single-node SQLite backend it buys nothing today — the DB lookup it
-avoids is one indexed point read on the same machine. It also has to be settled together with CLI
+That is a real feature, and it buys little today — the DB lookup it avoids is one indexed point read.
+It also has to be settled together with CLI
 authentication, which is already deferred above and would consume the same tokens.
 
 Worth doing when the backend stops being local. Not worth hand-rolling HS256 to get there early:

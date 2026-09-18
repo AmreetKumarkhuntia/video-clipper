@@ -33,9 +33,9 @@ clipsRoutes.post('/', async (c) => {
   return c.json({ clips });
 });
 
-clipsRoutes.get('/', (c) => {
+clipsRoutes.get('/', async (c) => {
   const { analysisId } = ListClipsQuerySchema.parse({ analysisId: c.req.query('analysisId') });
-  const clips = analysisId ? listClipsByAnalysisId(analysisId) : listClips();
+  const clips = analysisId ? await listClipsByAnalysisId(analysisId) : await listClips();
   return c.json({ clips });
 });
 
@@ -100,7 +100,7 @@ clipsRoutes.post('/:clipId/subtitles/plan', async (c) => {
  */
 clipsRoutes.get('/:clipId/file', async (c) => {
   const { clipId } = ClipParamsSchema.parse({ clipId: c.req.param('clipId') });
-  const clip = getClip(clipId);
+  const clip = await getClip(clipId);
 
   if (!clip) {
     return jsonError(404, 'Clip not found.');

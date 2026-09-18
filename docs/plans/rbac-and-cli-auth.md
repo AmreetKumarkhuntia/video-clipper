@@ -8,22 +8,16 @@ flow with a browser callback, and makes encryption depend on an explicitly provi
 
 ## Roles and migration
 
-`roles(id, rank, created_at, permissions)` stores each role's permissions as JSON.
+`roles(id, rank, created_at, permissions)` stores each role's permissions as JSONB.
 `customers.role_id` defaults to `customer`; the seeded administrator role has `settings:write`.
 Every session resolution loads the current grants, so role changes take effect on the next request.
 Zod validates stored permission arrays; invalid or absent roles grant no permissions.
 
-The single unreleased auth migration, `0011_rbac_and_cli_login`, upgrades databases through
-migration `0010` directly to the final schema. It creates `roles` with JSON `permissions`, seeds
-`customer` and `admin`, and adds `customers.role_id` with the `customer` default. Existing
-customers, identities and sessions are retained; `role_permissions` and `login_requests` are
-never created. Migrations through `0010` remain unchanged.
-
-The intermediate PR versions of `0011` and `0012` are not a supported upgrade source for this
-consolidated migration. Preserve any development database that already applied them: back up its
-database and matching secret, then explicitly review and reconcile its schema and migration
-history, including custom roles and grants. A separate, fresh development database is another
-option; it does not require deleting or resetting the old database.
+The PostgreSQL baseline migration creates `roles` with JSONB `permissions`, seeds `customer` and
+`admin`, and gives `customers.role_id` the `customer` default with a restrictive role foreign key.
+This is a greenfield database cutover: the former SQLite migration chain is not an upgrade source,
+and no SQLite customers, identities, sessions, custom roles, or grants are imported automatically.
+Run `pnpm db:migrate` against an empty PostgreSQL database before starting the upgraded API.
 
 `INITIAL_ADMIN_EMAIL` promotes the matching, Google-verified email during sign-in only while no
 administrator exists. Assignment is audit-logged. Removing the setting after bootstrap and
@@ -80,22 +74,21 @@ retry behavior and corrupt credentials remain recoverable through Zod validation
 
 ## Verification and operations
 
-Regression coverage includes old ciphertext fixtures, database/secret restoration, secret
-exclusion, fresh and pre-PR database migrations, bootstrap, API permission guards, Google callback state,
+Regression coverage includes old ciphertext fixtures, PostgreSQL/secret restoration, secret
+exclusion, fresh and idempotent PostgreSQL migrations, bootstrap, API permission guards, Google callback state,
 PKCE, expiry/replay races, independent sessions, rate limits, and callback listener lifecycle.
 Run `pnpm type-check`, `pnpm test` and `pnpm web:check`. Browser smoke-test artifacts belong
 under `temp/`.
 
 Run the Chromium flow with
 `pnpm test:e2e tests/e2e/auth/cliLogin.spec.ts`. It uses a local mock Google consent server with
-real API cookies, SQLite, redirects, and the CLI loopback listener. Install the Playwright Chromium
+real API cookies, PostgreSQL, redirects, and the CLI loopback listener. Install the Playwright Chromium
 browser first if it is not already available.
 
-Before upgrading, back up the database and matching secret and provision the existing key file's
-base64 value as `TOKEN_ENCRYPTION_KEY`. Upgrade backend and CLI together. Do not generate a new
-key for an existing encrypted database. Only this unreleased PR's auth migrations are consolidated;
-previously released migrations are unchanged. See the migration caveat above for databases that
-used intermediate PR versions, and the
+Before upgrading an existing PostgreSQL deployment, use `pg_dump` and preserve its matching
+`TOKEN_ENCRYPTION_KEY`. Upgrade backend and CLI together. Do not generate a new key for a database
+that already contains encrypted identities. SQLite is not a rollback target; this cutover does not
+import its records. See the
 [configuration guide](../guides/configuration.md#provider-tokens-at-rest) for recovery steps.
 
 The callback assumes a browser on the CLI machine and a single backend process. Headless remote

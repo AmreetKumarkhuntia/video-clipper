@@ -2,12 +2,7 @@ import { basename } from 'path';
 import { promises as fs } from 'fs';
 import { exportClips } from '@lib/pipeline/stages/clipExporter.js';
 import type { ClipExporterConfig } from '@lib/pipeline/stages/clipExporter.js';
-import {
-  getClipRow,
-  upsertClip,
-  listClipsByAnalysisId,
-  deleteClipsByAnalysisId,
-} from '@lib/services/db/index.js';
+import { persistGeneratedClips } from '@lib/services/db/index.js';
 import type { ClipArtifact, CreateClipsRequest } from '@lib/types/analysis.js';
 import type { RankedSegment } from '@lib/types/index.js';
 import type { YtDlpCookies } from '@lib/types/downloader.js';
@@ -58,8 +53,6 @@ export async function generateClipsForAnalysis(
     downloadSectionsMode: cfg.DOWNLOAD_SECTIONS_MODE,
   };
 
-  const existing = input.analysisId ? listClipsByAnalysisId(input.analysisId) : [];
-
   const segments = input.segments.map(toRankedSegment);
   const paths = await exportClips(
     input.videoId,
@@ -73,21 +66,24 @@ export async function generateClipsForAnalysis(
     exporterConfig,
   );
 
-  const saved = paths.map((path, index) => {
-    const source = input.segments[index];
-    return upsertClip({
-      id: `clip-${input.videoId}-${source.id}`,
-      videoId: input.videoId,
-      analysisId: input.analysisId,
-      segmentationId: source.id,
-      segmentRank: source.rank,
-      filename: basename(path),
-      path,
-      startSec: source.startSec,
-      endSec: source.endSec,
-      durationSec: Math.max(0.01, source.endSec - source.startSec),
-    });
-  });
+  const { saved, stale } = await persistGeneratedClips(
+    paths.map((path, index) => {
+      const source = input.segments[index];
+      return {
+        id: `clip-${input.videoId}-${source.id}`,
+        videoId: input.videoId,
+        analysisId: input.analysisId,
+        segmentationId: source.id,
+        segmentRank: source.rank,
+        filename: basename(path),
+        path,
+        startSec: source.startSec,
+        endSec: source.endSec,
+        durationSec: Math.max(0.01, source.endSec - source.startSec),
+      };
+    }),
+    input.analysisId,
+  );
 
   log.info(
     'generateClips',
@@ -95,16 +91,9 @@ export async function generateClipsForAnalysis(
     requestId,
   );
 
-  const keepIds = saved.map((artifact) => artifact.id);
-  const staleIds = existing
-    .filter((artifact) => !keepIds.includes(artifact.id))
-    .map((artifact) => artifact.id);
-
-  if (staleIds.length > 0) {
+  if (stale.length > 0) {
     await Promise.all(
-      staleIds.map(async (id) => {
-        const row = getClipRow(id);
-        if (!row) return;
+      stale.map(async (row) => {
         for (const filePath of [row.path, row.editedPath].filter(Boolean) as string[]) {
           await fs.unlink(filePath).catch((e: NodeJS.ErrnoException) => {
             if (e.code !== 'ENOENT')
@@ -115,12 +104,9 @@ export async function generateClipsForAnalysis(
         }
       }),
     );
-    if (input.analysisId) {
-      deleteClipsByAnalysisId(input.analysisId, keepIds);
-    }
     log.info(
       'generateClips',
-      `[clips] [pruned] | analysisId=${input.analysisId} stale=${staleIds.length}`,
+      `[clips] [pruned] | analysisId=${input.analysisId} stale=${stale.length}`,
       requestId,
     );
   }
