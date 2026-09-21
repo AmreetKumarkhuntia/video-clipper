@@ -1,9 +1,4 @@
-import path from 'node:path';
-import { afterAll, afterEach, beforeEach, expect, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import * as schema from '@lib/services/db/schema.js';
+import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from 'vitest';
 import { setConfigValues } from '@lib/config/index.js';
 import { createCodeChallenge, exchangeGoogleCode } from '@lib/utils/googleOAuth.js';
 import { CliLoginExchangeResponseSchema, CliLoginStartResponseSchema } from '@lib/types/api.js';
@@ -12,6 +7,10 @@ import type {
   CliLoginStartRequest,
   CliLoginStartResponse,
 } from '@lib/types/api.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 vi.hoisted(() => {
   process.env.GOOGLE_OAUTH_CLIENT_ID = 'test-cli-client';
@@ -37,11 +36,6 @@ vi.mock('@lib/utils/googleOAuth.js', async (importOriginal) => {
   };
 });
 
-export const sqlite: Database.Database = new Database(':memory:');
-const testDb = drizzle(sqlite, { schema });
-migrate(testDb, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-vi.mock('@lib/services/db/client.js', () => ({ db: testDb }));
-
 const { createApp } = await import('@app/api/app.js');
 export type TestApiApp = ReturnType<typeof createApp>;
 
@@ -58,6 +52,7 @@ export const GOOGLE_TOKENS = {
 };
 
 let currentApp = createApp();
+let database: PostgresTestDatabase;
 
 export function app(): TestApiApp {
   return currentApp;
@@ -158,8 +153,13 @@ export async function me(token: string, target: TestApiApp = currentApp): Promis
   return target.request('/api/me', { headers: { authorization: `Bearer ${token}` } });
 }
 
-export function sessionCount(): number {
-  return sqlite.prepare('SELECT COUNT(*) FROM sessions').pluck().get() as number;
+export async function sessionCount(): Promise<number> {
+  const result = await database.query<{ count: string }>('select count(*) from sessions');
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+export async function deleteCustomers(): Promise<void> {
+  await database.query('delete from customers');
 }
 
 export async function exchangeSession(response: Response): Promise<{
@@ -170,12 +170,14 @@ export async function exchangeSession(response: Response): Promise<{
   return CliLoginExchangeResponseSchema.parse(await (await exchange(response)).json());
 }
 
-beforeEach(() => {
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('cli_login_routes');
+});
+
+beforeEach(async () => {
   vi.clearAllMocks();
   vi.mocked(exchangeGoogleCode).mockResolvedValue(GOOGLE_TOKENS);
-  sqlite.exec(
-    'DELETE FROM sessions; DELETE FROM auth_identities; DELETE FROM customers; DELETE FROM channels;',
-  );
+  await database.reset();
   setConfigValues({
     GOOGLE_OAUTH_CLIENT_ID: 'test-cli-client',
     GOOGLE_OAUTH_CLIENT_SECRET: 'test-cli-secret',
@@ -189,4 +191,4 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.restoreAllMocks());
-afterAll(() => sqlite.close());
+afterAll(async () => database.close());

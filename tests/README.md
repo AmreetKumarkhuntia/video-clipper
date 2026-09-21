@@ -28,6 +28,18 @@ ffmpeg. Add an integration test only when a unit test cannot establish the contr
 
 ## Commands
 
+Unit and architecture tests need no database. Integration tests and the CLI-login browser journey
+require a dedicated `TEST_DATABASE_URL`; the harness creates an isolated PostgreSQL schema per test
+file and never falls back to `DATABASE_URL`.
+
+```bash
+createdb video_clipper_test
+TEST_DATABASE_URL=postgresql://video_clipper:video_clipper@127.0.0.1:5432/video_clipper_test pnpm test:integration
+```
+
+Create the test database once in your PostgreSQL 17 instance; `createdb` reports that it already
+exists on later runs. The safety check rejects URLs whose database name does not contain `test`.
+
 ```bash
 pnpm test:unit          # isolated behavior
 pnpm test:integration   # API, CLI, database, and orchestration contracts

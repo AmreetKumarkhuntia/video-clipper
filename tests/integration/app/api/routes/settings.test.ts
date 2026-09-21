@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { hashSessionToken } from '@lib/utils/sessionToken.js';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 /**
  * The permission gate on config writes.
@@ -26,18 +27,12 @@ vi.mock('@lib/config/fileStore.js', () => {
 });
 
 import { createApp } from '@app/api/app.js';
-import {
-  createCustomer,
-  initDb,
-  insertSession,
-  runMigrations,
-  setCustomerRole,
-} from '@lib/services/db/index.js';
+import { createCustomer, insertSession, setCustomerRole } from '@lib/services/db/index.js';
 
 const app = createApp();
 const CUSTOMER_TOKEN = 'customer-session';
 const ADMIN_TOKEN = 'admin-session';
-let tempDirectory: string;
+let database: PostgresTestDatabase;
 
 function cookie(token: string): Record<string, string> {
   return { cookie: `${SESSION_COOKIE_NAME}=${token}` };
@@ -58,22 +53,17 @@ async function errorOf(res: Response): Promise<{ message: string; detail?: strin
   return ((await res.json()) as { error: { message: string; detail?: string } }).error;
 }
 
-beforeAll(() => {
-  tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-api-settings-'));
-  initDb(path.join(tempDirectory, 'library.sqlite'));
-  runMigrations();
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('api_settings');
+  const customer = await createCustomer({ email: 'someone@example.com' });
+  await insertSession(hashSessionToken(CUSTOMER_TOKEN), customer.id, Date.now() + 60_000);
 
-  const customer = createCustomer({ email: 'someone@example.com' });
-  insertSession(hashSessionToken(CUSTOMER_TOKEN), customer.id, Date.now() + 60_000);
-
-  const admin = createCustomer({ email: 'admin@example.com' });
-  setCustomerRole(admin.id, 'admin');
-  insertSession(hashSessionToken(ADMIN_TOKEN), admin.id, Date.now() + 60_000);
+  const admin = await createCustomer({ email: 'admin@example.com' });
+  await setCustomerRole(admin.id, 'admin');
+  await insertSession(hashSessionToken(ADMIN_TOKEN), admin.id, Date.now() + 60_000);
 });
 
-afterAll(() => {
-  fs.rmSync(tempDirectory, { recursive: true, force: true });
-});
+afterAll(async () => database.close());
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -95,20 +85,35 @@ describe('reading settings', () => {
     expect(body).not.toContain(secret);
     expect(body).not.toContain('TOKEN_ENCRYPTION_KEY');
   });
+
+  it('never exposes the database URL or test database configuration', async () => {
+    const databaseUrl = 'postgresql://sensitive-user:sensitive-password@db.example.test/app';
+    vi.stubEnv('DATABASE_URL', databaseUrl);
+    vi.stubEnv('TEST_DATABASE_URL', `${databaseUrl}_test`);
+
+    const body = await (await app.request('/api/settings')).text();
+    expect(body).not.toContain(databaseUrl);
+    expect(body).not.toContain('DATABASE_URL');
+  });
 });
 
 describe('writing settings', () => {
-  it.each(['TOKEN_ENCRYPTION_KEY', 'TOKEN_ENCRYPTION_KEY_PATH'])(
-    'refuses an admin attempting to change the deployment-only %s',
-    async (key) => {
-      const secret = Buffer.alloc(32, 9).toString('base64');
-      const res = await patchSettings({ [key]: secret }, cookie(ADMIN_TOKEN));
-      expect(res.status).toBe(400);
-      const body = await res.text();
-      expect(body).toContain('server environment');
-      expect(body).not.toContain(secret);
-    },
-  );
+  it.each([
+    'TOKEN_ENCRYPTION_KEY',
+    'TOKEN_ENCRYPTION_KEY_PATH',
+    'DATABASE_URL',
+    'DATABASE_POOL_MAX',
+    'DATABASE_CONNECTION_TIMEOUT_MS',
+    'DATABASE_IDLE_TIMEOUT_MS',
+    'TEST_DATABASE_URL',
+  ])('refuses an admin attempting to change the deployment-only %s', async (key) => {
+    const secret = Buffer.alloc(32, 9).toString('base64');
+    const res = await patchSettings({ [key]: secret }, cookie(ADMIN_TOKEN));
+    expect(res.status).toBe(400);
+    const body = await res.text();
+    expect(body).toContain('server environment');
+    expect(body).not.toContain(secret);
+  });
 
   it('refuses an anonymous write with a 401, the sign-in answer', async () => {
     const res = await patchSettings({ SCORE_THRESHOLD: 8 });

@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '@app/api/app.js';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
@@ -8,12 +5,15 @@ import type { Customer } from '@lib/types/auth.js';
 import {
   createCustomer,
   findCustomerById,
-  initDb,
   insertSession,
   linkIdentity,
-  runMigrations,
+  upsertChannel,
 } from '@lib/services/db/index.js';
 import { hashSessionToken } from '@lib/utils/sessionToken.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 vi.hoisted(() => {
   process.env.GOOGLE_OAUTH_CLIENT_ID ??= 'test-client-id';
@@ -24,31 +24,27 @@ vi.hoisted(() => {
 const app = createApp();
 const SESSION_TOKEN = 'auth-route-session-token';
 let customer: Customer;
-let tempDirectory: string;
+let database: PostgresTestDatabase;
 
 function signedIn(token: string = SESSION_TOKEN): RequestInit {
   return { headers: { cookie: `${SESSION_COOKIE_NAME}=${token}` } };
 }
 
-beforeAll(() => {
-  tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-auth-route-'));
-  initDb(path.join(tempDirectory, 'library.sqlite'));
-  runMigrations();
-
-  customer = createCustomer({ email: 'owner@example.com', name: 'Owner' });
-  linkIdentity({
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('auth_route');
+  await upsertChannel({ id: 'UCtest_channel', title: 'Test Channel' });
+  customer = await createCustomer({ email: 'owner@example.com', name: 'Owner' });
+  await linkIdentity({
     customerId: customer.id,
     provider: 'google',
     providerAccountId: 'sub-owner',
     channelId: 'UCtest_channel',
   });
-  customer = findCustomerById(customer.id)!;
-  insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
+  customer = (await findCustomerById(customer.id))!;
+  await insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
 });
 
-afterAll(() => {
-  fs.rmSync(tempDirectory, { recursive: true, force: true });
-});
+afterAll(async () => database.close());
 
 describe('auth routes', () => {
   it('returns the customer, channel, role and permissions behind the session', async () => {
@@ -66,7 +62,7 @@ describe('auth routes', () => {
 
   it('signs out by deleting the server session and clearing the cookie', async () => {
     const token = 'signout-token';
-    insertSession(hashSessionToken(token), customer.id, Date.now() + 60_000);
+    await insertSession(hashSessionToken(token), customer.id, Date.now() + 60_000);
 
     const response = await app.request('/api/auth/signout', {
       method: 'POST',
