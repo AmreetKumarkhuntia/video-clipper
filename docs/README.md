@@ -29,7 +29,7 @@ Build and release the standalone client: [CLI distribution](./guides/cli-distrib
 | [cli-only-distribution.md](./plans/cli-only-distribution.md)     | **In progress** — CLI package/release slice implemented; hosted configuration, ownership, and downloads remain |
 | [product-restructure.md](./plans/product-restructure.md)         | **In progress** — three apps done; onboarding routes and pages outstanding                                     |
 | [product-foundation.md](./plans/product-foundation.md)           | **Partial** — Phase 1's identity tables and orchestrator shipped; jobs not started                             |
-| [sqlite-migration.md](./plans/sqlite-migration.md)               | Partial (9 of 11) — YouTube auth and user config still file-based                                              |
+| [postgresql-migration.md](./plans/postgresql-migration.md)       | **Implemented** — PostgreSQL-only backend cutover                                                              |
 | [editor-save-and-preview.md](./plans/editor-save-and-preview.md) | Partial — implementation shipped, Playwright specs not written                                                 |
 
 ## Archived plans

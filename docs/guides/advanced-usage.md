@@ -64,9 +64,9 @@ vdclip https://youtube.com/watch?v=VIDEO_ID --clip --threshold 8
 ## Persistence and re-runs
 
 There is no separate client-side cache. The backend stores video metadata, transcripts, per-chunk
-LLM results, analyses, and clips in its library database. Re-running `run` or `analyze` on a video
-reuses the stored transcript and any chunk results that already exist, so repeat runs are fast and
-cheap. Browse what that backend stores with `vdclip library`.
+LLM results, analyses, and clips. Re-running `run` or `analyze` on a video reuses the stored
+transcript and any chunk results that already exist, so repeat runs are fast and cheap. Browse what
+that backend stores with `vdclip library`.
 
 To ignore stored chunk results and re-analyze every chunk (the transcript is still reused):
 
