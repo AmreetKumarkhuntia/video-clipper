@@ -40,8 +40,8 @@ youtubeRoutes.get('/videos/:videoId', async (c) => {
   // Write-through so the catalog row exists for anything that later references
   // this video. A failure here must not fail the read.
   try {
-    upsertChannel({ id: video.channelId, title: video.channelTitle });
-    upsertVideo(video);
+    await upsertChannel({ id: video.channelId, title: video.channelTitle });
+    await upsertVideo(video);
   } catch (error) {
     log.warn('api.youtube', 'catalog write-through failed', c.get('requestId'), {
       videoId,

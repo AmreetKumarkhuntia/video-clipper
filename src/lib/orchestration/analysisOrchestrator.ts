@@ -6,13 +6,12 @@ import { selectSegments } from '@lib/pipeline/stages/segmentSelector.js';
 import { loadOrFetchTranscript } from './transcriptOrchestrator.js';
 import {
   findChunks,
-  setChunkAnalysisByRange,
+  setChunkAnalysesByRange,
   findSegmentations,
   upsertSegmentations,
   clearSegmentations,
-  insertSegmentation,
-  markSegmentationsComplete,
   saveAnalysisToDb,
+  withDbTransaction,
 } from '@lib/services/db/index.js';
 import { ClipPlanSchema } from '@lib/types/analysis.js';
 import type { ClipPlan, CreateAnalysisRequest } from '@lib/types/analysis.js';
@@ -119,7 +118,7 @@ export async function runAnalysis(
       uncachedGlobalIndices.push(i);
     });
   } else {
-    const dbRows = findChunks(videoId);
+    const dbRows = await findChunks(videoId);
     const rowMap = new Map(dbRows.map((r) => [`${r.start}:${r.end}`, r]));
 
     chunks.forEach((chunk, i) => {
@@ -157,17 +156,6 @@ export async function runAnalysis(
       onChunkAnalyzed: (localIdx: number, eval_: ChunkEvaluation) => {
         const globalIdx = uncachedGlobalIndices[localIdx];
         const globalEval = { ...eval_, chunk_index: globalIdx };
-
-        if (globalEval.status === 'success') {
-          setChunkAnalysisByRange(
-            videoId,
-            globalEval.chunk_start,
-            globalEval.chunk_end,
-            JSON.stringify(globalEval),
-            globalEval.score,
-          );
-        }
-
         callbacks?.onChunkAnalyzed?.(globalIdx, globalEval);
       },
     };
@@ -188,7 +176,20 @@ export async function runAnalysis(
       chunk_index: uncachedGlobalIndices[localI],
     }));
 
-    clearSegmentations(videoId);
+    await withDbTransaction(async () => {
+      await setChunkAnalysesByRange(
+        videoId,
+        freshEvals
+          .filter((evaluation) => evaluation.status === 'success')
+          .map((evaluation) => ({
+            start: evaluation.chunk_start,
+            end: evaluation.chunk_end,
+            analysis: JSON.stringify(evaluation),
+            score: evaluation.score,
+          })),
+      );
+      await clearSegmentations(videoId);
+    });
   }
 
   const chunkEvals = [...cachedEvals, ...freshEvals].sort((a, b) => a.chunk_start - b.chunk_start);
@@ -211,7 +212,7 @@ export async function runAnalysis(
   };
 
   if (canUseSegmentCache) {
-    const cached = findSegmentations(videoId, optionsHash);
+    const cached = await findSegmentations(videoId, optionsHash);
     if (cached.length > 0) {
       finalSegments = cached;
     } else {
@@ -258,7 +259,7 @@ export async function runAnalysis(
     createdAt,
   });
 
-  saveAnalysisToDb(plan, optionsHash);
+  await saveAnalysisToDb(plan, optionsHash);
   return plan;
 }
 
@@ -279,12 +280,9 @@ async function runSegmentation(
   const rankedSegments = selectSegments(chunkEvals, [], selectOpts);
 
   if (!input.options.refine || rankedSegments.length === 0) {
-    upsertSegmentations(videoId, rankedSegments, optionsHash);
+    await upsertSegmentations(videoId, rankedSegments, optionsHash);
     return rankedSegments;
   }
-
-  clearSegmentations(videoId);
-  const persistedRanks = new Set<number>();
 
   const wrappedRefineCallbacks = {
     onSegmentStarted: (rank: number) => callbacks?.onSegmentStarted?.(rank),
@@ -292,8 +290,6 @@ async function runSegmentation(
     onSegmentTextDelta: (rank: number, text: string) => callbacks?.onSegmentTextDelta?.(rank, text),
 
     onSegmentRefined: (rank: number, segment: RankedSegment) => {
-      insertSegmentation(videoId, segment, optionsHash);
-      persistedRanks.add(segment.rank);
       callbacks?.onSegmentRefined?.(rank, segment);
     },
   };
@@ -308,12 +304,7 @@ async function runSegmentation(
     signal,
   });
 
-  for (const segment of refined) {
-    if (!persistedRanks.has(segment.rank)) {
-      insertSegmentation(videoId, segment, optionsHash);
-    }
-  }
-  markSegmentationsComplete(videoId);
+  await upsertSegmentations(videoId, refined, optionsHash);
 
   return refined;
 }
