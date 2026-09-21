@@ -26,6 +26,27 @@ const PROVIDER_KEY_MAP: Record<LLMProvider, string> = {
   custom: 'CUSTOM_OPENAI_API_KEY',
 };
 
+export const DatabaseEnvironmentSchema = z.object({
+  DATABASE_URL: z
+    .string()
+    .url()
+    .refine((value) => ['postgres:', 'postgresql:'].includes(new URL(value).protocol), {
+      message: 'DATABASE_URL must use the postgres: or postgresql: protocol',
+    }),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(1000).default(10),
+  DATABASE_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(1).default(5000),
+  DATABASE_IDLE_TIMEOUT_MS: z.coerce.number().int().min(0).default(30000),
+});
+
+export type DatabaseEnvironment = z.infer<typeof DatabaseEnvironmentSchema>;
+
+export interface DatabaseConfig {
+  connectionString: string;
+  max: number;
+  connectionTimeoutMillis: number;
+  idleTimeoutMillis: number;
+}
+
 export const ConfigSchema = z
   .object({
     LLM_PROVIDER: z.enum(LLM_PROVIDERS).default('openai'),
@@ -62,10 +83,6 @@ export const ConfigSchema = z
     CLI_LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).default(60),
     CLI_LOGIN_MAX_OUTSTANDING: z.coerce.number().int().min(1).default(1000),
     TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
-
-    // The database path requires a restart. The encryption key is environment-
-    // only and validated separately; it must never enter mutable config.
-    LIBRARY_DB_PATH: z.string().min(1).optional(),
 
     SCORE_THRESHOLD: z.coerce.number().min(1).max(10).default(7),
     TOP_N_SEGMENTS: z.coerce.number().min(1).default(10),
@@ -204,15 +221,24 @@ export const ConfigSchema = z
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-/** Deployment secrets cannot be set or cleared through the mutable settings pipeline. */
+/** Restart-only deployment settings cannot be changed through the mutable settings pipeline. */
+export const DEPLOYMENT_ONLY_CONFIG_KEYS = [
+  'TOKEN_ENCRYPTION_KEY',
+  'TOKEN_ENCRYPTION_KEY_PATH',
+  'DATABASE_URL',
+  'DATABASE_POOL_MAX',
+  'DATABASE_CONNECTION_TIMEOUT_MS',
+  'DATABASE_IDLE_TIMEOUT_MS',
+  'TEST_DATABASE_URL',
+] as const;
+
 export const ConfigUpdatesSchema = z.record(z.string(), z.unknown()).superRefine((updates, ctx) => {
-  for (const key of ['TOKEN_ENCRYPTION_KEY', 'TOKEN_ENCRYPTION_KEY_PATH']) {
+  for (const key of DEPLOYMENT_ONLY_CONFIG_KEYS) {
     if (Object.hasOwn(updates, key)) {
       ctx.addIssue({
         code: 'custom',
         path: [key],
-        message:
-          'Configure TOKEN_ENCRYPTION_KEY in the server environment, then restart the server.',
+        message: `Configure ${key} in the server environment, then restart the server.`,
       });
     }
   }

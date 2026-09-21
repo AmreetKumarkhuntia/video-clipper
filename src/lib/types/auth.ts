@@ -86,6 +86,9 @@ export interface ProviderTokens {
   scope?: string;
 }
 
+export const IdentityMetadataSchema = z.record(z.string(), z.unknown());
+export type IdentityMetadata = z.infer<typeof IdentityMetadataSchema>;
+
 /**
  * One provider's account after normalisation.
  *
@@ -102,7 +105,7 @@ export interface ProviderAccount {
   channel: ProviderChannel | null;
   tokens: ProviderTokens;
   /** Anything provider-specific worth keeping, stored as JSON on the identity row. */
-  metadata?: Record<string, unknown>;
+  metadata?: IdentityMetadata;
 }
 
 // ── Roles and permissions ────────────────────────────────────────────────────
@@ -169,7 +172,7 @@ export interface AuthIdentityRecord extends AuthIdentity {
   scope?: string;
   /** The creator account on the provider. Absent when it has no such concept. */
   channelId?: string;
-  metadata: Record<string, unknown>;
+  metadata: IdentityMetadata;
 }
 
 export interface AuthIdentityInput {
@@ -181,7 +184,7 @@ export interface AuthIdentityInput {
   expiryDate?: number;
   scope?: string;
   channelId?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: IdentityMetadata;
 }
 
 /** A session row. `id` is the sha256 of the token; the raw token only ever lives in the cookie. */

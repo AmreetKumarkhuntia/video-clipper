@@ -1,14 +1,16 @@
 import type { Config } from 'drizzle-kit';
-import os from 'node:os';
-import path from 'node:path';
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required for Drizzle commands.');
+}
 
 export default {
   schema: './src/lib/services/db/schema.ts',
   out: './drizzle',
-  dialect: 'sqlite',
+  dialect: 'postgresql',
   dbCredentials: {
-    url:
-      process.env.LIBRARY_DB_PATH ??
-      path.join(os.homedir(), '.config', 'video-clipper', 'library.sqlite'),
+    url: databaseUrl,
   },
 } satisfies Config;

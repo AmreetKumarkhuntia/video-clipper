@@ -1,1 +1,0 @@
-ALTER TABLE `segmentations` ADD `completed` integer DEFAULT 0 NOT NULL;

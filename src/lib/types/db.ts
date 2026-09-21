@@ -15,6 +15,35 @@ export type ChunkInsert = {
   rank?: number;
 };
 
+export type ChannelRecord = {
+  id: string;
+  title: string;
+  description: string | null;
+  handle: string | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ChunkRecord = {
+  id: string;
+  videoId: string;
+  chunk: string;
+  analysis: string | null;
+  score: number | null;
+  start: number;
+  end: number;
+  rank: number | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ChunkAnalysisUpdate = {
+  start: number;
+  end: number;
+  analysis: string | null;
+  score: number | null;
+};
+
 export type SegmentationInsert = {
   videoId: string;
   rank: number;
@@ -59,4 +88,39 @@ export type UpsertClipInput = {
   startSec: number;
   endSec: number;
   durationSec: number;
+};
+
+export type ClipRowRecord = {
+  id: string;
+  videoId: string;
+  analysisId: string | null;
+  segmentationId: string | null;
+  segmentRank: number;
+  filename: string;
+  path: string;
+  editedPath: string | null;
+  editsJson: string | null;
+  currentEditsHash: string | null;
+  lastRenderedHash: string | null;
+  startSec: number;
+  endSec: number;
+  durationSec: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type VideoRecord = {
+  id: string;
+  channelId: string;
+  title: string;
+  description: string;
+  channelTitle: string;
+  publishedAt: string;
+  durationSec: number;
+  tags: string;
+  thumbnailUrl: string | null;
+  transcriptLines: string | null;
+  transcriptFetchedAt: string | null;
+  createdAt: number;
+  updatedAt: number;
 };

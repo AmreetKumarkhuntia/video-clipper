@@ -29,7 +29,6 @@ export function scriptPath(name: string): string {
 /**
  * Per-user config/state directory (`~/.config/video-clipper`).
  *
- * Home for the user config file, persisted YouTube auth state, and the
- * default SQLite library location.
+ * Home for the user config file and persisted YouTube auth state.
  */
 export { getUserConfigDir } from './userConfigDir.js';
