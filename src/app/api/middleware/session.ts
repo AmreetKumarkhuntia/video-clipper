@@ -14,7 +14,7 @@ import type { ApiEnv } from '../context.js';
  * differently for each. Routes that require a customer call `requireCustomer`.
  */
 export const session: MiddlewareHandler<ApiEnv> = async (c, next) => {
-  const customer = resolveSession(readSessionToken(c));
+  const customer = await resolveSession(readSessionToken(c));
   if (customer) c.set('customer', customer);
   await next();
 };
