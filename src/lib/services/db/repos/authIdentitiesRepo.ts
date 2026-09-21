@@ -1,10 +1,16 @@
 import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../client.js';
+import { getDb, withDbTransaction } from '../client.js';
 import { authIdentities } from '../schema.js';
 import { log } from '@lib/utils/logger.js';
 import { decryptSecret, encryptSecret, isEncryptedSecret } from '@lib/services/encryption/index.js';
-import type { AuthIdentityInput, AuthIdentityRecord, AuthProvider } from '@lib/types/auth.js';
+import { IdentityMetadataSchema } from '@lib/types/auth.js';
+import type {
+  AuthIdentityInput,
+  AuthIdentityRecord,
+  AuthProvider,
+  IdentityMetadata,
+} from '@lib/types/auth.js';
 
 /**
  * The bridge between a person and a way of signing in, and the store for
@@ -24,12 +30,12 @@ function rowToIdentity(row: typeof authIdentities.$inferSelect): AuthIdentityRec
     providerAccountId: row.providerAccountId,
     ...(accessToken ? { accessToken } : {}),
     ...(refreshToken ? { refreshToken } : {}),
-    ...(row.expiryDate ? { expiryDate: row.expiryDate } : {}),
+    ...(row.expiryDate ? { expiryDate: row.expiryDate.getTime() } : {}),
     ...(row.scope ? { scope: row.scope } : {}),
     ...(row.channelId ? { channelId: row.channelId } : {}),
     metadata: safeParse(row.metadata),
-    createdAt: new Date(row.createdAt).toISOString(),
-    updatedAt: new Date(row.updatedAt).toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
@@ -56,22 +62,18 @@ function writeSecret(plain: string | undefined | null): string | null {
 }
 
 /** A hand-edited row must not crash sign-in, so a bad blob reads as no metadata. */
-function safeParse(raw: string): Record<string, unknown> {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
-  } catch {
-    return {};
-  }
+function safeParse(raw: unknown): IdentityMetadata {
+  const result = IdentityMetadataSchema.safeParse(raw);
+  return result.success ? result.data : {};
 }
 
 /** The customer this login belongs to, or null when the login is unknown to us. */
-export function findCustomerIdByIdentity(
+export async function findCustomerIdByIdentity(
   provider: AuthProvider,
   providerAccountId: string,
-): string | null {
+): Promise<string | null> {
   const done = log.dbCalled('findCustomerIdByIdentity', undefined, { provider });
-  const row = db
+  const [row] = await getDb()
     .select({ customerId: authIdentities.customerId })
     .from(authIdentities)
     .where(
@@ -80,22 +82,22 @@ export function findCustomerIdByIdentity(
         eq(authIdentities.providerAccountId, providerAccountId),
       ),
     )
-    .get();
+    .limit(1);
   done({ found: row ? 1 : 0 });
   return row?.customerId ?? null;
 }
 
 /** One customer's login with a given provider, tokens included. */
-export function findIdentity(
+export async function findIdentity(
   customerId: string,
   provider: AuthProvider,
-): AuthIdentityRecord | null {
+): Promise<AuthIdentityRecord | null> {
   const done = log.dbCalled('findIdentity', undefined, { customerId, provider });
-  const row = db
+  const [row] = await getDb()
     .select()
     .from(authIdentities)
     .where(and(eq(authIdentities.customerId, customerId), eq(authIdentities.provider, provider)))
-    .get();
+    .limit(1);
   done({ found: row ? 1 : 0 });
   return row ? rowToIdentity(row) : null;
 }
@@ -109,64 +111,73 @@ export function findIdentity(
  * key, so a sign-in where the provider omits one detail (say, the uploads
  * playlist) keeps what an earlier sign-in stored.
  */
-export function linkIdentity(input: AuthIdentityInput): void {
+export async function linkIdentity(input: AuthIdentityInput): Promise<void> {
   const done = log.dbCalled('linkIdentity', undefined, {
     customerId: input.customerId,
     provider: input.provider,
   });
-  const ts = Date.now();
-  const existing = db
-    .select()
-    .from(authIdentities)
-    .where(
-      and(
-        eq(authIdentities.provider, input.provider),
-        eq(authIdentities.providerAccountId, input.providerAccountId),
+  await withDbTransaction(async () => {
+    const db = getDb();
+    const [existing] = await db
+      .select()
+      .from(authIdentities)
+      .where(
+        and(
+          eq(authIdentities.provider, input.provider),
+          eq(authIdentities.providerAccountId, input.providerAccountId),
+        ),
+      )
+      .limit(1);
+    const ts = new Date();
+
+    // Every write goes through the cipher, including the refresh token kept from
+    // an earlier grant — which is what re-encrypts a row written before
+    // encryption existed the next time its owner signs in.
+    const values = {
+      customerId: input.customerId,
+      accessToken: writeSecret(input.accessToken),
+      refreshToken: writeSecret(
+        input.refreshToken ?? readSecret(existing?.refreshToken ?? null, existing?.id ?? ''),
       ),
-    )
-    .get();
+      expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
+      scope: input.scope ?? null,
+      channelId: input.channelId ?? existing?.channelId ?? null,
+      metadata: {
+        ...safeParse(existing?.metadata),
+        ...IdentityMetadataSchema.parse(input.metadata ?? {}),
+      },
+      updatedAt: ts,
+    };
 
-  // Every write goes through the cipher, including the refresh token kept from
-  // an earlier grant — which is what re-encrypts a row written before
-  // encryption existed the next time its owner signs in.
-  const values = {
-    customerId: input.customerId,
-    accessToken: writeSecret(input.accessToken),
-    refreshToken: writeSecret(
-      input.refreshToken ?? readSecret(existing?.refreshToken ?? null, existing?.id ?? ''),
-    ),
-    expiryDate: input.expiryDate ?? null,
-    scope: input.scope ?? null,
-    channelId: input.channelId ?? existing?.channelId ?? null,
-    metadata: JSON.stringify({
-      ...safeParse(existing?.metadata ?? '{}'),
-      ...(input.metadata ?? {}),
-    }),
-    updatedAt: ts,
-  };
-
-  if (existing) {
-    db.update(authIdentities).set(values).where(eq(authIdentities.id, existing.id)).run();
-  } else {
-    db.insert(authIdentities)
-      .values({
-        id: `identity-${nanoid()}`,
-        provider: input.provider,
-        providerAccountId: input.providerAccountId,
-        createdAt: ts,
-        ...values,
-      })
-      .run();
-  }
+    if (existing) {
+      await db
+        .update(authIdentities)
+        .set(values)
+        .where(eq(authIdentities.id, existing.id))
+        .returning({ id: authIdentities.id });
+    } else {
+      await db
+        .insert(authIdentities)
+        .values({
+          id: `identity-${nanoid()}`,
+          provider: input.provider,
+          providerAccountId: input.providerAccountId,
+          createdAt: ts,
+          ...values,
+        })
+        .returning({ id: authIdentities.id });
+    }
+  });
   done({ customerId: input.customerId });
 }
 
 /** Forgets a login and the tokens it carried. */
-export function unlinkIdentity(customerId: string, provider: AuthProvider): void {
+export async function unlinkIdentity(customerId: string, provider: AuthProvider): Promise<void> {
   const done = log.dbCalled('unlinkIdentity', undefined, { customerId, provider });
-  db.delete(authIdentities)
+  await getDb()
+    .delete(authIdentities)
     .where(and(eq(authIdentities.customerId, customerId), eq(authIdentities.provider, provider)))
-    .run();
+    .returning({ id: authIdentities.id });
   done({ customerId });
 }
 
@@ -175,33 +186,37 @@ export function unlinkIdentity(customerId: string, provider: AuthProvider): void
  * rewritten through the cipher. Idempotent, and cheap when there is nothing
  * to do. Returns how many rows changed.
  */
-export function reencryptIdentityTokens(): number {
+export async function reencryptIdentityTokens(): Promise<number> {
   const done = log.dbCalled('reencryptIdentityTokens', undefined, {});
-  const rows = db.select().from(authIdentities).all();
-  let changed = 0;
-  for (const row of rows) {
-    const needsAccess = row.accessToken !== null && !isEncryptedSecret(row.accessToken);
-    const needsRefresh = row.refreshToken !== null && !isEncryptedSecret(row.refreshToken);
-    if (!needsAccess && !needsRefresh) continue;
-    db.update(authIdentities)
-      .set({
-        ...(needsAccess ? { accessToken: encryptSecret(row.accessToken!) } : {}),
-        ...(needsRefresh ? { refreshToken: encryptSecret(row.refreshToken!) } : {}),
-      })
-      .where(eq(authIdentities.id, row.id))
-      .run();
-    changed++;
-  }
+  const changed = await withDbTransaction(async () => {
+    const db = getDb();
+    const rows = await db.select().from(authIdentities);
+    let count = 0;
+    for (const row of rows) {
+      const needsAccess = row.accessToken !== null && !isEncryptedSecret(row.accessToken);
+      const needsRefresh = row.refreshToken !== null && !isEncryptedSecret(row.refreshToken);
+      if (!needsAccess && !needsRefresh) continue;
+      await db
+        .update(authIdentities)
+        .set({
+          ...(needsAccess ? { accessToken: encryptSecret(row.accessToken!) } : {}),
+          ...(needsRefresh ? { refreshToken: encryptSecret(row.refreshToken!) } : {}),
+        })
+        .where(eq(authIdentities.id, row.id))
+        .returning({ id: authIdentities.id });
+      count++;
+    }
+    return count;
+  });
   done({ changed });
   return changed;
 }
 
 /** Reports whether the database contains tokens protected by the deployment key. */
-export function hasEncryptedIdentityTokens(): boolean {
-  const rows = db
+export async function hasEncryptedIdentityTokens(): Promise<boolean> {
+  const rows = await getDb()
     .select({ accessToken: authIdentities.accessToken, refreshToken: authIdentities.refreshToken })
-    .from(authIdentities)
-    .all();
+    .from(authIdentities);
   return rows.some(
     (row) =>
       (row.accessToken !== null && isEncryptedSecret(row.accessToken)) ||
@@ -214,15 +229,14 @@ export function hasEncryptedIdentityTokens(): boolean {
  * degrade an individual identity to "no token"; startup must not silently do
  * that for an entire restored database.
  */
-export function validateEncryptedIdentityTokens(): void {
-  const rows = db
+export async function validateEncryptedIdentityTokens(): Promise<void> {
+  const rows = await getDb()
     .select({
       id: authIdentities.id,
       accessToken: authIdentities.accessToken,
       refreshToken: authIdentities.refreshToken,
     })
-    .from(authIdentities)
-    .all();
+    .from(authIdentities);
 
   for (const row of rows) {
     for (const stored of [row.accessToken, row.refreshToken]) {

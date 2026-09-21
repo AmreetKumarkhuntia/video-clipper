@@ -4,6 +4,7 @@ import {
   ConfigUpdatesSchema,
   type Config,
   CONFIG_FIELD_META,
+  DEPLOYMENT_ONLY_CONFIG_KEYS,
   type SetConfigResult,
 } from '@lib/types/config.js';
 import { loadUserConfig, saveUserConfig } from '@lib/config/fileStore.js';
@@ -59,9 +60,10 @@ export function setConfigValues(updates: Record<string, unknown>): SetConfigResu
 
   const currentFile = loadUserConfig() ?? {};
   const merged = { ...currentFile };
-  // Ignore legacy/manual entries as well as rejecting new settings writes.
-  delete merged.TOKEN_ENCRYPTION_KEY;
-  delete merged.TOKEN_ENCRYPTION_KEY_PATH;
+  // Ignore legacy/manual entries as well as rejecting new deployment-only writes.
+  for (const key of DEPLOYMENT_ONLY_CONFIG_KEYS) {
+    delete merged[key];
+  }
 
   for (const [key, value] of Object.entries(updates)) {
     if (value === '' || value === null || value === undefined) {

@@ -194,7 +194,7 @@ export {
 // ── Publish Service ──
 export * from './services/publish/index.js';
 
-// ── DB Service (migrations + repos; the sqlite handle stays internal) ──
+// ── DB Service (PostgreSQL pool, migration checks, and repositories) ──
 export * from './services/db/index.js';
 
 // ── Orchestration (transcript / analysis / clips / QA / publish / clip edits) ──

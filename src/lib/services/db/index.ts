@@ -1,13 +1,12 @@
 /**
  * Public entry point for the db service.
  *
- * Exposes migrations and every repo function. The drizzle client itself
- * (`client.js`) is internal — consumers never receive the raw handle.
+ * Exposes lifecycle, migration, transaction-context, and repository operations.
+ * `getDb()` resolves to the current transaction handle when one is active.
  */
-export { runMigrations } from './migrate.js';
-export { initDb, getDb, resolveDatabasePath } from './client.js';
+export { runMigrations, assertMigrationsCurrent } from './migrate.js';
+export { initDb, getDb, pingDb, closeDb, withDbTransaction } from './client.js';
 
-export { clearDatabase } from './repos/adminRepo.js';
 export {
   saveAnalysisToDb,
   getAnalysisFromDb,
@@ -39,12 +38,13 @@ export {
   setCustomerRole,
   hasCustomerWithRole,
 } from './repos/customersRepo.js';
-export { findRolePermissions } from './repos/rolesRepo.js';
+export { findRolePermissions, lockInitialAdminBootstrap } from './repos/rolesRepo.js';
 export {
   findChunks,
   upsertChunks,
   deleteChunks,
   setChunkAnalysisByRange,
+  setChunkAnalysesByRange,
   clearChunkAnalysis,
 } from './repos/chunksRepo.js';
 export {
@@ -54,6 +54,7 @@ export {
   listClipsByAnalysisId,
   listClipsByVideoId,
   upsertClip,
+  persistGeneratedClips,
   setClipEdits,
   setClipRender,
   deleteClip,
@@ -70,6 +71,7 @@ export {
 } from './repos/segmentationsRepo.js';
 export {
   upsertUploadArtifact,
+  upsertUploadArtifacts,
   listUploadArtifactsByAnalysisId,
 } from './repos/uploadArtifactsRepo.js';
 export {
