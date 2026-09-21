@@ -1,34 +1,34 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '@app/api/app.js';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
 import {
   createCustomer,
   findVideo,
-  initDb,
   insertSession,
   removeLibraryVideo,
-  runMigrations,
   saveLibraryVideo,
+  upsertChannel,
   upsertVideo,
 } from '@lib/services/db/index.js';
 import { hashSessionToken } from '@lib/utils/sessionToken.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 const app = createApp();
 const SESSION_TOKEN = 'videos-route-session';
 const OTHER_SESSION_TOKEN = 'other-videos-route-session';
 let customerId: string;
 let otherCustomerId: string;
-let tempDirectory: string;
+let database: PostgresTestDatabase;
 
 function signedIn(token: string = SESSION_TOKEN): RequestInit {
   return { headers: { cookie: `${SESSION_COOKIE_NAME}=${token}` } };
 }
 
-function seedVideo(): void {
-  upsertVideo({
+async function seedVideo(): Promise<void> {
+  await upsertVideo({
     id: 'vid-1',
     channelId: 'UCtest_channel',
     title: 'First upload',
@@ -38,31 +38,27 @@ function seedVideo(): void {
     durationSec: 120,
     tags: [],
   });
-  saveLibraryVideo({ customerId, videoId: 'vid-1' });
+  await saveLibraryVideo({ customerId, videoId: 'vid-1' });
 }
 
-beforeAll(() => {
-  tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-videos-route-'));
-  initDb(path.join(tempDirectory, 'library.sqlite'));
-  runMigrations();
-
-  const customer = createCustomer({ email: 'owner@example.com' });
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('videos_route');
+  await upsertChannel({ id: 'UCtest_channel', title: 'Test Channel' });
+  const customer = await createCustomer({ email: 'owner@example.com' });
   customerId = customer.id;
-  insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
+  await insertSession(hashSessionToken(SESSION_TOKEN), customer.id, Date.now() + 60_000);
 
-  const otherCustomer = createCustomer({ email: 'other@example.com' });
+  const otherCustomer = await createCustomer({ email: 'other@example.com' });
   otherCustomerId = otherCustomer.id;
-  insertSession(hashSessionToken(OTHER_SESSION_TOKEN), otherCustomer.id, Date.now() + 60_000);
+  await insertSession(hashSessionToken(OTHER_SESSION_TOKEN), otherCustomer.id, Date.now() + 60_000);
 });
 
-beforeEach(() => {
-  removeLibraryVideo(customerId, 'vid-1');
-  removeLibraryVideo(otherCustomerId, 'vid-1');
+beforeEach(async () => {
+  await removeLibraryVideo(customerId, 'vid-1');
+  await removeLibraryVideo(otherCustomerId, 'vid-1');
 });
 
-afterAll(() => {
-  fs.rmSync(tempDirectory, { recursive: true, force: true });
-});
+afterAll(async () => database.close());
 
 describe('video library routes', () => {
   it('returns an empty first page before anything is saved', async () => {
@@ -76,7 +72,7 @@ describe('video library routes', () => {
   });
 
   it('lists a saved video joined to its catalog row', async () => {
-    seedVideo();
+    await seedVideo();
     const response = await app.request('/api/videos', signedIn());
     const body = (await response.json()) as {
       videos: Array<{ videoId: string }>;
@@ -89,21 +85,21 @@ describe('video library routes', () => {
   });
 
   it('removes a saved video without deleting its catalog record', async () => {
-    seedVideo();
+    await seedVideo();
     const response = await app.request('/api/videos/vid-1', {
       method: 'DELETE',
       ...signedIn(),
     });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ videoId: 'vid-1', saved: false });
-    expect(findVideo('vid-1')).not.toBeNull();
+    expect(await findVideo('vid-1')).not.toBeNull();
 
     const list = await app.request('/api/videos', signedIn());
     expect(await list.json()).toMatchObject({ total: 0 });
   });
 
   it('cannot list or remove a video saved by another customer', async () => {
-    seedVideo();
+    await seedVideo();
 
     const otherList = await app.request('/api/videos', signedIn(OTHER_SESSION_TOKEN));
     expect(await otherList.json()).toMatchObject({ videos: [], total: 0 });

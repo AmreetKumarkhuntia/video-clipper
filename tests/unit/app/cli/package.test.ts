@@ -16,7 +16,7 @@ describe('CLI distribution boundaries', (): void => {
     expect((): unknown =>
       CliPackageManifestSchema.parse({
         ...manifest,
-        dependencies: { ...manifest.dependencies, 'better-sqlite3': '*' },
+        dependencies: { ...manifest.dependencies, pg: '*' },
       }),
     ).toThrow();
     expect((): unknown =>
@@ -30,6 +30,9 @@ describe('CLI distribution boundaries', (): void => {
     ).toThrow('cannot include');
     expect((): void => assertCliInputs(['src/app/cli/../api/index.ts'])).toThrow('cannot include');
     expect((): void => assertCliInputs(['node_modules/ai/index.js'])).toThrow('cannot include');
+    expect((): void => assertCliInputs(['node_modules/drizzle-orm/index.js'])).toThrow(
+      'cannot include',
+    );
   });
 
   it('rejects an archive containing anything outside the executable package', (): void => {

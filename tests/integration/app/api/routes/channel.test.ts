@@ -1,23 +1,22 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '@app/api/app.js';
 import { SESSION_COOKIE_NAME } from '@lib/types/api.js';
 import {
   createCustomer,
-  initDb,
   insertSession,
   linkIdentity,
-  runMigrations,
   upsertChannel,
 } from '@lib/services/db/index.js';
 import { hashSessionToken } from '@lib/utils/sessionToken.js';
+import {
+  createPostgresTestDatabase,
+  type PostgresTestDatabase,
+} from '../../../../support/postgres.js';
 
 const app = createApp();
 const LINKED_TOKEN = 'linked-channel-session';
 const UNLINKED_TOKEN = 'unlinked-channel-session';
-let tempDirectory: string;
+let database: PostgresTestDatabase;
 
 function signedIn(token: string): RequestInit {
   return { headers: { cookie: `${SESSION_COOKIE_NAME}=${token}` } };
@@ -28,28 +27,23 @@ async function errorMessageOf(response: Response): Promise<string> {
   return body.error.message;
 }
 
-beforeAll(() => {
-  tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-channel-route-'));
-  initDb(path.join(tempDirectory, 'library.sqlite'));
-  runMigrations();
-
-  upsertChannel({ id: 'UCtest_channel', title: 'Test Channel' });
-  const linked = createCustomer({ email: 'linked@example.com' });
-  linkIdentity({
+beforeAll(async () => {
+  database = await createPostgresTestDatabase('channel_route');
+  await upsertChannel({ id: 'UCtest_channel', title: 'Test Channel' });
+  const linked = await createCustomer({ email: 'linked@example.com' });
+  await linkIdentity({
     customerId: linked.id,
     provider: 'google',
     providerAccountId: 'linked-sub',
     channelId: 'UCtest_channel',
   });
-  insertSession(hashSessionToken(LINKED_TOKEN), linked.id, Date.now() + 60_000);
+  await insertSession(hashSessionToken(LINKED_TOKEN), linked.id, Date.now() + 60_000);
 
-  const unlinked = createCustomer({ email: 'unlinked@example.com' });
-  insertSession(hashSessionToken(UNLINKED_TOKEN), unlinked.id, Date.now() + 60_000);
+  const unlinked = await createCustomer({ email: 'unlinked@example.com' });
+  await insertSession(hashSessionToken(UNLINKED_TOKEN), unlinked.id, Date.now() + 60_000);
 });
 
-afterAll(() => {
-  fs.rmSync(tempDirectory, { recursive: true, force: true });
-});
+afterAll(async () => database.close());
 
 describe('channel routes', () => {
   it('returns the channel linked to the signed-in customer', async () => {

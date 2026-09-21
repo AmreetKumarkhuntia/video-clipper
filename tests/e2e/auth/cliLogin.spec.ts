@@ -5,13 +5,14 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import {
   CliLoginExchangeResponseSchema,
   CliLoginStartResponseSchema,
 } from '../../../src/lib/types/api.js';
+import { createPostgresTestDatabase, type PostgresTestDatabase } from '../../support/postgres.js';
 
 let backend: ReturnType<typeof serve> | undefined;
+let database: PostgresTestDatabase | undefined;
 let directory = '';
 let origin = '';
 let nativeFetch: typeof globalThis.fetch;
@@ -173,11 +174,10 @@ test.describe.serial('browser CLI callback', () => {
 
     installGoogleApiFixture();
 
-    const [appModule, configModule, dbModule, encryptionModule, callbackModule, oauthModule] =
+    const [appModule, configModule, encryptionModule, callbackModule, oauthModule] =
       await Promise.all([
         import('../../../src/app/api/app.js'),
         import('../../../src/lib/config/index.js'),
-        import('../../../src/lib/services/db/index.js'),
         import('../../../src/lib/services/encryption/index.js'),
         import('../../../src/app/cli/client/loginCallback.js'),
         import('../../../src/lib/utils/googleOAuth.js'),
@@ -186,8 +186,7 @@ test.describe.serial('browser CLI callback', () => {
     startLoginCallback = callbackModule.startLoginCallback;
     createCodeChallenge = oauthModule.createCodeChallenge;
     encryptionModule.initTokenCipher(randomBytes(32));
-    const database = dbModule.initDb(path.join(directory, 'library.sqlite'));
-    migrate(database, { migrationsFolder: path.resolve('drizzle') });
+    database = await createPostgresTestDatabase('browser_cli_login');
 
     origin = await new Promise<string>((resolve, reject) => {
       backend = serve(
@@ -205,6 +204,7 @@ test.describe.serial('browser CLI callback', () => {
 
   test.afterAll(async (): Promise<void> => {
     await closeBackend();
+    await database?.close();
     globalThis.fetch = nativeFetch;
     Object.defineProperty(os, 'homedir', { configurable: true, value: nativeHomedir });
     for (const [key, value] of environment) {

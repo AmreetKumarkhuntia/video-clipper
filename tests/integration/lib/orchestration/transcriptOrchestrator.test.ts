@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   findTranscriptLines: vi.fn(),
   saveTranscript: vi.fn(),
   upsertChunks: vi.fn(),
+  withDbTransaction: vi.fn(),
 }));
 
 vi.mock('@lib/services/analysis/index.js', () => ({
@@ -33,6 +34,7 @@ vi.mock('@lib/services/db/index.js', () => ({
   findTranscriptLines: mocks.findTranscriptLines,
   saveTranscript: mocks.saveTranscript,
   upsertChunks: mocks.upsertChunks,
+  withDbTransaction: mocks.withDbTransaction,
 }));
 
 import {
@@ -57,6 +59,9 @@ beforeEach(() => {
   mocks.buildLLMChunks.mockReturnValue(chunks);
   mocks.createTranscriptChain.mockReturnValue([{ source: 'test' }]);
   mocks.detect.mockResolvedValue({ lines, microBlocks, chunks });
+  mocks.withDbTransaction.mockImplementation(async (operation: () => Promise<unknown>) => {
+    return operation();
+  });
 });
 
 describe('loadOrFetchTranscript', () => {
@@ -103,15 +108,17 @@ describe('loadOrFetchTranscript', () => {
         end: 35,
       }),
     ]);
+    expect(mocks.withDbTransaction).toHaveBeenCalledOnce();
   });
 });
 
 describe('clearVideoTranscript', () => {
-  it('clears both the transcript and its derived chunks', () => {
-    mocks.clearTranscript.mockReturnValue(true);
+  it('clears both the transcript and its derived chunks', async () => {
+    mocks.clearTranscript.mockResolvedValue(true);
 
-    expect(clearVideoTranscript('video-1')).toEqual({ dbCleared: true });
+    await expect(clearVideoTranscript('video-1')).resolves.toEqual({ dbCleared: true });
     expect(mocks.clearTranscript).toHaveBeenCalledWith('video-1');
     expect(mocks.deleteChunks).toHaveBeenCalledWith('video-1');
+    expect(mocks.withDbTransaction).toHaveBeenCalledOnce();
   });
 });
